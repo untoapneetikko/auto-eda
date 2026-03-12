@@ -864,6 +864,15 @@ let library = {};
 let selectedSlug = null;
 const profileCache = {};
 
+window._icLayoutCache = {};
+async function prefetchICLayout(slug) {
+  if (window._icLayoutCache[slug]) return;
+  try {
+    const data = await fetch(`/api/library/${slug}/layout`).then(r=>r.json());
+    if (data && data.BOX_W) window._icLayoutCache[slug] = data;
+  } catch(e) {}
+}
+
 // ── SSE live updates ───────────────────────────────────────────────────────
 const evtSource = new EventSource('/api/events');
 evtSource.addEventListener('library_updated', () => loadLibrary());
@@ -998,6 +1007,7 @@ async function selectPart(slug) {
 }
 
 async function loadProfile(slug) {
+  if (!slug || slug === 'undefined' || slug === 'null') return;
   const res = await fetch(`/api/library/${slug}`);
   const profile = await res.json();
   renderProfile(profile);
@@ -1751,52 +1761,12 @@ async function fpSavePads(btn) {
   if (btn) { btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500); }
 }
 
-function buildFootprintPrompt(slug, profile) {
-  const partNum = profile.part_number || slug;
-  const pkgs = (profile.package_types || []).join(', ') || '(unknown — check datasheet)';
-  const pinCount = (profile.pins || []).length;
-  const pins = (profile.pins || []).slice(0, 20).map(p => `  ${p.number}: ${p.name}`).join('\n');
-  return `GENERATE FOOTPRINT — ${partNum}
-=======================================================
-
-Read the datasheet to find the physical package dimensions, then build and save the footprint.
-
-STEPS:
-1. Read raw datasheet text:  library/${slug}/raw_text.txt
-   - Find the package/mechanical section (look for "Package", "Dimensions", "Outline", "Land Pattern")
-   - Note: package type is "${pkgs}", pin count is ${pinCount}
-
-2. Determine the footprint name:
-   - Use the standard industry name if it matches a known package (e.g. "QFN-16-3x3", "SOIC-8", "DIP-14")
-   - If no standard name applies, use the part number: "${partNum}"
-
-3. Build the footprint JSON (all dimensions in mm):
-{
-  "name": "<footprint-name>",
-  "description": "${partNum} — ${pkgs}",
-  "pads": [
-    { "number": "1", "name": "PIN1", "x": 0, "y": 0, "type": "smd", "shape": "rect", "size_x": 0.6, "size_y": 1.5 }
-  ],
-  "courtyard": { "x": -2, "y": -2, "w": 4, "h": 4 }
-}
-
-PIN NAMES for this component:
-${pins}${(profile.pins||[]).length > 20 ? `\n  ... (${(profile.pins||[]).length - 20} more — see library/${slug}/profile.json)` : ''}
-
-4. Save the footprint:
-   PUT http://localhost:3030/api/footprints/<footprint-name>
-   Body: the JSON above
-
-5. Assign to profile:
-   PUT http://localhost:3030/api/library/${slug}/footprint
-   Body: { "footprint": "<footprint-name>" }
-
-IMPORTANT:
-- All pad x/y coordinates are relative to the component center (0,0)
-- "type" is "smd" for surface-mount or "thru_hole" for through-hole pads
-- "shape" is "rect" or "circle"
-- Courtyard x/y is the top-left corner offset from center, w/h are total dimensions
-- Match pin numbers exactly to profile pins above`;
+async function buildFootprintPrompt(slug, profile) {
+  const res = await fetch('/api/gen-tickets/build-prompt', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'footprint', slug, profile})
+  });
+  return (await res.json()).prompt;
 }
 
 // Convert _leBomData + _leNetAssign into the required_passives format used by _computeLayoutJSON.
@@ -2018,83 +1988,11 @@ function _computeLayoutJSON(partNum, fpName, fpPads, passives) {
 }
 
 async function buildLayoutPrompt(slug, profile) {
-  const partNum = profile.part_number || slug;
-  const fpName = profile.footprint || null;
-  // Prefer live BOM from schematic (includes components that may not be in required_passives)
-  const hasBom = Array.isArray(_leBomData) && _leBomData.length > 0 && Object.keys(_leNetAssign||{}).length > 0;
-  const passives = hasBom
-    ? _bomToPassives(_leBomData, _leNetAssign, _leProfileMap)
-    : (profile.required_passives || []);
-
-  // Fast path: pre-compute layout JSON and give agent 2-command prompt
-  if (fpName && passives.length) {
-    try {
-      const fp = await fetch(`/api/footprints/${encodeURIComponent(fpName)}`).then(r => r.json());
-      if ((fp.pads || []).length) {
-        const layoutJson = _computeLayoutJSON(partNum, fpName, fp.pads, passives);
-        const jsonStr = JSON.stringify(layoutJson, null, 2).replace(/'/g, "'\\''");
-        return `PCB LAYOUT — ${partNum}
-Run exactly these two commands:
-
-\`\`\`bash
-curl -s -X DELETE http://localhost:3030/api/library/${slug}/layout_example
-curl -s -X PUT http://localhost:3030/api/library/${slug}/layout_example \\
-  -H "Content-Type: application/json" \\
-  -d '${jsonStr}'
-\`\`\`
-`;
-      }
-    } catch(e) {}
-  }
-
-  // Fallback: instructions-based prompt when footprint/passives unavailable
-  const pkgs = (profile.package_types || []).join(', ') || '(check datasheet)';
-  const passivesSection = passives.length
-    ? `U1 — ${partNum} (${pkgs})\n` + passives.map((p, i) => `${p.type[0].toUpperCase()}${i+1} — ${p.value}  placement: ${p.placement}`).join('\n')
-    : `U1 — ${partNum} (${pkgs})\n(No required_passives in profile — read library/${slug}/raw_text.txt)`;
-  const supplyPins = (profile.pins || []).filter(p => /vcc|vdd|gnd|vss|power|supply/i.test(p.name || ''));
-  return `BUILD PCB LAYOUT EXAMPLE — ${partNum}
-=======================================================
-
-1. Read /home/latte/Desktop/schematic-designer/LAYOUT_EXAMPLE_INSTRUCTIONS.md
-2. DELETE http://localhost:3030/api/library/${slug}/layout_example
-3. GET http://localhost:3030/api/footprints/${encodeURIComponent(fpName || partNum)}
-4. Compute coordinates and PUT the board JSON to http://localhost:3030/api/library/${slug}/layout_example
-
-COMPONENTS:
-${passivesSection}
-${supplyPins.length ? `\nSupply/power pins: ${supplyPins.map(p => p.name).join(', ')}` : ''}
-
-RULES — these override LAYOUT_EXAMPLE_INSTRUCTIONS.md if there is any conflict:
-- Add 100nF–1µF decoupling cap for each VCC/VDD pin — place within 2mm of the pin
-- Place same-net components ADJACENT (0.25mm courtyard gap). Never scatter them.
-- Placement order: decoupling caps → RF chokes → DC-block caps → input passives
-- Board size: just large enough for components + 1mm margin; no empty space
-
-COMPONENT ORIENTATION RULES — follow every time:
-1. Orient each passive so ONE PAD aligns exactly (same X or same Y) with the IC pin it connects to.
-   This allows a single straight trace segment — no dog-legs.
-2. Place the connecting pad on the side FACING the IC pin.
-   Example: IC VIN at (6.05, 5.45), cap to the left → rotation=0, pad2 (right) aligns at y=5.45.
-   Set comp.x so pad2 is just outside IC courtyard. Trace: one straight horizontal segment.
-3. The non-connecting pad (GND or supply return) faces AWAY from the IC.
-
-TRACE ROUTING RULES — follow every time:
-1. Check every trace pair for crossings BEFORE writing JSON. Different-net traces must not cross.
-2. Route GND back-traces toward the outer board edge, away from signal traces.
-3. For EN-to-VIN ties: route on the OPPOSITE side of IC from signal traces.
-4. Never route a trace at the same Y (or X) as an IC pin row if it's a different net.
-5. Plan all trace paths and check each pair for intersections before writing.
-
-45° ANGLE ROUTING — always prefer 45° bends, never 90°:
-- Never use 90° bends. Use a short 45° diagonal at every direction change.
-- Pattern: straight → 45° diagonal → straight.
-- Verify copper clearance at every diagonal segment.
-
-CLOSEST-VALID-POINT ROUTING:
-- Route to the NEAREST pad of the target net, not an arbitrary one.
-  Example: EN tied to VIN → route to nearest VIN point (U1.padN), not to farther C1.pad2.
-`;
+  const res = await fetch('/api/gen-tickets/build-prompt', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'layout', slug, profile})
+  });
+  return (await res.json()).prompt;
 }
 
 async function fpGenerate(btn) {
@@ -2254,6 +2152,7 @@ async function gtRetract() {
 let _historyVersionCount = 0;
 
 async function loadActiveVersionBadge(slug) {
+  if (!slug || slug === 'undefined' || slug === 'null') return;
   const badge = document.getElementById('active-version-badge');
   if (!badge) return;
   const av = await fetch(`/api/library/${slug}/active_version`).then(r => r.json()).catch(() => null);
@@ -5542,6 +5441,7 @@ class SchematicEditor {
     this.labelCursor = null;
     this.history = []; this.historyIdx = -1;
     this.showNets = false;
+    this._cachedNetOverlay = null;
     this._noEvents = !!opts.noEvents;
     this._isEmbedded = !!opts.labelInputId; // true for appCircuitEditor, false for main editor
     this.labelInputId = opts.labelInputId || 'label-name-input';
@@ -5706,6 +5606,7 @@ class SchematicEditor {
 
   // Dynamic IC layout from cached profile (DIP-style: left half top→bottom, right half bottom→top)
   _icLayout(slug) {
+    if (window._icLayoutCache && window._icLayoutCache[slug]) return window._icLayoutCache[slug];
     const PIN_STUB = 40, ROW_H = 20, PAD_Y = 16, BOX_W = 120;
     const profile = profileCache[slug];
     const pins = (profile && profile.pins)
@@ -6561,12 +6462,32 @@ class SchematicEditor {
 
   // ── Undo/redo ─────────────────────────────────────────────────────────────
   _saveHist() {
+    this._refreshNetOverlay();
     const s = JSON.stringify({ c: this.project.components, w: this.project.wires, l: this.project.labels || [] });
     this.history = this.history.slice(0, this.historyIdx + 1);
     this.history.push(s);
     if (this.history.length > 60) this.history.shift();
     this.historyIdx = this.history.length - 1;
     this._updateUndoRedo();
+  }
+
+  async _refreshNetOverlay() {
+    try {
+      const res = await fetch('/api/netlist', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          components: this.project.components,
+          wires: this.project.wires,
+          labels: this.project.labels || []
+        })
+      });
+      const data = await res.json();
+      this._cachedNetOverlay = {
+        nets: data.nets || [],
+        wireToNet: new Map(Object.entries(data.wireToNet || {}))
+      };
+    } catch(e) {}
   }
 
   _undo() {
@@ -7113,193 +7034,22 @@ function exportBOM() {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
+async function getBOM(projectId) {
+  return fetch(`/api/projects/${projectId}/bom`).then(r=>r.json());
+}
+
 // ── PCB JSON Export ────────────────────────────────────────────────────────
-function buildNetlist() {
-  const { components, wires } = editor.project;
-  const SNAP = editor.GRID / 2; // 10 units — point match tolerance
-
-  function snapV(v) { return Math.round(v / SNAP) * SNAP; }
-  function ptKey(x, y) { return `${snapV(x)},${snapV(y)}`; }
-
-  // Union-Find with path compression
-  const parent = {};
-  function find(k) {
-    if (!(k in parent)) parent[k] = k;
-    if (parent[k] !== k) parent[k] = find(parent[k]);
-    return parent[k];
-  }
-  function union(a, b) {
-    const ra = find(a), rb = find(b);
-    if (ra !== rb) parent[ra] = rb;
-  }
-
-  // Build port nodes from all placed components
-  const portNodes = [];
-  for (const comp of components) {
-    const ports = editor._ports(comp);
-    const profile = profileCache[comp.slug] || {};
-    const profilePins = profile.pins || [];
-    for (const port of ports) {
-      const pin = profilePins.find(p => (p.name || `P${p.number}`) === port.name);
-      const nodeId = `${comp.id}::${port.name}`;
-      find(nodeId); // init in union-find
-      portNodes.push({
-        nodeId, compId: comp.id,
-        designator: comp.designator, slug: comp.slug, symType: comp.symType,
-        value: comp.value, portName: port.name,
-        pinNumber: pin?.number ?? null, pinType: pin?.type ?? null,
-        x: port.x, y: port.y
-      });
-    }
-  }
-
-  // Map: point-key → list of nodeIds touching that point
-  const ptMap = new Map();
-  function addPt(k, nodeId) {
-    if (!ptMap.has(k)) ptMap.set(k, []);
-    ptMap.get(k).push(nodeId);
-  }
-
-  // Add all port positions
-  for (const pn of portNodes) addPt(ptKey(pn.x, pn.y), pn.nodeId);
-
-  // Add wire points: all points on the same wire are connected
-  for (const wire of wires) {
-    if (!wire.points || wire.points.length < 1) continue;
-    const baseId = `wire::${wire.id}::0`;
-    find(baseId);
-    addPt(ptKey(wire.points[0].x, wire.points[0].y), baseId);
-    for (let i = 1; i < wire.points.length; i++) {
-      const wid = `wire::${wire.id}::${i}`;
-      find(wid);
-      union(baseId, wid); // chain: all wire points in the same net
-      addPt(ptKey(wire.points[i].x, wire.points[i].y), wid);
-    }
-  }
-
-  // Union everything that shares a point (port↔wire, wire↔wire T-junctions)
-  for (const nodeIds of ptMap.values()) {
-    for (let i = 1; i < nodeIds.length; i++) union(nodeIds[0], nodeIds[i]);
-  }
-
-  // Labels: add each label as a node and union it with any wire/port at its position.
-  // Labels with the SAME name are also unioned so disconnected wires with matching labels share a net.
-  const wireLabels = editor.project.labels || [];
-  const labelByName = new Map(); // name → first label nodeId with that name
-  for (const lbl of wireLabels) {
-    const lblId = `lbl::${lbl.id}`;
-    find(lblId);
-    // Union with any wire/port at the label's position
-    const nodesHere = ptMap.get(ptKey(lbl.x, lbl.y)) || [];
-    for (const id of nodesHere) union(lblId, id);
-    // Union with first seen label of same name (merges disconnected same-name nets)
-    if (!labelByName.has(lbl.name)) labelByName.set(lbl.name, lblId);
-    else union(lblId, labelByName.get(lbl.name));
-    // Also add to ptMap so future T-junction checks can see it
-    addPt(ptKey(lbl.x, lbl.y), lblId);
-  }
-
-  // Group port nodes by net root
-  const netMap = new Map(); // root → portNodes[]
-  for (const pn of portNodes) {
-    const root = find(pn.nodeId);
-    if (!netMap.has(root)) netMap.set(root, []);
-    netMap.get(root).push(pn);
-  }
-
-  // Name each net
-  const POWER_NAMES = new Set(['VCC','VDD','3V3','5V','12V','VIN','VOUT','PWR','POWER','AVCC','DVCC','VBAT','VBUS']);
-  const isNC = pn => (pn.pinType === 'nc') || /^NC$/i.test(pn.portName);
-  let netIdx = 1;
-  const namedNets = [];
-  for (const [, pns] of netMap) {
-    let netName = null;
-
-    // 1. VCC/GND power symbols
-    for (const pn of pns) {
-      if (pn.symType === 'vcc') { netName = pn.value?.trim() || 'VCC'; break; }
-      if (pn.symType === 'gnd') { netName = 'GND'; break; }
-    }
-
-    // 2. Named power pins (VCC, 3V3, GND, etc.)
-    if (!netName) {
-      for (const pn of pns) {
-        const n = pn.portName.toUpperCase();
-        if (POWER_NAMES.has(n) || n.startsWith('VCC') || n.startsWith('VDD') || n.startsWith('GND')) {
-          netName = n; break;
-        }
-      }
-    }
-
-    // 3. Schematic wire labels — label nodes are in union-find, check root equality
-    if (!netName && wireLabels.length) {
-      for (const pn of pns) {
-        const root = find(pn.nodeId);
-        for (const lbl of wireLabels) {
-          if (find(`lbl::${lbl.id}`) === root) { netName = lbl.name; break; }
-        }
-        if (netName) break;
-      }
-    }
-
-    // 4. NC pins — if every non-power pin is NC type/name, mark as NC (excluded from DRC/routing)
-    if (!netName) {
-      const nonPwr = pns.filter(pn => pn.symType !== 'vcc' && pn.symType !== 'gnd');
-      if (nonPwr.length && nonPwr.every(pn => isNC(pn))) netName = 'NC';
-    }
-
-    if (!netName) netName = `NET_${netIdx++}`;
-
-    namedNets.push({
-      name: netName,
-      pins: pns.map(pn => `${pn.designator}.${pn.portName}`)
-    });
-  }
-
-  // 5. Propagate label names through passive components (1-hop).
-  //    When a net has a user label and its neighbour across a passive has none,
-  //    the neighbour inherits the label.  This handles DC-blocking caps and
-  //    RF-choke inductors that sit between a label and an IC pin.
-  const rootToName = new Map();
-  for (const nn of namedNets) {
-    // find the canonical root for this net (any member node will do)
-    const sampleNode = portNodes.find(pn => nn.pins.includes(`${pn.designator}.${pn.portName}`));
-    if (sampleNode) rootToName.set(find(sampleNode.nodeId), nn.name);
-  }
-  const isAutoName = n => !n || /^NET_\d+$/.test(n);
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const nn of namedNets) {
-      if (!isAutoName(nn.name)) continue; // already named — skip
-      const sampleNode = portNodes.find(pn => nn.pins.includes(`${pn.designator}.${pn.portName}`));
-      if (!sampleNode) continue;
-      const myRoot = find(sampleNode.nodeId);
-      let candidate = null, ambiguous = false;
-      // Check every passive component port in this net group
-      for (const pn of portNodes.filter(p => find(p.nodeId) === myRoot)) {
-        if (pn.symType === 'ic' || pn.symType === 'vcc' || pn.symType === 'gnd') continue;
-        // Find the other port(s) of the same component
-        const otherPorts = portNodes.filter(p => p.compId === pn.compId && p.nodeId !== pn.nodeId);
-        for (const op of otherPorts) {
-          const otherRoot = find(op.nodeId);
-          const otherName = rootToName.get(otherRoot);
-          if (otherName && !isAutoName(otherName)) {
-            if (!candidate) candidate = otherName;
-            else if (candidate !== otherName) { ambiguous = true; break; }
-          }
-        }
-        if (ambiguous) break;
-      }
-      if (candidate && !ambiguous) {
-        nn.name = candidate;
-        rootToName.set(myRoot, candidate);
-        changed = true;
-      }
-    }
-  }
-
-  return { portNodes, namedNets };
+async function buildNetlist() {
+  const res = await fetch('/api/netlist', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      components: editor.project.components,
+      wires: editor.project.wires,
+      labels: editor.project.labels || []
+    })
+  });
+  return await res.json();
 }
 
 // ── Net names overlay (IMP-027) ────────────────────────────────────────────
@@ -7311,146 +7061,7 @@ function toggleShowNets() {
 }
 
 function computeNetOverlay(editorRef) {
-  const { components, wires } = editorRef.project;
-  const SNAP = 12;
-  function snapV(v) { return Math.round(v / SNAP) * SNAP; }
-  function ptKey(x, y) { return `${snapV(x)},${snapV(y)}`; }
-  const parent = {};
-  function find(k) { if (!(k in parent)) parent[k] = k; if (parent[k] !== k) parent[k] = find(parent[k]); return parent[k]; }
-  function union(a, b) { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; }
-  const portNodes = [];
-  for (const comp of components) {
-    const ports = editorRef._ports(comp);
-    for (const port of ports) {
-      const nodeId = `${comp.id}::${port.name}`;
-      find(nodeId);
-      portNodes.push({ nodeId, symType: comp.symType, value: comp.value, portName: port.name, x: port.x, y: port.y });
-    }
-  }
-  const ptMap = new Map();
-  function addPt(k, id) { if (!ptMap.has(k)) ptMap.set(k, []); ptMap.get(k).push(id); }
-  for (const pn of portNodes) addPt(ptKey(pn.x, pn.y), pn.nodeId);
-  const wireLabels = editorRef.project.labels || [];
-  for (const wire of wires) {
-    if (!wire.points?.length) continue;
-    const baseId = `wire::${wire.id}::0`; find(baseId);
-    addPt(ptKey(wire.points[0].x, wire.points[0].y), baseId);
-    for (let i = 1; i < wire.points.length; i++) {
-      const wid = `wire::${wire.id}::${i}`; find(wid); union(baseId, wid);
-      addPt(ptKey(wire.points[i].x, wire.points[i].y), wid);
-    }
-  }
-  for (const nodeIds of ptMap.values()) { for (let i = 1; i < nodeIds.length; i++) union(nodeIds[0], nodeIds[i]); }
-
-  // Labels: union each label with wire/ports at its position; same-name labels form one net
-  const lblByName = new Map();
-  for (const lbl of wireLabels) {
-    const lblId = `lbl::${lbl.id}`; find(lblId);
-    (ptMap.get(ptKey(lbl.x, lbl.y)) || []).forEach(id => union(lblId, id));
-    if (!lblByName.has(lbl.name)) lblByName.set(lbl.name, lblId);
-    else union(lblId, lblByName.get(lbl.name));
-    addPt(ptKey(lbl.x, lbl.y), lblId);
-  }
-
-  // Port-on-wire-segment: union component port with both ends of the wire segment it touches
-  for (const pn of portNodes) {
-    for (const wire of wires) {
-      const pts = wire.points;
-      if (!pts?.length) continue;
-      if (pts.some(p => snapV(p.x) === snapV(pn.x) && snapV(p.y) === snapV(pn.y))) continue; // at endpoint
-      for (let j = 0; j < pts.length - 1; j++) {
-        const a = pts[j], b = pts[j + 1];
-        if (a.x === b.x && a.y === b.y) continue;
-        const onH = a.y === b.y && snapV(pn.y) === snapV(a.y) &&
-                    pn.x > Math.min(a.x, b.x) && pn.x < Math.max(a.x, b.x);
-        const onV = a.x === b.x && snapV(pn.x) === snapV(a.x) &&
-                    pn.y > Math.min(a.y, b.y) && pn.y < Math.max(a.y, b.y);
-        if (onH || onV) {
-          union(pn.nodeId, `wire::${wire.id}::${j}`);
-          union(pn.nodeId, `wire::${wire.id}::${j + 1}`);
-          break;
-        }
-      }
-    }
-  }
-
-  // T-junction detection: wire endpoint lies on interior of another wire's segment
-  for (const w1 of wires) {
-    const pts1 = w1.points;
-    if (!pts1?.length) continue;
-    for (const [ei, endPt] of [[0, pts1[0]], [pts1.length - 1, pts1[pts1.length - 1]]]) {
-      const epId = `wire::${w1.id}::${ei === 0 ? 0 : pts1.length - 1}`;
-      for (const w2 of wires) {
-        if (w2.id === w1.id || !w2.points?.length) continue;
-        const pts2 = w2.points;
-        for (let j = 0; j < pts2.length - 1; j++) {
-          const a = pts2[j], b = pts2[j + 1];
-          if (a.x === b.x && a.y === b.y) continue;
-          const onH = a.y === b.y && endPt.y === a.y &&
-                      endPt.x > Math.min(a.x, b.x) && endPt.x < Math.max(a.x, b.x);
-          const onV = a.x === b.x && endPt.x === a.x &&
-                      endPt.y > Math.min(a.y, b.y) && endPt.y < Math.max(a.y, b.y);
-          if (onH || onV) {
-            union(epId, `wire::${w2.id}::${j}`);
-            union(epId, `wire::${w2.id}::${j + 1}`);
-          }
-        }
-      }
-    }
-  }
-
-  const netMap = new Map();
-  for (const pn of portNodes) { const r = find(pn.nodeId); if (!netMap.has(r)) netMap.set(r, []); netMap.get(r).push(pn); }
-  const POWER_NAMES = new Set(['VCC','VDD','3V3','5V','12V','VIN','VOUT','GND']);
-  let idx = 1;
-  const nets = [];
-  for (const [, pns] of netMap) {
-    let name = null;
-    for (const pn of pns) {
-      if (pn.symType === 'vcc') { name = pn.value?.trim() || 'VCC'; break; }
-      if (pn.symType === 'gnd') { name = 'GND'; break; }
-    }
-    if (!name) {
-      for (const pn of pns) {
-        const n = pn.portName.toUpperCase();
-        if (POWER_NAMES.has(n) || n.startsWith('VCC') || n.startsWith('VDD') || n.startsWith('GND')) { name = n; break; }
-      }
-    }
-    // Check schematic labels — label nodes are now in union-find, so just check root equality
-    if (!name && wireLabels.length) {
-      for (const pn of pns) {
-        const root = find(pn.nodeId);
-        for (const lbl of wireLabels) {
-          if (find(`lbl::${lbl.id}`) === root) { name = lbl.name; break; }
-        }
-        if (name) break;
-      }
-    }
-    if (!name) name = `N${idx++}`;
-    nets.push({ name, ports: pns });
-  }
-  // Build wire → net name map using the still-valid union-find structure
-  const rootToNetName = new Map();
-  for (const net of nets) {
-    for (const pn of net.ports) rootToNetName.set(find(pn.nodeId), net.name);
-  }
-  const wireToNet = new Map();
-  for (const wire of wires) {
-    if (!wire.points?.length) continue;
-    const root = find(`wire::${wire.id}::0`);
-    const name = rootToNetName.get(root);
-    if (name) wireToNet.set(wire.id, name);
-  }
-  // Force net names onto wire-only islands (no component port connected)
-  const orphanRootNames = new Map();
-  let wni = 1;
-  for (const wire of wires) {
-    if (!wire.points?.length || wireToNet.has(wire.id)) continue;
-    const root = find(`wire::${wire.id}::0`);
-    if (!orphanRootNames.has(root)) orphanRootNames.set(root, `NET_${wni++}`);
-    wireToNet.set(wire.id, orphanRootNames.get(root));
-  }
-  return { nets, wireToNet };
+  return editorRef._cachedNetOverlay || { nets: [], wireToNet: new Map() };
 }
 
 function exportPCBJson() {
@@ -8169,170 +7780,20 @@ async function confirmRebuild() {
   }
 }
 
-function buildExampleRebuildPrompt(slug, profile, rawText = null) {
-  const partNum = profile.part_number || slug;
-  const symType = profile.symbol_type || 'ic';
-  const appCircuits = profile.application_circuits || [];
-  const passives = profile.required_passives || [];
-  const pins = (profile.pins || []).slice(0, 20);
-  const existingCircuit = profile.example_circuit;
-
-  // Try to extract the BOM / component table section from raw text
-  let bomExcerpt = '';
-  if (rawText) {
-    // Find sections that likely contain the EVB component table / BOM
-    const bomPatterns = [
-      /bill\s*of\s*materials[\s\S]{0,4000}/i,
-      /evaluation\s*board[\s\S]{0,4000}/i,
-      /demo\s*board[\s\S]{0,4000}/i,
-      /(?:application|reference)\s*circuit\s*components[\s\S]{0,3000}/i,
-      /(?:typical\s*application|suggested\s*application)[\s\S]{0,3000}/i,
-    ];
-    for (const pat of bomPatterns) {
-      const m = rawText.match(pat);
-      if (m && m[0].length > 200) { bomExcerpt = m[0].slice(0, 4000); break; }
-    }
-    // Fallback: find first dense reference-designator block (C1, L1, R1 patterns)
-    if (!bomExcerpt) {
-      const refDesMatch = rawText.match(/(?:[CLR]\d+\s+[\w.]+\s+[\w\s,µpnF]{5,}[\r\n]){3,}/);
-      if (refDesMatch) bomExcerpt = refDesMatch[0].slice(0, 3000);
-    }
-  }
-
-  const datasheetSection = rawText
-    ? `FULL DATASHEET TEXT START (primary source — read ALL of it for the EVB BOM and application circuit):
-library/${slug}/raw_text.txt contains the complete text. Key excerpt (up to 8000 chars):
-${rawText.length > 8000 ? rawText.slice(0, 8000) + '\n[...TRUNCATED — read full file for more]' : rawText}`
-    : `DATASHEET: Read library/${slug}/raw_text.txt — find the "Typical Application", "Application Circuit", or "Reference Design" section to understand the correct wiring.`;
-
-  const bomSection = bomExcerpt
-    ? `\nEVB COMPONENT TABLE (extracted from datasheet — include ALL of these in the circuit):\n${bomExcerpt}`
-    : `\nBOM SEARCH: Scan library/${slug}/raw_text.txt for tables listing C1, C2, L1, R1 etc. with values. These are the EVB components that MUST appear in the circuit.`;
-
-  const groundTruth = existingCircuit
-    ? `EXISTING CIRCUIT (use as ground truth — fix errors, don't start from scratch):
-${JSON.stringify(existingCircuit, null, 2).slice(0, 3000)}${JSON.stringify(existingCircuit).length > 3000 ? '\n  ... (truncated)' : ''}`
-    : `NO EXISTING CIRCUIT — build from scratch using the datasheet application circuit.`;
-
-  return `BUILD EXAMPLE CIRCUIT — ${partNum}
-=======================================================
-
-GOAL: Build a correct, COMPLETE application circuit for ${partNum} that matches the datasheet's typical application / evaluation board circuit.
-Save it with: PUT http://localhost:3030/api/library/${slug}/example_circuit
-
-⚠ COMPLETENESS IS MANDATORY: The circuit must include EVERY component listed in the datasheet's
-  Evaluation Board BOM / Typical Application circuit — all bypass caps, RF input/output matching
-  caps/inductors, bias resistors, decoupling networks, etc. A missing component = a broken circuit.
-
-STEP 1 — FIND THE FULL BOM
-FIRST: Read library/${slug}/raw_text.txt and locate the complete Bill of Materials or component
-table. Look for tables listing C1, C2…, L1, L2…, R1, R2… with values and descriptions.
-${bomSection}
-
-STEP 2 — PARSE DATASHEET
-${datasheetSection}
-
-STEP 3 — GROUND TRUTH
-${groundTruth}
-
-STEP 4 — BUILD THE CIRCUIT
-Circuit JSON format:
-{
-  "components": [
-    { "id": "u1", "slug": "${slug}", "symType": "${symType}", "designator": "U1", "value": "${partNum}", "x": 320, "y": 240, "rotation": 0 },
-    { "id": "c1", "slug": "CAPACITOR", "symType": "capacitor", "designator": "C1", "value": "100nF", "x": 200, "y": 240, "rotation": 0 }
-  ],
-  "wires": [
-    { "id": "w1", "points": [{"x": 280, "y": 240}, {"x": 220, "y": 240}] }
-  ],
-  "labels": [
-    { "id": "lbl1", "name": "VCC", "x": 320, "y": 120, "rotation": 0 }
-  ]
+async function buildExampleRebuildPrompt(slug, profile, rawText = null) {
+  const res = await fetch('/api/gen-tickets/build-prompt', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'example', slug, profile, rawText})
+  });
+  return (await res.json()).prompt;
 }
 
-SLUG NAMES: "CAPACITOR", "INDUCTOR", "RESISTOR", "VCC", "GND" — IC slug: "${slug}"
-
-COORDINATE RULES:
-- Grid: 20 units. All x/y must be multiples of 20.
-- Range: x 80–600, y 60–500
-- Wires use L-routing (add elbow point)
-- VCC rotation:0 (up), GND rotation:0 (down)
-- Passive ports: rotation:0 → top (0,-20) / bottom (0,+20); rotation:1 → left (-20,0) / right (+20,0)
-
-APPLICATION CIRCUITS FROM PROFILE:
-${appCircuits.map(ac => `- ${ac.name}: ${ac.description}`).join('\n') || '(see datasheet typical application)'}
-
-REQUIRED PASSIVES (minimum set from profile — EVB BOM may have MORE):
-${passives.map(p => `- ${p.type} ${p.value}: ${p.placement} — ${p.reason}`).join('\n') || '(see datasheet raw_text.txt for full list)'}
-
-ALL PINS (${(profile.pins||[]).length} total):
-${pins.map(p => `  Pin ${p.number} ${p.name} [${p.type}]`).join('\n')}${(profile.pins||[]).length > 20 ? `\n  ... +${(profile.pins||[]).length - 20} more — read library/${slug}/profile.json` : ''}
-
-RULES:
-- Every pin used in the datasheet app circuit must be connected
-- Include ALL components from the EVB BOM / Typical Application — do not skip any
-- Use net labels for power/ground instead of running wires across the schematic
-- Wire endpoints must hit exact port positions (center + port offset after rotation)
-- All IDs must be unique strings
-- After building, count your components vs the BOM — they should match`;
-}
-
-function buildRebuildPrompt(slug, profile, rawText) {
-  const desigPrefix = getDesignatorPrefix(profile);
-  const corrections = profile.human_corrections || [];
-  const pins = profile.pins || [];
-
-  let prompt = `REBUILD COMPONENT PROFILE — ${profile.part_number || slug}
-=======================================================
-
-You are verifying and correcting the component profile for ${profile.part_number || slug}.
-Write the corrected profile to: library/${slug}/profile.json
-
-VERIFICATION TASKS (do all of these):
-1. Read the datasheet text below carefully
-2. Check every pin: does pin NUMBER match the NAME given in the datasheet?
-   - If a pin is misnamed → correct it
-   - If a pin number is wrong → fix it
-   - If a pin exists in the datasheet but is missing from the profile → add it
-   - If a pin is in the profile but NOT in the datasheet → remove it
-3. Recount the total pin count — the final profile must match the datasheet exactly
-4. Set "designator" field to "${desigPrefix}" (schematic reference designator prefix)
-5. Preserve ALL human_corrections — never delete them
-6. Keep "builtin": ${profile.builtin ? 'true' : 'false'} unchanged
-7. Set "status": "parsed" and "confidence": "HIGH" if all pins are verified
-
-CURRENT DESIGNATOR: ${profile.designator || '(not set — must be added as "designator": "' + desigPrefix + '")'}\n`;
-
-  if (corrections.length > 0) {
-    prompt += `\nHUMAN CORRECTIONS (preserve exactly as-is, do NOT remove):
-${JSON.stringify(corrections, null, 2)}\n`;
-  }
-
-  if (profile.notes) {
-    prompt += `\nUSER NOTES: ${profile.notes}\n`;
-  }
-
-  prompt += `\nCURRENT PROFILE (${pins.length} pins):
-${JSON.stringify({ ...profile, pins: pins.slice(0, 8) }, null, 2)}${pins.length > 8 ? `\n  ... and ${pins.length - 8} more pins (see full profile at library/${slug}/profile.json)` : ''}\n`;
-
-  if (rawText) {
-    const trimmed = rawText.length > 8000 ? rawText.slice(0, 8000) + '\n[...TRUNCATED — full text in library/' + slug + '/raw_text.txt]' : rawText;
-    prompt += `\nDATASHEET TEXT:\n${trimmed}\n`;
-  } else {
-    prompt += `\nNO RAW DATASHEET TEXT AVAILABLE.
-This is a seed/built-in component. Use your knowledge of ${profile.part_number || slug} to:
-- Verify all pin names and numbers are correct for this exact part
-- Add any missing standard pins
-- Set the correct designator prefix\n`;
-  }
-
-  prompt += `\nOUTPUT: Write a complete, corrected profile.json to library/${slug}/profile.json
-- Valid JSON only, no commentary outside the JSON
-- Include "designator": "${desigPrefix}" at the top level
-- Do not remove any human_corrections
-- Set parsed_at to today's date`;
-
-  return prompt;
+async function buildRebuildPrompt(slug, profile, rawText) {
+  const res = await fetch('/api/gen-tickets/build-prompt', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({type:'datasheet', slug, profile, rawText})
+  });
+  return (await res.json()).prompt;
 }
 
 function escapeHtml(s) {
