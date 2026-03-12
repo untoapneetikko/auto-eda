@@ -1,11 +1,14 @@
 """
-test_agent.py — Tests for the Component Agent.
+test_agent.py — Tests for the Component Agent (tools-only layer).
 
 Tests:
-1. kicad_sym_writer produces valid (balanced-parenthesis) output for a synthetic symbol
-2. Full agent run with a sample datasheet.json produces component.json matching the schema
-3. component.kicad_sym has balanced parentheses
-4. Agent handles missing datasheet.json gracefully
+1. kicad_sym_writer produces balanced-parenthesis output for a synthetic symbol
+2. kicad_sym_writer contains all expected pin entries
+3. kicad_sym_writer output passes kicad_validator
+4. SAMPLE_COMPONENT passes component_output.json schema validation
+5. read_datasheet raises FileNotFoundError for a missing file
+6. apply_symbol() with a known-good symbol dict succeeds end-to-end
+7. apply_symbol() with a bad symbol dict returns success=False with errors
 
 Run from the repo root:
     python -m pytest agents/component/test_agent.py -v
@@ -29,41 +32,6 @@ from backend.tools.kicad_validator import validate_sexpr
 from backend.tools.schema_validator import validate as validate_schema
 
 # ─── Sample data ────────────────────────────────────────────────────────────
-
-# A minimal but realistic 8-pin IC (e.g. NE555 timer-like)
-SAMPLE_DATASHEET = {
-    "component_name": "NE555",
-    "manufacturer": "Texas Instruments",
-    "package": "DIP-8",
-    "pins": [
-        {"number": 1, "name": "GND",     "type": "power",         "function": "Ground"},
-        {"number": 2, "name": "TRIG",    "type": "input",         "function": "Trigger"},
-        {"number": 3, "name": "OUT",     "type": "output",        "function": "Output"},
-        {"number": 4, "name": "RESET",   "type": "input",         "function": "Reset (active low)"},
-        {"number": 5, "name": "CV",      "type": "bidirectional", "function": "Control Voltage"},
-        {"number": 6, "name": "THRESH",  "type": "input",         "function": "Threshold"},
-        {"number": 7, "name": "DIS",     "type": "output",        "function": "Discharge"},
-        {"number": 8, "name": "VCC",     "type": "power",         "function": "Supply Voltage"},
-    ],
-    "footprint": {
-        "standard": "DIP-8",
-        "pad_count": 8,
-        "pitch_mm": 2.54,
-        "courtyard_mm": {"x": 9.0, "y": 7.0},
-    },
-    "electrical": {
-        "vcc_min": 4.5,
-        "vcc_max": 16.0,
-        "i_max_ma": 200.0,
-    },
-    "example_application": {
-        "description": "Astable multivibrator oscillator",
-        "required_passives": ["R1", "R2", "C1", "C2"],
-        "typical_schematic_notes": "C2 = 0.01uF on CV pin for noise immunity",
-    },
-    "raw_text": "NE555 Precision Timer datasheet excerpt for testing.",
-    "source_pdf": "ne555.pdf",
-}
 
 # A hand-crafted component.json that correctly follows the design rules
 SAMPLE_COMPONENT = {
@@ -118,7 +86,6 @@ def test_kicad_sym_writer_contains_all_pins():
         assert f'"{pin["number"]}"' in content or str(pin["number"]) in content, (
             f"Pin {pin['number']} not found in .kicad_sym output"
         )
-        # Pin name should appear in output
         name = pin["name"]
         assert name in content, f"Pin name '{name}' not found in .kicad_sym output"
     print("PASS test_kicad_sym_writer_contains_all_pins")
@@ -156,9 +123,8 @@ def test_component_json_schema_validation():
 
 
 def test_missing_datasheet_raises():
-    """Agent must raise FileNotFoundError when datasheet.json does not exist."""
+    """read_datasheet must raise FileNotFoundError when datasheet.json does not exist."""
     from agents.component.agent import read_datasheet
-    import tempfile
 
     nonexistent = Path(tempfile.mkdtemp()) / "datasheet.json"
     try:
@@ -169,61 +135,46 @@ def test_missing_datasheet_raises():
     print("PASS test_missing_datasheet_raises")
 
 
-def test_agent_run_with_sample_datasheet(tmp_path: Path | None = None):
-    """
-    Full agent run using SAMPLE_DATASHEET as input.
+def test_apply_symbol_success():
+    """apply_symbol() with a known-good symbol dict must write both files and return success=True."""
+    from agents.component.agent import apply_symbol
 
-    Writes datasheet.json to a temp directory, patches OUTPUT_DIR, calls agent.run(),
-    then checks:
-    - component.json exists and matches the schema
-    - component.kicad_sym exists and has balanced parentheses
-    """
-    import importlib
-    import agents.component.agent as agent_module
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        result = apply_symbol(SAMPLE_COMPONENT, output_dir=tmp_dir)
 
-    # Create isolated temp output directory
-    if tmp_path is None:
-        tmp_path = Path(tempfile.mkdtemp())
+    assert result["success"], (
+        f"apply_symbol() reported failure. errors={result['errors']}"
+    )
+    assert not result["errors"], f"Unexpected errors: {result['errors']}"
+    assert result["files"]["component_json"] is not None, "component_json path is None"
+    assert result["files"]["component_kicad_sym"] is not None, "component_kicad_sym path is None"
+    print("PASS test_apply_symbol_success")
 
-    # Write sample datasheet.json
-    ds_path = tmp_path / "datasheet.json"
-    with open(ds_path, "w", encoding="utf-8") as f:
-        json.dump(SAMPLE_DATASHEET, f, indent=2)
 
-    # Monkey-patch the paths in the agent module
-    orig_datasheet = agent_module.DATASHEET_JSON
-    orig_component = agent_module.COMPONENT_JSON
-    orig_kicad = agent_module.COMPONENT_KICAD_SYM
-    orig_output_dir = agent_module.OUTPUT_DIR
+def test_apply_symbol_invalid_dict():
+    """apply_symbol() with a bad symbol dict must return success=False with a non-empty errors list."""
+    from agents.component.agent import apply_symbol
 
-    agent_module.DATASHEET_JSON = ds_path
-    agent_module.COMPONENT_JSON = tmp_path / "component.json"
-    agent_module.COMPONENT_KICAD_SYM = tmp_path / "component.kicad_sym"
-    agent_module.OUTPUT_DIR = tmp_path
+    bad_symbol = {"symbol": {"name": "BAD"}}  # missing required fields
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        result = apply_symbol(bad_symbol, output_dir=tmp_dir)
+
+    assert not result["success"], "apply_symbol() should have failed on a bad symbol dict"
+    assert result["errors"], "errors list should be non-empty on failure"
+    print("PASS test_apply_symbol_invalid_dict")
+
+
+def test_run_raises_not_implemented():
+    """run() must raise NotImplementedError."""
+    from agents.component.agent import run
 
     try:
-        result = agent_module.run()
-    finally:
-        # Restore originals
-        agent_module.DATASHEET_JSON = orig_datasheet
-        agent_module.COMPONENT_JSON = orig_component
-        agent_module.COMPONENT_KICAD_SYM = orig_kicad
-        agent_module.OUTPUT_DIR = orig_output_dir
-
-    # Verify component.json
-    comp_json_path = tmp_path / "component.json"
-    assert comp_json_path.exists(), "component.json was not written"
-    json_valid = validate_schema(str(comp_json_path), str(COMPONENT_SCHEMA))
-    assert json_valid, "component.json does not match the schema"
-
-    # Verify component.kicad_sym
-    kicad_path = tmp_path / "component.kicad_sym"
-    assert kicad_path.exists(), "component.kicad_sym was not written"
-    kicad_valid = validate_sexpr(str(kicad_path))
-    assert kicad_valid, "component.kicad_sym has unbalanced parentheses"
-
-    print("PASS test_agent_run_with_sample_datasheet")
-    return result
+        run()
+        assert False, "Expected NotImplementedError was not raised"
+    except NotImplementedError as exc:
+        assert "apply_symbol" in str(exc), f"Unexpected message: {exc}"
+    print("PASS test_run_raises_not_implemented")
 
 
 # ─── Direct run ──────────────────────────────────────────────────────────────
@@ -236,16 +187,8 @@ if __name__ == "__main__":
     test_kicad_sym_writer_validate_with_tool()
     test_component_json_schema_validation()
     test_missing_datasheet_raises()
-
-    # Only run the full Anthropic API test if ANTHROPIC_API_KEY is set
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if api_key:
-        print("\nANTHROPIC_API_KEY found — running full agent test...")
-        test_agent_run_with_sample_datasheet()
-    else:
-        print(
-            "\nSkipping test_agent_run_with_sample_datasheet: "
-            "ANTHROPIC_API_KEY not set."
-        )
+    test_apply_symbol_success()
+    test_apply_symbol_invalid_dict()
+    test_run_raises_not_implemented()
 
     print("\nAll tests passed.")

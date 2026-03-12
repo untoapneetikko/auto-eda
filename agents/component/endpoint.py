@@ -2,127 +2,99 @@
 endpoint.py — FastAPI router for the Component Agent.
 
 Exposes:
-  POST /agents/component/run    — trigger a synchronous component agent run
-  GET  /agents/component/status — report current status / last run result
+  GET  /agents/component/datasheet-summary — compact summary the orchestrator needs
+  POST /agents/component/apply             — validate + write symbol given by orchestrator
+  POST /agents/component/run               — 501 Not Implemented (removed; use /apply)
 """
 from __future__ import annotations
 
-import json
 import os
-import threading
-import time
 from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/agents/component", tags=["component"])
 
-# ─── Shared run state (in-process; for production use Redis) ────────────────
-_state: dict[str, Any] = {
-    "status": "idle",          # idle | running | done | failed
-    "started_at": None,        # ISO timestamp string
-    "finished_at": None,
-    "error": None,
-    "output_summary": None,    # short summary of what was produced
-}
-_state_lock = threading.Lock()
-
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "data/outputs"))
-COMPONENT_JSON = OUTPUT_DIR / "component.json"
 
 
-def _set_state(**kwargs: Any) -> None:
-    with _state_lock:
-        _state.update(kwargs)
+# ─── Request / response models ───────────────────────────────────────────────
 
-
-# ─── Background worker ───────────────────────────────────────────────────────
-
-def _run_agent() -> None:
-    """Execute the component agent in a background thread."""
-    from agents.component.agent import run  # local import to avoid circular deps
-
-    _set_state(
-        status="running",
-        started_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        finished_at=None,
-        error=None,
-        output_summary=None,
-    )
-    try:
-        result = run()
-        sym = result.get("symbol", {})
-        summary = {
-            "component_name": sym.get("name"),
-            "reference": sym.get("reference"),
-            "pin_count": len(sym.get("pins", [])),
-            "body_width_mm": sym.get("body", {}).get("width"),
-            "body_height_mm": sym.get("body", {}).get("height"),
-        }
-        _set_state(
-            status="done",
-            finished_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            output_summary=summary,
-        )
-    except Exception as exc:
-        _set_state(
-            status="failed",
-            finished_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            error=str(exc),
-        )
+class ApplyRequest(BaseModel):
+    symbol: dict[str, Any]
 
 
 # ─── Routes ─────────────────────────────────────────────────────────────────
 
-@router.post("/run", summary="Trigger component agent run")
-async def run_component_agent() -> dict:
+@router.get("/datasheet-summary", summary="Get compact datasheet summary for orchestrator")
+async def datasheet_summary() -> dict:
     """
-    Trigger the component agent.
-    Reads data/outputs/datasheet.json, generates component.json and
-    component.kicad_sym using the Anthropic API.
+    Read data/outputs/datasheet.json and return a compact summary:
+      - component_name
+      - package
+      - pin_count
+      - pin_list  (number, name, type per pin)
 
-    Runs synchronously in a background thread. Poll GET /agents/component/status
-    for completion.
-
-    Returns 409 if an agent run is already in progress.
+    The orchestrator uses this to design the symbol before calling /apply.
     """
-    with _state_lock:
-        current_status = _state["status"]
+    from agents.component.agent import get_datasheet_summary  # local import
 
-    if current_status == "running":
+    try:
+        return get_datasheet_summary()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/apply", summary="Apply an orchestrator-designed symbol dict")
+async def apply_symbol(request: ApplyRequest) -> dict:
+    """
+    Accept a symbol dict already designed by the orchestrator, validate it
+    against the component_output.json schema, generate component.kicad_sym,
+    and write both files to data/outputs/.
+
+    Request body:
+        { "symbol": { "name": "...", "reference": "...", "pins": [...], "body": {...}, "format": "kicad_sym" } }
+
+    Returns:
+        { "success": bool, "files": { "component_json": "...", "component_kicad_sym": "..." }, "errors": [...] }
+    """
+    from agents.component.agent import apply_symbol as _apply  # local import
+
+    # Wrap back into the top-level dict the schema expects
+    symbol_dict = {"symbol": request.symbol}
+
+    result = _apply(symbol_dict, output_dir=OUTPUT_DIR)
+
+    if not result["success"]:
         raise HTTPException(
-            status_code=409,
-            detail="Component agent is already running. Poll /agents/component/status.",
+            status_code=422,
+            detail={"message": "Symbol validation or write failed", "errors": result["errors"]},
         )
 
-    thread = threading.Thread(target=_run_agent, daemon=True)
-    thread.start()
-
-    return {"message": "Component agent started", "status": "running"}
+    return result
 
 
-@router.get("/status", summary="Get component agent status")
-async def get_component_status() -> dict:
+@router.post("/run", summary="Removed — use /apply instead")
+async def run_removed() -> dict:
     """
-    Return the current status of the component agent and (if done) a summary
-    of the last outputs produced.
+    This endpoint has been removed.
 
-    Status values:
-    - idle    — agent has not been run yet
-    - running — agent is currently executing
-    - done    — last run succeeded
-    - failed  — last run failed (see 'error' field)
+    The old /run endpoint called the Anthropic API internally. Reasoning is now
+    handled by the orchestrator (Claude Code). Use:
+
+      GET  /agents/component/datasheet-summary  — to get component info
+      POST /agents/component/apply              — to write the symbol
+
+    Returns HTTP 501 Not Implemented.
     """
-    with _state_lock:
-        snapshot = dict(_state)
-
-    # Attach output file info if available
-    outputs: dict[str, Any] = {}
-    if snapshot["status"] == "done":
-        component_json_path = OUTPUT_DIR / "component.json"
-        component_sym_path = OUTPUT_DIR / "component.kicad_sym"
-        outputs["component_json"] = str(component_json_path) if component_json_path.exists() else None
-        outputs["component_kicad_sym"] = str(component_sym_path) if component_sym_path.exists() else None
-
-    return {**snapshot, "outputs": outputs}
+    raise HTTPException(
+        status_code=501,
+        detail=(
+            "POST /agents/component/run is no longer available. "
+            "Reasoning is handled by the orchestrator. "
+            "Use GET /agents/component/datasheet-summary and "
+            "POST /agents/component/apply instead."
+        ),
+    )
