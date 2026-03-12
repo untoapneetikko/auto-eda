@@ -24,7 +24,7 @@
 
   header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
   header h1 { font-size: 16px; font-weight: 700; }
-  .phase-badge { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 700; margin-left: auto; }
+
 
   .layout { display: flex; flex-direction: row; height: calc(100vh - 49px); overflow: hidden; }
 
@@ -493,13 +493,6 @@
     <button class="nav-tab" id="nav-generate" style="display:none;"></button>
     <button class="nav-tab" id="nav-build" style="display:none;"></button>
   </nav>
-  <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
-    <span class="phase-badge">Phase 2 — Schematic Designer</span>
-    <button id="designer-toggle" onclick="toggleDesignerMode()" title="Toggle designer tools (Agents, Generate)" style="display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;">
-      <span id="designer-toggle-icon" style="font-size:12px;">⚙</span>
-      <span id="designer-toggle-label">Designer</span>
-    </button>
-  </div>
 </header>
 
 <!-- ══ SECTION: DATASHEETS ════════════════════════════════════════════════ -->
@@ -943,12 +936,7 @@ evtSource.addEventListener('pipeline_agent_msg_start', e => _handlePipelineSSE('
 evtSource.addEventListener('pipeline_agent_chunk',     e => _handlePipelineSSE('pipeline_agent_chunk',     JSON.parse(e.data)));
 evtSource.addEventListener('pipeline_agent_done',      e => _handlePipelineSSE('pipeline_agent_done',      JSON.parse(e.data)));
 
-// ── Designer mode toggle (must be before init call) ──────────────────────────
-const DESIGNER_TABS = ['generate', 'agents'];
-let _designerMode = localStorage.getItem('designerMode') !== 'off';
-
 // ── Init ───────────────────────────────────────────────────────────────────
-applyDesignerMode();
 loadLibrary();
 
 async function loadLibrary() {
@@ -4959,37 +4947,6 @@ function switchSection(name) {
   }
 }
 
-// ── Designer mode toggle ─────────────────────────────────────────────────────
-function applyDesignerMode() {
-  DESIGNER_TABS.forEach(t => {
-    const btn = document.getElementById('nav-' + t);
-    if (btn) btn.style.display = _designerMode ? '' : 'none';
-  });
-  const toggle = document.getElementById('designer-toggle');
-  const icon   = document.getElementById('designer-toggle-icon');
-  const label  = document.getElementById('designer-toggle-label');
-  if (_designerMode) {
-    if (toggle) { toggle.style.borderColor = 'var(--accent)'; toggle.style.color = 'var(--accent)'; toggle.style.background = 'var(--accent-dim)'; }
-    if (icon)   icon.textContent = '⚙';
-    if (label)  label.textContent = 'Designer';
-  } else {
-    if (toggle) { toggle.style.borderColor = 'var(--border)'; toggle.style.color = 'var(--text-muted)'; toggle.style.background = 'var(--surface2)'; }
-    if (icon)   icon.textContent = '⚙';
-    if (label)  label.textContent = 'Designer';
-  }
-}
-
-function toggleDesignerMode() {
-  _designerMode = !_designerMode;
-  localStorage.setItem('designerMode', _designerMode ? 'on' : 'off');
-  applyDesignerMode();
-  // If currently on a hidden designer tab, fall back to library
-  const active = ['library','schematic','pcb','generate','agents'].find(s => {
-    const sec = document.getElementById('section-' + s);
-    return sec && !sec.classList.contains('hidden');
-  });
-  if (!_designerMode && DESIGNER_TABS.includes(active)) switchSection('library');
-}
 
 // kept for backward compat (PDF viewer / profile still uses showView)
 function showView(name) {
