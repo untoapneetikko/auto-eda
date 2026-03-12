@@ -2,10 +2,10 @@
 agents/layout/agent.py — Layout Agent
 
 Reads placement.json, routing.json, schematic.json, footprint.json,
-calls Anthropic claude-sonnet-4-20250514 to produce a finalized board
-summary, assembles the .kicad_pcb via KiCadPCBWriter, validates it,
-and writes both final_layout.json and final_layout.kicad_pcb to
-data/outputs/.
+assembles the .kicad_pcb via KiCadPCBWriter, validates it, and writes
+both final_layout.json and final_layout.kicad_pcb to data/outputs/.
+
+No LLM calls — layout assembly is fully deterministic.
 """
 
 from __future__ import annotations
@@ -18,7 +18,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
-import anthropic
 
 from kicad_pcb_writer import KiCadPCBWriter
 
@@ -28,12 +27,9 @@ from kicad_pcb_writer import KiCadPCBWriter
 
 load_dotenv()
 
-_ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 _OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "data/outputs"))
 _SCHEMAS_DIR = Path(os.getenv("SCHEMAS_DIR", "shared/schemas"))
 _TOOLS_DIR = Path(os.getenv("TOOLS_DIR", "backend/tools"))
-
-MODEL = "claude-sonnet-4-20250514"
 
 
 # ---------------------------------------------------------------------------
@@ -64,82 +60,61 @@ def _write_text(path: Path, text: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Anthropic call
+# Assembly context
 # ---------------------------------------------------------------------------
 
-def _ask_claude(
-    placement: dict,
-    routing: dict,
-    schematic: dict,
-    footprint: dict,
-) -> dict:
+def get_assembly_context(output_dir: Path | None = None) -> dict:
     """
-    Call claude-sonnet-4-20250514 to produce a finalized board summary.
-    Returns a dict with keys: project_name, board_notes, drc_notes, layer_notes.
-    Falls back gracefully if the API key is absent.
+    Read all 4 input files and return a summary dict suitable for the
+    orchestrator to inspect before triggering final assembly.
+
+    Returns:
+      {
+        "component_count": int,
+        "net_count":       int,
+        "trace_count":     int,
+        "via_count":       int,
+        "board": {"width_mm": float, "height_mm": float},
+        "project_name":    str,
+        "missing_files":   [str, ...],   # empty when all files present
+      }
     """
-    if not _ANTHROPIC_API_KEY:
-        print("[layout] No ANTHROPIC_API_KEY — skipping Claude call, using defaults")
-        return {
-            "project_name": schematic.get("project_name", "PCB-AI Project"),
-            "board_notes": "Auto-generated board. No AI review performed.",
-            "drc_notes": "DRC not reviewed by AI.",
-            "layer_notes": "Standard 2-layer FR4.",
-        }
+    out_dir = output_dir or _OUTPUT_DIR
 
-    client = anthropic.Anthropic(api_key=_ANTHROPIC_API_KEY)
+    file_names = {
+        "placement":  out_dir / "placement.json",
+        "routing":    out_dir / "routing.json",
+        "schematic":  out_dir / "schematic.json",
+        "footprint":  out_dir / "footprint.json",
+    }
 
+    missing_files: list[str] = []
+    loaded: dict[str, dict] = {}
+    for key, path in file_names.items():
+        if not path.exists():
+            missing_files.append(str(path))
+            loaded[key] = {}
+        else:
+            with open(path) as f:
+                loaded[key] = json.load(f)
+
+    placement  = loaded["placement"]
+    routing    = loaded["routing"]
+    schematic  = loaded["schematic"]
     board_info = placement.get("board", {})
-    num_components = len(schematic.get("components", []))
-    num_nets = len(schematic.get("nets", []))
-    num_traces = len(routing.get("traces", []))
-    num_vias = len(routing.get("vias", []))
-    board_w = board_info.get("width_mm", "?")
-    board_h = board_info.get("height_mm", "?")
-    project_name = schematic.get("project_name", "PCB-AI Project")
 
-    prompt = f"""You are a senior PCB layout engineer performing a final design review.
-
-Board: {project_name}
-Size: {board_w}mm × {board_h}mm
-Components: {num_components}
-Nets: {num_nets}
-Traces: {num_traces}
-Vias: {num_vias}
-Footprint: {footprint.get("name", "Unknown")}
-
-Schematic nets: {json.dumps([n.get("name","") for n in schematic.get("nets", [])[:20]], indent=2)}
-
-Provide a concise JSON object (no markdown fences) with these keys:
-- "project_name": project name string
-- "board_notes": overall board assessment (1-2 sentences)
-- "drc_notes": any DRC concerns based on the data above
-- "layer_notes": stackup recommendation (e.g. "2-layer FR4 1.6mm, 1oz copper")
-
-Respond with ONLY valid JSON, nothing else."""
-
-    message = client.messages.create(
-        model=MODEL,
-        max_tokens=512,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    raw = message.content[0].text.strip()
-
-    # Strip markdown code fences if present
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-
-    try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        print(f"[layout] Claude returned non-JSON: {raw!r}", file=sys.stderr)
-        return {
-            "project_name": project_name,
-            "board_notes": raw[:200],
-            "drc_notes": "Could not parse AI response.",
-            "layer_notes": "2-layer FR4 1.6mm",
-        }
+    return {
+        "component_count": len(schematic.get("components", [])),
+        "net_count":       len(schematic.get("nets", [])),
+        "trace_count":     len(routing.get("traces", [])),
+        "via_count":       len(routing.get("vias", [])),
+        "board": {
+            "width_mm":  board_info.get("width_mm",  100.0),
+            "height_mm": board_info.get("height_mm",  80.0),
+        },
+        "project_name": schematic.get("project_name", "PCB-AI Project"),
+        "missing_files": missing_files,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -211,7 +186,7 @@ def _build_final_layout_json(
     routing: dict,
     schematic: dict,
     footprint: dict,
-    ai_review: dict,
+    board_meta: dict,
 ) -> dict:
     """Assemble the final_layout.json summary document."""
     board = placement.get("board", {})
@@ -224,27 +199,30 @@ def _build_final_layout_json(
     # Unrouted = schematic nets not present in traces
     unrouted = [n for n in schematic_nets if n and n not in routed_nets]
 
+    stats = {
+        "components":      len(schematic.get("components", [])),
+        "nets_total":      len(schematic_nets),
+        "nets_routed":     len(routed_nets),
+        "nets_unrouted":   len(unrouted),
+        "unrouted_nets":   unrouted,
+        "traces":          len(routing.get("traces", [])),
+        "vias":            len(routing.get("vias", [])),
+        "mounting_holes":  4,
+    }
+
     return {
         "schema_version": "1.0",
         "generated_at": now_iso,
-        "project_name": ai_review.get("project_name", schematic.get("project_name", "PCB-AI")),
+        "project_name": board_meta.get("project_name", schematic.get("project_name", "PCB-AI")),
+        "revision": board_meta.get("revision", "v1.0"),
+        "author": board_meta.get("author", "PCB-AI"),
         "board": {
             "width_mm":  board.get("width_mm",  100.0),
             "height_mm": board.get("height_mm",  80.0),
             "layers":    2,
-            "stackup":   ai_review.get("layer_notes", "2-layer FR4 1.6mm"),
+            "stackup":   "2-layer FR4 1.6mm, 1oz copper",
         },
-        "stats": {
-            "components":      len(schematic.get("components", [])),
-            "nets_total":      len(schematic_nets),
-            "nets_routed":     len(routed_nets),
-            "nets_unrouted":   len(unrouted),
-            "unrouted_nets":   unrouted,
-            "traces":          len(routing.get("traces", [])),
-            "vias":            len(routing.get("vias", [])),
-            "mounting_holes":  4,
-        },
-        "ai_review": ai_review,
+        "stats": stats,
         "drc": {
             "board_outline":    True,
             "mounting_holes":   True,
@@ -257,44 +235,47 @@ def _build_final_layout_json(
 
 
 # ---------------------------------------------------------------------------
-# Main run function
+# apply_layout — primary entry point
 # ---------------------------------------------------------------------------
 
-def run(output_dir: Path | None = None) -> dict:
+def apply_layout(board_meta: dict | None = None, output_dir: Path | None = None) -> dict:
     """
-    Full layout agent run.
+    Read the 4 input files, generate .kicad_pcb, validate it, and write
+    final_layout.kicad_pcb + final_layout.json to output_dir.
 
-    Returns a dict with keys:
-      - status: "ok" | "error"
-      - message: human-readable summary
-      - final_layout_json: path to final_layout.json
-      - final_layout_kicad_pcb: path to final_layout.kicad_pcb
+    Args:
+        board_meta: Optional overrides — any of: project_name, revision, author.
+                    If None, sensible defaults are used.
+        output_dir: Override output directory (default: data/outputs).
+
+    Returns:
+        {
+          "success": bool,
+          "files": {"kicad_pcb": str, "layout_json": str},
+          "stats": { component_count, net_count, trace_count, ... },
+          "validation_passed": bool,
+          "message": str,
+        }
     """
-    out_dir = output_dir or _OUTPUT_DIR
+    out_dir = Path(output_dir) if output_dir and not isinstance(output_dir, Path) else (output_dir or _OUTPUT_DIR)
     out_dir.mkdir(parents=True, exist_ok=True)
+    meta = board_meta or {}
 
     # ------------------------------------------------------------------
     # Step 1 — Load all inputs
     # ------------------------------------------------------------------
-    print("[layout] Loading input files…")
+    print("[layout] Loading input files...")
     placement  = _load_json(out_dir / "placement.json")
     routing    = _load_json(out_dir / "routing.json")
     schematic  = _load_json(out_dir / "schematic.json")
     footprint  = _load_json(out_dir / "footprint.json")
 
-    # ------------------------------------------------------------------
-    # Step 2 — AI design review
-    # ------------------------------------------------------------------
-    print("[layout] Calling Claude for design review…")
-    ai_review = _ask_claude(placement, routing, schematic, footprint)
-    project_name = ai_review.get("project_name", schematic.get("project_name", "PCB-AI Project"))
-    print(f"[layout] Project: {project_name}")
-    print(f"[layout] Board notes: {ai_review.get('board_notes', '')}")
+    project_name = meta.get("project_name") or schematic.get("project_name", "PCB-AI Project")
 
     # ------------------------------------------------------------------
-    # Step 3 — Generate .kicad_pcb
+    # Step 2 — Generate .kicad_pcb
     # ------------------------------------------------------------------
-    print("[layout] Assembling .kicad_pcb…")
+    print("[layout] Assembling .kicad_pcb...")
     writer = KiCadPCBWriter(
         placement_data=placement,
         routing_data=routing,
@@ -310,33 +291,62 @@ def run(output_dir: Path | None = None) -> dict:
     _write_text(pcb_path, kicad_content)
 
     # ------------------------------------------------------------------
-    # Step 4 — Validate .kicad_pcb
+    # Step 3 — Validate .kicad_pcb
     # ------------------------------------------------------------------
-    print("[layout] Validating .kicad_pcb…")
+    print("[layout] Validating .kicad_pcb...")
     valid = _validate_kicad_pcb(pcb_path)
     if not valid:
         print("[layout] WARNING: KiCad PCB validation failed", file=sys.stderr)
 
     # ------------------------------------------------------------------
-    # Step 5 — Write final_layout.json
+    # Step 4 — Write final_layout.json
     # ------------------------------------------------------------------
-    print("[layout] Writing final_layout.json…")
-    final_json = _build_final_layout_json(
-        placement, routing, schematic, footprint, ai_review
-    )
+    print("[layout] Writing final_layout.json...")
+    final_json = _build_final_layout_json(placement, routing, schematic, footprint, meta)
     final_json["drc"]["kicad_validation_passed"] = valid
     _write_json(json_path, final_json)
 
-    status_msg = "Layout agent complete." if valid else "Layout agent complete (validation warnings)."
+    stats = final_json["stats"]
+    status_msg = "Layout complete." if valid else "Layout complete (validation warnings)."
     print(f"[layout] {status_msg}")
 
     return {
-        "status": "ok",
-        "message": status_msg,
-        "final_layout_json": str(json_path),
-        "final_layout_kicad_pcb": str(pcb_path),
+        "success": valid,
+        "files": {
+            "kicad_pcb":   str(pcb_path),
+            "layout_json": str(json_path),
+        },
+        "stats": {
+            "component_count": stats["components"],
+            "net_count":       stats["nets_total"],
+            "trace_count":     stats["traces"],
+            "via_count":       stats["vias"],
+            "nets_unrouted":   stats["nets_unrouted"],
+        },
         "validation_passed": valid,
-        "ai_review": ai_review,
+        "message": status_msg,
+    }
+
+
+# ---------------------------------------------------------------------------
+# run() — simple wrapper kept for backward compatibility
+# ---------------------------------------------------------------------------
+
+def run(output_dir: Path | None = None) -> dict:
+    """
+    Thin wrapper around apply_layout() for end-to-end execution once
+    all input files are ready.
+
+    Returns a dict with keys: status, message, final_layout_json,
+    final_layout_kicad_pcb, validation_passed.
+    """
+    result = apply_layout(board_meta=None, output_dir=output_dir)
+    return {
+        "status":                 "ok" if result["success"] else "error",
+        "message":                result["message"],
+        "final_layout_json":      result["files"]["layout_json"],
+        "final_layout_kicad_pcb": result["files"]["kicad_pcb"],
+        "validation_passed":      result["validation_passed"],
     }
 
 

@@ -2,8 +2,10 @@
 agents/layout/endpoint.py — FastAPI router for the layout agent.
 
 Mounts at /agents/layout and exposes:
-  POST /agents/layout/run    — triggers a full layout agent run
-  GET  /agents/layout/status — returns current run status and output paths
+  GET  /agents/layout/context  — return assembly context (input file summary)
+  POST /agents/layout/apply    — run apply_layout() with optional board_meta
+  POST /agents/layout/run      — triggers a full layout agent run (background thread)
+  GET  /agents/layout/status   — returns current run status and output paths
 """
 
 from __future__ import annotations
@@ -28,11 +30,11 @@ _OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "data/outputs"))
 # ---------------------------------------------------------------------------
 
 _state: dict[str, Any] = {
-    "status":   "idle",          # idle | running | done | error
+    "status":      "idle",          # idle | running | done | error
     "started_at":  None,
     "finished_at": None,
-    "message":  "Not yet started.",
-    "result":   None,
+    "message":     "Not yet started.",
+    "result":      None,
 }
 _lock = threading.Lock()
 
@@ -43,6 +45,11 @@ _lock = threading.Lock()
 
 class RunRequest(BaseModel):
     output_dir: str | None = None  # override output directory (optional)
+
+
+class ApplyRequest(BaseModel):
+    board_meta: dict | None = None  # optional overrides: project_name, revision, author
+    output_dir: str | None = None
 
 
 class RunResponse(BaseModel):
@@ -60,21 +67,29 @@ class StatusResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Background task
+# Shared agent import helper
 # ---------------------------------------------------------------------------
 
-def _run_agent(output_dir_override: str | None) -> None:
-    """Execute the layout agent in a background thread."""
-    # Import here to avoid circular imports at module load time
-    import sys, importlib
+def _import_agent():
+    """Import the agent module from the same package directory."""
+    import sys
+    import importlib
 
-    # Resolve the agent module path (same package directory)
     agent_dir = Path(__file__).parent
     if str(agent_dir) not in sys.path:
         sys.path.insert(0, str(agent_dir))
 
+    return importlib.import_module("agent")
+
+
+# ---------------------------------------------------------------------------
+# Background task (used by /run)
+# ---------------------------------------------------------------------------
+
+def _run_agent(output_dir_override: str | None) -> None:
+    """Execute the layout agent in a background thread."""
     try:
-        agent_mod = importlib.import_module("agent")
+        agent_mod = _import_agent()
     except ImportError as exc:
         with _lock:
             _state["status"]      = "error"
@@ -101,6 +116,56 @@ def _run_agent(output_dir_override: str | None) -> None:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+@router.get("/context")
+async def get_context():
+    """
+    Return a summary of the 4 input files so the orchestrator can verify
+    everything is ready before triggering assembly.
+
+    Returns component count, net count, trace count, board dimensions,
+    and a list of any missing files.
+    """
+    try:
+        agent_mod = _import_agent()
+    except ImportError as exc:
+        raise HTTPException(status_code=500, detail=f"Import error: {exc}")
+
+    try:
+        context = agent_mod.get_assembly_context(output_dir=_OUTPUT_DIR)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Context error: {exc}")
+
+    return context
+
+
+@router.post("/apply")
+async def apply_layout(req: ApplyRequest):
+    """
+    Run apply_layout() synchronously and return the result.
+
+    Accepts optional board_meta overrides (project_name, revision, author)
+    and an optional output_dir override.
+
+    Returns success flag, output file paths, stats, and validation result.
+    """
+    try:
+        agent_mod = _import_agent()
+    except ImportError as exc:
+        raise HTTPException(status_code=500, detail=f"Import error: {exc}")
+
+    out_dir = Path(req.output_dir) if req.output_dir else _OUTPUT_DIR
+
+    try:
+        result = agent_mod.apply_layout(board_meta=req.board_meta, output_dir=out_dir)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Apply error: {exc}")
+
+    if not result["success"]:
+        raise HTTPException(status_code=422, detail=result)
+
+    return result
+
 
 @router.post("/run", response_model=RunResponse, status_code=202)
 async def run_layout(req: RunRequest, background_tasks: BackgroundTasks):
@@ -147,10 +212,6 @@ async def get_status():
             "final_layout_kicad_pcb": res.get("final_layout_kicad_pcb"),
             "validation_passed":      res.get("validation_passed"),
         }
-        # Include AI review summary if present
-        ai_review = res.get("ai_review")
-        if ai_review:
-            outputs["ai_review"] = ai_review
 
     return StatusResponse(
         status=snap["status"],

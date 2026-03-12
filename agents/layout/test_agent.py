@@ -8,6 +8,7 @@ Tests:
   4. .kicad_pcb has balanced parentheses (no S-expression corruption)
   5. final_layout.json is valid JSON and has required top-level keys
   6. KiCad version header is present
+  7. End-to-end: write PCB file to a temp dir and verify it exists and is non-empty
 """
 
 from __future__ import annotations
@@ -166,7 +167,7 @@ def test_mounting_holes_present():
         assert ref in pcb, f"Mounting hole {ref} not found in PCB file"
     assert pcb.count("MountingHole") >= 4, "Expected at least 4 mounting hole footprints"
     assert pcb.count("np_thru_hole") >= 4, "Expected at least 4 NPTH drill pads for M3 holes"
-    print("PASS: mounting holes present (MH1–MH4)")
+    print("PASS: mounting holes present (MH1-MH4)")
 
 
 def test_all_schematic_nets_in_pcb():
@@ -201,32 +202,30 @@ def test_balanced_parentheses():
 def test_kicad_version_header():
     """kicad_pcb and version header must be the first token."""
     pcb = _make_pcb()
-    assert pcb.startswith("(kicad_pcb"), "File does not start with (kicad_pcb …)"
+    assert pcb.startswith("(kicad_pcb"), "File does not start with (kicad_pcb ...)"
     assert "version 20231120" in pcb, "Missing KiCad version stamp (version 20231120)"
     print("PASS: KiCad version header present")
 
 
 def test_final_layout_json_structure():
     """
-    Run the writer and verify that final_layout.json has the required keys
-    when written by the agent's _build_final_layout_json helper.
+    Verify that _build_final_layout_json produces a document with the
+    required keys and correct stats.  No LLM call is made.
     """
-    # Import agent helpers without invoking a live Claude call
     import importlib
     agent_mod = importlib.import_module("agent")
 
-    ai_review_stub = {
+    board_meta_stub = {
         "project_name": "test-project",
-        "board_notes":  "Looks good.",
-        "drc_notes":    "None.",
-        "layer_notes":  "2-layer FR4 1.6mm",
+        "revision":     "v1.0",
+        "author":       "Test",
     }
 
     layout_json = agent_mod._build_final_layout_json(
-        PLACEMENT_DATA, ROUTING_DATA, SCHEMATIC_DATA, FOOTPRINT_DATA, ai_review_stub
+        PLACEMENT_DATA, ROUTING_DATA, SCHEMATIC_DATA, FOOTPRINT_DATA, board_meta_stub
     )
 
-    required_keys = {"schema_version", "generated_at", "project_name", "board", "stats", "ai_review", "drc"}
+    required_keys = {"schema_version", "generated_at", "project_name", "board", "stats", "drc"}
     missing = required_keys - set(layout_json.keys())
     assert not missing, f"final_layout.json missing keys: {missing}"
 
