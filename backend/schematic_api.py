@@ -1432,31 +1432,68 @@ def api_gen_tickets_retract(tid: int):
 
 # ── Pipeline Agents ──────────────────────────────────────────────────────────
 # In-memory state: agent_name → {status, last_run, log, run_id}
+# ── Pipeline Agents (chat-capable, multi-turn, session-resumable) ─────────────
 _PIPELINE_AGENTS = {
-    "datasheet-parser":  {"label": "Datasheet Parser",  "icon": "📄", "desc": "Parse component datasheets into structured JSON profiles"},
-    "component":         {"label": "Component Designer","icon": "🔷", "desc": "Generate KiCad symbol and rich component profile from parsed data"},
-    "footprint":         {"label": "Footprint Designer","icon": "🔲", "desc": "Generate PCB footprint JSON from component package information"},
-    "example-schematic": {"label": "Example Schematic", "icon": "📐", "desc": "Build a reference application schematic for the component"},
-    "schematic":         {"label": "Schematic Agent",   "icon": "🗺️", "desc": "Design the full project schematic from a brief description"},
-    "connectivity":      {"label": "Connectivity Check","icon": "🔗", "desc": "Verify net connectivity, detect orphans, floating pins, loops"},
-    "autoplace":         {"label": "Auto Placer",       "icon": "🧩", "desc": "Place components on the PCB canvas using heuristic clustering"},
-    "autoroute":         {"label": "Auto Router",       "icon": "〰️", "desc": "Route PCB traces between component pads"},
-    "layout":            {"label": "Layout Assembler",  "icon": "📋", "desc": "Assemble the final PCB layout JSON and KiCad PCB file"},
+    "orchestrator":      {"label": "Orchestrator",       "icon": "🎯",  "desc": "Run the full 9-step EDA pipeline end-to-end from datasheet to PCB"},
+    "datasheet-parser":  {"label": "Datasheet Parser",   "icon": "📄",  "desc": "Parse component datasheets into structured JSON profiles"},
+    "component":         {"label": "Component Designer", "icon": "🔷",  "desc": "Generate KiCad symbol and rich component profile from parsed data"},
+    "footprint":         {"label": "Footprint Designer", "icon": "🔲",  "desc": "Generate PCB footprint JSON from component package information"},
+    "example-schematic": {"label": "Example Schematic",  "icon": "📐",  "desc": "Build a reference application schematic for the component"},
+    "schematic":         {"label": "Schematic Agent",    "icon": "🗺️",  "desc": "Design the full project schematic from a brief description"},
+    "connectivity":      {"label": "Connectivity Check", "icon": "🔗",  "desc": "Verify net connectivity, detect orphans, floating pins, loops"},
+    "autoplace":         {"label": "Auto Placer",        "icon": "🧩",  "desc": "Place components on the PCB canvas using heuristic clustering"},
+    "autoroute":         {"label": "Auto Router",        "icon": "〰️",  "desc": "Route PCB traces between component pads"},
+    "layout":            {"label": "Layout Assembler",   "icon": "📋",  "desc": "Assemble the final PCB layout JSON and KiCad PCB file"},
 }
-_pipeline_state: dict[str, dict] = {
-    name: {"status": "idle", "last_run": None, "log": "", "run_id": None}
-    for name in _PIPELINE_AGENTS
-}
-_pipeline_tasks: dict[str, asyncio.Task] = {}
 
 PROJECT_ROOT_SA = Path(__file__).parent.parent
 
+# per-agent state
+_pipeline_state: dict[str, dict] = {
+    name: {"status": "idle", "last_run": None, "run_id": None}
+    for name in _PIPELINE_AGENTS
+}
+# per-agent chat history: list of {id, role, content, ts}
+_pipeline_chat: dict[str, list] = {name: [] for name in _PIPELINE_AGENTS}
+# per-agent claude-agent-sdk session id (for multi-turn resumption)
+_pipeline_sessions: dict[str, str | None] = {name: None for name in _PIPELINE_AGENTS}
+_pipeline_tasks: dict[str, asyncio.Task] = {}
+_pa_msg_counter: list[int] = [0]
+
+
+def _pa_next_id() -> int:
+    _pa_msg_counter[0] += 1
+    return _pa_msg_counter[0]
+
+
+def _pa_system_prompt(name: str) -> str:
+    """Build the initial system context for a pipeline agent."""
+    claude_md = PROJECT_ROOT_SA / "agents" / name / "CLAUDE.md"
+    ctx = ""
+    if claude_md.exists():
+        ctx = f"\n\n# Agent CLAUDE.md\n{claude_md.read_text(encoding='utf-8')}"
+    return (
+        f"You are the '{name}' EDA pipeline agent for the auto-eda project.\n"
+        f"Project root: {PROJECT_ROOT_SA}\n"
+        f"Output directory: {PROJECT_ROOT_SA / 'data' / 'outputs'}\n"
+        f"Library directory: {PROJECT_ROOT_SA / 'frontend' / 'static' / 'library'}\n"
+        f"{ctx}"
+    )
+
+
+def _pa_cwd(name: str) -> str:
+    agent_dir = PROJECT_ROOT_SA / "agents" / name
+    return str(agent_dir) if agent_dir.exists() else str(PROJECT_ROOT_SA)
+
+
 @router.get("/pipeline/agents")
 def api_pipeline_agents_list():
-    """Return all pipeline agents with their current state."""
+    """Return all pipeline agents with current state."""
     result = []
     for name, meta in _PIPELINE_AGENTS.items():
         state = _pipeline_state[name]
+        msgs = _pipeline_chat[name]
+        last_msg = msgs[-1]["content"][:120] if msgs else ""
         result.append({
             "name": name,
             "label": meta["label"],
@@ -1464,13 +1501,44 @@ def api_pipeline_agents_list():
             "desc": meta["desc"],
             "status": state["status"],
             "last_run": state["last_run"],
-            "log": state["log"][-2000:] if state["log"] else "",
+            "msg_count": len(msgs),
+            "last_msg": last_msg,
+            "has_session": bool(_pipeline_sessions[name]),
         })
     return result
 
-@router.post("/pipeline/agents/{name}/run")
-async def api_pipeline_agent_run(name: str, request: Request):
-    """Awaken a specific pipeline agent — spawns a Claude Code session."""
+
+@router.get("/pipeline/agents/{name}/history")
+def api_pipeline_agent_history(name: str):
+    """Return full chat history for an agent."""
+    if name not in _PIPELINE_AGENTS:
+        raise HTTPException(404, f"Unknown agent: {name}")
+    return {
+        "name": name,
+        "status": _pipeline_state[name]["status"],
+        "messages": _pipeline_chat[name],
+        "has_session": bool(_pipeline_sessions[name]),
+    }
+
+
+@router.delete("/pipeline/agents/{name}/history")
+def api_pipeline_agent_clear(name: str):
+    """Clear chat history and session for an agent."""
+    if name not in _PIPELINE_AGENTS:
+        raise HTTPException(404, f"Unknown agent: {name}")
+    task = _pipeline_tasks.get(name)
+    if task and not task.done():
+        task.cancel()
+    _pipeline_chat[name] = []
+    _pipeline_sessions[name] = None
+    _pipeline_state[name].update({"status": "idle", "run_id": None})
+    _broadcast("pipeline_agent_done", {"name": name, "status": "cleared"})
+    return {"ok": True}
+
+
+@router.post("/pipeline/agents/{name}/chat")
+async def api_pipeline_agent_chat(name: str, request: Request):
+    """Send a message to a pipeline agent — spawns / resumes a Claude Code session."""
     if name not in _PIPELINE_AGENTS:
         raise HTTPException(404, f"Unknown agent: {name}")
     if _pipeline_state[name]["status"] == "running":
@@ -1481,56 +1549,103 @@ async def api_pipeline_agent_run(name: str, request: Request):
         body = await request.json()
     except Exception:
         pass
-    user_input = body.get("input", "")
+    user_msg = (body.get("message") or body.get("input") or "").strip()
+    if not user_msg:
+        raise HTTPException(400, "message required")
 
-    # Load agent's CLAUDE.md for context
-    claude_md_path = PROJECT_ROOT_SA / "agents" / name / "CLAUDE.md"
-    agent_context = ""
-    if claude_md_path.exists():
-        agent_context = f"\n\n---\nAgent context from CLAUDE.md:\n{claude_md_path.read_text(encoding='utf-8')}"
-
-    cwd = str(PROJECT_ROOT_SA / "agents" / name) if (PROJECT_ROOT_SA / "agents" / name).exists() else str(PROJECT_ROOT_SA)
-
-    task_prompt = (
-        f"You are the '{name}' EDA pipeline agent for the auto-eda project.\n"
-        f"Project root: {PROJECT_ROOT_SA}\n"
-        f"Your outputs should go to: {PROJECT_ROOT_SA / 'data' / 'outputs'}\n"
-        f"\nUser request: {user_input or 'Run your standard pipeline step.'}"
-        f"{agent_context}"
-    )
+    # Save user message
+    msg_id = _pa_next_id()
+    now = datetime.now(timezone.utc).isoformat()
+    _pipeline_chat[name].append({"id": msg_id, "role": "user", "content": user_msg, "ts": now})
 
     run_id = f"{name}-{int(time.time())}"
-    _pipeline_state[name].update({"status": "running", "last_run": datetime.now(timezone.utc).isoformat(), "log": "", "run_id": run_id})
-    _broadcast("pipeline_agent_started", {"name": name, "run_id": run_id, "label": _PIPELINE_AGENTS[name]["label"]})
+    _pipeline_state[name].update({"status": "running", "last_run": now, "run_id": run_id})
+    _broadcast("pipeline_agent_started", {
+        "name": name, "run_id": run_id,
+        "label": _PIPELINE_AGENTS[name]["label"],
+        "msg": {"id": msg_id, "role": "user", "content": user_msg, "ts": now},
+    })
+
+    existing_session = _pipeline_sessions[name]
 
     async def _run():
-        log_lines: list[str] = []
+        resp_id = _pa_next_id()
+        resp_ts = datetime.now(timezone.utc).isoformat()
+        resp_parts: list[str] = []
+
+        # Placeholder for streaming assistant message
+        _pipeline_chat[name].append({"id": resp_id, "role": "assistant", "content": "", "ts": resp_ts, "streaming": True})
+        _broadcast("pipeline_agent_msg_start", {"name": name, "msg": {"id": resp_id, "role": "assistant", "content": "", "ts": resp_ts, "streaming": True}})
+
         try:
-            from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage  # type: ignore
+            from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage, SystemMessage, AssistantMessage  # type: ignore
+
+            # First message: prepend system context; subsequent: just the user message
+            if existing_session:
+                prompt = user_msg
+            else:
+                prompt = f"{_pa_system_prompt(name)}\n\n---\nUser: {user_msg}"
+
             opts = ClaudeAgentOptions(
-                cwd=cwd,
+                cwd=_pa_cwd(name),
                 allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep"],
                 permission_mode="bypassPermissions",
-                max_turns=30,
+                max_turns=40,
+                resume=existing_session,  # None on first call, session_id thereafter
             )
-            async for msg in query(prompt=task_prompt, options=opts):
-                if isinstance(msg, ResultMessage):
-                    log_lines.append(f"[result] {msg.result[:500]}")
-                else:
-                    txt = str(msg)[:200]
-                    log_lines.append(txt)
-                _pipeline_state[name]["log"] = "\n".join(log_lines[-50:])
-                _broadcast("pipeline_agent_log", {"name": name, "line": log_lines[-1] if log_lines else ""})
+
+            async for sdk_msg in query(prompt=prompt, options=opts):
+                if isinstance(sdk_msg, SystemMessage) and sdk_msg.subtype == "init":
+                    _pipeline_sessions[name] = sdk_msg.data.get("session_id")
+                elif isinstance(sdk_msg, AssistantMessage):
+                    for block in sdk_msg.content:
+                        block_type = getattr(block, "type", "")
+                        if block_type == "text":
+                            chunk = block.text
+                            resp_parts.append(chunk)
+                            full = "".join(resp_parts)
+                            # update in-memory
+                            for m in _pipeline_chat[name]:
+                                if m["id"] == resp_id:
+                                    m["content"] = full
+                                    break
+                            _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id, "chunk": chunk})
+                        elif block_type == "tool_use":
+                            tool_line = f"\n▶ {block.name}({json.dumps(block.input)[:120]})\n"
+                            resp_parts.append(tool_line)
+                            _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id, "chunk": tool_line, "is_tool": True})
+                elif isinstance(sdk_msg, ResultMessage):
+                    if sdk_msg.result and sdk_msg.result not in "".join(resp_parts):
+                        resp_parts.append(f"\n{sdk_msg.result}")
+                        _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id, "chunk": f"\n{sdk_msg.result}"})
+
+            final = "".join(resp_parts)
+            for m in _pipeline_chat[name]:
+                if m["id"] == resp_id:
+                    m["content"] = final
+                    m["streaming"] = False
+                    break
             _pipeline_state[name]["status"] = "done"
-            _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "done"})
+            _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "done",
+                                               "msg_id": resp_id, "session_id": _pipeline_sessions[name]})
+        except asyncio.CancelledError:
+            _pipeline_state[name]["status"] = "idle"
+            _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "cancelled", "msg_id": resp_id})
         except Exception as exc:
+            err = f"\n[error] {exc}"
+            for m in _pipeline_chat[name]:
+                if m["id"] == resp_id:
+                    m["content"] += err
+                    m["streaming"] = False
+                    break
             _pipeline_state[name]["status"] = "error"
-            _pipeline_state[name]["log"] += f"\n[error] {exc}"
-            _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "error", "error": str(exc)})
+            _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "error",
+                                               "msg_id": resp_id, "error": str(exc)})
 
     task = asyncio.create_task(_run())
     _pipeline_tasks[name] = task
-    return {"ok": True, "run_id": run_id, "name": name}
+    return {"ok": True, "run_id": run_id, "msg_id": msg_id}
+
 
 @router.post("/pipeline/agents/{name}/stop")
 async def api_pipeline_agent_stop(name: str):
