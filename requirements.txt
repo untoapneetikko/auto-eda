@@ -2,7 +2,6 @@ fastapi
 uvicorn[standard]
 polars
 plotly
-anthropic
 redis
 pdfplumber
 jsonschema

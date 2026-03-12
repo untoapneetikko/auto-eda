@@ -1,7 +1,7 @@
-# PCB AI Design Automation — Orchestrator
+# Auto-EDA — Orchestrator
 
 ## Project Purpose
-Fully automated PCB design pipeline. User uploads a datasheet PDF.
+Auto-EDA: fully automated EDA design pipeline. User uploads a datasheet PDF.
 The system produces: component symbol, footprint, schematic, placement, and routed layout.
 
 ## Agent Pipeline (in order)
@@ -29,11 +29,11 @@ The system produces: component symbol, footprint, schematic, placement, and rout
 - Language: Python 3.12
 - Framework: FastAPI
 - Data: Polars
-- AI: Anthropic SDK (claude-sonnet-4-20250514)
+- AI: Claude Code (main agent orchestrates, no API key required)
 - Storage: Redis (agent state), local filesystem (files)
 - Output formats: KiCad (.kicad_sym, .kicad_mod, .kicad_sch, .kicad_pcb)
 
 ## Do Not
-- Do not run multiple agents in the same Claude Code session
 - Do not skip schema validation
 - Do not hardcode file paths — always use environment variables from `.env`
+- Do not call the Anthropic API directly — Claude Code IS the AI, all reasoning happens via Agent tool calls

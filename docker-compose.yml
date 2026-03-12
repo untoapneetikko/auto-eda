@@ -10,7 +10,6 @@ services:
       - ./agents:/app/agents
       - ./shared:/app/shared
     environment:
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - REDIS_URL=redis://redis:6379
       - DATA_DIR=/app/data
       - OUTPUT_DIR=/app/data/outputs
