@@ -11,8 +11,8 @@ services:
       - ./shared:/app/shared
       - ./frontend:/app/frontend
       - ./backend:/app/backend
-      # Mount Claude Code auth so agents are authenticated
-      - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude:ro
+      # Mount Claude Code config (writable so agents can save session history)
+      - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude
     environment:
       - REDIS_URL=redis://redis:6379
       - DATA_DIR=/app/data
@@ -31,8 +31,8 @@ services:
       - ./shared:/app/shared
       - ./backend:/app/backend
       - ./frontend:/app/frontend
-      # Mount Claude Code auth so agents are authenticated
-      - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude:ro
+      # Mount Claude Code config (writable so agents can save session history)
+      - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude
     environment:
       - REDIS_URL=redis://redis:6379
       - DATA_DIR=/app/data

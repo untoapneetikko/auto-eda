@@ -1333,6 +1333,12 @@ def api_history_activate(slug: str, hid: str):
     snap = json.loads(snap_path.read_text(encoding="utf-8"))
     if not snap.get("profile"):
         raise HTTPException(400, "Invalid snapshot")
+    # Auto-save current state before switching versions so no work is lost
+    pp = _profile_path(slug)
+    if pp.exists():
+        current = json.loads(pp.read_text(encoding="utf-8"))
+        if not _profile_already_saved(slug, current):
+            _snapshot_profile(slug, "pre-activate")
     h = _history_dir(slug)
     files = sorted(h.glob("*.json"))
     v_num = next((i + 1 for i, f in enumerate(files) if f.stem == hid), 0)
@@ -1388,8 +1394,17 @@ async def api_library_put(slug: str, request: Request):
     pp = _profile_path(slug)
     if not pp.exists():
         raise HTTPException(404, "Not found")
-    _snapshot_profile(slug, body.get("_label", "profile-rebuild"))
-    _clear_active_version(slug)
+    new_ts = _snapshot_profile(slug, body.get("_label", "profile-rebuild"))
+    # Point active_version at the auto-saved snapshot so Save still works after Generate
+    if new_ts:
+        h = _history_dir(slug)
+        files = sorted(h.glob("*.json"))
+        v_num = next((i + 1 for i, f in enumerate(files) if f.stem == new_ts), 0)
+        _active_version_path(slug).write_text(
+            json.dumps({"id": new_ts, "label": body.get("_label", "profile-rebuild"), "vNum": v_num}, indent=2),
+            encoding="utf-8")
+    else:
+        _clear_active_version(slug)
     current = json.loads(pp.read_text(encoding="utf-8"))
     new_profile = {**body, "human_corrections": current.get("human_corrections", [])}
     new_profile.pop("_label", None)
@@ -1466,6 +1481,8 @@ _PIPELINE_AGENTS = {
 }
 
 PROJECT_ROOT_SA = Path(__file__).parent.parent
+_PA_STATE_DIR = PROJECT_ROOT_SA / "data" / "agents"
+_PA_STATE_DIR.mkdir(parents=True, exist_ok=True)
 
 # per-agent state
 _pipeline_state: dict[str, dict] = {
@@ -1483,6 +1500,42 @@ _pa_msg_counter: list[int] = [0]
 def _pa_next_id() -> int:
     _pa_msg_counter[0] += 1
     return _pa_msg_counter[0]
+
+
+def _pa_save(name: str) -> None:
+    """Persist chat history and session ID for an agent to disk."""
+    try:
+        (_PA_STATE_DIR / f"{name}.json").write_text(
+            json.dumps({
+                "session_id": _pipeline_sessions[name],
+                "messages": _pipeline_chat[name],
+                "msg_counter": _pa_msg_counter[0],
+            }, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
+
+
+def _pa_load_all() -> None:
+    """Load persisted state for all agents on startup."""
+    for name in _PIPELINE_AGENTS:
+        p = _PA_STATE_DIR / f"{name}.json"
+        if not p.exists():
+            continue
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+            _pipeline_sessions[name] = data.get("session_id")
+            _pipeline_chat[name] = data.get("messages", [])
+            # Restore msg counter to avoid ID collisions
+            saved_counter = data.get("msg_counter", 0)
+            if saved_counter > _pa_msg_counter[0]:
+                _pa_msg_counter[0] = saved_counter
+        except Exception:
+            pass
+
+
+_pa_load_all()
 
 
 def _pa_system_prompt(name: str) -> str:
@@ -1563,6 +1616,7 @@ def api_pipeline_agent_clear(name: str):
     _pipeline_chat[name] = []
     _pipeline_sessions[name] = None
     _pipeline_state[name].update({"status": "idle", "run_id": None})
+    _pa_save(name)
     _broadcast("pipeline_agent_done", {"name": name, "status": "cleared"})
     return {"ok": True}
 
@@ -1588,6 +1642,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
     msg_id = _pa_next_id()
     now = datetime.now(timezone.utc).isoformat()
     _pipeline_chat[name].append({"id": msg_id, "role": "user", "content": user_msg, "ts": now})
+    _pa_save(name)  # persist user message before agent starts
 
     run_id = f"{name}-{int(time.time())}"
     _pipeline_state[name].update({"status": "running", "last_run": now, "run_id": run_id})
@@ -1673,6 +1728,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
             async for sdk_msg in _stream(existing_session):
                 if isinstance(sdk_msg, SystemMessage) and sdk_msg.subtype == "init":
                     _pipeline_sessions[name] = sdk_msg.data.get("session_id")
+                    _pa_save(name)  # persist session ID immediately
                 elif isinstance(sdk_msg, AssistantMessage):
                     for block in sdk_msg.content:
                         block_type = getattr(block, "type", "")
@@ -1740,12 +1796,14 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                     m["streaming"] = False
                     break
             _pipeline_state[name]["status"] = "done"
+            _pa_save(name)
             _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "done",
                                                "msg_id": resp_id, "session_id": _pipeline_sessions[name]})
             # Notify the UI to refresh library/projects in case agent wrote files
             _broadcast("library_updated", {"reason": f"agent:{name}"})
         except asyncio.CancelledError:
             _pipeline_state[name]["status"] = "idle"
+            _pa_save(name)
             _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "cancelled", "msg_id": resp_id})
         except Exception as exc:
             err = f"\n[error] {exc}"
@@ -1757,6 +1815,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
             _pipeline_state[name]["status"] = "error"
             # Clear session so next message starts fresh instead of resuming a broken session
             _pipeline_sessions[name] = None
+            _pa_save(name)
             _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "error",
                                                "msg_id": resp_id, "error": str(exc)})
 
