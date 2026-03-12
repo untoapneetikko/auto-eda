@@ -1,0 +1,13 @@
+{
+  "board": {"width_mm": "float", "height_mm": "float"},
+  "placements": [
+    {
+      "reference": "string",
+      "x": "float",
+      "y": "float",
+      "rotation": "float",
+      "layer": "F.Cu|B.Cu",
+      "rationale": "string"
+    }
+  ]
+}

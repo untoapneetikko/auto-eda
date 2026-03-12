@@ -1,0 +1,18 @@
+{
+  "symbol": {
+    "name": "string",
+    "reference": "string",
+    "pins": [
+      {
+        "number": "integer",
+        "name": "string",
+        "direction": "left|right|top|bottom",
+        "type": "power|input|output|bidirectional|passive|nc",
+        "x": "float",
+        "y": "float"
+      }
+    ],
+    "body": {"width": "float", "height": "float"},
+    "format": "kicad_sym"
+  }
+}

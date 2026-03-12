@@ -1,0 +1,31 @@
+{
+  "component_name": "string",
+  "manufacturer": "string",
+  "package": "string",
+  "pins": [
+    {
+      "number": "integer",
+      "name": "string",
+      "type": "power|input|output|bidirectional|passive|nc",
+      "function": "string"
+    }
+  ],
+  "footprint": {
+    "standard": "string",
+    "pad_count": "integer",
+    "pitch_mm": "float",
+    "courtyard_mm": {"x": "float", "y": "float"}
+  },
+  "electrical": {
+    "vcc_min": "float",
+    "vcc_max": "float",
+    "i_max_ma": "float"
+  },
+  "example_application": {
+    "description": "string",
+    "required_passives": ["string"],
+    "typical_schematic_notes": "string"
+  },
+  "raw_text": "string",
+  "source_pdf": "string"
+}

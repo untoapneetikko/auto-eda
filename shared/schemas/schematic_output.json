@@ -1,0 +1,17 @@
+{
+  "project_name": "string",
+  "nets": [
+    {"name": "string", "label": "string", "type": "power|signal|gnd"}
+  ],
+  "components": [
+    {
+      "reference": "string",
+      "value": "string",
+      "footprint": "string",
+      "position": {"x": "float", "y": "float"},
+      "connections": [{"pin": "integer", "net": "string"}]
+    }
+  ],
+  "power_symbols": ["string"],
+  "format": "kicad_sch"
+}

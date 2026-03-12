@@ -1,0 +1,13 @@
+{
+  "traces": [
+    {
+      "net": "string",
+      "layer": "string",
+      "width_mm": "float",
+      "path": [{"x": "float", "y": "float"}]
+    }
+  ],
+  "vias": [
+    {"net": "string", "x": "float", "y": "float", "drill_mm": "float"}
+  ]
+}
