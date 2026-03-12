@@ -10,6 +10,8 @@ Mounts all /api/* endpoints used by index.html and pcb.html:
 from __future__ import annotations
 
 import asyncio
+import heapq
+import io
 import json
 import math
 import os
@@ -18,6 +20,7 @@ import shutil
 import subprocess
 import sys
 import time
+import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -1672,6 +1675,993 @@ async def api_pipeline_agent_stop(name: str):
         _pipeline_state[name]["status"] = "idle"
         _broadcast("pipeline_agent_done", {"name": name, "status": "cancelled"})
     return {"ok": True}
+
+# ── IC Layout helper ──────────────────────────────────────────────────────────
+
+def ic_layout(pins: list) -> dict:
+    """Compute IC symbol geometry from a list of pin dicts (port of JS _icLayout)."""
+    PIN_STUB = 40
+    ROW_H    = 20
+    PAD_Y    = 16
+    BOX_W    = 120
+
+    sorted_pins = sorted(pins, key=lambda p: (
+        int(p.get("number", 0)) if str(p.get("number", "")).isdigit() else 0
+    ))
+
+    half = math.ceil(len(sorted_pins) / 2) if sorted_pins else 2
+    left_pins  = sorted_pins[:half]
+    right_pins = list(reversed(sorted_pins[half:]))
+
+    max_rows = max(len(left_pins), len(right_pins), 1)
+    BOX_H    = max_rows * ROW_H + 2 * PAD_Y
+
+    ports = []
+    for i, pin in enumerate(left_pins):
+        dx = -(BOX_W / 2 + PIN_STUB)
+        dy = -(BOX_H / 2 - PAD_Y) + i * ROW_H
+        ports.append({"name": pin.get("name", str(pin.get("number", i + 1))), "dx": dx, "dy": dy})
+    for i, pin in enumerate(right_pins):
+        dx = +(BOX_W / 2 + PIN_STUB)
+        dy = -(BOX_H / 2 - PAD_Y) + i * ROW_H
+        ports.append({"name": pin.get("name", str(pin.get("number", i + 1))), "dx": dx, "dy": dy})
+
+    return {
+        "BOX_W":      BOX_W,
+        "BOX_H":      BOX_H,
+        "PIN_STUB":   PIN_STUB,
+        "ROW_H":      ROW_H,
+        "PAD_Y":      PAD_Y,
+        "leftPins":   left_pins,
+        "rightPins":  right_pins,
+        "ports":      ports,
+        "w":          BOX_W + 2 * PIN_STUB,
+        "h":          BOX_H,
+    }
+
+
+# ── Netlist extraction helpers ─────────────────────────────────────────────────
+
+_SNAP_GRID = 12
+
+def _snap(v: float) -> int:
+    return round(v / _SNAP_GRID) * _SNAP_GRID
+
+def _pt_key(x, y) -> str:
+    return f"{_snap(x)},{_snap(y)}"
+
+# SYMDEFS port offsets (dx, dy) for each symbol type at rotation 0
+_SYMDEFS: dict[str, list[tuple[str, int, int]]] = {
+    "resistor":    [("P1", -30, 0), ("P2", 30, 0)],
+    "capacitor":   [("P1", 0, -20), ("P2", 0, 20)],
+    "capacitor_pol": [("P1", 0, -20), ("P2", 0, 20)],
+    "inductor":    [("P1", -40, 0), ("P2", 40, 0)],
+    "vcc":         [("1", 0, 20)],
+    "gnd":         [("1", 0, -20)],
+    "diode":       [("anode", -30, 0), ("cathode", 30, 0)],
+    "led":         [("anode", -30, 0), ("cathode", 30, 0)],
+    "npn":         [("base", -30, 0), ("collector", 20, -25), ("emitter", 20, 25)],
+    "pnp":         [("base", -30, 0), ("collector", 20, -25), ("emitter", 20, 25)],
+    "nmos":        [("gate", -30, 0), ("drain", 20, -25), ("source", 20, 25)],
+    "pmos":        [("gate", -30, 0), ("drain", 20, -25), ("source", 20, 25)],
+    "amplifier":   [("in", -50, -20), ("in2", -50, 20), ("out", 50, 0), ("vcc", 0, 40)],
+    "opamp":       [("in_pos", -50, -20), ("in_neg", -50, 20), ("out", 50, 0)],
+}
+
+def _rotate_offset(dx: int, dy: int, r: int) -> tuple[int, int]:
+    for _ in range(r % 4):
+        dx, dy = dy, -dx
+    return dx, dy
+
+_POWER_NAMES = {"VCC", "VDD", "GND", "GND", "3V3", "5V", "12V", "AGND", "DGND", "PGND", "VSS"}
+
+def build_netlist(components: list, wires: list, labels: list) -> dict:
+    """Extract netlist from schematic JSON using union-find."""
+
+    # Union-Find
+    parent: dict[str, str] = {}
+
+    def find(x: str) -> str:
+        if parent.setdefault(x, x) != x:
+            parent[x] = find(parent[x])
+        return parent[x]
+
+    def union(a: str, b: str):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    def ensure(x: str):
+        parent.setdefault(x, x)
+
+    # Load IC profiles for port computation
+    def _comp_ports(comp: dict) -> list[tuple[str, int, int]]:
+        """Return list of (node_id, wx, wy) for each port of a component."""
+        cid  = comp.get("id", "")
+        cx   = comp.get("x", 0)
+        cy   = comp.get("y", 0)
+        r    = comp.get("rotation", 0)
+        sym  = comp.get("symType", "ic")
+
+        offsets = _SYMDEFS.get(sym)
+        if offsets:
+            result = []
+            for name, dx, dy in offsets:
+                rdx, rdy = _rotate_offset(dx, dy, r)
+                node_id = f"port::{cid}::{name}"
+                result.append((node_id, cx + rdx, cy + rdy))
+            return result
+
+        # IC: load layout from profile
+        slug = comp.get("slug", "")
+        profile_path = LIBRARY_DIR / slug / "profile.json"
+        pins: list = []
+        if profile_path.exists():
+            try:
+                profile = json.loads(profile_path.read_text("utf-8"))
+                pins = profile.get("pins", [])
+            except Exception:
+                pass
+
+        layout = ic_layout(pins)
+        result = []
+        for port in layout["ports"]:
+            rdx, rdy = _rotate_offset(int(port["dx"]), int(port["dy"]), r)
+            node_id = f"port::{cid}::{port['name']}"
+            result.append((node_id, cx + rdx, cy + rdy))
+        return result
+
+    # 1. Build portNodes and ptMap
+    portNodes: list[tuple[str, int, int]] = []  # (node_id, wx, wy)
+    ptMap: dict[str, list[str]] = {}            # key -> [node_ids]
+
+    for comp in components:
+        for node_id, wx, wy in _comp_ports(comp):
+            ensure(node_id)
+            portNodes.append((node_id, wx, wy))
+            k = _pt_key(wx, wy)
+            ptMap.setdefault(k, []).append(node_id)
+
+    # 2. Wire nodes
+    for wire in wires:
+        wid = wire.get("id", id(wire))
+        pts = wire.get("points", [])
+        for pi, pt in enumerate(pts):
+            node_id = f"wire::{wid}::{pi}"
+            ensure(node_id)
+            k = _pt_key(pt["x"], pt["y"])
+            ptMap.setdefault(k, []).append(node_id)
+
+    # 3. Union all nodes sharing same pt_key
+    for key, nodes in ptMap.items():
+        for ni in nodes[1:]:
+            union(nodes[0], ni)
+
+    # 4. Wire chain: adjacent points within each wire
+    for wire in wires:
+        wid = wire.get("id", id(wire))
+        pts = wire.get("points", [])
+        for pi in range(len(pts) - 1):
+            union(f"wire::{wid}::{pi}", f"wire::{wid}::{pi + 1}")
+
+    # 5. T-junction: wire endpoint on interior segment of another wire
+    def _pt_on_segment(px, py, ax, ay, bx, by) -> bool:
+        if ax == bx:  # vertical
+            if _snap(px) != _snap(ax):
+                return False
+            miny, maxy = (ay, by) if ay < by else (by, ay)
+            return miny < _snap(py) < maxy
+        if ay == by:  # horizontal
+            if _snap(py) != _snap(ay):
+                return False
+            minx, maxx = (ax, bx) if ax < bx else (bx, ax)
+            return minx < _snap(px) < maxx
+        return False
+
+    wire_segs: list[tuple[str, str, int, int, int, int, int, int]] = []
+    for wire in wires:
+        wid = wire.get("id", id(wire))
+        pts = wire.get("points", [])
+        for pi in range(len(pts) - 1):
+            p0, p1 = pts[pi], pts[pi + 1]
+            wire_segs.append((
+                wid, f"wire::{wid}::{pi}", f"wire::{wid}::{pi + 1}",
+                _snap(p0["x"]), _snap(p0["y"]),
+                _snap(p1["x"]), _snap(p1["y"]),
+            ))
+
+    for wire2 in wires:
+        wid2 = wire2.get("id", id(wire2))
+        pts2 = wire2.get("points", [])
+        # check each endpoint of wire2 against interior of other wires
+        for pi, pt in enumerate(pts2):
+            if pi not in (0, len(pts2) - 1):
+                continue  # only endpoints
+            ep_node = f"wire::{wid2}::{pi}"
+            px, py = _snap(pt["x"]), _snap(pt["y"])
+            for seg in wire_segs:
+                seg_wid = seg[0]
+                if seg_wid == wid2:
+                    continue
+                n0, n1, ax, ay, bx, by = seg[1], seg[2], seg[3], seg[4], seg[5], seg[6]
+                if _pt_on_segment(px, py, ax, ay, bx, by):
+                    union(ep_node, n0)
+                    union(ep_node, n1)
+
+    # 6. Port-on-wire: comp port on interior of a wire segment
+    for node_id, wx, wy in portNodes:
+        px, py = _snap(wx), _snap(wy)
+        for seg in wire_segs:
+            n0, n1, ax, ay, bx, by = seg[1], seg[2], seg[3], seg[4], seg[5], seg[6]
+            if _pt_on_segment(px, py, ax, ay, bx, by):
+                union(node_id, n0)
+                union(node_id, n1)
+
+    # 7. Labels: union with wire/port at same position + same-name labels
+    label_nodes: dict[str, str] = {}  # label_id -> node_id
+    label_name_to_nodes: dict[str, list[str]] = {}
+
+    for lbl in labels:
+        lid = lbl.get("id", id(lbl))
+        lx  = lbl.get("x", 0)
+        ly  = lbl.get("y", 0)
+        lname = lbl.get("name", lbl.get("text", ""))
+        lnode = f"lbl::{lid}"
+        ensure(lnode)
+        label_nodes[str(lid)] = lnode
+        # union with coincident wire/port nodes
+        k = _pt_key(lx, ly)
+        for other in ptMap.get(k, []):
+            union(lnode, other)
+        label_name_to_nodes.setdefault(lname, []).append(lnode)
+
+    # Union all nodes with same label name
+    for lname, lnodes in label_name_to_nodes.items():
+        for ni in lnodes[1:]:
+            union(lnodes[0], ni)
+
+    # 8. Group portNodes by union root → nets
+    root_to_ports: dict[str, list[str]] = {}
+    for node_id, wx, wy in portNodes:
+        r = find(node_id)
+        root_to_ports.setdefault(r, []).append(node_id)
+
+    # 9. Name nets
+    def _port_designator(node_id: str, comp_map: dict) -> str:
+        """Convert port::compId::pinName → DESIGNATOR.pinName"""
+        parts = node_id.split("::")
+        if len(parts) < 3:
+            return node_id
+        cid   = parts[1]
+        pname = parts[2]
+        comp  = comp_map.get(cid, {})
+        des   = comp.get("designator") or comp.get("id", cid)
+        return f"{des}.{pname}"
+
+    comp_map = {c.get("id", ""): c for c in components}
+    lbl_name_map: dict[str, str] = {}
+    for lbl in labels:
+        lid   = str(lbl.get("id", id(lbl)))
+        lname = lbl.get("name", lbl.get("text", ""))
+        lnode = label_nodes.get(lid, "")
+        if lnode:
+            lbl_name_map[find(lnode)] = lname
+
+    net_counter = [0]
+    named_nets: list[dict] = []
+    root_to_net: dict[str, str] = {}
+    used_names: set[str] = set()
+
+    def _assign(root: str, name: str):
+        root_to_net[root] = name
+        used_names.add(name)
+
+    # Priority 1: VCC/GND symbol types
+    for comp in components:
+        sym = comp.get("symType", "")
+        cid = comp.get("id", "")
+        if sym == "vcc":
+            ports_in_net = root_to_ports.get(find(f"port::{cid}::1"), [])
+            r = find(f"port::{cid}::1") if f"port::{cid}::1" in parent else None
+            if r and r not in root_to_net:
+                _assign(r, "VCC")
+        elif sym == "gnd":
+            r = find(f"port::{cid}::1") if f"port::{cid}::1" in parent else None
+            if r and r not in root_to_net:
+                _assign(r, "GND")
+
+    # Priority 2: named power pins
+    for comp in components:
+        cid = comp.get("id", "")
+        for node_id, wx, wy in portNodes:
+            if not node_id.startswith(f"port::{cid}::"):
+                continue
+            pname = node_id.split("::")[-1].upper()
+            if pname in _POWER_NAMES:
+                r = find(node_id)
+                if r not in root_to_net:
+                    net_name = pname if pname not in used_names else f"{pname}_{cid}"
+                    _assign(r, net_name)
+
+    # Priority 3: wire labels
+    for root, lname in lbl_name_map.items():
+        if root not in root_to_net and lname:
+            _assign(root, lname)
+
+    # Priority 4: NC check (single port, name NC or pin type nc)
+    for root, ports_in in root_to_ports.items():
+        if root in root_to_net:
+            continue
+        if len(ports_in) == 1:
+            pname = ports_in[0].split("::")[-1].upper()
+            if pname in ("NC", "NO_CONNECT"):
+                _assign(root, "NC")
+
+    # Priority 5: passive 1-hop propagation
+    for root, ports_in in root_to_ports.items():
+        if root in root_to_net:
+            continue
+        for pnode in ports_in:
+            parts = pnode.split("::")
+            if len(parts) < 3:
+                continue
+            cid   = parts[1]
+            pname = parts[2]
+            comp  = comp_map.get(cid, {})
+            sym   = comp.get("symType", "ic")
+            if sym not in ("resistor", "capacitor", "capacitor_pol", "inductor", "diode", "led"):
+                continue
+            # Check other port of same passive
+            other_port = "P2" if pname == "P1" else "P1"
+            other_node = f"port::{cid}::{other_port}"
+            if other_node not in parent:
+                other_node = f"port::{cid}::cathode" if pname == "anode" else f"port::{cid}::anode"
+            if other_node in parent:
+                other_root = find(other_node)
+                inherited = root_to_net.get(other_root)
+                if inherited:
+                    _assign(root, f"{inherited}_{pname}")
+
+    # Priority 6: NET_N
+    for root in root_to_ports:
+        if root not in root_to_net:
+            net_counter[0] += 1
+            _assign(root, f"NET_{net_counter[0]}")
+
+    # 10. Build wireToNet
+    wire_to_net: dict[str, str] = {}
+    for wire in wires:
+        wid = wire.get("id", id(wire))
+        node0 = f"wire::{wid}::0"
+        if node0 in parent:
+            r = find(node0)
+            net_name = root_to_net.get(r, "")
+            if net_name:
+                wire_to_net[str(wid)] = net_name
+
+    # Build output
+    for root, ports_in in root_to_ports.items():
+        net_name = root_to_net.get(root, f"NET_X_{root[:8]}")
+        pins_out = [_port_designator(n, comp_map) for n in ports_in]
+        named_nets.append({"name": net_name, "pins": pins_out})
+
+    named_nets.sort(key=lambda n: n["name"])
+    return {"namedNets": named_nets, "wireToNet": wire_to_net}
+
+
+# ── POST /api/netlist ──────────────────────────────────────────────────────────
+@router.post("/netlist")
+async def extract_netlist(request: Request):
+    body = await request.json()
+    components = body.get("components", [])
+    wires      = body.get("wires", [])
+    labels     = body.get("labels", [])
+    result = build_netlist(components, wires, labels)
+    return result
+
+
+# ── GET /api/library/{slug}/layout ────────────────────────────────────────────
+@router.get("/library/{slug}/layout")
+async def get_ic_layout(slug: str):
+    profile_path = LIBRARY_DIR / slug / "profile.json"
+    if not profile_path.exists():
+        raise HTTPException(404, "Profile not found")
+    profile = json.loads(profile_path.read_text("utf-8"))
+    return ic_layout(profile.get("pins", []))
+
+
+# ── GET /api/projects/{pid}/bom ───────────────────────────────────────────────
+@router.get("/projects/{pid}/bom")
+async def get_project_bom(pid: str):
+    fpath = PROJECTS_DIR / f"{pid}.json"
+    if not fpath.exists():
+        raise HTTPException(404, "Project not found")
+    project = json.loads(fpath.read_text("utf-8"))
+
+    # Aggregate by (slug, value)
+    groups: dict[tuple, dict] = {}
+    for comp in project.get("components", []):
+        slug      = comp.get("slug", "")
+        value     = comp.get("value", "")
+        sym_type  = comp.get("symType", "")
+        des       = comp.get("designator", comp.get("id", ""))
+        key       = (slug, value)
+        if key not in groups:
+            # Try to get description from profile
+            desc = ""
+            pp = LIBRARY_DIR / slug / "profile.json"
+            if pp.exists():
+                try:
+                    desc = json.loads(pp.read_text("utf-8")).get("description", "")
+                except Exception:
+                    pass
+            groups[key] = {
+                "designators": [],
+                "symType":     sym_type,
+                "value":       value,
+                "slug":        slug,
+                "description": desc,
+                "quantity":    0,
+            }
+        groups[key]["designators"].append(des)
+        groups[key]["quantity"] += 1
+
+    bom = []
+    for (slug, value), row in sorted(groups.items()):
+        bom.append({
+            "designator":  ", ".join(sorted(row["designators"])),
+            "symType":     row["symType"],
+            "value":       row["value"],
+            "slug":        row["slug"],
+            "description": row["description"],
+            "quantity":    row["quantity"],
+        })
+    return bom
+
+
+# ── DRC helper ────────────────────────────────────────────────────────────────
+
+def run_drc(board: dict) -> dict:
+    dr              = board.get("designRules", {})
+    min_clearance   = float(dr.get("clearance", 0.2))
+    min_trace_w     = float(dr.get("minTraceWidth", 0.15))
+    bw              = float(board.get("board", {}).get("width",  board.get("width",  200)))
+    bh              = float(board.get("board", {}).get("height", board.get("height", 200)))
+
+    violations: list[dict] = []
+
+    # Build set of net names that have at least one trace
+    traced_nets: set[str] = set()
+    for trace in board.get("traces", []):
+        net = trace.get("net", "")
+        if net:
+            traced_nets.add(net)
+        # Check trace width
+        w = float(trace.get("width", 0))
+        if w > 0 and w < min_trace_w:
+            violations.append({
+                "type":    "trace_width",
+                "message": f"Trace on net '{net}' has width {w}mm < min {min_trace_w}mm",
+                "net":     net,
+            })
+        # Check trace out of board bounds
+        for seg in trace.get("segments", []):
+            for pt_key in ("start", "end"):
+                pt = seg.get(pt_key, {})
+                x, y = float(pt.get("x", 0)), float(pt.get("y", 0))
+                if x < 0 or y < 0 or x > bw or y > bh:
+                    violations.append({
+                        "type":    "out_of_bounds",
+                        "message": f"Trace on net '{net}' goes outside board at ({x:.2f},{y:.2f})",
+                        "net":     net,
+                    })
+
+    # Check unconnected nets: each net with 2+ pads but no trace
+    for net_entry in board.get("nets", []):
+        net_name = net_entry.get("name", "")
+        pads_in_net = net_entry.get("pads", [])
+        if len(pads_in_net) < 2:
+            continue
+        if net_name and net_name not in traced_nets:
+            violations.append({
+                "type":    "unconnected_net",
+                "message": f"Net '{net_name}' has {len(pads_in_net)} pads but no routed traces",
+                "net":     net_name,
+            })
+
+    return {"violations": violations, "passed": len(violations) == 0}
+
+
+# ── POST /api/pcb/{bid}/drc ───────────────────────────────────────────────────
+@router.post("/pcb/{bid}/drc")
+async def drc_board_id(bid: str):
+    fpath = PCB_BOARDS_DIR / f"{bid}.json"
+    if not fpath.exists():
+        raise HTTPException(404, "Not found")
+    board = json.loads(fpath.read_text("utf-8"))
+    return run_drc(board)
+
+
+@router.post("/pcb/drc")
+async def drc_board_direct(request: Request):
+    board = await request.json()
+    return run_drc(board)
+
+
+# ── Autoroute helper ──────────────────────────────────────────────────────────
+
+def run_autoroute(board: dict) -> dict:
+    GRID = 0.25  # mm
+    bw   = float(board.get("board", {}).get("width",  board.get("width",  200)))
+    bh   = float(board.get("board", {}).get("height", board.get("height", 200)))
+    dr   = board.get("designRules", {})
+    trace_w = float(dr.get("traceWidth", dr.get("minTraceWidth", 0.25)))
+
+    # Build occupancy grid (already-routed traces block cells)
+    grid_w = int(bw / GRID) + 1
+    grid_h = int(bh / GRID) + 1
+
+    occupied: set[tuple[int, int]] = set()
+    for trace in board.get("traces", []):
+        for seg in trace.get("segments", []):
+            x0 = seg.get("start", {}).get("x", 0)
+            y0 = seg.get("start", {}).get("y", 0)
+            x1 = seg.get("end",   {}).get("x", 0)
+            y1 = seg.get("end",   {}).get("y", 0)
+            # Mark cells along segment
+            steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
+            for s in range(steps + 1):
+                t = s / max(steps, 1)
+                gx = int(round((x0 + t * (x1 - x0)) / GRID))
+                gy = int(round((y0 + t * (y1 - y0)) / GRID))
+                occupied.add((gx, gy))
+
+    # Build pad position lookup: "REF.padNum" -> (x, y)
+    pad_pos: dict[str, tuple[float, float]] = {}
+    for comp in board.get("components", []):
+        ref = comp.get("ref", comp.get("id", ""))
+        cx, cy = float(comp.get("x", 0)), float(comp.get("y", 0))
+        for pad in comp.get("pads", []):
+            key = f"{ref}.{pad.get('number', pad.get('name', '?'))}"
+            px  = cx + float(pad.get("x", 0))
+            py  = cy + float(pad.get("y", 0))
+            pad_pos[key] = (px, py)
+
+    DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+    def _bfs(sx: float, sy: float, ex: float, ey: float) -> list[tuple[float, float]] | None:
+        sg = (int(round(sx / GRID)), int(round(sy / GRID)))
+        eg = (int(round(ex / GRID)), int(round(ey / GRID)))
+        if sg == eg:
+            return [(sx, sy)]
+        dist = {sg: 0}
+        prev: dict[tuple, tuple] = {}
+        pq: list = [(0, sg)]
+        while pq:
+            d, cur = heapq.heappop(pq)
+            if cur == eg:
+                path = []
+                while cur in prev:
+                    path.append((cur[0] * GRID, cur[1] * GRID))
+                    cur = prev[cur]
+                path.append((sg[0] * GRID, sg[1] * GRID))
+                path.reverse()
+                path.append((ex, ey))
+                return path
+            for dx, dy in DIRS:
+                nxt = (cur[0] + dx, cur[1] + dy)
+                if nxt[0] < 0 or nxt[1] < 0 or nxt[0] >= grid_w or nxt[1] >= grid_h:
+                    continue
+                if nxt in occupied:
+                    continue
+                nd = d + 1
+                if nxt not in dist or nd < dist[nxt]:
+                    dist[nxt] = nd
+                    prev[nxt] = cur
+                    heapq.heappush(pq, (nd, nxt))
+        return None  # no path
+
+    routed = 0
+    total  = 0
+    new_traces: list[dict] = list(board.get("traces", []))
+
+    skip_nets = {"GND", "NC", ""}
+    for net_entry in board.get("nets", []):
+        net_name = net_entry.get("name", "")
+        if net_name in skip_nets:
+            continue
+        pads_in_net = [p for p in net_entry.get("pads", []) if p in pad_pos]
+        if len(pads_in_net) < 2:
+            continue
+        total += 1
+
+        # Route MST: connect pads in a chain nearest-neighbor
+        remaining = list(pads_in_net)
+        connected = [remaining.pop(0)]
+        success = True
+        segments: list[dict] = []
+
+        while remaining:
+            best_i, best_path, best_d = 0, None, float("inf")
+            for i, cand in enumerate(remaining):
+                cx2, cy2 = pad_pos[cand]
+                for src in connected:
+                    sx, sy = pad_pos[src]
+                    d = abs(cx2 - sx) + abs(cy2 - sy)
+                    if d < best_d:
+                        best_d = d
+                        best_i = i
+                        best_pair = (sx, sy, cx2, cy2)
+            sx, sy, ex2, ey2 = best_pair
+            path = _bfs(sx, sy, ex2, ey2)
+            if path is None:
+                success = False
+                break
+            for j in range(len(path) - 1):
+                x0, y0 = path[j]
+                x1, y1 = path[j + 1]
+                segments.append({"start": {"x": x0, "y": y0}, "end": {"x": x1, "y": y1}})
+                # Mark path as occupied
+                steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
+                for s in range(steps + 1):
+                    t = s / max(steps, 1)
+                    gx = int(round((x0 + t * (x1 - x0)) / GRID))
+                    gy = int(round((y0 + t * (y1 - y0)) / GRID))
+                    occupied.add((gx, gy))
+            connected.append(remaining.pop(best_i))
+
+        if success and segments:
+            new_traces.append({
+                "net":      net_name,
+                "layer":    "F.Cu",
+                "width":    trace_w,
+                "segments": segments,
+            })
+            routed += 1
+
+    result = dict(board)
+    result["traces"] = new_traces
+    return {**result, "_autoroute": {"routed": routed, "total": total}}
+
+
+# ── POST /api/pcb/{bid}/autoroute ─────────────────────────────────────────────
+@router.post("/pcb/{bid}/autoroute")
+async def autoroute_board_id(bid: str):
+    fpath = PCB_BOARDS_DIR / f"{bid}.json"
+    if not fpath.exists():
+        raise HTTPException(404, "Not found")
+    board = json.loads(fpath.read_text("utf-8"))
+    result = run_autoroute(board)
+    # Save updated board
+    autoroute_meta = result.pop("_autoroute", {})
+    fpath.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    return {**autoroute_meta, "board": result}
+
+
+@router.post("/pcb/autoroute")
+async def autoroute_direct(request: Request):
+    body  = await request.json()
+    board = body.get("board", body)
+    result = run_autoroute(board)
+    autoroute_meta = result.pop("_autoroute", {})
+    return {**autoroute_meta, "board": result}
+
+
+# ── Gerber export helper ───────────────────────────────────────────────────────
+
+def gerber_for_board(board: dict) -> bytes:
+    """Generate a ZIP of Gerber files for the board."""
+    bw = float(board.get("board", {}).get("width",  board.get("width",  200)))
+    bh = float(board.get("board", {}).get("height", board.get("height", 200)))
+
+    def _mm(v: float) -> str:
+        return str(int(round(v * 1_000_000))).zfill(7)
+
+    # F_Cu.gtl  — copper traces
+    def _f_cu() -> str:
+        lines = [
+            "%FSLAX66Y66*%",
+            "%MOMM*%",
+            "%LPD*%",
+            "%ADD10C,0.25*%",  # default aperture
+            "D10*",
+        ]
+        for trace in board.get("traces", []):
+            layer = trace.get("layer", "F.Cu")
+            if layer not in ("F.Cu", ""):
+                continue
+            w = float(trace.get("width", 0.25))
+            w_um = int(round(w * 1_000_000))
+            lines.append(f"%ADD11C,{w / 1:.6f}*%")
+            lines.append("D11*")
+            for seg in trace.get("segments", []):
+                x0 = float(seg.get("start", {}).get("x", 0))
+                y0 = float(seg.get("start", {}).get("y", 0))
+                x1 = float(seg.get("end",   {}).get("x", 0))
+                y1 = float(seg.get("end",   {}).get("y", 0))
+                lines.append(f"X{_mm(x0)}Y{_mm(y0)}D02*")
+                lines.append(f"X{_mm(x1)}Y{_mm(y1)}D01*")
+        lines.append("M02*")
+        return "\n".join(lines)
+
+    # Edge_Cuts.gml — board outline
+    def _edge_cuts() -> str:
+        lines = [
+            "%FSLAX66Y66*%",
+            "%MOMM*%",
+            "%LPD*%",
+            "%ADD10C,0.05*%",
+            "D10*",
+            f"X{_mm(0)}Y{_mm(0)}D02*",
+            f"X{_mm(bw)}Y{_mm(0)}D01*",
+            f"X{_mm(bw)}Y{_mm(bh)}D01*",
+            f"X{_mm(0)}Y{_mm(bh)}D01*",
+            f"X{_mm(0)}Y{_mm(0)}D01*",
+            "M02*",
+        ]
+        return "\n".join(lines)
+
+    # Excellon drill file
+    def _drill() -> str:
+        lines = [
+            "M48",
+            "METRIC,TZ",
+            "T1C0.800",
+            "%",
+            "G90",
+            "G05",
+            "T1",
+        ]
+        for comp in board.get("components", []):
+            cx = float(comp.get("x", 0))
+            cy = float(comp.get("y", 0))
+            for pad in comp.get("pads", []):
+                if pad.get("type") == "thru_hole" and pad.get("drill"):
+                    px = cx + float(pad.get("x", 0))
+                    py = cy + float(pad.get("y", 0))
+                    lines.append(f"X{px * 1000:.0f}Y{py * 1000:.0f}")
+        lines.append("T0")
+        lines.append("M30")
+        return "\n".join(lines)
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("F_Cu.gtl",        _f_cu())
+        zf.writestr("Edge_Cuts.gml",   _edge_cuts())
+        zf.writestr("drill.drl",        _drill())
+    return buf.getvalue()
+
+
+# ── GET /api/pcb/{bid}/export/gerber ─────────────────────────────────────────
+@router.get("/pcb/{bid}/export/gerber")
+async def export_gerber(bid: str):
+    fpath = PCB_BOARDS_DIR / f"{bid}.json"
+    if not fpath.exists():
+        raise HTTPException(404, "Not found")
+    board = json.loads(fpath.read_text("utf-8"))
+    data  = gerber_for_board(board)
+    name  = board.get("name", "board")
+    safe  = re.sub(r"[^a-zA-Z0-9_\-]", "_", name)
+    return StreamingResponse(
+        iter([data]),
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{safe}_gerbers.zip"'},
+    )
+
+
+# ── KiCad export helper ────────────────────────────────────────────────────────
+
+def kicad_for_board(board: dict) -> str:
+    """Generate KiCad .kicad_pcb S-expression content."""
+    lines: list[str] = []
+    lines.append("(kicad_pcb (version 20221018) (generator auto-eda)")
+
+    # Net index
+    all_nets = [""]  # index 0 = no net
+    for net_entry in board.get("nets", []):
+        n = net_entry.get("name", "")
+        if n and n not in all_nets:
+            all_nets.append(n)
+    net_idx = {n: i for i, n in enumerate(all_nets)}
+
+    lines.append("  (net 0 \"\")")
+    for i, n in enumerate(all_nets[1:], 1):
+        lines.append(f'  (net {i} "{n}")')
+
+    # Board outline
+    bw = float(board.get("board", {}).get("width",  board.get("width",  200)))
+    bh = float(board.get("board", {}).get("height", board.get("height", 200)))
+    lines.append(f'  (gr_rect (start 0 0) (end {bw} {bh}) (layer "Edge.Cuts") (width 0.05))')
+
+    # Footprints
+    for comp in board.get("components", []):
+        ref = comp.get("ref", comp.get("id", ""))
+        val = comp.get("value", "")
+        cx  = float(comp.get("x", 0))
+        cy  = float(comp.get("y", 0))
+        rot = float(comp.get("rotation", 0))
+        fp_name = comp.get("footprint", "")
+        lines.append(f'  (footprint "{fp_name}" (layer "F.Cu") (at {cx} {cy} {rot})')
+        lines.append(f'    (fp_text reference "{ref}" (at 0 -1) (layer "F.SilkS"))')
+        lines.append(f'    (fp_text value "{val}" (at 0 1) (layer "F.Fab"))')
+        for pad in comp.get("pads", []):
+            pnum  = pad.get("number", "1")
+            px    = float(pad.get("x", 0))
+            py    = float(pad.get("y", 0))
+            ptype = "thru_hole" if pad.get("type") == "thru_hole" else "smd"
+            pshp  = pad.get("shape", "circle")
+            sx    = float(pad.get("size_x", 1.6))
+            sy    = float(pad.get("size_y", 1.6))
+            pnet  = pad.get("net", "")
+            nidx  = net_idx.get(pnet, 0)
+            drill_str = ""
+            if ptype == "thru_hole" and pad.get("drill"):
+                drill_str = f' (drill {pad["drill"]})'
+            lines.append(
+                f'    (pad "{pnum}" {ptype} {pshp} (at {px} {py}) (size {sx} {sy}){drill_str}'
+                f' (layers "*.Cu" "*.Mask") (net {nidx} "{pnet}"))'
+            )
+        lines.append("  )")
+
+    # Traces
+    for trace in board.get("traces", []):
+        layer    = trace.get("layer", "F.Cu")
+        width    = float(trace.get("width", 0.25))
+        net_name = trace.get("net", "")
+        nidx     = net_idx.get(net_name, 0)
+        for seg in trace.get("segments", []):
+            x0 = float(seg.get("start", {}).get("x", 0))
+            y0 = float(seg.get("start", {}).get("y", 0))
+            x1 = float(seg.get("end",   {}).get("x", 0))
+            y1 = float(seg.get("end",   {}).get("y", 0))
+            lines.append(
+                f'  (segment (start {x0} {y0}) (end {x1} {y1})'
+                f' (width {width}) (layer "{layer}") (net {nidx}))'
+            )
+
+    # Vias
+    for via in board.get("vias", []):
+        x    = float(via.get("x", 0))
+        y    = float(via.get("y", 0))
+        size = float(via.get("size", 0.8))
+        drill = float(via.get("drill", 0.4))
+        vnet = via.get("net", "")
+        nidx = net_idx.get(vnet, 0)
+        lines.append(
+            f'  (via (at {x} {y}) (size {size}) (drill {drill})'
+            f' (layers "F.Cu" "B.Cu") (net {nidx}))'
+        )
+
+    lines.append(")")
+    return "\n".join(lines)
+
+
+# ── GET /api/pcb/{bid}/export/kicad ──────────────────────────────────────────
+@router.get("/pcb/{bid}/export/kicad")
+async def export_kicad(bid: str):
+    fpath = PCB_BOARDS_DIR / f"{bid}.json"
+    if not fpath.exists():
+        raise HTTPException(404, "Not found")
+    board   = json.loads(fpath.read_text("utf-8"))
+    content = kicad_for_board(board)
+    name    = board.get("name", "board")
+    safe    = re.sub(r"[^a-zA-Z0-9_\-]", "_", name)
+    return StreamingResponse(
+        iter([content.encode()]),
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{safe}.kicad_pcb"'},
+    )
+
+
+# ── POST /api/pcb/compute-ratsnest ────────────────────────────────────────────
+@router.post("/pcb/compute-ratsnest")
+async def compute_ratsnest(request: Request):
+    body    = await request.json()
+    board   = body.get("board", body)
+    # netlist unused for now — we derive from board.nets + board.components
+    # Build pad position lookup
+    pad_pos: dict[str, tuple[float, float]] = {}
+    for comp in board.get("components", []):
+        ref = comp.get("ref", comp.get("id", ""))
+        cx  = float(comp.get("x", 0))
+        cy  = float(comp.get("y", 0))
+        for pad in comp.get("pads", []):
+            key = f"{ref}.{pad.get('number', pad.get('name', '?'))}"
+            pad_pos[key] = (cx + float(pad.get("x", 0)), cy + float(pad.get("y", 0)))
+
+    # Collect routed connections from traces (per net, which pad-pairs are connected)
+    # Simplified: if a net has traces, consider it fully routed
+    routed_nets: set[str] = set()
+    for trace in board.get("traces", []):
+        net = trace.get("net", "")
+        if net:
+            routed_nets.add(net)
+
+    ratsnest: list[dict] = []
+    for net_entry in board.get("nets", []):
+        net_name = net_entry.get("name", "")
+        pads_in  = [p for p in net_entry.get("pads", []) if p in pad_pos]
+        if len(pads_in) < 2 or net_name in routed_nets:
+            continue
+        # Generate minimum spanning pairs (chain)
+        remaining = list(pads_in)
+        connected = [remaining.pop(0)]
+        while remaining:
+            best_i, best_d = 0, float("inf")
+            for i, cand in enumerate(remaining):
+                cx2, cy2 = pad_pos[cand]
+                for src in connected:
+                    sx, sy = pad_pos[src]
+                    d = (cx2 - sx) ** 2 + (cy2 - sy) ** 2
+                    if d < best_d:
+                        best_d = d
+                        best_i = i
+                        best_src = src
+            x1, y1 = pad_pos[best_src]
+            x2, y2 = pad_pos[remaining[best_i]]
+            ratsnest.append({"net": net_name, "x1": x1, "y1": y1, "x2": x2, "y2": y2})
+            connected.append(remaining.pop(best_i))
+
+    return {"ratsnest": ratsnest, "count": len(ratsnest)}
+
+
+# ── POST /api/gen-tickets/build-prompt ────────────────────────────────────────
+@router.post("/gen-tickets/build-prompt")
+async def build_gen_ticket_prompt(request: Request):
+    body        = await request.json()
+    ticket_type = body.get("type", "")
+    slug        = body.get("slug", "")
+    profile     = body.get("profile", {})
+    raw_text    = body.get("rawText", "")
+
+    part = profile.get("part_number", slug)
+    pkg  = (profile.get("package_types") or ["unknown"])[0]
+    desc = profile.get("description", "")
+    pins = profile.get("pins", [])
+    pin_summary = ", ".join(
+        f"{p.get('number','?')}:{p.get('name','?')}" for p in pins[:12]
+    )
+    if len(pins) > 12:
+        pin_summary += f" …+{len(pins) - 12} more"
+
+    if ticket_type == "footprint":
+        prompt = (
+            f"Generate a PCB footprint for {part}.\n"
+            f"Package: {pkg}\n"
+            f"Description: {desc}\n"
+            f"Pins ({len(pins)}): {pin_summary}\n"
+            f"Output: PUT /api/library/{slug}/footprint with a footprint JSON matching the pcb footprint schema."
+        )
+    elif ticket_type == "example":
+        prompt = (
+            f"Build an example application circuit for {part}.\n"
+            f"Description: {desc}\n"
+            f"Pins ({len(pins)}): {pin_summary}\n"
+            f"Output: PUT /api/library/{slug}/example_circuit with the schematic JSON "
+            f"(components[], wires[], labels[])."
+        )
+    elif ticket_type == "layout":
+        prompt = (
+            f"Build a PCB layout example for {part}.\n"
+            f"Package: {pkg}\n"
+            f"Description: {desc}\n"
+            f"Output: PUT /api/library/{slug}/layout_example with a board JSON "
+            f"(components[], traces[], nets[])."
+        )
+    elif ticket_type == "datasheet":
+        raw_snippet = raw_text[:3000] if raw_text else "(no raw text provided)"
+        prompt = (
+            f"Rebuild the datasheet profile for {part}.\n"
+            f"Description: {desc}\n"
+            f"Raw datasheet excerpt:\n{raw_snippet}\n\n"
+            f"Output: PUT /api/library/{slug} with a complete profile.json "
+            f"following the datasheet schema (symbol_type, pins[], package_types, etc.)."
+        )
+    else:
+        prompt = f"Generate {ticket_type} for {slug}."
+
+    return {"prompt": prompt}
+
 
 # ── Startup: rebuild index ─────────────────────────────────────────────────────
 _update_index()

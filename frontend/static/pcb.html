@@ -2209,1774 +2209,72 @@ class PCBEditor {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SCHEMATIC IMPORTER  (async — fetches IC profiles from library)
+// SCHEMATIC IMPORTER — delegated to Python API
 // ═══════════════════════════════════════════════════════════════
-class SchematicImporter {
-  rotPort(dx,dy,r){switch((r||0)%4){case 0:return[dx,dy];case 1:return[dy,-dx];case 2:return[-dx,-dy];case 3:return[-dy,dx];}}
-
-  // Generate through-hole DIP pad array from profile pins
-  dipPads(pins,pinCount,rowMm,pitchMm){
-    const half=Math.ceil(pinCount/2),totalH=(half-1)*pitchMm,pads=[];
-    for(let i=0;i<half;i++){
-      const pn=i+1,pin=pins.find(p=>p.number===pn)||{name:String(pn)};
-      pads.push({number:String(pn),name:pin.name,x:-rowMm/2,y:-totalH/2+i*pitchMm,
-        type:'thru_hole',shape:pn===1?'rect':'circle',size_x:1.8,size_y:1.8,drill:1.0,net:null});
-    }
-    for(let i=0;i<Math.floor(pinCount/2);i++){
-      const pn=pinCount-i,pin=pins.find(p=>p.number===pn)||{name:String(pn)};
-      pads.push({number:String(pn),name:pin.name,x:rowMm/2,y:-totalH/2+i*pitchMm,
-        type:'thru_hole',shape:'circle',size_x:1.8,size_y:1.8,drill:1.0,net:null});
-    }
-    return pads;
-  }
-
-  // Generate SMD SOIC pad array from profile pins
-  soicPads(pins,pinCount,rowMm,pitchMm){
-    const half=Math.ceil(pinCount/2),totalH=(half-1)*pitchMm,pads=[];
-    for(let i=0;i<half;i++){
-      const pn=i+1,pin=pins.find(p=>p.number===pn)||{name:String(pn)};
-      pads.push({number:String(pn),name:pin.name,x:-rowMm/2,y:-totalH/2+i*pitchMm,
-        type:'smd',shape:'rect',size_x:Math.max(0.4,pitchMm*0.65),size_y:1.6,net:null});
-    }
-    for(let i=0;i<Math.floor(pinCount/2);i++){
-      const pn=pinCount-i,pin=pins.find(p=>p.number===pn)||{name:String(pn)};
-      pads.push({number:String(pn),name:pin.name,x:rowMm/2,y:-totalH/2+i*pitchMm,
-        type:'smd',shape:'rect',size_x:Math.max(0.4,pitchMm*0.65),size_y:1.6,net:null});
-    }
-    return pads;
-  }
-
-  // Generate 4-sided TQFP pads
-  tqfpPads(pins,pinCount,pitchMm){
-    const pps=Math.round(pinCount/4),len=(pps-1)*pitchMm;
-    const half=len/2,body=len+2.0,off=body/2+0.5,pads=[];
-    const add=(pn,x,y,sw,sh)=>{const pin=pins.find(p=>p.number===pn)||{name:String(pn)};
-      pads.push({number:String(pn),name:pin.name,x,y,type:'smd',shape:'rect',size_x:sw,size_y:sh,net:null});};
-    for(let i=0;i<pps;i++) add(i+1,       -half+i*pitchMm, off,   pitchMm*0.6,1.5);   // bottom
-    for(let i=0;i<pps;i++) add(pps+i+1,    off,  -half+i*pitchMm, 1.5,pitchMm*0.6);   // right
-    for(let i=0;i<pps;i++) add(2*pps+i+1,  half-i*pitchMm,-off,   pitchMm*0.6,1.5);   // top
-    for(let i=0;i<pps;i++) add(3*pps+i+1, -off,  half-i*pitchMm,  1.5,pitchMm*0.6);   // left
-    return pads;
-  }
-
-  // Generate 4-sided QFN pads
-  qfnPads(pins,pinCount,bodyMm){
-    const pps=Math.round(pinCount/4),pitch=bodyMm/pps;
-    const half=(pps-1)*pitch/2,off=bodyMm/2+0.3,pads=[];
-    const add=(pn,x,y,sw,sh)=>{const pin=pins.find(p=>p.number===pn)||{name:String(pn)};
-      pads.push({number:String(pn),name:pin.name,x,y,type:'smd',shape:'rect',size_x:sw,size_y:sh,net:null});};
-    for(let i=0;i<pps;i++) add(i+1,       -half+i*pitch, off,  pitch*0.6,0.8); // bottom
-    for(let i=0;i<pps;i++) add(pps+i+1,    off, -half+i*pitch, 0.8,pitch*0.6); // right
-    for(let i=0;i<pps;i++) add(2*pps+i+1,  half-i*pitch,-off,  pitch*0.6,0.8); // top
-    for(let i=0;i<pps;i++) add(3*pps+i+1, -off,  half-i*pitch, 0.8,pitch*0.6); // left
-    // Exposed pad
-    const ep=pins.find(p=>/^(EP|PAD|EPAD)$/i.test(p.name));
-    if(ep) pads.push({number:String(ep.number),name:ep.name,x:0,y:0,type:'smd',shape:'rect',size_x:bodyMm*0.6,size_y:bodyMm*0.6,net:null});
-    return pads;
-  }
-
-  // Resolve footprint name from symbol type + profile (matches leFootprintFor in index.html)
-  _fpName(symType,profile){
-    switch(symType){
-      case 'resistor': case 'inductor': return '0402';
-      case 'capacitor': case 'capacitor_pol': return '0402';
-      case 'led': return '0402';
-      case 'diode': return 'SOD-123';
-      case 'npn': case 'pnp': return 'SOT-23';
-      case 'nmos': case 'pmos': return 'TO-220';
-      case 'opamp': return 'SOIC-8';
-      case 'amplifier': return profile?.footprint||'MCLP-4';
-      case 'ic': return profile?.footprint||null;
-      default: return null;
-    }
-  }
-
-  // Decide footprint + pads for an IC component
-  icPads(comp,profile){
-    const pkg=(profile?.package_types?.[0]||'').toUpperCase();
-    const pins=profile?.pins||[];
-    const n=pins.length; if(!n) return{fp:'IC',pads:[]};
-    const sizeM=pkg.match(/(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)/);
-    if(/SOIC|SOP/.test(pkg)&&!/TSSOP|SSOP/.test(pkg)){
-      return{fp:pkg.split(/\s/)[0],pads:this.soicPads(pins,n,/W\b|\bWIDE/.test(pkg)?7.5:5.08,1.27)};
-    }
-    if(/SSOP|TSSOP/.test(pkg)) return{fp:'SSOP-'+n,pads:this.soicPads(pins,n,5.3,0.65)};
-    if(/TQFP|QFP/.test(pkg)){
-      const pitch=pkg.match(/0\.\d+/)?parseFloat(pkg.match(/0\.\d+/)[0]):0.8;
-      return{fp:pkg.split(/\s/)[0],pads:this.tqfpPads(pins,n,pitch)};
-    }
-    if(/QFN|DFN|WSON|LFCSP|MCLP/.test(pkg)){
-      const body=sizeM?parseFloat(sizeM[1]):3;
-      return{fp:pkg.split(/\s/)[0],pads:this.qfnPads(pins,n,body)};
-    }
-    if(/SOT-23/.test(pkg)&&n<=3){
-      return{fp:'SOT-23',pads:[
-        {number:'1',name:pins[0]?.name||'1',x:-0.95,y:0.65,type:'smd',shape:'rect',size_x:0.8,size_y:1.1,net:null},
-        {number:'2',name:pins[1]?.name||'2',x:0.95,y:0.65,type:'smd',shape:'rect',size_x:0.8,size_y:1.1,net:null},
-        {number:'3',name:pins[2]?.name||'3',x:0,y:-0.65,type:'smd',shape:'rect',size_x:0.8,size_y:1.1,net:null}]};
-    }
-    if(/SOT-223/.test(pkg)){
-      return{fp:'SOT-223',pads:[
-        {number:'1',name:pins[0]?.name||'ADJ',x:-2.3,y:1.65,type:'smd',shape:'rect',size_x:0.9,size_y:1.7,net:null},
-        {number:'2',name:pins[1]?.name||'OUT',x:0,y:1.65,type:'smd',shape:'rect',size_x:0.9,size_y:1.7,net:null},
-        {number:'3',name:pins[2]?.name||'IN',x:2.3,y:1.65,type:'smd',shape:'rect',size_x:0.9,size_y:1.7,net:null},
-        {number:'4',name:'TAB',x:0,y:-1.65,type:'smd',shape:'rect',size_x:3.6,size_y:2.2,net:null}]};
-    }
-    // Default: DIP through-hole
-    const rowMm=n>28?15.24:7.62;
-    return{fp:`DIP-${n}`,pads:this.dipPads(pins,n,rowMm,2.54)};
-  }
-
-  // Get pad geometry + names for any component type
-  compPads(symType,comp,profile){
-    const smd=(n,nm,x,y,w,h)=>({number:String(n),name:nm,x,y,type:'smd',shape:'rect',size_x:w,size_y:h,net:null});
-    const tph=(n,nm,x,y,s,d,sq)=>({number:String(n),name:nm,x,y,type:'thru_hole',shape:sq?'rect':'circle',size_x:s,size_y:s,drill:d,net:null});
-    switch(symType){
-      case 'resistor': case 'inductor':
-        return{fp:'0402',pads:[smd(1,'P1',-0.5,0,0.6,0.6),smd(2,'P2',0.5,0,0.6,0.6)]};
-      case 'capacitor':
-        return{fp:'0402',pads:[smd(1,'P1',-0.5,0,0.6,0.6),smd(2,'P2',0.5,0,0.6,0.6)]};
-      case 'capacitor_pol':
-        return{fp:'CP_5mm',pads:[tph(1,'+',0,-1.0,1.8,0.8,true),tph(2,'-',0,1.0,1.6,0.8,false)]};
-      case 'diode':
-        return{fp:'SOD-123',pads:[smd(1,'K',-1.6,0,0.9,1.2),smd(2,'A',1.6,0,0.9,1.2)]};
-      case 'led':
-        return{fp:'LED_D5mm',pads:[tph(1,'K',-1.27,0,1.6,0.8,true),tph(2,'A',1.27,0,1.6,0.8,false)]};
-      case 'npn': case 'pnp':
-        return{fp:'SOT-23',pads:[smd(1,'B',-0.95,0.65,0.8,1.1),smd(2,'C',0.95,0.65,0.8,1.1),smd(3,'E',0,-0.65,0.8,1.1)]};
-      case 'nmos': case 'pmos':
-        return{fp:'TO-220',pads:[tph(1,'G',-2.54,0,1.8,1.0,true),tph(2,'D',0,0,1.8,1.0,false),tph(3,'S',2.54,0,1.8,1.0,false)]};
-      case 'opamp':
-        return{fp:'SOIC-8',pads:[smd(1,'+',-2.54,-1.905,0.9,1.6),smd(2,'-',-2.54,-0.635,0.9,1.6),
-          smd(3,'OUT',-2.54,0.635,0.9,1.6),smd(4,'V-',-2.54,1.905,0.9,1.6),
-          smd(5,'V-',2.54,1.905,0.9,1.6),smd(6,'OUT2',2.54,0.635,0.9,1.6),
-          smd(7,'+2',2.54,-0.635,0.9,1.6),smd(8,'V+',2.54,-1.905,0.9,1.6)]};
-      case 'amplifier':
-        return{fp:'QFN-8-3x3',pads:[smd(2,'RF_IN',-1.5,1.5,0.4,0.6),smd(8,'RF_OUT',1.5,1.5,0.4,0.6),
-          {number:'P',name:'GND',x:0,y:0,type:'smd',shape:'rect',size_x:2.0,size_y:2.0,net:null}]};
-      case 'ic':
-        return this.icPads(comp,profile);
-      default:
-        return{fp:'IC',pads:[]};
-    }
-  }
-
-  // Compute net names from a profile's example_circuit (fallback only).
-  // Used for LE-only passives that are not present in the user's schematic.
-  // Schematic-derived precomputedNets takes priority over this in convert().
-  // Returns Map<"designator.portName" → netName> or null if no example_circuit.
-  _computeExampleNets(profile,profileCache){
-    const ex=profile?.example_circuit;
-    if(!ex)return null;
-    const {components=[],wires=[],labels=[]}=ex;
-    const SNAP=10,PIN_STUB=40,ROW_H=20,BOX_W=120,PAD_Y=16;
-    const snapV=v=>Math.round(v/SNAP)*SNAP;
-    const ptKey=(x,y)=>`${snapV(x)},${snapV(y)}`;
-    const par={};
-    const find=id=>{if(!(id in par))par[id]=id;if(par[id]!==id)par[id]=find(par[id]);return par[id];};
-    const union=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)par[ra]=rb;};
-    // Build ports using exact same _icLayout formula as index.html
-    const ports=[];
-    for(const c of components){
-      if(c.symType==='ic'){
-        const prof=profileCache[c.slug];
-        const rawPins=prof?.pins||[];
-        const icPins=[...rawPins].sort((a,b)=>(a.number||0)-(b.number||0));
-        const N=icPins.length||4,half=Math.ceil(N/2);
-        const leftPins=icPins.slice(0,half),rightPins=[...icPins.slice(half)].reverse();
-        const BOX_H=Math.max(leftPins.length,rightPins.length,1)*ROW_H+2*PAD_Y;
-        leftPins.forEach((pin,i)=>{
-          const pdy=-(BOX_H/2-PAD_Y)+i*ROW_H;
-          const[rdx,rdy]=this.rotPort(-(BOX_W/2+PIN_STUB),pdy,c.rotation||0);
-          const id=`${c.id}.${pin.name||`P${pin.number}`}`;
-          par[id]=id;
-          ports.push({id,compId:c.id,des:c.designator||c.id,stype:'ic',pname:pin.name||`P${pin.number}`,x:c.x+rdx,y:c.y+rdy});
-        });
-        rightPins.forEach((pin,i)=>{
-          const pdy=-(BOX_H/2-PAD_Y)+i*ROW_H;
-          const[rdx,rdy]=this.rotPort(BOX_W/2+PIN_STUB,pdy,c.rotation||0);
-          const id=`${c.id}.${pin.name||`P${pin.number}`}`;
-          par[id]=id;
-          ports.push({id,compId:c.id,des:c.designator||c.id,stype:'ic',pname:pin.name||`P${pin.number}`,x:c.x+rdx,y:c.y+rdy});
-        });
-      } else {
-        const def=SYMDEFS[c.symType]||{ports:[]};
-        def.ports.forEach((p,i)=>{
-          const[rdx,rdy]=this.rotPort(p.dx,p.dy,c.rotation||0);
-          const id=`${c.id}.${i}`;par[id]=id;
-          ports.push({id,compId:c.id,des:c.designator||c.id,stype:c.symType,pname:p.name,x:c.x+rdx,y:c.y+rdy});
-        });
-      }
-    }
-    // ptMap: point key → list of node ids
-    const ptMap=new Map();
-    const addPt=(k,id)=>{if(!ptMap.has(k))ptMap.set(k,[]);ptMap.get(k).push(id);};
-    for(const p of ports)addPt(ptKey(p.x,p.y),p.id);
-    for(const lbl of labels){const id=`lbl_${lbl.id}`;par[id]=id;addPt(ptKey(lbl.x,lbl.y),id);}
-    for(const wire of wires){
-      if(!wire.points||!wire.points.length)continue;
-      const base=`w_${wire.id}_0`;par[base]=base;
-      addPt(ptKey(wire.points[0].x,wire.points[0].y),base);
-      for(let i=1;i<wire.points.length;i++){
-        const wid=`w_${wire.id}_${i}`;par[wid]=wid;union(base,wid);
-        addPt(ptKey(wire.points[i].x,wire.points[i].y),wid);
-      }
-    }
-    for(const ids of ptMap.values())for(let i=1;i<ids.length;i++)union(ids[0],ids[i]);
-    // Group ports by net root
-    const netGroups=new Map();
-    for(const p of ports){const r=find(p.id);if(!netGroups.has(r))netGroups.set(r,[]);netGroups.get(r).push(p);}
-    // Name nets: power symbols, then wire labels
-    const rootName=new Map();
-    for(const[root,pns]of netGroups){
-      let name=null;
-      for(const pn of pns){
-        if(pn.stype==='vcc'){const c=components.find(x=>x.id===pn.compId);name=(c?.value?.trim())||'VCC';break;}
-        if(pn.stype==='gnd'&&!name){const c=components.find(x=>x.id===pn.compId);name=(c?.value?.trim())||'GND';}
-      }
-      if(!name){for(const lbl of labels){const lk=ptKey(lbl.x,lbl.y);if(ptMap.get(lk)?.some(id=>find(id)===root)){name=lbl.name;break;}}}
-      rootName.set(root,name||null);
-    }
-    // Propagate label names through passive components (handles DC-blocking caps, chokes, etc.)
-    // A net with no label that has exactly one labelled neighbour (through a passive) inherits that name.
-    const isAuto=n=>!n;
-    let changed=true;
-    while(changed){
-      changed=false;
-      for(const[root,pns]of netGroups){
-        if(!isAuto(rootName.get(root)))continue;
-        let candidate=null,ambiguous=false;
-        for(const pn of pns){
-          if(pn.stype==='ic')continue; // only cross passives
-          const c=components.find(x=>x.id===pn.compId);if(!c||c.symType==='ic')continue;
-          for(const op of ports.filter(p=>p.compId===pn.compId&&p.id!==pn.id)){
-            const n=rootName.get(find(op.id));
-            if(n){if(!candidate)candidate=n;else if(candidate!==n)ambiguous=true;}
-          }
-        }
-        if(candidate&&!ambiguous){rootName.set(root,candidate);changed=true;}
-      }
-    }
-    // Auto-name remaining unlabeled nets (N1, N2, …) — same convention as buildNetlist()
-    let autoIdx=0;
-    for(const root of netGroups.keys()){
-      if(!rootName.get(root)){autoIdx++;rootName.set(root,`N${autoIdx}`);}
-    }
-    // Build result map: "designator.portName" → netName
-    const result=new Map();
-    for(const p of ports){
-      if(p.stype==='vcc'||p.stype==='gnd')continue;
-      const name=rootName.get(find(p.id));
-      if(name)result.set(`${p.des}.${p.pname}`,name);
-    }
-    return result;
-  }
-
-  async convert(project,boardW,boardH,prevBoard=null,precomputedNets=null){
-    const comps=project.components||[],wires=project.wires||[],labels=project.labels||[];
-    const SNAP=12; // schematic units tolerance for pin-to-wire matching
-    const PIN_STUB=40,ROW_H=20,BOX_W=120;
-
-    // Fetch IC profiles
-    const profileCache={};
-    await Promise.all(comps.filter(c=>c.symType==='ic').map(async c=>{
-      if(c.slug&&!profileCache[c.slug]){
-        try{const r=await fetch(`/api/library/${c.slug}`);if(r.ok)profileCache[c.slug]=await r.json();}catch(_){}
-      }
-    }));
-
-    // Compute port world positions (schematic coordinate space)
-    // IC layout MUST match index.html _icLayout() exactly: sort by number, reverse right side, PAD_Y=16
-    const PAD_Y=16;
-    const ports=[];
-    for(const c of comps){
-      if(c.symType==='ic'){
-        const profile=profileCache[c.slug];
-        const rawPins=profile?.pins||[];
-        // Sort by pin number ascending (same as _icLayout in index.html)
-        const icPins=[...rawPins].sort((a,b)=>(a.number||0)-(b.number||0));
-        const N=icPins.length||4,half=Math.ceil(N/2);
-        const leftPins=icPins.slice(0,half);
-        const rightPins=[...icPins.slice(half)].reverse(); // DIP: right side top→bottom = high numbers first
-        const maxRows=Math.max(leftPins.length,rightPins.length,1);
-        const BOX_H=maxRows*ROW_H+2*PAD_Y;
-        leftPins.forEach((pin,i)=>{
-          const pdy=-(BOX_H/2-PAD_Y)+i*ROW_H;
-          const[rdx,rdy]=this.rotPort(-(BOX_W/2+PIN_STUB),pdy,c.rotation||0);
-          ports.push({id:`${c.id}.p${i}`,compId:c.id,des:c.designator||c.id,stype:c.symType,
-            slug:c.slug,pinNum:pin.number,pname:pin.name||`P${pin.number}`,x:c.x+rdx,y:c.y+rdy});
-        });
-        rightPins.forEach((pin,i)=>{
-          const pdy=-(BOX_H/2-PAD_Y)+i*ROW_H;
-          const[rdx,rdy]=this.rotPort(BOX_W/2+PIN_STUB,pdy,c.rotation||0);
-          ports.push({id:`${c.id}.p${half+i}`,compId:c.id,des:c.designator||c.id,stype:c.symType,
-            slug:c.slug,pinNum:pin.number,pname:pin.name||`P${pin.number}`,x:c.x+rdx,y:c.y+rdy});
-        });
-      } else {
-        const def=SYMDEFS[c.symType]||{ports:[]};
-        for(let i=0;i<def.ports.length;i++){
-          const p=def.ports[i];
-          const[rdx,rdy]=this.rotPort(p.dx,p.dy,c.rotation||0);
-          ports.push({id:`${c.id}.${i}`,compId:c.id,des:c.designator||c.id,stype:c.symType,
-            slug:c.slug,pinNum:null,pname:p.name,x:c.x+rdx,y:c.y+rdy});
-        }
-      }
-    }
-
-    // Union-Find
-    const par={};
-    const find=id=>{if(par[id]!==id)par[id]=find(par[id]);return par[id];};
-    const union=(a,b)=>{par[find(a)]=find(b);};
-    ports.forEach(p=>par[p.id]=p.id);
-
-    // Wire nodes
-    const wns=[];
-    for(const w of wires){
-      const pts=w.points||[];if(pts.length<2)continue;
-      const ns=pts.map((_,i)=>`w${w.id}.${i}`);
-      ns.forEach(n=>par[n]=n);
-      for(let i=0;i<ns.length-1;i++)union(ns[i],ns[i+1]);
-      wns.push({pts,ns});
-    }
-    // Connect wire points to nearby ports
-    for(const{pts,ns}of wns)
-      for(let wi=0;wi<pts.length;wi++)
-        for(const p of ports)
-          if(Math.hypot(pts[wi].x-p.x,pts[wi].y-p.y)<=SNAP)union(ns[wi],p.id);
-
-    // Net labels: connect to nearby wires/ports, then merge by name
-    const lblNodes={};
-    for(const lbl of labels){
-      const ln=`lbl_${lbl.id}`;par[ln]=ln;
-      for(const{pts,ns}of wns)
-        for(let wi=0;wi<pts.length;wi++)
-          if(Math.hypot(pts[wi].x-lbl.x,pts[wi].y-lbl.y)<=SNAP)union(ln,ns[wi]);
-      for(const p of ports)
-        if(Math.hypot(p.x-lbl.x,p.y-lbl.y)<=SNAP)union(ln,p.id);
-      if(!lblNodes[lbl.name])lblNodes[lbl.name]=ln;
-      else union(ln,lblNodes[lbl.name]);
-    }
-
-    // Collect groups
-    const groups={};
-    for(const p of ports){const r=find(p.id);(groups[r]||(groups[r]=[])).push(p);}
-
-    // Build a lookup from the schematic-computed netlist if provided.
-    // Key: "designator.portName" → net name (same format as buildNetlist() produces)
-    const isNCpin=p=>(p.pinType==='nc')||/^NC$/i.test(p.pname);
-    let pinNetLookup=null;
-    if(precomputedNets&&precomputedNets.length){
-      pinNetLookup=new Map();
-      for(const net of precomputedNets){
-        for(const pin of net.pins){
-          // pin is "designator.portName" e.g. "U1.RF-IN"
-          pinNetLookup.set(pin,/^NC$/i.test(net.name)?null:net.name);
-        }
-      }
-    }
-
-    // Name nets and assign
-    let nets=[],assign={};let auto=1;
-    for(const grp of Object.values(groups)){
-      if(!grp.length)continue;
-      let name=null;
-
-      // 1. VCC/GND power symbols always win
-      for(const p of grp){
-        if(p.stype==='vcc'){const c=comps.find(x=>x.id===p.compId);name=(c?.value?.trim())||'VCC';}
-        else if(p.stype==='gnd'){const c=comps.find(x=>x.id===p.compId);if(!name)name=(c?.value?.trim())||'GND';}
-      }
-
-      // 2. Use schematic-computed net name (from buildNetlist — same labels, same N1/N2 counters)
-      if(!name&&pinNetLookup){
-        for(const p of grp){
-          if(p.stype==='vcc'||p.stype==='gnd')continue;
-          const key=`${p.des}.${p.pname}`;
-          if(pinNetLookup.has(key)){name=pinNetLookup.get(key);break;}
-        }
-      }
-
-      // 3. Local label fallback (if precomputedNets not provided)
-      if(!name){
-        for(const lbl of labels){
-          const ln=`lbl_${lbl.id}`;
-          if(par[ln]&&find(ln)===find(grp[0].id)){name=lbl.name;break;}
-        }
-      }
-
-      // 4. NC: all non-power pins are NC type → null net (excluded from DRC/routing)
-      if(!name){
-        const np=grp.filter(p=>p.stype!=='vcc'&&p.stype!=='gnd');
-        if(np.length&&np.every(p=>isNCpin(p)))name=null; // will assign null to all pads
-      }
-
-      // 5. Final fallback
-      if(name===undefined)name=`NET${auto++}`;
-
-      const pads=[];
-      for(const p of grp){
-        if(p.stype==='vcc'||p.stype==='gnd')continue;
-        // NC pins always get null — excluded from DRC, routing, ratsnest
-        const padNet=isNCpin(p)?null:name;
-        assign[p.id]=padNet;
-        if(padNet)pads.push(`${p.des}.${p.pname}`);
-      }
-      if(name&&pads.length>0)nets.push({name,pads});
-    }
-
-    // ── Example-aware placement ─────────────────────────────────────────────
-    // Components tagged with _exampleGroupId (placed via ⚡ in schematic) keep
-    // their template spatial relationships on the PCB. Others go in a grid.
-    const phys=comps.filter(c=>c.symType!=='vcc'&&c.symType!=='gnd');
-    if(!phys.length)return null;
-
-    // Group by example instance id (eg_xxxx assigned in schematic's _placeGroup/importExample)
-    const exGroups={};
-    for(const c of phys)if(c._exampleGroupId)(exGroups[c._exampleGroupId]||(exGroups[c._exampleGroupId]=[])).push(c);
-    const exGroupIds=Object.keys(exGroups);
-
-    // Scale: 1 schematic px → 0.075 mm  (20px grid → 1.5mm; bypass cap ~40px away → 3mm)
-    const SCH_TO_MM=0.075;
-    const BM=Math.min(boardW,boardH)*0.09;
-
-    // Fetch layout_examples for each unique slug in example groups
-    const leBySlug={};
-    await Promise.all(Object.values(exGroups).map(async gcs=>{
-      const slug=gcs[0]?._exampleSlug;
-      if(slug&&!leBySlug.hasOwnProperty(slug)){
-        leBySlug[slug]=null; // sentinel to avoid duplicate fetches
-        try{const r=await fetch(`/api/library/${slug}`);
-          if(r.ok){const p=await r.json();
-            if(p.layout_example?.components?.length)leBySlug[slug]=p.layout_example;}}
-        catch(_){}
-      }
-    }));
-    const leForGroup=gid=>{const slug=exGroups[gid]?.[0]?._exampleSlug;return slug?leBySlug[slug]:null;};
-
-    // Each group's PCB bounding box in mm (relative to group centroid in template coords)
-    const gBounds={};
-    for(const[gid,gcs]of Object.entries(exGroups)){
-      const le=leForGroup(gid);
-      if(le){
-        // Use layout_example's actual board as the tile footprint (with small padding)
-        const PAD=2;
-        gBounds[gid]={cx:0,cy:0,mnX:-PAD,mxX:le.board.width+PAD,mnY:-PAD,mxY:le.board.height+PAD,
-          w:le.board.width+PAD*2,h:le.board.height+PAD*2};
-      }else{
-        const exs=gcs.map(c=>c._exampleX!=null?c._exampleX:c.x);
-        const eys=gcs.map(c=>c._exampleY!=null?c._exampleY:c.y);
-        const cx=exs.reduce((s,v)=>s+v,0)/exs.length;
-        const cy=eys.reduce((s,v)=>s+v,0)/eys.length;
-        const mnX=(Math.min(...exs)-cx)*SCH_TO_MM,mxX=(Math.max(...exs)-cx)*SCH_TO_MM;
-        const mnY=(Math.min(...eys)-cy)*SCH_TO_MM,mxY=(Math.max(...eys)-cy)*SCH_TO_MM;
-        const PAD=4;
-        gBounds[gid]={cx,cy,mnX:mnX-PAD,mxX:mxX+PAD,mnY:mnY-PAD,mxY:mxY+PAD,
-          w:mxX-mnX+PAD*2,h:mxY-mnY+PAD*2};
-      }
-    }
-
-    // Tile groups across board, wrapping to new row as needed
-    const gOrigins={};
-    let tileX=BM,tileY=BM,rowH=0;
-    for(const gid of exGroupIds){
-      const gb=gBounds[gid];
-      if(tileX+gb.w>boardW-BM&&tileX>BM){tileX=BM;tileY+=rowH+8;rowH=0;}
-      gOrigins[gid]={boardX:tileX-gb.mnX,boardY:tileY-gb.mnY};
-      tileX+=gb.w+8;rowH=Math.max(rowH,gb.h);
-    }
-
-    // Ungrouped components: simple grid below example groups
-    const freeStartX=BM,freeStartY=exGroupIds.length?tileY+rowH+8:BM;
-    const FREE_COLS=Math.max(1,Math.floor((boardW-BM*2)/8));
-    let freeCount=0;
-
-    // ── Inject layout_example groups ──────────────────────────────────────
-    // For each example group that has a layout_example, use its actual
-    // PCB component positions, traces, and vias instead of auto-placing.
-    // On re-import (prevBoard has _leApplied), preserve the existing board's
-    // LE data so user edits (moved parts, added traces) are not wiped.
-    const leCoveredCompIds=new Set();
-    const leExtraComps=[],leExtraTraces=[],leExtraVias=[],leExtraAreas=[];
-    const hasAnyLE=exGroupIds.some(g=>!!leForGroup(g));
-    const prevHasLE=prevBoard&&prevBoard._leApplied&&
-      (prevBoard.components?.some(c=>c._fromLE)||prevBoard.traces?.length>0);
-
-    if(prevHasLE){
-      // ── Re-import with existing LE data: preserve user's PCB work ──────
-      // Mark all LE-group schematic components as covered so they don't get auto-placed
-      for(const[gid,gcs]of Object.entries(exGroups)){
-        if(leForGroup(gid))for(const c of gcs)leCoveredCompIds.add(c.id);
-      }
-      // Carry over previous LE components (preserving user-edited positions/rotations),
-      // but re-assign pad nets from example_circuit netlist (authoritative source).
-      // Build exampleNets per LE group: "des.portName" → net name from example_circuit labels
-      const leExampleNetsByGroup={};
-      for(const[gid,gcs]of Object.entries(exGroups)){
-        const le=leForGroup(gid);if(!le)continue;
-        const icSlug=gcs.find(c=>c.symType==='ic')?.slug;
-        const prof=icSlug?profileCache[icSlug]:null;
-        leExampleNetsByGroup[gid]=this._computeExampleNets(prof,profileCache);
-      }
-      for(const ec of(prevBoard.components||[])){
-        if(!ec._fromLE)continue;
-        const baseRef=ec.ref.replace(/_g\d+$/,'');
-        // Use the _g suffix index to find the correct group for this instance.
-        // Fallback to designator matching for un-suffixed refs or index out of range.
-        const suffixM=ec.ref.match(/_g(\d+)$/);
-        let gid;
-        if(suffixM){
-          const idx=parseInt(suffixM[1])-1;
-          const candidate=exGroupIds[idx];
-          if(candidate&&leForGroup(candidate))gid=candidate;
-        }
-        if(!gid)gid=Object.keys(exGroups).find(g=>exGroups[g].some(c=>(c.designator||c.id).toUpperCase()===baseRef.toUpperCase()));
-        const exNets=gid?leExampleNetsByGroup[gid]:null;
-        const gcs2=gid?exGroups[gid]:[];
-        const icSlugRe=gcs2.find(c=>c.symType==='ic')?.slug;
-        const profRe=icSlugRe?profileCache[icSlugRe]:null;
-        // Find the schematic designator for this LE ref within the group
-        const exCircCompsRe=profRe?.example_circuit?.components||[];
-        const refToSchDesigRe={};
-        for(const sc of gcs2){
-          if(sc._exampleX==null||sc._exampleY==null)continue;
-          const orig=exCircCompsRe.find(ec2=>ec2.x===sc._exampleX&&ec2.y===sc._exampleY);
-          if(orig?.designator)refToSchDesigRe[orig.designator]=sc.designator;
-        }
-        const schRefRe=refToSchDesigRe[baseRef]??baseRef;
-        const newPads=(ec.pads||[]).map(p=>{
-          let net=undefined;
-          // 1. Schematic netlist is authoritative — use the resolved per-instance designator
-          if(pinNetLookup){
-            net=pinNetLookup.get(`${schRefRe}.${p.name}`);
-            if(net===undefined&&profRe){
-              const pin=profRe.pins?.find(pp=>String(pp.number)===String(p.number));
-              if(pin)net=pinNetLookup.get(`${schRefRe}.${pin.name||`P${pin.number}`}`);
-            }
-          }
-          // 2. Fall back to example_circuit nets (covers LE-only passives not in schematic)
-          if(net===undefined&&exNets){
-            net=exNets.get(`${baseRef}.${p.name}`);
-            if(net===undefined&&profRe){
-              const pin=profRe.pins?.find(pp=>String(pp.number)===String(p.number));
-              if(pin)net=exNets.get(`${baseRef}.${pin.name||`P${pin.number}`}`);
-            }
-          }
-          return{...p,net:net??p.net};
-        });
-        leExtraComps.push({...ec,pads:newPads});
-      }
-      leExtraTraces.push(...(prevBoard.traces||[]));
-      leExtraVias.push(...(prevBoard.vias||[]));
-      leExtraAreas.push(...(prevBoard.areas||[]));
-      // ── Inject groups not yet in the previous board (new instances added since last conversion)
-      // Determine which group indices are already represented in prevBoard._fromLE components.
-      const prevRepIdx=new Set();
-      for(const ec of(prevBoard.components||[])){
-        if(!ec._fromLE)continue;
-        const sm=ec.ref.match(/_g(\d+)$/);
-        prevRepIdx.add(sm?parseInt(sm[1])-1:0); // no suffix = index 0
-      }
-      for(const[gid,gcs]of Object.entries(exGroups)){
-        const le=leForGroup(gid);if(!le||!gOrigins[gid])continue;
-        const leInstIdx=exGroupIds.indexOf(gid);
-        if(prevRepIdx.has(leInstIdx))continue; // already in prevBoard — skip
-        // New group: inject from LE template at its tiled position
-        const{boardX,boardY}=gOrigins[gid];
-        const refSuffix=exGroupIds.filter(g=>leForGroup(g)===le).length>1?`_g${leInstIdx+1}`:'';
-        const icSlug=gcs.find(c=>c.symType==='ic')?.slug;
-        const prof=icSlug?profileCache[icSlug]:null;
-        const exNets=this._computeExampleNets(prof,profileCache);
-        const refToSchDesig={};
-        const exCircComps=prof?.example_circuit?.components||[];
-        for(const sc of gcs){
-          if(sc._exampleX==null||sc._exampleY==null)continue;
-          const orig=exCircComps.find(e=>e.x===sc._exampleX&&e.y===sc._exampleY);
-          if(orig?.designator)refToSchDesig[orig.designator]=sc.designator;
-        }
-        const leNetRemapA=new Map();
-        for(const lec of le.components){
-          const schRef=refToSchDesig[lec.ref]??lec.ref;
-          const newPads=(lec.pads||[]).map(p=>{
-            let net=undefined;
-            if(pinNetLookup){
-              net=pinNetLookup.get(`${schRef}.${p.name}`);
-              if(net===undefined&&prof){const pin=prof.pins?.find(pp=>String(pp.number)===String(p.number));if(pin)net=pinNetLookup.get(`${schRef}.${pin.name||`P${pin.number}`}`);}
-            }
-            if(net===undefined&&exNets){
-              net=exNets.get(`${lec.ref}.${p.name}`);
-              if(net===undefined&&prof){const pin=prof.pins?.find(pp=>String(pp.number)===String(p.number));if(pin)net=exNets.get(`${lec.ref}.${pin.name||`P${pin.number}`}`);}
-            }
-            if(net===undefined||net===null)net=p.net||null;
-            if(p.net&&net&&p.net!==net)leNetRemapA.set(p.net,net);
-            return{...p,net};
-          });
-          leExtraComps.push({id:(lec.id||lec.ref)+refSuffix,ref:lec.ref+refSuffix,value:lec.value||'',
-            footprint:lec.footprint,x:Math.round((boardX+lec.x)*100)/100,
-            y:Math.round((boardY+lec.y)*100)/100,rotation:lec.rotation||0,layer:lec.layer||'F',
-            pads:newPads,_fromLE:true});
-        }
-        for(const tr of(le.traces||[]))leExtraTraces.push({...tr,net:leNetRemapA.get(tr.net)??tr.net,segments:(tr.segments||[]).map(s=>({start:{x:Math.round((s.start.x+boardX)*100)/100,y:Math.round((s.start.y+boardY)*100)/100},end:{x:Math.round((s.end.x+boardX)*100)/100,y:Math.round((s.end.y+boardY)*100)/100}}))});
-        for(const v of(le.vias||[]))leExtraVias.push({...v,x:Math.round((v.x+boardX)*100)/100,y:Math.round((v.y+boardY)*100)/100});
-        for(const a of(le.areas||[]))leExtraAreas.push({...a,points:(a.points||[]).map(p=>({x:Math.round((p.x+boardX)*100)/100,y:Math.round((p.y+boardY)*100)/100}))});
-      }
-    }else if(hasAnyLE){
-      // ── First-time import: inject from profile ─────────────────────────
-      for(const[gid,gcs]of Object.entries(exGroups)){
-        const le=leForGroup(gid);
-        if(!le||!gOrigins[gid])continue;
-        // All schematic components in this group are covered — skip them in the main loop
-        for(const c of gcs)leCoveredCompIds.add(c.id);
-        const{boardX,boardY}=gOrigins[gid];
-        const leInstIdx=exGroupIds.indexOf(gid);
-        const refSuffix=exGroupIds.filter(g=>leForGroup(g)===le).length>1?`_g${leInstIdx+1}`:'';
-        // Compute nets: schematic netlist is authoritative; example_circuit only fills gaps
-        const icSlug=gcs.find(c=>c.symType==='ic')?.slug;
-        const prof=icSlug?profileCache[icSlug]:null;
-        const exNets=this._computeExampleNets(prof,profileCache);
-        // Build LE-template-ref → schematic-designator map for this group instance.
-        // Each schematic component stores _exampleX/_exampleY (original example_circuit coords).
-        // Matching those coords against the example_circuit components gives us the original ref,
-        // which equals the LE template ref. This lets us look up correct nets for any instance.
-        const refToSchDesig={};
-        const exCircComps=prof?.example_circuit?.components||[];
-        for(const sc of gcs){
-          if(sc._exampleX==null||sc._exampleY==null)continue;
-          const orig=exCircComps.find(ec=>ec.x===sc._exampleX&&ec.y===sc._exampleY);
-          if(orig?.designator)refToSchDesig[orig.designator]=sc.designator;
-        }
-        const leNetRemapB=new Map();
-        for(const lec of le.components){
-          // Resolve the schematic designator for this LE component (handles multi-instance correctly)
-          const schRef=refToSchDesig[lec.ref]??lec.ref;
-          const newPads=(lec.pads||[]).map(p=>{
-            let net=undefined;
-            // 1. Schematic netlist first — using the correct per-instance schematic designator
-            if(pinNetLookup){
-              net=pinNetLookup.get(`${schRef}.${p.name}`);
-              if(net===undefined&&prof){
-                const pin=prof.pins?.find(pp=>String(pp.number)===String(p.number));
-                if(pin)net=pinNetLookup.get(`${schRef}.${pin.name||`P${pin.number}`}`);
-              }
-            }
-            // 2. Example_circuit nets — fallback for LE-only passives not in the schematic
-            if(net===undefined&&exNets){
-              net=exNets.get(`${lec.ref}.${p.name}`);
-              if(net===undefined&&prof){
-                const pin=prof.pins?.find(pp=>String(pp.number)===String(p.number));
-                if(pin)net=exNets.get(`${lec.ref}.${pin.name||`P${pin.number}`}`);
-              }
-            }
-            // 3. LE template's own pad net as last resort
-            if(net===undefined||net===null)net=p.net||null;
-            if(p.net&&net&&p.net!==net)leNetRemapB.set(p.net,net);
-            return{...p,net};
-          });
-          leExtraComps.push({id:(lec.id||lec.ref)+refSuffix,ref:lec.ref+refSuffix,value:lec.value||'',
-            footprint:lec.footprint,x:Math.round((boardX+lec.x)*100)/100,
-            y:Math.round((boardY+lec.y)*100)/100,rotation:lec.rotation||0,layer:lec.layer||'F',
-            pads:newPads,_fromLE:true});
-        }
-        for(const tr of(le.traces||[])){
-          leExtraTraces.push({...tr,net:leNetRemapB.get(tr.net)??tr.net,segments:(tr.segments||[]).map(s=>({
-            start:{x:Math.round((s.start.x+boardX)*100)/100,y:Math.round((s.start.y+boardY)*100)/100},
-            end:{x:Math.round((s.end.x+boardX)*100)/100,y:Math.round((s.end.y+boardY)*100)/100}
-          }))});
-        }
-        for(const v of(le.vias||[])){
-          leExtraVias.push({...v,x:Math.round((v.x+boardX)*100)/100,y:Math.round((v.y+boardY)*100)/100});
-        }
-        for(const a of(le.areas||[])){
-          leExtraAreas.push({...a,points:(a.points||[]).map(p=>({x:Math.round((p.x+boardX)*100)/100,y:Math.round((p.y+boardY)*100)/100}))});
-        }
-      }
-    }
-
-    // Pre-fetch all footprints so the loop below is synchronous
-    const fpCache={};
-    await Promise.all(phys.map(async c=>{
-      const fpName=this._fpName(c.symType,profileCache[c.slug]);
-      if(fpName&&!fpCache[fpName]){
-        try{const r=await fetch(`/api/footprints/${encodeURIComponent(fpName)}`);
-          if(r.ok)fpCache[fpName]=await r.json();}catch(_){}
-      }
-    }));
-
-    const pcbComps=[];
-    for(const c of phys){
-      if(leCoveredCompIds.has(c.id))continue; // covered by layout_example — skip
-      const profile=profileCache[c.slug];
-      const fpName=this._fpName(c.symType,profile);
-      const fpData=fpCache[fpName];
-
-      let fp,pads;
-      if(fpData&&fpData.pads&&fpData.pads.length){
-        fp=fpData.name||fpName;
-        // Build pads from footprint file; add pin names so net assignment works
-        const profilePins=profile?.pins||[];
-        const def=SYMDEFS[c.symType]||{ports:[]};
-        pads=fpData.pads.map((p,i)=>{
-          const pad={...p,net:null};
-          if(!pad.name){
-            // IC: match pin name from profile by number
-            const pin=profilePins.find(pp=>String(pp.number)===String(pad.number));
-            if(pin) pad.name=pin.name;
-            // Passive: match port name from SYMDEFS by pad index
-            else if(def.ports[i]) pad.name=def.ports[i].name;
-          }
-          return pad;
-        });
-      }else{
-        // Fallback to hardcoded generation
-        const result=this.compPads(c.symType,c,profile);
-        fp=result.fp; pads=result.pads;
-      }
-
-      // Assign nets: authoritative precomputedNets lookup first (bypasses broken coordinate union-find for ICs),
-      // fallback to union-find assign[] only when not found
-      const des=c.designator||c.id;
-      const profilePins2=profile?.pins||[];
-      const compPorts=ports.filter(p=>p.compId===c.id);
-      for(const pad of pads){
-        let net=undefined;
-        // 1. Direct name lookup: "U1.RF-IN", "R1.P1", etc.
-        if(pinNetLookup) net=pinNetLookup.get(`${des}.${pad.name}`);
-        // 2. Lookup by profile pin number → pin name (IC footprint pads may only have a number)
-        if(net===undefined&&pinNetLookup&&profilePins2.length){
-          const pin=profilePins2.find(pp=>String(pp.number)===String(pad.number));
-          if(pin) net=pinNetLookup.get(`${des}.${pin.name}`);
-        }
-        // 3. Union-find fallback (wire-labels, non-precomputed path)
-        if(net===undefined){
-          const byNum=compPorts.find(p=>String(p.pinNum)===String(pad.number));
-          if(byNum&&assign[byNum.id]!==undefined) net=assign[byNum.id];
-          else{
-            const byName=compPorts.find(p=>p.pname===pad.name);
-            if(byName&&assign[byName.id]!==undefined) net=assign[byName.id];
-          }
-        }
-        pad.net=net??null;
-      }
-      let px,py;
-      if(c._exampleGroupId&&gOrigins[c._exampleGroupId]){
-        // Use scaled template position to preserve spatial relationships from example circuit
-        const{boardX,boardY}=gOrigins[c._exampleGroupId];
-        const{cx,cy}=gBounds[c._exampleGroupId];
-        const relX=((c._exampleX!=null?c._exampleX:c.x)-cx)*SCH_TO_MM;
-        const relY=((c._exampleY!=null?c._exampleY:c.y)-cy)*SCH_TO_MM;
-        px=Math.max(1,Math.min(boardW-1,boardX+relX));
-        py=Math.max(1,Math.min(boardH-1,boardY+relY));
-      }else{
-        px=Math.max(1,Math.min(boardW-1,freeStartX+(freeCount%FREE_COLS)*8));
-        py=Math.max(1,Math.min(boardH-1,freeStartY+Math.floor(freeCount/FREE_COLS)*8));
-        freeCount++;
-      }
-      pcbComps.push({id:c.id,ref:c.designator||c.id.toUpperCase(),value:c.value||'',
-        footprint:fp,x:Math.round(px*100)/100,y:Math.round(py*100)/100,
-        rotation:(c.rotation||0)*90,layer:'F',pads});
-    }
-    // Always rebuild nets[] from actual pad assignments across all components
-    // (union-find nets[] can be wrong for ICs with LE/coordinate mismatch)
-    const allComps=[...leExtraComps,...pcbComps];
-    {
-      const netsByName=new Map();
-      for(const comp of allComps){
-        const ref=comp.ref||comp.id;
-        for(const pad of comp.pads||[]){
-          if(!pad.net)continue;
-          if(!netsByName.has(pad.net))netsByName.set(pad.net,[]);
-          netsByName.get(pad.net).push(`${ref}.${pad.number}`);
-        }
-      }
-      nets=[...netsByName.entries()].map(([name,pads])=>({name,pads}));
-    }
-
-    // ── Rebind trace nets from schematic pad assignments ───────────────────
-    // Traces coming from the layout_example may carry stale net names.
-    // Snap each trace endpoint to the nearest pad and inherit its net.
-    // This keeps routing correct after schematic nets win over example nets.
-    {
-      // Build pad lookup: {net, x, y} in board mm
-      const padPts=[];
-      for(const comp of allComps){
-        for(const pad of comp.pads||[]){
-          if(!pad.net)continue;
-          padPts.push({net:pad.net,x:comp.x+(pad.x||0),y:comp.y+(pad.y||0)});
-        }
-      }
-      const MAX_SNAP_MM=6; // max distance to snap a trace endpoint to a pad
-      const nearestNet=(tx,ty)=>{
-        let bestD=Infinity,bestNet=null;
-        for(const pp of padPts){
-          const d=Math.hypot(tx-pp.x,ty-pp.y);
-          if(d<bestD){bestD=d;bestNet=pp.net;}
-        }
-        return bestD<=MAX_SNAP_MM?bestNet:null;
-      };
-      for(const tr of leExtraTraces){
-        if(!tr.segments||!tr.segments.length)continue;
-        const s0=tr.segments[0],sN=tr.segments[tr.segments.length-1];
-        const n1=nearestNet(s0.start.x,s0.start.y);
-        const n2=nearestNet(sN.end.x,sN.end.y);
-        // Both endpoints agree → use that net; endpoints disagree → keep existing
-        if(n1&&n1===n2)tr.net=n1;
-        else if(n1&&!n2)tr.net=n1;
-        else if(n2&&!n1)tr.net=n2;
-        // else leave trace.net unchanged
-      }
-    }
-
-    const leGroupCount=exGroupIds.filter(g=>!!leForGroup(g)).length;
-    return{version:'1.0',title:project.name||'Imported',
-      projectId:project.id||null,
-      board:{width:boardW,height:boardH,units:'mm'},
-      components:allComps,nets,
-      traces:leExtraTraces,vias:leExtraVias,zones:[],areas:leExtraAreas,
-      _exGroupCount:exGroupIds.length,_exCompCount:phys.filter(c=>c._exampleGroupId).length,
-      _leGroupCount:leGroupCount,_leApplied:leGroupCount>0||prevHasLE};
-  }
+async function importSchematic(projectData) {
+  const res = await fetch('/api/pcb/import-schematic', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ project: projectData })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || e.error || 'Import failed'); }
+  return await res.json();
 }
 
+
 // ═══════════════════════════════════════════════════════════════
-// AUTO PLACER — net-aware greedy placement with multiple trials
-// Generates candidate positions that align passive pads with the
-// IC pins they connect to (same X or same Y), respects courtyard
-// clearances, and scores by HPWL.  Runs nTrials shuffles and
-// keeps the lowest-score result.
+// AUTO PLACER — class body removed, see runAutoPlace() below
 // ═══════════════════════════════════════════════════════════════
-class AutoPlacer{
-  constructor(board,fpData,dr,gridSize){
-    this.board=board;this.fpData=fpData;this.dr=dr||{};
-    this.grid=gridSize||0.5;
-  }
-  _snap(v){return Math.round(v/this.grid)*this.grid;}
 
-  // Courtyard half-extents for comp (swapped when rotated ~90°)
-  _cyH(comp){
-    const fp=this.fpData[comp.footprint];
-    let hw,hh;
-    if(fp?.courtyard){const cy=fp.courtyard;hw=cy.w/2;hh=cy.h/2;}
-    else{
-      hw=1.5;hh=1.5;
-      for(const p of(comp.pads||[])){
-        hw=Math.max(hw,Math.abs(p.x)+(p.size_x||0.5));
-        hh=Math.max(hh,Math.abs(p.y)+(p.size_y||0.5));
-      }
-    }
-    const rot=Math.abs((comp.rotation||0))%180;
-    return(rot>45&&rot<135)?{hw:hh,hh:hw}:{hw,hh};
-  }
+// ═══════════════════════════════════════════════════════════════
+// AUTO ROUTER — class body removed, see runAutoRoute() below
+// ═══════════════════════════════════════════════════════════════
 
-  _aabb(comp,x,y){const{hw,hh}=this._cyH(comp);return{mnX:x-hw,mxX:x+hw,mnY:y-hh,mxY:y+hh};}
+// ═══════════════════════════════════════════════════════════════
+// GERBER EXPORTER — class body removed, see exportGerber() / downloadGerberZip() below
+// ═══════════════════════════════════════════════════════════════
 
-  // Returns true if placing comp at (x,y) violates courtyard clearance with any placed comp.
-  // Expands comp's AABB by DR.courtyardClearance before testing overlap.
-  _conflicts(comp,x,y,placed){
-    const cl=this.dr.courtyardClearance??0;
-    const a=this._aabb(comp,x,y);
-    const ae={mnX:a.mnX-cl,mxX:a.mxX+cl,mnY:a.mnY-cl,mxY:a.mxY+cl};
-    return placed.some(p=>{
-      const b=this._aabb(p.comp,p.x,p.y);
-      return ae.mnX<b.mxX&&ae.mxX>b.mnX&&ae.mnY<b.mxY&&ae.mxY>b.mnY;
-    });
-  }
+// ═══════════════════════════════════════════════════════════════
+// KICAD PCB EXPORTER — class body removed, see exportKiCad() below
+// ═══════════════════════════════════════════════════════════════
 
-  // Half-perimeter wire length for entire board given a posMap {compId->{x,y}}
-  _hpwl(posMap){
-    let t=0;
-    for(const net of(this.board.nets||[])){
-      if(!net.pads||net.pads.length<2)continue;
-      let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;
-      for(const ref of net.pads){
-        const[cr,pn]=ref.split('.');
-        const c=this.board.components.find(c=>c.ref===cr);if(!c)continue;
-        const pos=posMap.get(c.id);if(!pos)continue;
-        const pad=(c.pads||[]).find(p=>p.number===pn);if(!pad)continue;
-        const wx=pos.x+pad.x,wy=pos.y+pad.y;
-        if(wx<mnX)mnX=wx;if(wx>mxX)mxX=wx;if(wy<mnY)mnY=wy;if(wy>mxY)mxY=wy;
-      }
-      if(mnX<1e9)t+=(mxX-mnX)+(mxY-mnY);
-    }
-    return t;
-  }
-
-  // Connection count per component ref (used to sort IC first)
-  _connCount(){
-    const cnt={};
-    for(const net of(this.board.nets||[]))
-      for(const ref of(net.pads||[])){const cr=ref.split('.')[0];cnt[cr]=(cnt[cr]||0)+1;}
-    return cnt;
-  }
-
-  // Find best position for comp given already-placed components.
-  // Generates 4 candidates per (myPad × connectedAnchorPad) pair:
-  //   above/below the anchor (X-aligned), left/right the anchor (Y-aligned).
-  // Picks the valid candidate with lowest pad-distance score.
-  _bestPos(comp,placed,W,H){
-    const myNets=new Set((comp.pads||[]).map(p=>p.net).filter(Boolean));
-    const{hw,hh}=this._cyH(comp);
-
-    // World positions of connected pads already on the board
-    const connPads=[];
-    for(const p of placed){
-      const{hw:shw,hh:shh}=this._cyH(p.comp);
-      for(const pad of(p.comp.pads||[])){
-        if(pad.net&&myNets.has(pad.net))
-          connPads.push({wx:p.x+pad.x,wy:p.y+pad.y,net:pad.net,
-                          sx:p.x,sy:p.y,shw,shh});
-      }
-    }
-
-    if(!connPads.length)
-      return this._radialScan(W/2,H/2,comp,placed,W,H)||{x:W*.8,y:H*.2};
-
-    // Gap to leave between courtyards when generating candidates
-    const gap=(this.dr.courtyardClearance??0)+0.01;
-    const edge=this.dr.edgeClearance??0.5;
-
-    // Generate candidates: align each of my pads with each anchor pad
-    const cands=[];
-    for(const myPad of(comp.pads||[])){
-      if(!myPad.net)continue;
-      const ancs=connPads.filter(a=>a.net===myPad.net);
-      for(const a of ancs){
-        const axc=a.wx-myPad.x; // place so myPad.x == anchor wx
-        const ayc=a.wy-myPad.y; // place so myPad.y == anchor wy
-        cands.push(
-          {x:axc, y:a.sy-a.shh-hh-gap},  // above anchor (X-aligned)
-          {x:axc, y:a.sy+a.shh+hh+gap},  // below anchor (X-aligned)
-          {x:a.sx-a.shw-hw-gap, y:ayc},  // left  of anchor (Y-aligned)
-          {x:a.sx+a.shw+hw+gap, y:ayc}   // right of anchor (Y-aligned)
-        );
-      }
-    }
-
-    let best=null,bScore=1e9;
-    for(const c of cands){
-      const x=this._snap(Math.max(hw+edge,Math.min(W-hw-edge,c.x)));
-      const y=this._snap(Math.max(hh+edge,Math.min(H-hh-edge,c.y)));
-      if(this._conflicts(comp,x,y,placed))continue;
-      // Score = total distance from my pads to their connected anchors
-      let score=0;
-      for(const myPad of(comp.pads||[])){
-        if(!myPad.net)continue;
-        for(const a of connPads.filter(a=>a.net===myPad.net))
-          score+=Math.hypot(x+myPad.x-a.wx,y+myPad.y-a.wy);
-      }
-      if(score<bScore){bScore=score;best={x,y};}
-    }
-
-    if(!best){
-      // Fallback: radial scan outward from centroid of connected pads
-      const cx=connPads.reduce((s,p)=>s+p.wx,0)/connPads.length;
-      const cy=connPads.reduce((s,p)=>s+p.wy,0)/connPads.length;
-      best=this._radialScan(cx,cy,comp,placed,W,H);
-    }
-    return best||{x:W*.9,y:H*.9};
-  }
-
-  // Radial scan outward from (cx,cy) to find a conflict-free position
-  _radialScan(cx,cy,comp,placed,W,H){
-    const{hw,hh}=this._cyH(comp);
-    const edge=this.dr.edgeClearance??0.5;
-    for(let r=.5;r<=25;r+=.5)
-      for(let d=0;d<360;d+=30){
-        const rad=d*Math.PI/180;
-        const x=this._snap(Math.max(hw+edge,Math.min(W-hw-edge,cx+r*Math.cos(rad))));
-        const y=this._snap(Math.max(hh+edge,Math.min(H-hh-edge,cy+r*Math.sin(rad))));
-        if(!this._conflicts(comp,x,y,placed))return{x,y};
-      }
-    return null;
-  }
-
-  // Run one greedy placement trial in the given component order
-  async _trial(order,W,H,onStep){
-    const placed=[],posMap=new Map();
-    for(let i=0;i<order.length;i++){
-      const comp=order[i];
-      if(onStep)onStep(comp.ref);
-      let x,y;
-      if(!placed.length){x=this._snap(W/2);y=this._snap(H/2);}
-      else{const p=this._bestPos(comp,placed,W,H);x=p.x;y=p.y;}
-      placed.push({comp,x,y});
-      posMap.set(comp.id,{x,y});
-      if(i%4===0)await new Promise(r=>setTimeout(r,0)); // keep UI alive
-    }
-    return{posMap,score:this._hpwl(posMap)};
-  }
-
-  _shuffle(a){
-    a=[...a];
-    for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];}
-    return a;
-  }
-
-  // Run nTrials shuffles; return best {posMap, score}
-  async place(nTrials,onProgress){
-    const comps=(this.board.components||[]).filter(c=>c.pads?.length);
-    if(!comps.length)return null;
-    const W=this.board.board?.width||100,H=this.board.board?.height||80;
-    const conn=this._connCount();
-    // Sort: most-connected (IC) first; passives follow in random order each trial
-    const sorted=[...comps].sort((a,b)=>(conn[b.ref]||0)-(conn[a.ref]||0));
-    let best=null;
-    for(let t=0;t<nTrials;t++){
-      if(onProgress)onProgress(t+1,nTrials,null);
-      // Keep the top-2 most-connected anchors fixed at front; shuffle the rest
-      const N=Math.min(2,sorted.length);
-      const order=[...sorted.slice(0,N),...this._shuffle(sorted.slice(N))];
-      const trial=await this._trial(order,W,H,ref=>{
-        if(onProgress)onProgress(t+1,nTrials,ref);
+// ═══════════════════════════════════════════════════════════════
+// DRC — delegated to Python API
+// ═══════════════════════════════════════════════════════════════
+async function runDRC(board, dr, fpData) {
+  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  try {
+    let res;
+    if (boardId) {
+      res = await fetch(`/api/pcb/${boardId}/drc`, { method: 'POST' });
+    } else {
+      res = await fetch('/api/pcb/drc', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ board: board || editor?.board || {} })
       });
-      if(!best||trial.score<best.score)best=trial;
-      await new Promise(r=>setTimeout(r,0));
     }
-    return best;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// AUTO ROUTER (Lee BFS, single-layer F.Cu)
-// ═══════════════════════════════════════════════════════════════
-class AutoRouter {
-  constructor(board,dr){
-    this.board=board; this.dr=dr;
-    this.res=0.25; // mm per grid cell
-  }
-
-  async routeAll(onProgress){
-    const conns=this._buildConns();
-    conns.sort((a,b)=>a.dist-b.dist);
-    let routed=0,failed=0,lastPaint=performance.now();
-    for(let i=0;i<conns.length;i++){
-      const c=conns[i];
-      const segs=this._route(c);
-      if(segs&&segs.length>0){
-        this.board.traces.push({net:c.net,layer:'F.Cu',width:this.dr.traceWidth,segments:segs});
-        routed++;
-      } else failed++;
-      // Yield to browser every ~16ms so each routed trace paints immediately
-      const now=performance.now();
-      if(now-lastPaint>=16){
-        if(onProgress)onProgress(i+1,conns.length,c.net);
-        await new Promise(r=>requestAnimationFrame(r));
-        lastPaint=performance.now();
+    const data = await res.json();
+    const violations = data.violations || data.errors || [];
+    const resultsEl = document.getElementById('drc-results') || document.getElementById('drc-output');
+    if (resultsEl) {
+      if (!violations.length) {
+        resultsEl.innerHTML = '<div style="color:#22c55e;padding:8px;">✓ No DRC violations</div>';
+      } else {
+        resultsEl.innerHTML = violations.map(v =>
+          `<div style="color:#ef4444;padding:4px 8px;border-left:3px solid #ef4444;margin:4px 0;">${v.type}: ${v.message}</div>`
+        ).join('');
       }
     }
-    if(onProgress)onProgress(conns.length,conns.length,'');
-    return{routed,failed,total:conns.length};
+    return violations;
+  } catch(e) {
+    console.error('DRC failed:', e);
+    return [];
   }
-
-  _buildConns(){
-    const netPads=this._netPads(),conns=[];
-    for(const[net,pads]of Object.entries(netPads)){
-      if(pads.length<2)continue;
-      // Skip GND, NC and empty nets — these are handled by copper pour / no connection
-      if(!net||/^GND$/i.test(net)||/^VSS$/i.test(net)||/^AGND$/i.test(net)||/^PGND$/i.test(net)||
-         /^NC$/i.test(net)||/[_.]NC$/i.test(net)||/^NOCONNECT$/i.test(net))continue;
-      // MST by nearest-neighbor
-      const used=new Set([0]);
-      while(used.size<pads.length){
-        let bd=Infinity,bi=-1,bj=-1;
-        for(const i of used)
-          for(let j=0;j<pads.length;j++){
-            if(used.has(j))continue;
-            const d=Math.hypot(pads[i].x-pads[j].x,pads[i].y-pads[j].y);
-            if(d<bd){bd=d;bi=i;bj=j;}
-          }
-        if(bi===-1)break;
-        conns.push({net,from:pads[bi],to:pads[bj],dist:bd});
-        used.add(bj);
-      }
-    }
-    return conns;
-  }
-
-  _route(conn){
-    const{from,to,net}=conn;
-    const b=this.board.board;
-    const cols=Math.ceil(b.width/this.res)+1;
-    const rows=Math.ceil(b.height/this.res)+1;
-    const grid=new Uint32Array(cols*rows); // 0=free, 0xFFFFFFFF=obstacle
-    const OBS=0xFFFFFFFF;
-    this._markObs(grid,cols,rows,net);
-
-    const toG=(v)=>Math.max(0,Math.min(cols-1,Math.round(v/this.res)));
-    const toGy=(v)=>Math.max(0,Math.min(rows-1,Math.round(v/this.res)));
-    const sgx=toG(from.x),sgy=toGy(from.y),egx=toG(to.x),egy=toGy(to.y);
-
-    grid[sgy*cols+sgx]=0; grid[egy*cols+egx]=0;
-    // BFS
-    grid[sgy*cols+sgx]=1;
-    const Q=[[sgx,sgy]]; let qi=0,found=false;
-    const D=[[1,0],[0,1],[-1,0],[0,-1]];
-    while(qi<Q.length&&!found){
-      const[cx,cy]=Q[qi++];
-      const cv=grid[cy*cols+cx];
-      for(const[dx,dy]of D){
-        const nx=cx+dx,ny=cy+dy;
-        if(nx<0||nx>=cols||ny<0||ny>=rows)continue;
-        const idx=ny*cols+nx;
-        if(grid[idx]!==0)continue;
-        grid[idx]=cv+1;
-        if(nx===egx&&ny===egy){found=true;break;}
-        Q.push([nx,ny]);
-      }
-    }
-    if(!found)return null;
-
-    // Backtrack
-    const path=[[egx,egy]];
-    let cx=egx,cy=egy;
-    while(cx!==sgx||cy!==sgy){
-      const cv=grid[cy*cols+cx];
-      let bx=cx,by=cy;
-      for(const[dx,dy]of D){
-        const nx=cx+dx,ny=cy+dy;
-        if(nx<0||nx>=cols||ny<0||ny>=rows)continue;
-        const v=grid[ny*cols+nx];
-        if(v>0&&v<cv&&v!==OBS){bx=nx;by=ny;break;}
-      }
-      if(bx===cx&&by===cy)break;
-      path.push([bx,by]); cx=bx; cy=by;
-    }
-    path.reverse();
-    return this._simplify(path.map(([gx,gy])=>({x:gx*this.res,y:gy*this.res})));
-  }
-
-  _simplify(pts){
-    if(pts.length<2)return[];
-    const segs=[];
-    let i=0;
-    while(i<pts.length-1){
-      let j=i+1;
-      while(j<pts.length-1){
-        const dxa=Math.sign(pts[j].x-pts[i].x),dya=Math.sign(pts[j].y-pts[i].y);
-        const dxb=Math.sign(pts[j+1].x-pts[j].x),dyb=Math.sign(pts[j+1].y-pts[j].y);
-        if(dxa!==dxb||dya!==dyb)break;
-        j++;
-      }
-      segs.push({start:{x:pts[i].x,y:pts[i].y},end:{x:pts[j].x,y:pts[j].y}});
-      i=j;
-    }
-    return segs;
-  }
-
-  _markObs(grid,cols,rows,skipNet){
-    const OBS=0xFFFFFFFF;
-    const cl=this.dr.clearance+this.dr.traceWidth/2;
-    const fill=(cx,cy,r)=>{
-      const gcx=Math.round(cx/this.res),gcy=Math.round(cy/this.res);
-      const gr=Math.ceil(r/this.res);
-      for(let dy=-gr;dy<=gr;dy++)for(let dx=-gr;dx<=gr;dx++){
-        if(dx*dx+dy*dy>gr*gr+1)continue;
-        const gx=gcx+dx,gy=gcy+dy;
-        if(gx>=0&&gx<cols&&gy>=0&&gy<rows)grid[gy*cols+gx]=OBS;
-      }
-    };
-    for(const c of(this.board.components||[]))
-      for(const p of(c.pads||[])){
-        if(p.net===skipNet)continue;
-        const{px,py}=this._pp(c,p);
-        fill(px,py,Math.max(p.size_x||1.6,p.size_y||1.6)/2+cl);
-      }
-    for(const tr of(this.board.traces||[])){
-      if(tr.net===skipNet)continue;
-      const hw=(tr.width||this.dr.traceWidth)/2+this.dr.clearance;
-      for(const seg of(tr.segments||[])){
-        const dx=seg.end.x-seg.start.x,dy=seg.end.y-seg.start.y;
-        const len=Math.hypot(dx,dy)||1;
-        const steps=Math.ceil(len/this.res)*2;
-        for(let i=0;i<=steps;i++)fill(seg.start.x+dx*i/steps,seg.start.y+dy*i/steps,hw);
-      }
-    }
-    // Edge keep-out
-    const ec=Math.ceil(this.dr.edgeClearance/this.res);
-    for(let gy=0;gy<rows;gy++)for(let gx=0;gx<cols;gx++){
-      if(gx<ec||gx>=cols-ec||gy<ec||gy>=rows-ec)grid[gy*cols+gx]=OBS;
-    }
-  }
-
-  _pp(c,p){
-    const r=(c.rotation||0)*Math.PI/180;
-    return{px:p.x*Math.cos(r)-p.y*Math.sin(r)+c.x,
-           py:p.x*Math.sin(r)+p.y*Math.cos(r)+c.y};
-  }
-
-  _netPads(){
-    const m={};
-    const isNC=n=>/^NC$/i.test(n)||/[_.]NC$/i.test(n);
-    for(const c of(this.board.components||[]))
-      for(const p of(c.pads||[])){
-        if(!p.net||isNC(p.net))continue;
-        const{px,py}=this._pp(c,p);
-        (m[p.net]||(m[p.net]=[])).push({x:px,y:py});
-      }
-    return m;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// GERBER EXPORTER (RS-274X)
-// ═══════════════════════════════════════════════════════════════
-class GerberExporter {
-  constructor(board){this.board=board;}
-  coord(v){return Math.round(v*1e6).toString();}
-  hdr(lyr){
-    return['%TF.GenerationSoftware,SchematicDesigner,PCBEditor,1.0*%',
-           `%TF.CreationDate,${new Date().toISOString()}*%`,
-           `%TF.SameCoordinates,POS_AND_NEG*%`,
-           `%TF.FileFunction,${lyr}*%`,
-           '%FSLAX46Y46*%','%MOMM*%','%LPD*%'].join('\n');
-  }
-  copper(layer){
-    const lines=[this.hdr(layer==='F.Cu'?'Copper,L1,Top':'Copper,L2,Bot')];
-    const amap={};let dc=10;
-    const ap=(key,def)=>{if(!amap[key]){amap[key]=dc++;lines.push(def.replace('Dxx',`D${amap[key]}`))}return amap[key];};
-    // Pads
-    const isl=(c)=>(layer==='F.Cu'&&(c.layer||'F')==='F')||(layer==='B.Cu'&&c.layer==='B');
-    for(const c of(this.board.components||[])){
-      if(!isl(c))continue;
-      const r=(c.rotation||0)*Math.PI/180;
-      for(const p of(c.pads||[])){
-        const px=p.x*Math.cos(r)-p.y*Math.sin(r)+c.x;
-        const py=p.x*Math.sin(r)+p.y*Math.cos(r)+c.y;
-        const w=(p.size_x||1.6).toFixed(6),h=(p.size_y||1.6).toFixed(6);
-        const d=p.shape==='rect'?ap(`R${w}x${h}`,`%ADDxxR,${w}X${h}*%`):ap(`C${w}`,`%ADDxxC,${w}*%`);
-        lines.push(`D${d}*`,`X${this.coord(px)}Y${this.coord(py)}D03*`);
-      }
-    }
-    // Traces
-    for(const tr of(this.board.traces||[])){
-      if(tr.layer!==layer)continue;
-      const tw=(tr.width||0.25).toFixed(6);
-      const d=ap(`TW${tw}`,`%ADDxxC,${tw}*%`);
-      lines.push(`D${d}*`);
-      for(const seg of(tr.segments||[])){
-        lines.push(`X${this.coord(seg.start.x)}Y${this.coord(seg.start.y)}D02*`);
-        lines.push(`X${this.coord(seg.end.x)}Y${this.coord(seg.end.y)}D01*`);
-      }
-    }
-    // Drawings on this copper layer
-    for(const d of(this.board.drawings||[])){
-      if(d.layer!==layer)continue;
-      const pts=d.points||[];
-      if(pts.length<2)continue;
-      const dw=(d.width||0.25).toFixed(6);
-      const dd=ap(`DW${dw}`,`%ADDxxC,${dw}*%`);
-      lines.push(`D${dd}*`);
-      lines.push(`X${this.coord(pts[0].x)}Y${this.coord(pts[0].y)}D02*`);
-      for(let i=1;i<pts.length;i++)
-        lines.push(`X${this.coord(pts[i].x)}Y${this.coord(pts[i].y)}D01*`);
-      if(d.closed)lines.push(`X${this.coord(pts[0].x)}Y${this.coord(pts[0].y)}D01*`);
-    }
-    lines.push('M02*');
-    return lines.join('\n');
-  }
-  silk(side){
-    const lyr=side+'SilkS';
-    const lines=[this.hdr(`Legend,${side==='F'?'Top':'Bot'}`),'%ADD10C,0.120000*%','D10*'];
-    for(const c of(this.board.components||[])){
-      if((c.layer||'F')!==side)continue;
-      if(!c.pads||!c.pads.length)continue;
-      let mn=[Infinity,Infinity],mx=[-Infinity,-Infinity];
-      const r=(c.rotation||0)*Math.PI/180;
-      for(const p of c.pads){
-        const px=p.x*Math.cos(r)-p.y*Math.sin(r),py=p.x*Math.sin(r)+p.y*Math.cos(r);
-        const hw=(p.size_x||1.6)/2,hh=(p.size_y||1.6)/2;
-        mn[0]=Math.min(mn[0],px-hw);mn[1]=Math.min(mn[1],py-hh);
-        mx[0]=Math.max(mx[0],px+hw);mx[1]=Math.max(mx[1],py+hh);
-      }
-      const m=0.3,x1=c.x+mn[0]-m,y1=c.y+mn[1]-m,x2=c.x+mx[0]+m,y2=c.y+mx[1]+m;
-      lines.push(`X${this.coord(x1)}Y${this.coord(y1)}D02*`,
-                 `X${this.coord(x2)}Y${this.coord(y1)}D01*`,
-                 `X${this.coord(x2)}Y${this.coord(y2)}D01*`,
-                 `X${this.coord(x1)}Y${this.coord(y2)}D01*`,
-                 `X${this.coord(x1)}Y${this.coord(y1)}D01*`);
-    }
-    // Custom drawings on this silk layer
-    const silkLyr=side==='F'?'F.SilkS':'B.SilkS';
-    for(const d of(this.board.drawings||[])){
-      if(d.layer!==silkLyr)continue;
-      const pts=d.points||[];
-      if(pts.length<2)continue;
-      lines.push(`X${this.coord(pts[0].x)}Y${this.coord(pts[0].y)}D02*`);
-      for(let i=1;i<pts.length;i++)
-        lines.push(`X${this.coord(pts[i].x)}Y${this.coord(pts[i].y)}D01*`);
-      if(d.closed)lines.push(`X${this.coord(pts[0].x)}Y${this.coord(pts[0].y)}D01*`);
-    }
-    lines.push('M02*');
-    return lines.join('\n');
-  }
-  mask(side){
-    const lines=[this.hdr(`SolderMask,${side==='F'?'Top':'Bot'}`)];
-    const amap={};let dc=10;
-    const exp=0.05;
-    const isl=(c)=>(side==='F'&&(c.layer||'F')==='F')||(side==='B'&&c.layer==='B');
-    for(const c of(this.board.components||[])){
-      if(!isl(c))continue;
-      const r=(c.rotation||0)*Math.PI/180;
-      for(const p of(c.pads||[])){
-        const px=p.x*Math.cos(r)-p.y*Math.sin(r)+c.x;
-        const py=p.x*Math.sin(r)+p.y*Math.cos(r)+c.y;
-        const w=((p.size_x||1.6)+exp*2).toFixed(6),h=((p.size_y||1.6)+exp*2).toFixed(6);
-        const key=`${w}x${h}`;
-        if(!amap[key]){amap[key]=dc;lines.push(`%ADD${dc}${p.shape==='rect'?'R':'C'},${w}${p.shape==='rect'?'X'+h:''}*%`);dc++;}
-        lines.push(`D${amap[key]}*`,`X${this.coord(px)}Y${this.coord(py)}D03*`);
-      }
-    }
-    lines.push('M02*');
-    return lines.join('\n');
-  }
-  edge(){
-    const b=this.board.board;
-    const lines=[this.hdr('Profile,NP'),'%ADD10C,0.050000*%','D10*',
-      `X${this.coord(0)}Y${this.coord(0)}D02*`,
-      `X${this.coord(b.width)}Y${this.coord(0)}D01*`,
-      `X${this.coord(b.width)}Y${this.coord(b.height)}D01*`,
-      `X${this.coord(0)}Y${this.coord(b.height)}D01*`,
-      `X${this.coord(0)}Y${this.coord(0)}D01*`];
-    // Custom drawings on Edge.Cuts layer
-    for(const d of(this.board.drawings||[])){
-      if(d.layer!=='Edge.Cuts')continue;
-      const pts=d.points||[];
-      if(pts.length<2)continue;
-      lines.push(`X${this.coord(pts[0].x)}Y${this.coord(pts[0].y)}D02*`);
-      for(let i=1;i<pts.length;i++)
-        lines.push(`X${this.coord(pts[i].x)}Y${this.coord(pts[i].y)}D01*`);
-      if(d.closed)lines.push(`X${this.coord(pts[0].x)}Y${this.coord(pts[0].y)}D01*`);
-    }
-    lines.push('M02*');
-    return lines.join('\n');
-  }
-  drill(){
-    const drills=new Map();
-    const add=(x,y,d)=>{const k=d.toFixed(3);(drills.get(k)||(drills.set(k,[]),drills.get(k))).push({x,y});};
-    for(const c of(this.board.components||[])){
-      const r=(c.rotation||0)*Math.PI/180;
-      for(const p of(c.pads||[])){
-        if(p.type!=='thru_hole'||!p.drill)continue;
-        add(p.x*Math.cos(r)-p.y*Math.sin(r)+c.x,p.x*Math.sin(r)+p.y*Math.cos(r)+c.y,p.drill);
-      }
-    }
-    for(const v of(this.board.vias||[]))add(v.x,v.y,v.drill||0.6);
-    const lines=['M48','METRIC,TZ'];
-    let t=1;
-    for(const[sz]of drills){lines.push(`T${t}C${sz}`);t++;}
-    lines.push('%','G90','G05');
-    t=1;
-    for(const[,holes]of drills){
-      lines.push(`T${t}`);
-      for(const h of holes)lines.push(`X${String(Math.round(h.x*1000)).padStart(6,'0')}Y${String(Math.round(h.y*1000)).padStart(6,'0')}`);
-      t++;
-    }
-    lines.push('M30');
-    return lines.join('\n');
-  }
-  all(){
-    return{
-      'F_Cu.gtl':this.copper('F.Cu'),
-      'B_Cu.gbl':this.copper('B.Cu'),
-      'F_SilkS.gto':this.silk('F'),
-      'B_SilkS.gbo':this.silk('B'),
-      'F_Mask.gts':this.mask('F'),
-      'B_Mask.gbs':this.mask('B'),
-      'Edge_Cuts.gm1':this.edge(),
-      'drill.drl':this.drill()
-    };
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// KICAD PCB EXPORTER
-// ═══════════════════════════════════════════════════════════════
-class KiCadExporter {
-  constructor(board){this.board=board;}
-  export(){
-    const b=this.board.board,nets=new Map();let ni=1;
-    const lines=[];
-    lines.push('(kicad_pcb (version 20221018) (generator pcb_editor)');
-    lines.push('  (general (thickness 1.6))');
-    lines.push('  (paper "A4")');
-    lines.push('  (layers');
-    [['0','F.Cu','signal'],['31','B.Cu','signal'],['35','F.SilkS','user'],
-     ['34','B.SilkS','user'],['44','Edge.Cuts','user'],['37','F.Mask','user'],['38','B.Mask','user']]
-      .forEach(([i,n,t])=>lines.push(`    (${i} "${n}" ${t})`));
-    lines.push('  )');
-    lines.push('  (setup (pad_to_mask_clearance 0.05))');
-    lines.push('  (net 0 "")');
-    for(const net of(this.board.nets||[])){nets.set(net.name,ni);lines.push(`  (net ${ni} "${net.name}")`);ni++;}
-    for(const c of(this.board.components||[]))
-      for(const p of(c.pads||[]))
-        if(p.net&&!nets.has(p.net)){nets.set(p.net,ni);lines.push(`  (net ${ni} "${p.net}")`);ni++;}
-    lines.push(`  (gr_rect (start 0 0) (end ${b.width} ${b.height}) (layer "Edge.Cuts") (width 0.05))`);
-    // Custom drawings
-    for(const d of(this.board.drawings||[])){
-      const pts=d.points||[];
-      if(pts.length<2)continue;
-      const w=d.width||0.05;
-      const lyr=d.layer||'Edge.Cuts';
-      const n=pts.length+(d.closed?1:0);
-      for(let i=0;i<n-1;i++){
-        const a=pts[i],b2=pts[(i+1)%pts.length];
-        lines.push(`  (gr_line (start ${a.x} ${a.y}) (end ${b2.x} ${b2.y}) (layer "${lyr}") (width ${w}))`);
-      }
-    }
-    for(const c of(this.board.components||[])){
-      const lyr=c.layer==='B'?'B.Cu':'F.Cu';
-      lines.push(`  (footprint "${c.footprint||c.value}" (layer "${lyr}")`);
-      lines.push(`    (at ${c.x} ${c.y} ${c.rotation||0})`);
-      lines.push(`    (reference "${c.ref}" (at 0 -2) (layer "F.SilkS"))`);
-      lines.push(`    (value "${c.value||''}" (at 0 2) (layer "F.Fab"))`);
-      for(const p of(c.pads||[])){
-        const nn=p.net?(nets.get(p.net)||0):0;
-        const shp=p.shape==='rect'?'rect':'circle';
-        if(p.type==='thru_hole')
-          lines.push(`    (pad "${p.number}" thru_hole ${shp} (at ${p.x} ${p.y}) (size ${p.size_x||1.6} ${p.size_y||1.6}) (drill ${p.drill||0.8}) (layers "*.Cu" "*.Mask") (net ${nn} "${p.net||''}"))`)
-        else
-          lines.push(`    (pad "${p.number}" smd ${shp} (at ${p.x} ${p.y}) (size ${p.size_x||1.6} ${p.size_y||1.6}) (layers "${lyr}" "F.Mask") (net ${nn} "${p.net||''}"))`)
-      }
-      lines.push('  )');
-    }
-    for(const tr of(this.board.traces||[])){
-      const nn=tr.net?(nets.get(tr.net)||0):0;
-      for(const seg of(tr.segments||[]))
-        lines.push(`  (segment (start ${seg.start.x} ${seg.start.y}) (end ${seg.end.x} ${seg.end.y}) (width ${tr.width||0.25}) (layer "${tr.layer||'F.Cu'}") (net ${nn}))`);
-    }
-    for(const v of(this.board.vias||[])){
-      const nn=v.net?(nets.get(v.net)||0):0;
-      lines.push(`  (via (at ${v.x} ${v.y}) (size ${v.size||1.0}) (drill ${v.drill||0.6}) (layers "F.Cu" "B.Cu") (net ${nn}))`);
-    }
-    lines.push(')');
-    return lines.join('\n');
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// DRC
-// ═══════════════════════════════════════════════════════════════
-function runDRC(board,dr,fpData={}){
-  const errs=[];
-  const bw=board.board?.width||100,bh=board.board?.height||100;
-  const isNC=n=>/^NC$/i.test(n)||/[_.]NC$/i.test(n);
-  const minAnnular=dr.minAnnularRing??0.15;
-
-  // 1. Collect pad world positions
-  const pads=[];
-  for(const c of(board.components||[])){
-    const r=(c.rotation||0)*Math.PI/180;
-    for(const p of(c.pads||[])){
-      const px=p.x*Math.cos(r)-p.y*Math.sin(r)+c.x;
-      const py=p.x*Math.sin(r)+p.y*Math.cos(r)+c.y;
-      pads.push({comp:c.ref,pad:p.number,name:p.name,net:p.net,x:px,y:py,
-        size_x:p.size_x||1.6,size_y:p.size_y||1.6,drill:p.drill||0,type:p.type||'smd',
-        r:Math.max(p.size_x||1.6,p.size_y||1.6)/2});
-    }
-  }
-
-  // 2. Clearance — different-net pads
-  for(let i=0;i<pads.length;i++)for(let j=i+1;j<pads.length;j++){
-    const a=pads[i],b=pads[j];
-    if(!a.net||!b.net||a.net===b.net)continue;
-    const dist=Math.hypot(a.x-b.x,a.y-b.y)-a.r-b.r;
-    if(dist<dr.clearance)
-      errs.push({cat:'clearance',type:'CLEARANCE',sev:'ERROR',
-        msg:`Clearance ${dist.toFixed(3)}mm &lt; ${dr.clearance}mm: <b>${a.comp}.${a.pad}</b>(${a.net}) &#8596; <b>${b.comp}.${b.pad}</b>(${b.net})`});
-  }
-  // Edge clearance — pads near board edge
-  for(const p of pads){
-    const d=Math.min(p.x-p.r,bw-(p.x+p.r),p.y-p.r,bh-(p.y+p.r));
-    if(d<dr.edgeClearance)
-      errs.push({cat:'clearance',type:'EDGE_CLEARANCE',sev:'WARNING',
-        msg:`<b>${p.comp}.${p.pad}</b> pad within ${dr.edgeClearance}mm of board edge (gap ${Math.max(0,d).toFixed(2)}mm)`});
-  }
-
-  // Trace-segment-to-pad copper clearance (different nets)
-  function ptSegDist(px,py,ax,ay,bx,by){
-    const dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
-    if(len2<1e-10)return Math.hypot(px-ax,py-ay);
-    const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len2));
-    return Math.hypot(px-(ax+t*dx),py-(ay+t*dy));
-  }
-  const seenTC=new Set();
-  for(const tr of(board.traces||[])){
-    if(!tr.net||isNC(tr.net))continue;
-    const hw=(tr.width||0.25)/2;
-    for(const s of(tr.segments||[])){
-      if(!s.start||!s.end)continue;
-      for(const p of pads){
-        if(!p.net||p.net===tr.net||isNC(p.net))continue;
-        const dist=ptSegDist(p.x,p.y,s.start.x,s.start.y,s.end.x,s.end.y);
-        const copperGap=dist-hw-p.r;
-        if(copperGap<dr.clearance){
-          const key=tr.net+'|'+p.comp+'.'+p.pad;
-          if(!seenTC.has(key)){
-            seenTC.add(key);
-            errs.push({cat:'clearance',type:'TRACE_PAD_CLEARANCE',sev:'ERROR',
-              msg:`Trace(<b>${tr.net}</b>) ↔ <b>${p.comp}.${p.pad}</b>(${p.net}): copper gap ${copperGap.toFixed(3)}mm &lt; ${dr.clearance}mm`});
-          }
-        }
-      }
-    }
-  }
-
-  // Trace-segment-to-trace-segment copper clearance (different nets)
-  function segSegDist(ax,ay,bx,by,cx,cy,dx2,dy2){
-    function ptSeg(px,py,x1,y1,x2,y2){
-      const ex=x2-x1,ey=y2-y1,len2=ex*ex+ey*ey;
-      if(len2<1e-10)return Math.hypot(px-x1,py-y1);
-      const t=Math.max(0,Math.min(1,((px-x1)*ex+(py-y1)*ey)/len2));
-      return Math.hypot(px-(x1+t*ex),py-(y1+t*ey));
-    }
-    function segsIntersect(ax,ay,bx,by,cx,cy,dx,dy){
-      const D=(bx-ax)*(dy-cy)-(by-ay)*(dx-cx);
-      if(Math.abs(D)<1e-10)return false;
-      const t=((cx-ax)*(dy-cy)-(cy-ay)*(dx-cx))/D;
-      const u=((cx-ax)*(by-ay)-(cy-ay)*(bx-ax))/D;
-      return t>=0&&t<=1&&u>=0&&u<=1;
-    }
-    if(segsIntersect(ax,ay,bx,by,cx,cy,dx2,dy2))return 0;
-    return Math.min(ptSeg(ax,ay,cx,cy,dx2,dy2),ptSeg(bx,by,cx,cy,dx2,dy2),
-                    ptSeg(cx,cy,ax,ay,bx,by),ptSeg(dx2,dy2,ax,ay,bx,by));
-  }
-  const seenTT=new Set();
-  const traceList=board.traces||[];
-  for(let i=0;i<traceList.length;i++){
-    const ta=traceList[i];if(!ta.net||isNC(ta.net))continue;
-    const hwa=(ta.width||0.25)/2;
-    for(let j=i+1;j<traceList.length;j++){
-      const tb=traceList[j];if(!tb.net||isNC(tb.net))continue;
-      if(ta.net===tb.net)continue;
-      const hwb=(tb.width||0.25)/2;
-      for(const sa of(ta.segments||[])){
-        if(!sa.start||!sa.end)continue;
-        for(const sb of(tb.segments||[])){
-          if(!sb.start||!sb.end)continue;
-          const dist=segSegDist(sa.start.x,sa.start.y,sa.end.x,sa.end.y,
-                                sb.start.x,sb.start.y,sb.end.x,sb.end.y);
-          const copperGap=dist-hwa-hwb;
-          if(copperGap<dr.clearance){
-            const key=[ta.net,tb.net].sort().join('|');
-            if(!seenTT.has(key)){
-              seenTT.add(key);
-              errs.push({cat:'clearance',type:'TRACE_TRACE_CLEARANCE',sev:'ERROR',
-                msg:`Trace(<b>${ta.net}</b>) ↔ Trace(<b>${tb.net}</b>): copper gap ${copperGap.toFixed(3)}mm &lt; ${dr.clearance}mm`});
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // 3. Unconnected nets
-  const routedNets=new Set((board.traces||[]).map(t=>t.net));
-  const netPads={};
-  for(const p of pads)if(p.net&&!isNC(p.net))(netPads[p.net]||(netPads[p.net]=[])).push(p);
-  for(const[net,pp]of Object.entries(netPads)){
-    if(pp.length>1&&!routedNets.has(net))
-      errs.push({cat:'unconnected',type:'UNCONNECTED',sev:'WARNING',
-        msg:`Net <b>${net}</b> — ${pp.length} pads, no traces routed`});
-    if(pp.length===1)
-      errs.push({cat:'net',type:'SINGLE_PAD_NET',sev:'WARNING',
-        msg:`Net <b>${net}</b> has only 1 pad (${pp[0].comp}.${pp[0].pad}) — nothing to connect to`});
-  }
-
-  // 4. Trace geometry
-  const padNets=new Set(pads.map(p=>p.net).filter(Boolean));
-  for(const tr of(board.traces||[])){
-    if((tr.width||0)<dr.minTraceWidth)
-      errs.push({cat:'trace',type:'TRACE_WIDTH',sev:'ERROR',
-        msg:`Trace on <b>${tr.net||'?'}</b>: width ${tr.width}mm &lt; min ${dr.minTraceWidth}mm`});
-    if(tr.net&&!padNets.has(tr.net)&&!isNC(tr.net))
-      errs.push({cat:'net',type:'FLOATING_TRACE',sev:'WARNING',
-        msg:`Trace on net <b>${tr.net}</b> — no component pad uses this net`});
-    for(const s of(tr.segments||[])){
-      if(s.start&&s.end&&Math.hypot(s.end.x-s.start.x,s.end.y-s.start.y)<0.001)
-        errs.push({cat:'trace',type:'ZERO_LENGTH',sev:'WARNING',
-          msg:`Zero-length trace segment on net <b>${tr.net||'?'}</b> at (${s.start?.x},${s.start?.y})`});
-      for(const pt of[s.start,s.end].filter(Boolean)){
-        const d=Math.min(pt.x,bw-pt.x,pt.y,bh-pt.y);
-        if(d<dr.edgeClearance)
-          errs.push({cat:'clearance',type:'TRACE_EDGE_CLEARANCE',sev:'WARNING',
-            msg:`Trace (net <b>${tr.net||'?'}</b>) endpoint within ${dr.edgeClearance}mm of board edge`});
-      }
-    }
-  }
-
-  // 5. Physical net conflicts — elements of different nets that physically touch
-  const seenConf=new Set();
-  function addConf(x,y,aLabel,aNet,bLabel,bNet,type='NET_CONFLICT'){
-    const key=[aLabel,bLabel].sort().join('|')+`@${type}`;
-    if(seenConf.has(key))return;seenConf.add(key);
-    errs.push({cat:'net',type,sev:'ERROR',x,y,
-      msg:`Net conflict: <b>${aLabel}</b> (${aNet}) touches <b>${bLabel}</b> (${bNet})`});
-  }
-  // Pad-to-pad physical overlap (different nets)
-  for(let i=0;i<pads.length;i++)for(let j=i+1;j<pads.length;j++){
-    const a=pads[i],b=pads[j];
-    if(!a.net||!b.net||a.net===b.net||isNC(a.net)||isNC(b.net))continue;
-    const dist=Math.hypot(a.x-b.x,a.y-b.y);
-    if(dist<Math.max(a.r,0.3)+Math.max(b.r,0.3))
-      addConf((a.x+b.x)/2,(a.y+b.y)/2,`${a.comp}.${a.pad}`,a.net,`${b.comp}.${b.pad}`,b.net);
-  }
-  // Via-to-pad conflict
-  for(const v of(board.vias||[])){
-    if(!v.net||isNC(v.net))continue;
-    const vr=(v.size||1)/2;
-    for(const p of pads){
-      if(!p.net||p.net===v.net||isNC(p.net))continue;
-      if(Math.hypot(v.x-p.x,v.y-p.y)<vr+Math.max(p.r,0.3))
-        addConf((v.x+p.x)/2,(v.y+p.y)/2,`via(${v.net})`,v.net,`${p.comp}.${p.pad}`,p.net);
-    }
-  }
-  // Trace endpoint touching a pad of a different net (NET_MISMATCH)
-  const EPS_NM=0.4;
-  for(const tr of(board.traces||[])){
-    if(!tr.net||isNC(tr.net))continue;
-    for(const s of(tr.segments||[])){
-      for(const pt of[s.start,s.end].filter(Boolean)){
-        for(const p of pads){
-          if(!p.net||p.net===tr.net||isNC(p.net))continue;
-          if(Math.hypot(pt.x-p.x,pt.y-p.y)<EPS_NM)
-            addConf(pt.x,pt.y,`trace(${tr.net})`,tr.net,`${p.comp}.${p.pad}`,p.net,'NET_MISMATCH');
-        }
-      }
-    }
-  }
-  // Trace-to-trace crossing (different nets)
-  function segX(ax1,ay1,ax2,ay2,bx1,by1,bx2,by2){
-    const dx1=ax2-ax1,dy1=ay2-ay1,dx2=bx2-bx1,dy2=by2-by1;
-    const d=dx1*dy2-dy1*dx2;if(!d)return null;
-    const t=((bx1-ax1)*dy2-(by1-ay1)*dx2)/d;
-    const u=((bx1-ax1)*dy1-(by1-ay1)*dx1)/d;
-    if(t>0.01&&t<0.99&&u>0.01&&u<0.99)return{x:ax1+t*dx1,y:ay1+t*dy1};
-    return null;
-  }
-  const trSegs=[];
-  for(const tr of(board.traces||[])){if(!tr.net||isNC(tr.net))continue;for(const s of(tr.segments||[])){if(s.start&&s.end)trSegs.push({s,net:tr.net});}}
-  for(let i=0;i<trSegs.length;i++)for(let j=i+1;j<trSegs.length;j++){
-    const a=trSegs[i],b=trSegs[j];
-    if(a.net===b.net)continue;
-    const pt=segX(a.s.start.x,a.s.start.y,a.s.end.x,a.s.end.y,b.s.start.x,b.s.start.y,b.s.end.x,b.s.end.y);
-    if(pt)addConf(pt.x,pt.y,`trace(${a.net})`,a.net,`trace(${b.net})`,b.net,'TRACE_CROSSING');
-  }
-
-  // 5. Via geometry
-  const vias=board.vias||[];
-  const minViaClear=dr.viaClearance??0.25;
-  for(const v of vias){
-    const annular=((v.size||1)-(v.drill||0.6))/2;
-    if(annular<minAnnular)
-      errs.push({cat:'via',type:'ANNULAR_RING',sev:'ERROR',
-        msg:`Via at (${v.x},${v.y}): annular ring ${annular.toFixed(3)}mm &lt; min ${minAnnular}mm`});
-    if((v.drill||0.6)>=(v.size||1))
-      errs.push({cat:'via',type:'VIA_DRILL_TOO_LARGE',sev:'ERROR',
-        msg:`Via at (${v.x},${v.y}): drill ${v.drill}mm &#8805; outer &#8960; ${v.size}mm`});
-    if(v.x<dr.edgeClearance||v.x>bw-dr.edgeClearance||v.y<dr.edgeClearance||v.y>bh-dr.edgeClearance)
-      errs.push({cat:'bounds',type:'VIA_EDGE',sev:'WARNING',
-        msg:`Via at (${(v.x||0).toFixed(2)},${(v.y||0).toFixed(2)}) within edge clearance zone`});
-    const aspect=(dr.boardThickness||1.6)/(v.drill||0.6);
-    if(aspect>10)
-      errs.push({cat:'holes',type:'DRILL_ASPECT',sev:'WARNING',
-        msg:`Via at (${v.x},${v.y}): aspect ratio ${aspect.toFixed(1)}:1 (drill ${v.drill}mm, board ${dr.boardThickness||1.6}mm) — recommended &#8804;10:1`});
-  }
-  // Via-to-via clearance
-  for(let i=0;i<vias.length;i++)for(let j=i+1;j<vias.length;j++){
-    const a=vias[i],b=vias[j];
-    if(a.net&&b.net&&a.net===b.net)continue;
-    const dist=Math.hypot((a.x||0)-(b.x||0),(a.y||0)-(b.y||0));
-    const minDist=(a.size||1)/2+(b.size||1)/2+minViaClear;
-    if(dist<minDist)
-      errs.push({cat:'via',type:'VIA_CLEARANCE',sev:'ERROR',
-        msg:`Via(${a.net||'?'}) at (${a.x},${a.y}) to Via(${b.net||'?'}) at (${b.x},${b.y}): gap ${(dist-(a.size||1)/2-(b.size||1)/2).toFixed(3)}mm &lt; ${minViaClear}mm`});
-  }
-  // Through-hole pad annular ring
-  for(const p of pads)
-    if(p.type==='thru_hole'&&p.drill){
-      const ring=(Math.min(p.size_x,p.size_y)-p.drill)/2;
-      if(ring<minAnnular)
-        errs.push({cat:'via',type:'PAD_ANNULAR_RING',sev:'ERROR',
-          msg:`<b>${p.comp}.${p.pad}</b> TH annular ring ${ring.toFixed(3)}mm &lt; min ${minAnnular}mm`});
-    }
-  // Drill-to-drill clearance
-  const drills=[];
-  for(const v of(board.vias||[]))drills.push({x:v.x,y:v.y,r:(v.drill||0.6)/2,label:`via(${v.net||'?'})`});
-  for(const c of(board.components||[])){
-    const rx=(c.rotation||0)*Math.PI/180;
-    for(const p of(c.pads||[]))
-      if(p.type==='thru_hole'&&p.drill)
-        drills.push({x:p.x*Math.cos(rx)-p.y*Math.sin(rx)+c.x,
-          y:p.x*Math.sin(rx)+p.y*Math.cos(rx)+c.y,r:p.drill/2,label:`${c.ref}.${p.number}`});
-  }
-  for(let i=0;i<drills.length;i++)for(let j=i+1;j<drills.length;j++){
-    const a=drills[i],b=drills[j];
-    const d=Math.hypot(a.x-b.x,a.y-b.y)-a.r-b.r;
-    if(d<(dr.drillClearance||0.25))
-      errs.push({cat:'holes',type:'DRILL_CLEARANCE',sev:'ERROR',
-        msg:`Drill clearance ${d.toFixed(3)}mm &lt; ${dr.drillClearance||0.25}mm: <b>${a.label}</b> &#8596; <b>${b.label}</b>`});
-  }
-
-  // 6. Board bounds — components
-  for(const c of(board.components||[])){
-    if(c.x<=0||c.x>=bw||c.y<=0||c.y>=bh)
-      errs.push({cat:'bounds',type:'OUT_OF_BOUNDS',sev:'ERROR',
-        msg:`<b>${c.ref}</b> at (${(c.x||0).toFixed(2)},${(c.y||0).toFixed(2)}) is outside the board outline`});
-    else if(c.x<dr.edgeClearance||c.x>bw-dr.edgeClearance||c.y<dr.edgeClearance||c.y>bh-dr.edgeClearance)
-      errs.push({cat:'bounds',type:'EDGE_PROXIMITY',sev:'WARNING',
-        msg:`<b>${c.ref}</b> at (${(c.x||0).toFixed(2)},${(c.y||0).toFixed(2)}) — closer than ${dr.edgeClearance}mm to board edge`});
-  }
-
-  // 7. Component reference integrity
-  const refCount={};
-  for(const c of(board.components||[]))refCount[c.ref]=(refCount[c.ref]||0)+1;
-  for(const[ref,cnt]of Object.entries(refCount))
-    if(cnt>1)errs.push({cat:'refs',type:'DUPLICATE_REF',sev:'ERROR',
-      msg:`Duplicate reference <b>${ref}</b> appears ${cnt}&#215; on the board`});
-  for(const c of(board.components||[])){
-    if(!c.footprint)errs.push({cat:'refs',type:'NO_FOOTPRINT',sev:'WARNING',
-      msg:`<b>${c.ref}</b> (${c.value||'—'}) has no footprint`});
-    if(!c.value||c.value==='?')errs.push({cat:'refs',type:'NO_VALUE',sev:'WARNING',
-      msg:`<b>${c.ref}</b> has no component value (BOM will be incomplete)`});
-    if(!(c.pads||[]).length)errs.push({cat:'refs',type:'NO_PADS',sev:'WARNING',
-      msg:`<b>${c.ref}</b> (${c.footprint||'no fp'}) has no pads — cannot be connected`});
-  }
-
-  // 8. Courtyard clearance
-  const cyClear=dr.courtyardClearance??0.0;
-  function cyAABB(comp,cy){
-    const r=(comp.rotation||0)*Math.PI/180,cos=Math.cos(r),sin=Math.sin(r);
-    const corners=[{x:cy.x,y:cy.y},{x:cy.x+cy.w,y:cy.y},{x:cy.x+cy.w,y:cy.y+cy.h},{x:cy.x,y:cy.y+cy.h}];
-    let mnX=Infinity,mxX=-Infinity,mnY=Infinity,mxY=-Infinity;
-    for(const c of corners){
-      const wx=c.x*cos-c.y*sin+comp.x,wy=c.x*sin+c.y*cos+comp.y;
-      mnX=Math.min(mnX,wx);mxX=Math.max(mxX,wx);mnY=Math.min(mnY,wy);mxY=Math.max(mxY,wy);
-    }
-    return{mnX,mxX,mnY,mxY};
-  }
-  function rectGap(a,b){
-    const sx=Math.max(a.mnX,b.mnX)-Math.min(a.mxX,b.mxX);
-    const sy=Math.max(a.mnY,b.mnY)-Math.min(a.mxY,b.mxY);
-    if(sx<=0&&sy<=0)return Math.max(sx,sy);
-    if(sx<=0)return sy;if(sy<=0)return sx;
-    return Math.hypot(sx,sy);
-  }
-  const cyComps=board.components||[];
-  for(let i=0;i<cyComps.length;i++)for(let j=i+1;j<cyComps.length;j++){
-    const a=cyComps[i],b=cyComps[j];
-    const afp=fpData[a.footprint],bfp=fpData[b.footprint];
-    if(!afp?.courtyard||!bfp?.courtyard)continue;
-    const gap=rectGap(cyAABB(a,afp.courtyard),cyAABB(b,bfp.courtyard));
-    if(gap<cyClear)
-      errs.push({cat:'courtyard',type:'COURTYARD_CLEARANCE',sev:'ERROR',
-        msg:`Courtyard clearance ${gap.toFixed(3)}mm &lt; ${cyClear}mm: <b>${a.ref}</b> &#8596; <b>${b.ref}</b>${gap<0?' (overlap '+(-gap).toFixed(3)+'mm)':''}`});
-  }
-
-  return errs;
 }
 
 // ═══════════════════════════════════════════════════════════════
 // App bootstrap
 // ═══════════════════════════════════════════════════════════════
-let editor,importer=new SchematicImporter();
+let editor;
 
 window.addEventListener('load',()=>{
   // If standalone (not embedded in iframe), show back link
@@ -4033,7 +2331,7 @@ window.addEventListener('load',()=>{
       if (result.ok) {
         editor.render();
         // Auto-run DRC so conflict markers and table appear immediately
-        setTimeout(()=>{if(typeof runDRCTab==='function'){runDRCTab();}else if(typeof runDRC==='function'&&editor.board){_drcResults=runDRC(editor.board,DR);renderConflictTable();editor.render();}},100);
+        setTimeout(()=>{if(typeof runDRCTab==='function')runDRCTab();},100);
       }
     }
     if (e.data.type === 'getBoard') {
@@ -4065,7 +2363,7 @@ window.addEventListener('load',()=>{
           }
           const r = await fetch(`/api/projects/${e.data.projectId}`);
           const proj = await r.json();
-          const pcb = await importer.convert(proj, bw, bh, prevBoardData, e.data.netlist||null);
+          const pcb = await importSchematic(proj);
           if (pcb) {
             // Only reuse the board ID if we explicitly loaded an existing board for THIS project.
             // Do NOT grab editor.board.id here — it may belong to a different (or deleted) project.
@@ -4946,7 +3244,7 @@ async function doImport(){
     const bw=parseFloat(document.getElementById('imp-w').value)||40;
     const bh=parseFloat(document.getElementById('imp-h').value)||30;
     const st=document.getElementById('import-status');
-    const pcb=await importer.convert(proj,bw,bh);
+    const pcb=await importSchematic(proj);
     if(!pcb){st.textContent='No physical components found';return;}
     const eg=pcb._exGroupCount||0,ec=pcb._exCompCount||0;
     delete pcb._exGroupCount;delete pcb._exCompCount;
@@ -4964,71 +3262,57 @@ async function doImport(){
   }catch(e){document.getElementById('import-status').textContent='Error: '+e.message;}
 }
 
-// ── Auto Route ───────────────────────────────────────────────
-async function runAutoRoute(){
-  if(!editor.board){alert('No board loaded');return;}
-  const btn=document.getElementById('btn-autoroute');
-  const orig=btn.textContent;
-  btn.textContent='⏳ Routing…';btn.disabled=true;
-  editor._snapshot(); // snapshot BEFORE routing so undo restores pre-route state
-  const router=new AutoRouter(editor.board,DR);
-  try{
-    const res=await router.routeAll((i,total,net)=>{
-      btn.textContent=`⏳ ${i}/${total} ${net||''}`;
-      editor.render();
-    });
-    editor._snapshot(); // snapshot AFTER routing so redo can re-apply it
-    editor.render();rebuildCompList();updateBoardInfo();
-    btn.textContent=`✓ ${res.routed}/${res.total}`;btn.disabled=false;
-    setTimeout(()=>btn.textContent=orig,2500);
-  }catch(e){
-    editor.undo(); // roll back the pre-route snapshot on error
-    btn.textContent=orig;btn.disabled=false;
+// ── Auto Route ────────────────────────────────────────────
+async function runAutoRoute() {
+  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  const btn = document.getElementById('btn-autoroute');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Routing…'; }
+  try {
+    let res;
+    if (boardId) {
+      if (editor?._saveBoard) await editor._saveBoard();
+      res = await fetch(`/api/pcb/${boardId}/autoroute`, { method: 'POST' });
+    } else {
+      res = await fetch('/api/pcb/autoroute', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ board: editor?.board || editor?._getBoardData?.() || {} })
+      });
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || data.error || 'Autoroute failed');
+    if (data.traces && editor) {
+      if (editor.board) editor.board.traces = data.traces;
+      if (editor._render) editor._render();
+      else if (editor.render) editor.render();
+    }
+    const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets`;
+    const status = document.getElementById('status-bar') || document.getElementById('route-status');
+    if (status) status.textContent = msg; else console.log(msg);
+    if (editor && editor.render) { editor.render(); rebuildCompList(); updateBoardInfo(); }
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Auto-Route'; }
+  } catch(e) {
+    alert('Autoroute failed: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Auto-Route'; }
   }
 }
 
-// ── Auto Place (experimental) ─────────────────────────────────
-async function runAutoPlace(){
-  if(!editor.board){alert('No board loaded');return;}
-  const comps=editor.board.components||[];
-  if(!comps.length){alert('No components to place');return;}
-  const btn=document.getElementById('btn-autoplace');
-  const orig=btn.textContent;
-  btn.textContent='⏳ Placing…';btn.disabled=true;
-
-  // Fetch footprint courtyard data (same pattern as DRC)
-  const fpData={};
-  const fpNames=[...new Set(comps.map(c=>c.footprint).filter(Boolean))];
-  await Promise.all(fpNames.map(async fp=>{
-    try{const r=await fetch(`/api/footprints/${encodeURIComponent(fp)}`);if(r.ok)fpData[fp]=await r.json();}catch(_){}
-  }));
-
-  editor._snapshot();
-  const N_TRIALS=8;
-  const placer=new AutoPlacer(editor.board,fpData,DR,editor.gridSize);
-  const origHPWL=placer._hpwl(new Map(comps.map(c=>[c.id,{x:c.x,y:c.y}])));
-
-  try{
-    const result=await placer.place(N_TRIALS,(trial,total,ref)=>{
-      btn.textContent=ref?`⏳ T${trial}/${total} ${ref}`:`⏳ Trial ${trial}/${total}…`;
+// ── Auto Place ───────────────────────────────────────────────
+async function runAutoPlace() {
+  const btn = document.getElementById('btn-autoplace');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Placing…'; }
+  try {
+    const context = await fetch('/agents/autoplace/context').then(r => r.json());
+    const res = await fetch('/agents/autoplace/apply', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ placement_dict: context, board_width_mm: 100, board_height_mm: 80 })
     });
-    if(!result)throw new Error('Placer returned no result');
-
-    // Apply best placement
-    for(const comp of comps){
-      const pos=result.posMap.get(comp.id);
-      if(pos){comp.x=Math.round(pos.x*100)/100;comp.y=Math.round(pos.y*100)/100;}
-    }
-    // Existing traces are now invalid — clear them
-    editor.board.traces=[];
-
-    editor._snapshot();
-    editor.render();rebuildCompList();updateBoardInfo();
-    btn.textContent=`✓ HPWL ${result.score.toFixed(1)}mm`;btn.disabled=false;
-    setTimeout(()=>btn.textContent=orig,2500);
-  }catch(e){
-    editor.undo();
-    btn.textContent=orig;btn.disabled=false;
+    const data = await res.json();
+    if (data.success && editor?.render) editor.render();
+    if (editor && editor.render) { rebuildCompList(); updateBoardInfo(); }
+  } catch(e) {
+    alert('Auto-place failed: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📐 Auto-Place'; }
   }
 }
 
@@ -5036,39 +3320,52 @@ async function runAutoPlace(){
 // Iterative legalization: push overlapping components apart while
 // keeping them as close to their current (schematic-derived) positions
 // as possible. Uses DR.courtyardClearance and DR.edgeClearance.
-async function legalize(comps,fpData,W,H){
-  const placer=new AutoPlacer({components:comps,nets:[],board:{width:W,height:H}},fpData,DR,editor.gridSize);
-  const edge=DR.edgeClearance??0.5;
-  const cl=DR.courtyardClearance??0;
-  const MAX_ITER=120;
-  for(let iter=0;iter<MAX_ITER;iter++){
-    let moved=false;
-    for(let i=0;i<comps.length;i++){
-      const a=comps[i];
-      const{hw:ahw,hh:ahh}=placer._cyH(a);
-      for(let j=i+1;j<comps.length;j++){
-        const b=comps[j];
-        const{hw:bhw,hh:bhh}=placer._cyH(b);
-        // Overlap including clearance zone (expand A by cl, check against B)
-        const ox=Math.min(a.x+ahw+cl,b.x+bhw)-Math.max(a.x-ahw-cl,b.x-bhw);
-        const oy=Math.min(a.y+ahh+cl,b.y+bhh)-Math.max(a.y-ahh-cl,b.y-bhh);
-        if(ox<=0||oy<=0)continue; // no conflict
-        moved=true;
-        // Push apart along the minimum-penetration axis
-        const push=Math.min(ox,oy)/2+placer.grid;
-        if(ox<=oy){
-          if(a.x<=b.x){a.x-=push;b.x+=push;}else{a.x+=push;b.x-=push;}
-        }else{
-          if(a.y<=b.y){a.y-=push;b.y+=push;}else{a.y+=push;b.y-=push;}
+function _cyHalfExtents(comp, fpData) {
+  const fp = fpData && fpData[comp.footprint];
+  let hw, hh;
+  if (fp?.courtyard) { const cy = fp.courtyard; hw = cy.w / 2; hh = cy.h / 2; }
+  else {
+    hw = 1.5; hh = 1.5;
+    for (const p of (comp.pads || [])) {
+      hw = Math.max(hw, Math.abs(p.x) + (p.size_x || 0.5));
+      hh = Math.max(hh, Math.abs(p.y) + (p.size_y || 0.5));
+    }
+  }
+  const rot = Math.abs((comp.rotation || 0)) % 180;
+  return (rot > 45 && rot < 135) ? {hw: hh, hh: hw} : {hw, hh};
+}
+async function legalize(comps, fpData, W, H) {
+  const grid = editor.gridSize || 0.5;
+  const snapV = v => Math.round(v / grid) * grid;
+  const edge = DR.edgeClearance ?? 0.5;
+  const cl = DR.courtyardClearance ?? 0;
+  const MAX_ITER = 120;
+  for (let iter = 0; iter < MAX_ITER; iter++) {
+    let moved = false;
+    for (let i = 0; i < comps.length; i++) {
+      const a = comps[i];
+      const {hw: ahw, hh: ahh} = _cyHalfExtents(a, fpData);
+      for (let j = i + 1; j < comps.length; j++) {
+        const b = comps[j];
+        const {hw: bhw, hh: bhh} = _cyHalfExtents(b, fpData);
+        const ox = Math.min(a.x + ahw + cl, b.x + bhw) - Math.max(a.x - ahw - cl, b.x - bhw);
+        const oy = Math.min(a.y + ahh + cl, b.y + bhh) - Math.max(a.y - ahh - cl, b.y - bhh);
+        if (ox <= 0 || oy <= 0) continue;
+        moved = true;
+        const push = Math.min(ox, oy) / 2 + grid;
+        if (ox <= oy) {
+          if (a.x <= b.x) { a.x -= push; b.x += push; } else { a.x += push; b.x -= push; }
+        } else {
+          if (a.y <= b.y) { a.y -= push; b.y += push; } else { a.y += push; b.y -= push; }
         }
-        a.x=placer._snap(Math.max(ahw+edge,Math.min(W-ahw-edge,a.x)));
-        a.y=placer._snap(Math.max(ahh+edge,Math.min(H-ahh-edge,a.y)));
-        b.x=placer._snap(Math.max(bhw+edge,Math.min(W-bhw-edge,b.x)));
-        b.y=placer._snap(Math.max(bhh+edge,Math.min(H-bhh-edge,b.y)));
+        a.x = snapV(Math.max(ahw + edge, Math.min(W - ahw - edge, a.x)));
+        a.y = snapV(Math.max(ahh + edge, Math.min(H - ahh - edge, a.y)));
+        b.x = snapV(Math.max(bhw + edge, Math.min(W - bhw - edge, b.x)));
+        b.y = snapV(Math.max(bhh + edge, Math.min(H - bhh - edge, b.y)));
       }
     }
-    if(!moved)break;
-    if(iter%15===14)await new Promise(r=>setTimeout(r,0)); // keep UI alive
+    if (!moved) break;
+    if (iter % 15 === 14) await new Promise(r => setTimeout(r, 0));
   }
 }
 
@@ -5328,7 +3625,7 @@ async function runDRCTab(){
   await Promise.all(fpNames.map(async fp=>{
     try{const r=await fetch(`/api/footprints/${encodeURIComponent(fp)}`);if(r.ok)fpData[fp]=await r.json();}catch(_){}
   }));
-  _drcResults=runDRC(editor.board,DR,fpData);
+  _drcResults=await runDRC(editor.board,DR,fpData);
   renderDRCTabResults();
   renderConflictTable();
   editor.render();
@@ -5448,38 +3745,36 @@ function saveLayerRules(){
 }
 
 // ── Gerber ───────────────────────────────────────────────────
-let _gerberFiles=null;
-function exportGerber(){
-  if(!editor.board){alert('No board loaded');return;}
-  const ge=new GerberExporter(editor.board);
-  _gerberFiles=ge.all();
-  const list=document.getElementById('gerber-file-list');list.innerHTML='';
-  for(const[fn,content]of Object.entries(_gerberFiles)){
-    const d=document.createElement('div');d.className='gfile';
-    d.innerHTML=`<span class="gfile-name">${fn}</span><span style="color:var(--text-muted);font-size:10px;">${content.split('\n').length} lines</span>`;
-    list.appendChild(d);
-  }
-  openModal('gerber-modal');
+async function exportGerber() {
+  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  if (!boardId) { alert('Save the board first before exporting.'); return; }
+  const res = await fetch(`/api/pcb/${boardId}/export/gerber`);
+  if (!res.ok) { alert('Gerber export failed: ' + (await res.text())); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (editor?.board?.title || editor?.board?.name || 'board') + '_gerbers.zip';
+  a.click();
+  URL.revokeObjectURL(url);
 }
-async function downloadGerberZip(){
-  if(!_gerberFiles){return;}
-  if(typeof JSZip==='undefined'){
-    // Fallback: download each file individually
-    for(const[fn,content]of Object.entries(_gerberFiles))dl(content,fn,'text/plain');
-    return;
-  }
-  const zip=new JSZip();
-  const folder=zip.folder(editor.board.title||'gerbers');
-  for(const[fn,content]of Object.entries(_gerberFiles))folder.file(fn,content);
-  const blob=await zip.generateAsync({type:'blob'});
-  dl(blob,(editor.board.title||'pcb')+'_gerbers.zip','application/zip');
+async function downloadGerberZip() {
+  return exportGerber();
 }
 
 // ── KiCad Export ─────────────────────────────────────────────
-function exportKiCad(){
-  if(!editor.board){alert('No board loaded');return;}
-  const ke=new KiCadExporter(editor.board);
-  dl(ke.export(),(editor.board.title||'pcb')+'.kicad_pcb','text/plain');
+async function exportKiCad() {
+  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  if (!boardId) { alert('Save the board first before exporting.'); return; }
+  const res = await fetch(`/api/pcb/${boardId}/export/kicad`);
+  if (!res.ok) { alert('KiCad export failed: ' + (await res.text())); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (editor?.board?.title || editor?.board?.name || 'board') + '.kicad_pcb';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── Modal helpers ────────────────────────────────────────────
