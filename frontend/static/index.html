@@ -278,10 +278,11 @@
   #agents-drawer {
     position: fixed; top: 0; right: 0; width: 33vw; min-width: 320px; max-width: 860px;
     height: 100vh; background: #0d0f17; border-left: 1px solid var(--border);
-    z-index: 999; display: flex; flex-direction: column; overflow: hidden;
+    z-index: 999; display: flex; flex-direction: column; overflow: visible;
     transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
     box-shadow: -8px 0 40px rgba(0,0,0,0.55);
   }
+  #agents-drawer > *:not(#agents-drawer-toggle) { overflow: hidden; }
   #agents-drawer.open { transform: translateX(0); }
   #agents-drawer-resize {
     position: absolute; left: 0; top: 0; width: 5px; height: 100%;
@@ -289,8 +290,8 @@
   }
   #agents-drawer-resize:hover, #agents-drawer-resize.dragging { background: rgba(108,99,255,0.4); }
   #agents-drawer-toggle {
-    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
-    z-index: 998; background: var(--surface2); border: 1px solid var(--border);
+    position: absolute; left: -37px; top: 50%; transform: translateY(-50%);
+    z-index: 1001; background: var(--surface2); border: 1px solid var(--border);
     border-right: none; border-radius: 8px 0 0 8px; padding: 14px 7px;
     cursor: pointer; display: flex; flex-direction: column; align-items: center;
     gap: 6px; color: var(--text-muted); transition: all .2s;
@@ -454,7 +455,9 @@
   .pa-msg-user { align-items:flex-end; }
   .pa-msg-user .pa-msg-bubble { background:#1e2040; border:1px solid #2d3060; border-radius:8px 8px 2px 8px; padding:7px 12px; color:#c7d2fe; font-size:12px; max-width:80%; white-space:pre-wrap; word-break:break-word; }
   .pa-msg-assistant .pa-msg-bubble { background:#111828; border:1px solid #1e2535; border-radius:2px 8px 8px 8px; padding:7px 12px; color:#e2e8f0; font-size:12px; max-width:100%; font-family:monospace; white-space:pre-wrap; word-break:break-word; line-height:1.55; }
-  .pa-msg-assistant .pa-msg-bubble .pa-tool-line { color:#fbbf24; opacity:.75; }
+  .pa-msg-assistant .pa-msg-bubble .pa-tool-line { color:#fbbf24; font-weight:600; display:block; }
+  .pa-msg-assistant .pa-msg-bubble .pa-result-line { color:#6b7280; font-size:10px; display:block; border-left:2px solid #374151; padding-left:6px; margin:2px 0; }
+  .pa-msg-assistant .pa-msg-bubble .pa-thinking-line { color:#818cf8; font-size:10px; display:block; font-style:italic; opacity:.7; }
   .pa-msg-ts { font-size:10px; color:#374151; }
   .pa-thinking { display:flex; align-items:center; gap:8px; color:#6b7280; font-size:11px; padding:4px 0; }
   .pa-thinking-dots span { display:inline-block; width:5px; height:5px; border-radius:50%; background:#6c63ff; animation:paThink 1.2s infinite; }
@@ -547,15 +550,14 @@
 
 <!-- section-generate removed — tickets now live in the agents drawer -->
 
-<!-- ══ AGENTS DRAWER TOGGLE ════════════════════════════════════════════════ -->
-<button id="agents-drawer-toggle" onclick="toggleAgentsDrawer()" title="Open Agents Panel">
-  <span class="dtgl-icon">🤖</span>
-  <span class="dtgl-label">Agents</span>
-  <span class="dtgl-badge" id="agents-toggle-badge">0</span>
-</button>
-
 <!-- ══ AGENTS DRAWER ═══════════════════════════════════════════════════════ -->
 <div id="agents-drawer">
+  <!-- Toggle handle — lives inside drawer so it slides with it -->
+  <button id="agents-drawer-toggle" onclick="toggleAgentsDrawer()" title="Open/Close Agents Panel">
+    <span class="dtgl-icon">🤖</span>
+    <span class="dtgl-label">Agents</span>
+    <span class="dtgl-badge" id="agents-toggle-badge">0</span>
+  </button>
   <div id="agents-drawer-resize"></div>
 
   <!-- Header -->
@@ -2225,7 +2227,7 @@ async function _loadHistoryList() {
   }).join('');
 }
 
-// Save button — updates active version in-place, or creates new if none active
+// Save button — appends a new snapshot under the same label (never overwrites history), or creates new if none active
 async function historySaveActive() {
   if (!selectedSlug) return;
   const av = await fetch(`/api/library/${selectedSlug}/active_version`).then(r => r.json()).catch(() => null);
@@ -2239,6 +2241,7 @@ async function historySaveActive() {
     return;
   }
   await _loadHistoryList();
+  loadActiveVersionBadge(selectedSlug);
 }
 
 // New Version button — always creates a fresh snapshot
@@ -8059,17 +8062,25 @@ function _paAppendMsg(msg, scroll=true) {
 }
 
 function _paFormatAssistant(text) {
-  // Highlight tool lines (lines starting with ▶)
-  return esc(text).replace(/▶ [^\n]+/g, m => `<span class="pa-tool-line">${m}</span>`);
+  return esc(text)
+    .replace(/▶ ([^\n]+)/g, '<span class="pa-tool-line">▶ $1</span>')
+    .replace(/◀ ((?:[^\n]|\n(?![▶◀💭]))+)/g, '<span class="pa-result-line">◀ $1</span>')
+    .replace(/💭 ((?:[^\n]|\n(?![▶◀]))+)/g, '<span class="pa-thinking-line">💭 $1</span>');
 }
 
-function _paShowThinking() {
+function _paShowThinking(msg) {
   const area = document.getElementById('pa-chat-area');
-  if (!area || area.querySelector('.pa-thinking')) return;
-  area.insertAdjacentHTML('beforeend', `<div class="pa-thinking" id="pa-thinking-indicator">
-    <div class="pa-thinking-dots"><span></span><span></span><span></span></div>
-    <span>Claude is working…</span>
-  </div>`);
+  if (!area) return;
+  let el = document.getElementById('pa-thinking-indicator');
+  if (!el) {
+    area.insertAdjacentHTML('beforeend', `<div class="pa-thinking" id="pa-thinking-indicator">
+      <div class="pa-thinking-dots"><span></span><span></span><span></span></div>
+      <span id="pa-thinking-label">${esc(msg || 'Thinking…')}</span>
+    </div>`);
+  } else {
+    const lbl = el.querySelector('#pa-thinking-label');
+    if (lbl) lbl.textContent = msg || 'Thinking…';
+  }
   _paScrollBottom();
 }
 
@@ -8162,12 +8173,10 @@ function _handlePipelineSSE(evt, data) {
     _paShowThinking();
   }
   else if (evt === 'pipeline_agent_chunk') {
-    _paHideThinking();
     const msgEl = document.getElementById('pa-msg-' + data.msg_id);
     if (msgEl) {
       const bubble = msgEl.querySelector('.pa-msg-bubble');
       if (bubble) {
-        // Append chunk text
         const raw = bubble.dataset.raw || '';
         const newRaw = raw + (data.chunk || '');
         bubble.dataset.raw = newRaw;
@@ -8177,7 +8186,17 @@ function _handlePipelineSSE(evt, data) {
       if (ts) ts.textContent = 'typing…';
     }
     _paScrollBottom();
-    if (!data.is_tool) _paShowThinking();
+    // Update live status indicator
+    if (data.is_tool) {
+      const toolLabel = (data.chunk || '').replace(/^\n▶ /, '').split('\n')[0].trim();
+      _paShowThinking(toolLabel || `Running ${data.tool_name || 'tool'}…`);
+    } else if (data.is_thinking) {
+      _paShowThinking('Reasoning…');
+    } else if (data.is_result) {
+      _paShowThinking('Reading result…');
+    } else {
+      _paShowThinking('Responding…');
+    }
   }
   else if (evt === 'pipeline_agent_done') {
     _paHideThinking();

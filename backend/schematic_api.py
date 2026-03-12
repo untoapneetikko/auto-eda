@@ -1354,14 +1354,25 @@ def api_active_version(slug: str):
 
 @router.put("/library/{slug}/history/{hid}")
 def api_history_update(slug: str, hid: str):
+    """Save current profile as a NEW snapshot (preserves hid unchanged).
+    Updates active_version to point at the new snapshot."""
     snap_path = _history_dir(slug) / (hid + ".json")
     if not snap_path.exists():
         raise HTTPException(404, "Not found")
-    snap = json.loads(snap_path.read_text(encoding="utf-8"))
-    snap["profile"] = json.loads(_profile_path(slug).read_text(encoding="utf-8"))
-    snap["saved_at"] = datetime.now(timezone.utc).isoformat()
-    snap_path.write_text(json.dumps(snap, indent=2), encoding="utf-8")
-    return {"ok": True}
+    old_snap = json.loads(snap_path.read_text(encoding="utf-8"))
+    old_label = old_snap.get("label", "")
+    # Create a fresh snapshot instead of overwriting — history is append-only
+    new_ts = _snapshot_profile(slug, old_label)
+    if not new_ts:
+        raise HTTPException(500, "Failed to create snapshot")
+    # Advance active_version to the new snapshot
+    h = _history_dir(slug)
+    files = sorted(h.glob("*.json"))
+    v_num = next((i + 1 for i, f in enumerate(files) if f.stem == new_ts), 0)
+    _active_version_path(slug).write_text(
+        json.dumps({"id": new_ts, "label": old_label, "vNum": v_num}, indent=2),
+        encoding="utf-8")
+    return {"ok": True, "new_id": new_ts}
 
 @router.delete("/library/{slug}/history/{hid}")
 def api_history_delete(slug: str, hid: str):
@@ -1613,9 +1624,27 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                 _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
                                                     "chunk": f"\n[stderr] {line}", "is_tool": True})
 
+            def _fmt_tool(tool_name: str, inp: dict) -> str:
+                """Format a tool call into a readable one-liner."""
+                if tool_name == "Bash":
+                    cmd = inp.get("command", "")
+                    return f"$ {cmd}"
+                if tool_name in ("Read", "Write"):
+                    return f"{tool_name}: {inp.get('file_path','')}"
+                if tool_name == "Edit":
+                    return f"Edit: {inp.get('file_path','')} — {str(inp.get('old_string',''))[:60].strip()!r}"
+                if tool_name == "Grep":
+                    return f"Grep {inp.get('pattern','')!r} in {inp.get('path','.')}"
+                if tool_name == "Glob":
+                    return f"Glob {inp.get('pattern','')}"
+                if tool_name == "WebFetch":
+                    return f"Fetch: {inp.get('url','')}"
+                # fallback: dump first 200 chars of JSON
+                return f"{tool_name}: {json.dumps(inp)[:200]}"
+
             opts = ClaudeAgentOptions(
                 cwd=_pa_cwd(name),
-                allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep"],
+                allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"],
                 permission_mode="bypassPermissions",
                 max_turns=40,
                 resume=existing_session,  # None on first call, session_id thereafter
@@ -1629,20 +1658,58 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                 elif isinstance(sdk_msg, AssistantMessage):
                     for block in sdk_msg.content:
                         block_type = getattr(block, "type", "")
-                        if block_type == "text":
+                        if block_type == "thinking":
+                            # Show thinking as a collapsible thought — send full text
+                            thought = getattr(block, "thinking", "") or ""
+                            chunk = f"\n💭 {thought}\n"
+                            resp_parts.append(chunk)
+                            full = "".join(resp_parts)
+                            for m in _pipeline_chat[name]:
+                                if m["id"] == resp_id:
+                                    m["content"] = full
+                                    break
+                            _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
+                                                                "chunk": chunk, "is_thinking": True})
+                        elif block_type == "text":
                             chunk = block.text
                             resp_parts.append(chunk)
                             full = "".join(resp_parts)
-                            # update in-memory
                             for m in _pipeline_chat[name]:
                                 if m["id"] == resp_id:
                                     m["content"] = full
                                     break
                             _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id, "chunk": chunk})
                         elif block_type == "tool_use":
-                            tool_line = f"\n▶ {block.name}({json.dumps(block.input)[:120]})\n"
+                            formatted = _fmt_tool(block.name, block.input or {})
+                            tool_line = f"\n▶ {formatted}\n"
                             resp_parts.append(tool_line)
-                            _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id, "chunk": tool_line, "is_tool": True})
+                            full = "".join(resp_parts)
+                            for m in _pipeline_chat[name]:
+                                if m["id"] == resp_id:
+                                    m["content"] = full
+                                    break
+                            _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
+                                                                "chunk": tool_line, "is_tool": True,
+                                                                "tool_name": block.name})
+                        elif block_type == "tool_result":
+                            # Show abbreviated result
+                            result_text = ""
+                            for part in (getattr(block, "content", None) or []):
+                                if getattr(part, "type", "") == "text":
+                                    result_text += part.text
+                            if result_text:
+                                preview = result_text[:300].strip()
+                                if len(result_text) > 300:
+                                    preview += f"\n  … ({len(result_text)} chars total)"
+                                result_line = f"◀ {preview}\n"
+                                resp_parts.append(result_line)
+                                full = "".join(resp_parts)
+                                for m in _pipeline_chat[name]:
+                                    if m["id"] == resp_id:
+                                        m["content"] = full
+                                        break
+                                _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
+                                                                    "chunk": result_line, "is_result": True})
                 elif isinstance(sdk_msg, ResultMessage):
                     if sdk_msg.result and sdk_msg.result not in "".join(resp_parts):
                         resp_parts.append(f"\n{sdk_msg.result}")
