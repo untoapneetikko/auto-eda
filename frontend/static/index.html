@@ -278,7 +278,7 @@
   #agents-drawer {
     position: fixed; top: 0; right: 0; width: 33vw; min-width: 320px; max-width: 860px;
     height: 100vh; background: #0d0f17; border-left: 1px solid var(--border);
-    z-index: 999; display: flex; flex-direction: column; overflow: visible;
+    z-index: 999; display: flex; flex-direction: column; overflow: hidden;
     transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
     box-shadow: -8px 0 40px rgba(0,0,0,0.55);
   }
@@ -289,11 +289,12 @@
   }
   #agents-drawer-resize:hover, #agents-drawer-resize.dragging { background: rgba(108,99,255,0.4); }
   #agents-drawer-toggle {
-    position: absolute; left: -37px; top: 50%; transform: translateY(-50%);
-    z-index: 1001; background: var(--surface2); border: 1px solid var(--border);
+    position: fixed; right: var(--drawer-toggle-right, 0px); top: 50%; transform: translateY(-50%);
+    z-index: 1000; background: var(--surface2); border: 1px solid var(--border);
     border-right: none; border-radius: 8px 0 0 8px; padding: 14px 7px;
     cursor: pointer; display: flex; flex-direction: column; align-items: center;
-    gap: 6px; color: var(--text-muted); transition: all .2s;
+    gap: 6px; color: var(--text-muted);
+    transition: right 0.25s cubic-bezier(0.4,0,0.2,1), background .2s, border-color .2s, color .2s;
   }
   #agents-drawer-toggle:hover { background: var(--surface); border-color: var(--accent); color: var(--text); }
   #agents-drawer-toggle .dtgl-icon { font-size: 15px; }
@@ -549,14 +550,15 @@
 
 <!-- section-generate removed — tickets now live in the agents drawer -->
 
+<!-- ══ AGENTS DRAWER TOGGLE ════════════════════════════════════════════════ -->
+<button id="agents-drawer-toggle" onclick="toggleAgentsDrawer()" title="Open Agents Panel">
+  <span class="dtgl-icon">🤖</span>
+  <span class="dtgl-label">Agents</span>
+  <span class="dtgl-badge" id="agents-toggle-badge">0</span>
+</button>
+
 <!-- ══ AGENTS DRAWER ═══════════════════════════════════════════════════════ -->
 <div id="agents-drawer">
-  <!-- Toggle handle — lives inside drawer so it slides with it -->
-  <button id="agents-drawer-toggle" onclick="toggleAgentsDrawer()" title="Open/Close Agents Panel">
-    <span class="dtgl-icon">🤖</span>
-    <span class="dtgl-label">Agents</span>
-    <span class="dtgl-badge" id="agents-toggle-badge">0</span>
-  </button>
   <div id="agents-drawer-resize"></div>
 
   <!-- Header -->
@@ -7834,6 +7836,9 @@ function toggleAgentsDrawer(forceOpen) {
   const drawer = document.getElementById('agents-drawer');
   _drawerOpen = forceOpen !== undefined ? forceOpen : !_drawerOpen;
   drawer.classList.toggle('open', _drawerOpen);
+  // Slide the toggle handle with the drawer
+  const offset = _drawerOpen ? drawer.offsetWidth : 0;
+  document.documentElement.style.setProperty('--drawer-toggle-right', offset + 'px');
   const navBtn = document.getElementById('nav-agents');
   if (navBtn) navBtn.classList.toggle('active', _drawerOpen);
   if (_drawerOpen) {
@@ -7873,6 +7878,7 @@ function _onDrawerMove(e) {
   const dx = _onDrawerMove._sx - e.clientX;
   const newW = Math.max(300, Math.min(window.innerWidth * 0.8, _onDrawerMove._sw + dx));
   drawer.style.width = newW + 'px';
+  document.documentElement.style.setProperty('--drawer-toggle-right', newW + 'px');
 }
 function _onDrawerUp() {
   const handle = document.getElementById('agents-drawer-resize');
@@ -7910,6 +7916,27 @@ function _onDrawerUp() {
 
 // ── Pipeline Agents ──────────────────────────────────────────────────────────
 let _paState = {};        // name → agent summary object
+let _paPollTimer = null;  // fallback poll when SSE events are missed
+
+function _paStartPoll(name) {
+  _paStopPoll();
+  _paPollTimer = setInterval(async () => {
+    try {
+      const hist = await fetch(`/api/pipeline/agents/${name}/history`).then(r => r.json());
+      if (hist && hist.status !== 'running') {
+        _paStopPoll();
+        _paRenderHistory(hist);
+        _paHideThinking();
+        _paUpdateModalStatus(hist.status === 'done' ? 'done' : hist.status === 'error' ? 'error' : 'idle');
+        const btn = document.getElementById('pa-send-btn');
+        if (btn) btn.disabled = false;
+      }
+    } catch(e) {}
+  }, 3000);
+}
+function _paStopPoll() {
+  if (_paPollTimer) { clearInterval(_paPollTimer); _paPollTimer = null; }
+}
 let _activePaAgent = null; // currently open agent name
 
 // ── Design Assistant ──────────────────────────────────────────────────────────
@@ -8125,6 +8152,7 @@ async function paChatSend() {
     const tmpEl = document.getElementById('pa-msg-' + tempId);
     if (tmpEl && res.msg_id) tmpEl.id = 'pa-msg-' + res.msg_id;
     _paShowThinking('Waiting for agent…');
+    _paStartPoll(_activePaAgent);
   }
 }
 
@@ -8215,6 +8243,7 @@ function _handlePipelineSSE(evt, data) {
     }
   }
   else if (evt === 'pipeline_agent_done') {
+    _paStopPoll();
     _paHideThinking();
     _paUpdateModalStatus(data.status === 'done' ? 'done' : data.status === 'error' ? 'error' : 'idle');
     const sessEl = document.getElementById('pa-modal-session');
