@@ -1,0 +1,18 @@
+{
+  "name": "SOIC-8",
+  "description": "SOIC-8 8-pin SMD - NE555, LM358, op-amps",
+  "pin_count": 8,
+  "pitch": 1.27,
+  "row_spacing": 5.08,
+  "pads": [
+    {"number":"1","x":-2.54,"y":-1.905,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6},
+    {"number":"2","x":-2.54,"y":-0.635,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6},
+    {"number":"3","x":-2.54,"y":0.635,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6},
+    {"number":"4","x":-2.54,"y":1.905,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6},
+    {"number":"5","x":2.54,"y":1.905,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6},
+    {"number":"6","x":2.54,"y":0.635,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6},
+    {"number":"7","x":2.54,"y":-0.635,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6},
+    {"number":"8","x":2.54,"y":-1.905,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.6}
+  ],
+  "courtyard":{"x":-4.0,"y":-2.8,"w":8.0,"h":5.6}
+}

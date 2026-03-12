@@ -1,0 +1,148 @@
+{
+  "part_number": "LM358",
+  "description": "Dual general-purpose op-amp — single or split supply, rail-to-rail input not required, low power, 1MHz GBW",
+  "manufacturer": "Texas Instruments / ST / Many",
+  "package_types": ["DIP-8", "SOIC-8", "TSSOP-8"],
+  "supply_voltage_range": "3V to 32V single supply, or ±1.5V to ±16V dual supply",
+  "absolute_max": {
+    "supply_voltage": "32V (single) or ±16V (split)",
+    "input_voltage_range": "GND to Vcc+",
+    "input_differential_voltage": "32V",
+    "output_short_circuit": "Continuous (to GND)",
+    "operating_temp": "0°C to +70°C (LM358), -55°C to +125°C (LM258/LM158)"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "OUT_A",
+      "type": "output",
+      "description": "Output of op-amp A",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "LM358 output cannot swing to Vcc+ (not rail-to-rail output). Output saturates ~1.5V below Vcc under load.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 2,
+      "name": "IN-_A",
+      "type": "input",
+      "description": "Inverting input of op-amp A",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "High impedance input. Keep traces short to minimize noise pickup.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 3,
+      "name": "IN+_A",
+      "type": "input",
+      "description": "Non-inverting input of op-amp A",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "High impedance input. Input voltage can go down to GND (input common-mode includes GND).",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 4,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Negative supply terminal. GND for single supply, V- for split supply.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF bypass cap between Vcc (pin 8) and GND close to IC",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 5,
+      "name": "IN+_B",
+      "type": "input",
+      "description": "Non-inverting input of op-amp B",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "High impedance input.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 6,
+      "name": "IN-_B",
+      "type": "input",
+      "description": "Inverting input of op-amp B",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "High impedance input.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 7,
+      "name": "OUT_B",
+      "type": "output",
+      "description": "Output of op-amp B",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Cannot swing to Vcc+. Saturates ~1.5V below Vcc under load.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 8,
+      "name": "VCC",
+      "type": "power",
+      "description": "Positive supply voltage. 3V to 32V single supply.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF bypass cap to GND close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "placement": "VCC (pin 8) to GND (pin 4)",
+      "reason": "Supply bypass — prevents oscillation from supply noise",
+      "datasheet_page": 1
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Voltage follower (buffer)",
+      "description": "IN+ = input signal. IN- connected to OUT. OUT follows IN+ with high input impedance, low output impedance.",
+      "page": 1
+    },
+    {
+      "name": "Inverting amplifier",
+      "description": "Gain = -Rf/Rin. IN+ to voltage divider midpoint (bias). Signal via Rin to IN-. Rf from IN- to OUT.",
+      "page": 1
+    },
+    {
+      "name": "Comparator",
+      "description": "Reference on IN+. Signal on IN-. OUT goes HIGH when signal < reference. No feedback needed.",
+      "page": 1
+    }
+  ],
+  "common_mistakes": [
+    "LM358 output cannot swing to Vcc — output saturates ~1.5V below Vcc. Not rail-to-rail.",
+    "LM358 input common-mode includes GND but output cannot reach GND under source current — output can only sink current, not source near GND",
+    "Phase reversal: if input exceeds common-mode range, output may invert unexpectedly",
+    "LM358 is not a high-speed op-amp — GBW = 1MHz, slew rate = 0.6V/µs. Not suitable for audio above a few kHz or fast signals",
+    "Unused op-amp sections should have IN+ connected to GND or mid-supply and IN- connected to OUT (follower configuration) to prevent oscillation",
+    "No protection against output short to Vcc — only short to GND is allowed continuously"
+  ],
+  "notes": "GBW = 1MHz. Slew rate = 0.6V/µs. Input offset voltage ~2mV typical. Common single-supply op-amp for comparator and low-frequency amplifier duties. For rail-to-rail, use LMV358 or TLV2362. For higher speed, use TL072 or NE5532.",
+  "symbol_type": "opamp",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-08T00:00:00.000Z",
+  "builtin": true,
+  "human_corrections": []
+}

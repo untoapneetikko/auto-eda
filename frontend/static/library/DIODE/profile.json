@@ -1,0 +1,65 @@
+{
+  "part_number": "D",
+  "description": "Rectifier diode — blocks reverse current, passes forward current above ~0.7V (silicon) or ~0.3V (Schottky)",
+  "manufacturer": "Generic",
+  "package_types": ["DO-41", "DO-214AC (SMA)", "DO-214AB (SMC)", "SOD-123"],
+  "supply_voltage_range": "Forward voltage: 0.3V–1.2V depending on type",
+  "absolute_max": {
+    "reverse_voltage": "depends on part — check datasheet (common: 50V–1000V)",
+    "forward_current": "depends on part (common: 1A–3A for general purpose)",
+    "peak_surge_current": "up to 30A for 1N4001 series"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "A",
+      "type": "passive",
+      "description": "Anode — current enters here in forward bias",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to more positive potential for forward bias operation",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 2,
+      "name": "K",
+      "type": "passive",
+      "description": "Cathode — marked with a band on the body. Current exits here in forward bias.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to more negative potential for forward bias. The cathode band MUST face the correct direction or the diode blocks instead of passes.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    }
+  ],
+  "required_passives": [],
+  "application_circuits": [
+    {
+      "name": "Reverse polarity protection",
+      "description": "Series diode between supply and circuit. Blocks reverse polarity. Forward voltage drop reduces supply slightly.",
+      "page": 1
+    },
+    {
+      "name": "Flyback diode",
+      "description": "Place across inductive load (motor, relay coil) with cathode toward positive rail to clamp inductive kickback.",
+      "page": 1
+    }
+  ],
+  "common_mistakes": [
+    "Installing backwards — cathode (band) must face the correct direction",
+    "Silicon forward voltage ~0.7V causes voltage drop in power supplies — use Schottky (0.3V) if drop matters",
+    "Exceeding peak reverse voltage causes avalanche breakdown and permanent damage",
+    "Flyback diodes must be placed physically close to the inductive load"
+  ],
+  "notes": "Common parts: 1N4001-1N4007 (50V-1000V, 1A silicon), 1N5819 (40V, 1A Schottky), 1N5822 (40V, 3A Schottky). Schottky diodes have lower forward voltage and faster switching but lower reverse voltage rating.",
+  "symbol_type": "diode",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-08T00:00:00.000Z",
+  "builtin": true,
+  "human_corrections": []
+}

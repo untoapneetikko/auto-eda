@@ -1,0 +1,49 @@
+{
+  "name": "LTCC-4PAD-2x1.6",
+  "description": "LTCC 4-pad RF filter 2.0x1.6mm (LFCN/SLP series)",
+  "pin_count": 4,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.7,
+      "y": -0.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.6
+    },
+    {
+      "number": "2",
+      "x": 0.7,
+      "y": -0.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.6
+    },
+    {
+      "number": "3",
+      "x": 0.7,
+      "y": 0.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.6
+    },
+    {
+      "number": "4",
+      "x": -0.7,
+      "y": 0.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.6
+    }
+  ],
+  "courtyard": {
+    "x": -1.3,
+    "y": -1.1,
+    "w": 2.6,
+    "h": 2.2
+  }
+}

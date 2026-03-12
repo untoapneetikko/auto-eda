@@ -1,0 +1,13 @@
+{
+  "name": "SOT-23-5",
+  "description": "SOT-23-5 5-pin SMD package",
+  "pin_count": 5,
+  "pads": [
+    {"number":"1","x":-0.95,"y":0.95,"type":"smd","shape":"rect","size_x":0.8,"size_y":0.8},
+    {"number":"2","x":0.0,"y":0.95,"type":"smd","shape":"rect","size_x":0.8,"size_y":0.8},
+    {"number":"3","x":0.95,"y":0.95,"type":"smd","shape":"rect","size_x":0.8,"size_y":0.8},
+    {"number":"4","x":0.95,"y":-0.95,"type":"smd","shape":"rect","size_x":0.8,"size_y":0.8},
+    {"number":"5","x":-0.95,"y":-0.95,"type":"smd","shape":"rect","size_x":0.8,"size_y":0.8}
+  ],
+  "courtyard":{"x":-1.7,"y":-1.5,"w":3.4,"h":3.0}
+}

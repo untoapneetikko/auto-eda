@@ -1,0 +1,685 @@
+{
+  "part_number": "TEST_PMA3-83LNW+",
+  "description": "PHEMT-based wideband low-noise MMIC amplifier, 0.4–8 GHz, 1.2 dB NF at 2 GHz, +37 dBm OIP3, single 5V/6V supply",
+  "manufacturer": "Mini-Circuits",
+  "package_types": [
+    "12-lead MCLP 3x3x0.89mm (DQ1225)"
+  ],
+  "supply_voltage_range": "5V or 6V (4.75–5.25V or 5.75–6.75V)",
+  "frequency_range": "0.4 to 8.0 GHz",
+  "impedance": "50Ω",
+  "designator": "U",
+  "absolute_max": {
+    "dc_voltage": "7V",
+    "input_power_continuous_05_to_8GHz": "+16 dBm",
+    "input_power_continuous_04_to_05GHz": "+9 dBm",
+    "input_power_5min_max": "+19 dBm",
+    "total_power_dissipation": "0.95 W",
+    "junction_temperature": "150°C",
+    "operating_temp_ground_lead": "-40°C to +105°C",
+    "storage_temp": "-65°C to +150°C",
+    "esd_hbm": "Class 1A (250–500V)"
+  },
+  "key_performance": {
+    "noise_figure_2GHz": "1.2 dB (typ)",
+    "gain_2GHz_6V": "22.6 dB (typ)",
+    "oip3_2GHz_6V": "+37 dBm (typ)",
+    "p1db_2GHz_6V": "21.7 dBm (typ)",
+    "operating_current_6V": "75 mA (typ)",
+    "operating_current_5V": "58 mA (typ)"
+  },
+  "pins": [
+    {
+      "number": 2,
+      "name": "RF-IN",
+      "type": "input",
+      "description": "RF signal input (pad 2). Connects to RF input and to ground via L1. Optional 100pF blocking capacitor may be added in series before C2 for extra DC isolation.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect RF source via C2 (10pF series coupling cap). Add L1 (18nH shunt inductor) from this pad to GND as DC bias return and ESD path. Optional separate 100pF series cap for additional DC isolation — see datasheet p.3.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 8,
+      "name": "RF-OUT/DC-IN",
+      "type": "bidirectional",
+      "description": "Combined RF output and DC supply input (pad 8). RF output exits via C3 (100pF DC block). VDD supplied via L2 (39nH RF choke). Both functions share this single pad.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "MANDATORY: connect VDD through L2 (39nH RF choke) to this pad. Connect RF output through C3 (100pF DC block). Both must be present — missing L2 means no bias; missing C3 puts VDD on RF output and damages downstream components. See Fig.1 p.4.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 0,
+      "name": "GND (Paddle)",
+      "type": "gnd",
+      "description": "Exposed thermal and electrical ground paddle on bottom of package. Both thermal and electrical ground — primary current return and heat dissipation path.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Must be soldered to PCB ground plane with full solder coverage. Primary thermal path — poor or partial solder contact causes thermal failure. Use Mini-Circuits suggested PCB layout PL-628. Add ground vias under paddle.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 1,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 1). Not used internally. Connected to ground on Mini-Circuits characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating. Grounding matches test board behavior.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 3,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 3). Not used internally. Connected to ground on characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 4,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 4). Not used internally. Connected to ground on characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 5,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 5). Not used internally. Connected to ground on characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 6,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 6). Not used internally. Connected to ground on characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 7,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 7). Not used internally. Connected to ground on characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 9,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 9). Not used internally. Connected to ground on characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 10,
+      "name": "NC",
+      "type": "passive",
+      "description": "No internal connection (pad 10). Not used internally. Connected to ground on characterization test board.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to ground or leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 11,
+      "name": "NC (float!)",
+      "type": "passive",
+      "description": "No internal connection (pad 11). NOT connected to ground on test board — explicitly different from all other NC pads.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "MUST be left floating. Do NOT connect to ground. Datasheet p.3 specifically calls out pads 11 and 12 as exceptions to the grounded-NC rule.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 12,
+      "name": "NC (float!)",
+      "type": "passive",
+      "description": "No internal connection (pad 12). NOT connected to ground on test board — explicitly different from all other NC pads.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "MUST be left floating. Do NOT connect to ground. Datasheet p.3 specifically calls out pads 11 and 12 as exceptions to the grounded-NC rule.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "inductor",
+      "value": "18nH 0402",
+      "part_number": "Murata LQP15MN18NJ02D",
+      "placement": "RF-IN (pad 2) to GND",
+      "reason": "L1 — input shunt RF choke providing DC bias return path and ESD protection. Required per application circuit Fig.1 p.4.",
+      "datasheet_page": 4
+    },
+    {
+      "type": "inductor",
+      "value": "39nH 0402",
+      "part_number": "Coilcraft 0402CS-39NXGLW",
+      "placement": "VDD rail to RF-OUT/DC-IN (pad 8)",
+      "reason": "L2 — RF choke for DC bias injection. The ONLY DC path to the device. Mandatory — without it the amplifier will not operate. Required per Fig.1 p.4.",
+      "datasheet_page": 4
+    },
+    {
+      "type": "capacitor",
+      "value": "0.01µF 0402",
+      "part_number": "Murata GRM155R71E103KA01D",
+      "placement": "VDD rail to GND, close to L2 connection",
+      "reason": "C1 — VDD supply bypass decoupling capacitor. Required per Fig.1 p.4.",
+      "datasheet_page": 4
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF 0402",
+      "placement": "VDD rail to GND, bulk bypass (parallel with C1)",
+      "reason": "C4 — second VDD bypass cap for low-frequency supply decoupling. Standard RF PCB practice alongside C1 (0.01µF HF cap). Present in example_circuit.",
+      "datasheet_page": 4
+    },
+    {
+      "type": "capacitor",
+      "value": "10pF 0402",
+      "part_number": "Murata GJM1555C1H100JB01D",
+      "placement": "Series between RF source and RF-IN (pad 2)",
+      "reason": "C2 — input series coupling and DC-block. Value confirmed 10pF — not 100pF. Required per Fig.1 p.4.",
+      "datasheet_page": 4
+    },
+    {
+      "type": "capacitor",
+      "value": "100pF 0402",
+      "part_number": "Murata GRM1555C1H101JA01D",
+      "placement": "RF-OUT/DC-IN (pad 8) to RF output trace",
+      "reason": "C3 — mandatory output DC block. Without this VDD appears on RF output, damaging downstream components. Required per Fig.1 p.4.",
+      "datasheet_page": 4
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Typical application and characterization test circuit (Fig. 1, p.4)",
+      "description": "RF path: RF source → C2 (10pF series) → pad 2 → [device] → pad 8 → C3 (100pF DC block) → RF output. Bias path: VDD → L2 (39nH choke) → pad 8. C1 (0.01µF) VDD bypass to GND. L1 (18nH) shunt pad 2 to GND. Pads 1,3–7,9–10 and Paddle tied to GND. Pads 11,12 left floating.",
+      "page": 4
+    }
+  ],
+  "common_mistakes": [
+    "Pads 11 and 12 must NOT be connected to ground — unlike all other NC pads, the datasheet explicitly calls these out as floating on the test board (p.3).",
+    "DC supply voltage must not exceed 7V — permanent damage above this limit.",
+    "Exposed paddle MUST be fully soldered to PCB ground plane — primary thermal path. Partial solder contact causes thermal failure.",
+    "L2 (39nH) is mandatory — it is the only DC bias path to the device. Without it the amplifier will not operate.",
+    "C3 (100pF output block) is mandatory — without it VDD appears directly on RF output, damaging downstream components.",
+    "Input power must not exceed +16 dBm continuous (0.5–8 GHz) or +9 dBm continuous (0.4–0.5 GHz). +19 dBm is only permitted for 5 minutes maximum.",
+    "ESD Class 1A — handle with ESD precautions at all times.",
+    "C2 is 10pF (not 100pF) — the optional 100pF in the pad 2 description is a separate series cap that may be added before C2, not a replacement.",
+    "Device draws 75mA at 6V or 58mA at 5V — size power supply trace width accordingly.",
+    "Thermal resistance junction-to-ground is 47°C/W — verify Tj stays below 150°C at max operating conditions."
+  ],
+  "notes": "RF MMIC — standard RF PCB layout rules apply: 50Ω controlled impedance traces, short RF paths, ground vias adjacent to every ground connection, no sharp corners on RF traces. Use Mini-Circuits suggested PCB layout PL-628. Evaluation board TB-PMA3-83LNW+ available. BOM from p.4: L1=LQP15MN18NJ02D (18nH), L2=0402CS-39NXGLW (39nH), C1=GRM155R71E103KA01D (0.01µF), C2=GJM1555C1H100JB01D (10pF), C3=GRM1555C1H101JA01D (100pF).",
+  "symbol_type": "ic",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "PMA3_83LNW.pdf",
+  "page_count": 5,
+  "raw_text_length": 6553,
+  "uploaded_at": "2026-03-08T16:52:47.739Z",
+  "parsed_at": "2026-03-09T00:00:00.000Z",
+  "builtin": false,
+  "human_corrections": [
+    {
+      "date": "2026-03-08",
+      "original": "Pin 2 requirements incorrectly stated C2 = 100pF. C2 is 10pF (series input coupling cap). The 100pF mentioned in datasheet p.3 is a separate optional add-on, not C2.",
+      "correction": "Pin 2 requirements updated: C2 (10pF) is the standard series input cap. Optional separate 100pF for extra DC isolation. C2 placement corrected to 'series between RF source and pad 2'.",
+      "reason": "Verified against BOM on datasheet p.4: C2 = 10pF GJM1555C1H100JB01D"
+    },
+    {
+      "date": "2026-03-08",
+      "original": "Bias should be from RF out DC in. Please take a good look at the PDF.",
+      "correction": "Confirmed: pad 8 is RF-OUT/DC-IN combined. VDD injected via L2 choke to pad 8. RF output extracted via C3 from pad 8.",
+      "reason": "Verified against datasheet p.3 pad description and Fig.1 p.4 application circuit."
+    },
+    {
+      "date": "2026-03-09",
+      "original": "Profile had 7 garbage PNaN pins with null numbers from a failed re-parse attempt.",
+      "correction": "Removed all 7 spurious pins. Expanded all NC groups to individual pin entries (one per pad number) as required — device has 13 pads total: pad 2 (RF-IN), pad 8 (RF-OUT/DC-IN), paddle (GND), pads 1/3/4/5/6/7/9/10 (NC, tie to GND), pads 11/12 (NC, must float). Added designator U. symbol_type = ic for square box rendering.",
+      "reason": "Rebuild — pin count and assignments cross-checked against datasheet p.3 pad table. Every pad on the device now has an individual entry."
+    }
+  ],
+  "example_circuit": {
+    "components": [
+      {
+        "id": "u1",
+        "slug": "PMA3_83LNW",
+        "symType": "ic",
+        "designator": "U1",
+        "value": "PMA3-83LNW+",
+        "x": 300,
+        "y": 270,
+        "rotation": 0,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 300,
+        "_exampleY": 270
+      },
+      {
+        "id": "c2",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C2",
+        "value": "10pF",
+        "x": 130,
+        "y": 240,
+        "rotation": 1,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 130,
+        "_exampleY": 240
+      },
+      {
+        "id": "l1",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L1",
+        "value": "18nH",
+        "x": 170,
+        "y": 280,
+        "rotation": 1,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 170,
+        "_exampleY": 280
+      },
+      {
+        "id": "c3",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C3",
+        "value": "100pF",
+        "x": 500,
+        "y": 280,
+        "rotation": 3,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 500,
+        "_exampleY": 280
+      },
+      {
+        "id": "l2",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L2",
+        "value": "39nH",
+        "x": 440,
+        "y": 240,
+        "rotation": 1,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 440,
+        "_exampleY": 240
+      },
+      {
+        "id": "vdd1",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VDD",
+        "value": "5V/6V",
+        "x": 440,
+        "y": 90,
+        "rotation": 0,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 440,
+        "_exampleY": 90
+      },
+      {
+        "id": "gnd1",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND",
+        "value": "",
+        "x": 170,
+        "y": 350,
+        "rotation": 0,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 170,
+        "_exampleY": 350
+      },
+      {
+        "id": "cmmjcfob9",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND1",
+        "value": "GND",
+        "x": 150,
+        "y": 200,
+        "rotation": 1,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 150,
+        "_exampleY": 200
+      },
+      {
+        "id": "cmml33s4b",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C1",
+        "value": "1uF",
+        "x": 460,
+        "y": 180,
+        "rotation": 1,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 460,
+        "_exampleY": 180
+      },
+      {
+        "id": "cmml340vw",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C4",
+        "value": "1uF",
+        "x": 460,
+        "y": 140,
+        "rotation": 1,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 460,
+        "_exampleY": 140
+      },
+      {
+        "id": "cmml34ife",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND2",
+        "value": "GND",
+        "x": 480,
+        "y": 210,
+        "rotation": 0,
+        "_exampleGroupId": "eg_mmnndosbfe",
+        "_exampleSlug": "TEST_PMA3_83LNW",
+        "_exampleX": 480,
+        "_exampleY": 210
+      }
+    ],
+    "wires": [
+      {
+        "id": "w_rfin",
+        "points": [
+          {
+            "x": 40,
+            "y": 240
+          },
+          {
+            "x": 110,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "wmmj8oll6",
+        "points": [
+          {
+            "x": 170,
+            "y": 320,
+            "isPort": true
+          },
+          {
+            "x": 170,
+            "y": 335,
+            "isPort": true
+          }
+        ]
+      },
+      {
+        "id": "wmmj8oo7v",
+        "points": [
+          {
+            "x": 150,
+            "y": 240,
+            "isPort": true
+          },
+          {
+            "x": 200,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "cwmmjc04bp3k6",
+        "points": [
+          {
+            "x": 440,
+            "y": 110
+          },
+          {
+            "x": 440,
+            "y": 110
+          }
+        ]
+      },
+      {
+        "id": "cwmmjc1iv6vqy",
+        "points": [
+          {
+            "x": 440,
+            "y": 110
+          },
+          {
+            "x": 440,
+            "y": 110
+          }
+        ]
+      },
+      {
+        "id": "wmmjc2h5l",
+        "points": [
+          {
+            "x": 400,
+            "y": 280,
+            "isPort": true
+          },
+          {
+            "x": 480,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "wmmjc2u79",
+        "points": [
+          {
+            "x": 440,
+            "y": 200,
+            "isPort": true
+          },
+          {
+            "x": 440,
+            "y": 110,
+            "isPort": true
+          }
+        ]
+      },
+      {
+        "id": "wmmjcevfa",
+        "points": [
+          {
+            "x": 570,
+            "y": 260,
+            "isPort": true
+          },
+          {
+            "x": 570,
+            "y": 260
+          }
+        ]
+      },
+      {
+        "id": "wmmjcftix",
+        "points": [
+          {
+            "x": 170,
+            "y": 200,
+            "isPort": false
+          },
+          {
+            "x": 200,
+            "y": 200
+          }
+        ]
+      },
+      {
+        "id": "cwmmjcv5zaaqg",
+        "points": [
+          {
+            "x": 170,
+            "y": 240
+          },
+          {
+            "x": 170,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "cwmmjcv5zak6g",
+        "points": [
+          {
+            "x": 440,
+            "y": 280
+          },
+          {
+            "x": 440,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "wmmjcwduv",
+        "points": [
+          {
+            "x": 570,
+            "y": 260,
+            "isPort": true
+          },
+          {
+            "x": 570,
+            "y": 260
+          }
+        ]
+      },
+      {
+        "id": "wmmjcwgwe",
+        "points": [
+          {
+            "x": 520,
+            "y": 280,
+            "isPort": true
+          },
+          {
+            "x": 570,
+            "y": 260
+          }
+        ]
+      },
+      {
+        "id": "cwmml33upa799",
+        "points": [
+          {
+            "x": 440,
+            "y": 180
+          },
+          {
+            "x": 440,
+            "y": 180
+          }
+        ]
+      },
+      {
+        "id": "cwmml3428ctn1",
+        "points": [
+          {
+            "x": 440,
+            "y": 140
+          },
+          {
+            "x": 440,
+            "y": 140
+          }
+        ]
+      },
+      {
+        "id": "cwmml34ifei9w",
+        "points": [
+          {
+            "x": 480,
+            "y": 190
+          },
+          {
+            "x": 480,
+            "y": 190
+          }
+        ]
+      },
+      {
+        "id": "wmml34jez",
+        "points": [
+          {
+            "x": 480,
+            "y": 190,
+            "isPort": true
+          },
+          {
+            "x": 480,
+            "y": 140,
+            "isPort": true
+          }
+        ]
+      }
+    ],
+    "labels": [
+      {
+        "id": "lmmjcvrul",
+        "name": "RFIN",
+        "x": 40,
+        "y": 240,
+        "rotation": 2
+      },
+      {
+        "id": "lmmjcw7li",
+        "name": "RFOUT",
+        "x": 570,
+        "y": 260,
+        "rotation": 0
+      }
+    ]
+  },
+  "footprint": "QFN-12-3x3"
+}

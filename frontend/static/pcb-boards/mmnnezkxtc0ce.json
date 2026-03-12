@@ -1,0 +1,494 @@
+{
+  "version": "1.0",
+  "title": "TEST_PMA3-83LNW+ Layout Example",
+  "board": {
+    "width": 50,
+    "height": 40,
+    "units": "mm"
+  },
+  "components": [
+    {
+      "id": "U1_le",
+      "ref": "U1",
+      "value": "PMA3-83LNW+",
+      "footprint": "QFN-12-3x3",
+      "x": 25,
+      "y": 20,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "NC",
+          "x": -0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N4"
+        },
+        {
+          "number": "2",
+          "name": "RF-IN",
+          "x": 0,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N1"
+        },
+        {
+          "number": "3",
+          "name": "NC",
+          "x": 0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N5"
+        },
+        {
+          "number": "4",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N6"
+        },
+        {
+          "number": "5",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N7"
+        },
+        {
+          "number": "6",
+          "name": "NC",
+          "x": 1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N13"
+        },
+        {
+          "number": "7",
+          "name": "NC",
+          "x": 0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N12"
+        },
+        {
+          "number": "8",
+          "name": "RF-OUT/DC-IN",
+          "x": 0,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N2"
+        },
+        {
+          "number": "9",
+          "name": "NC",
+          "x": -0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N11"
+        },
+        {
+          "number": "10",
+          "name": "NC",
+          "x": -1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N10"
+        },
+        {
+          "number": "11",
+          "name": "NC (float)",
+          "x": -1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N9"
+        },
+        {
+          "number": "12",
+          "name": "NC (float)",
+          "x": -1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N8"
+        },
+        {
+          "number": "0",
+          "name": "GND",
+          "x": 0,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 1.7,
+          "size_y": 1.7,
+          "net": "N3"
+        }
+      ]
+    },
+    {
+      "id": "C2_le",
+      "ref": "C2",
+      "value": "10pF",
+      "footprint": "0402",
+      "x": 25,
+      "y": 23,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RFIN"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N3"
+        }
+      ]
+    },
+    {
+      "id": "L1_le",
+      "ref": "L1",
+      "value": "18nH",
+      "footprint": "0402",
+      "x": 28.5,
+      "y": 20,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "GND"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N14"
+        }
+      ]
+    },
+    {
+      "id": "C3_le",
+      "ref": "C3",
+      "value": "100pF",
+      "footprint": "0402",
+      "x": 25,
+      "y": 17,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RFOUT"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N12"
+        }
+      ]
+    },
+    {
+      "id": "L2_le",
+      "ref": "L2",
+      "value": "39nH",
+      "footprint": "0402",
+      "x": 21.5,
+      "y": 20,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N15"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "5V/6V"
+        }
+      ]
+    },
+    {
+      "id": "C1_le",
+      "ref": "C1",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 29,
+      "y": 23,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N16"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "GND"
+        }
+      ]
+    },
+    {
+      "id": "C4_le",
+      "ref": "C4",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 29,
+      "y": 21.5,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N17"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "GND"
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "N4",
+      "pads": [
+        "U1.1"
+      ]
+    },
+    {
+      "name": "N1",
+      "pads": [
+        "U1.2"
+      ]
+    },
+    {
+      "name": "N5",
+      "pads": [
+        "U1.3"
+      ]
+    },
+    {
+      "name": "N6",
+      "pads": [
+        "U1.4"
+      ]
+    },
+    {
+      "name": "N7",
+      "pads": [
+        "U1.5"
+      ]
+    },
+    {
+      "name": "N13",
+      "pads": [
+        "U1.6"
+      ]
+    },
+    {
+      "name": "N12",
+      "pads": [
+        "U1.7",
+        "C3.2"
+      ]
+    },
+    {
+      "name": "N2",
+      "pads": [
+        "U1.8"
+      ]
+    },
+    {
+      "name": "N11",
+      "pads": [
+        "U1.9"
+      ]
+    },
+    {
+      "name": "N10",
+      "pads": [
+        "U1.10"
+      ]
+    },
+    {
+      "name": "N9",
+      "pads": [
+        "U1.11"
+      ]
+    },
+    {
+      "name": "N8",
+      "pads": [
+        "U1.12"
+      ]
+    },
+    {
+      "name": "N3",
+      "pads": [
+        "U1.0",
+        "C2.2"
+      ]
+    },
+    {
+      "name": "RFIN",
+      "pads": [
+        "C2.1"
+      ]
+    },
+    {
+      "name": "GND",
+      "pads": [
+        "L1.1",
+        "C1.2",
+        "C4.2"
+      ]
+    },
+    {
+      "name": "N14",
+      "pads": [
+        "L1.2"
+      ]
+    },
+    {
+      "name": "RFOUT",
+      "pads": [
+        "C3.1"
+      ]
+    },
+    {
+      "name": "N15",
+      "pads": [
+        "L2.1"
+      ]
+    },
+    {
+      "name": "5V/6V",
+      "pads": [
+        "L2.2"
+      ]
+    },
+    {
+      "name": "N16",
+      "pads": [
+        "C1.1"
+      ]
+    },
+    {
+      "name": "N17",
+      "pads": [
+        "C4.1"
+      ]
+    }
+  ],
+  "traces": [],
+  "vias": [],
+  "id": "mmnnezkxtc0ce",
+  "updated_at": "2026-03-12T15:54:34.020Z"
+}

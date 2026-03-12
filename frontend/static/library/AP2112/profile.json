@@ -1,0 +1,687 @@
+{
+  "part_number": "AP2112",
+  "description": "600mA CMOS low-dropout linear regulator with enable function; fixed output voltage options 1.2V, 1.8V, 2.5V, 2.6V, or 3.3V; available in SOT25, SOT89-5, and SO-8 packages.",
+  "manufacturer": "Diodes Incorporated",
+  "package_types": [
+    "SOT25 (5-lead)",
+    "SOT89-5 Option 1 (R5 Package)",
+    "SOT89-5 Option 2 (R5A Package)",
+    "SO-8 (8-lead)"
+  ],
+  "supply_voltage_range": "2.5V to 6.0V (recommended operating); 6.5V absolute maximum",
+  "designator": "U",
+  "absolute_max": {
+    "supply_voltage": "6.5V",
+    "operating_temp": "-40°C to +85°C ambient; +150°C junction max",
+    "junction_temperature": "+150°C",
+    "storage_temp": "-65°C to +150°C",
+    "lead_temp_soldering": "+260°C (10 seconds)",
+    "thermal_shutdown": "+160°C (hysteresis +25°C)",
+    "esd_hbm": "4000V (Human Body Model)",
+    "esd_mm": "400V (Machine Model)"
+  },
+  "key_performance": {
+    "output_current": "600mA minimum guaranteed",
+    "output_voltage_accuracy": "±1.5%",
+    "dropout_voltage_3v3": "250mV typ @ 600mA",
+    "quiescent_current": "55μA typ",
+    "standby_current": "0.01μA typ (EN low)",
+    "load_regulation": "0.2%/A typ",
+    "line_regulation": "0.02%/V typ",
+    "psrr": "-65dB @ 100Hz and 1kHz",
+    "output_noise": "50μV RMS (10Hz–100kHz, no load)",
+    "foldback_short_current": "50mA",
+    "startup_time": "20μs typ (no load)"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "VIN",
+      "type": "power",
+      "description": "Input supply voltage. SOT25 pin 1. (SO-8 pin 8; SOT89-5 R5 pin 4; SOT89-5 R5A pin 4.)",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Bypass with CIN 1.0μF ceramic (X7R or X5R) as close to pin as possible. VIN must be at least dropout voltage above VOUT for regulation.",
+      "ambiguous": false,
+      "datasheet_page": 2
+    },
+    {
+      "number": 2,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground reference. SOT25 pin 2. (SO-8 pins 6 & 7; SOT89-5 R5 pin 2; SOT89-5 R5A pin 2.)",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to circuit ground. SO-8 package has two GND pins (6 and 7) — both must be connected.",
+      "ambiguous": false,
+      "datasheet_page": 2
+    },
+    {
+      "number": 3,
+      "name": "EN",
+      "type": "input",
+      "description": "Enable input. Logic HIGH enables regulator output; logic LOW disables output (shutdown). SOT25 pin 3. (SO-8 pin 5; SOT89-5 R5 pin 3; SOT89-5 R5A pin 1.) Has internal 3MΩ pull-down resistor.",
+      "active": "high",
+      "internal_pull": "down",
+      "requirements": "VIH: 1.5V min, 6.0V max. VIL: 0V min, 0.4V max. For always-on operation, tie EN to VIN. Do NOT leave EN floating — internal pull-down will hold it LOW and disable the regulator.",
+      "ambiguous": false,
+      "datasheet_page": 2
+    },
+    {
+      "number": 4,
+      "name": "NC",
+      "type": "passive",
+      "description": "No connection. SOT25 pin 4. (SO-8 NC pins are 2, 3, 4; SOT89-5 R5 NC is pin 1; SOT89-5 R5A NC is pin 3.)",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Leave unconnected. No special grounding requirement stated.",
+      "ambiguous": false,
+      "datasheet_page": 2
+    },
+    {
+      "number": 5,
+      "name": "VOUT",
+      "type": "output",
+      "description": "Regulated output voltage. Fixed at ordered voltage variant (1.2V, 1.8V, 2.5V, 2.6V, or 3.3V). SOT25 pin 5. (SO-8 pin 1; SOT89-5 R5 pin 5; SOT89-5 R5A pin 5.) Auto-discharge to GND via 60Ω when EN is LOW.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Bypass with COUT 1.0μF ceramic (X7R or X5R) as close to pin as possible. Maximum output current 600mA. Output discharges to GND through 60Ω when disabled.",
+      "ambiguous": false,
+      "datasheet_page": 2
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "1.0μF ceramic",
+      "part_number": "",
+      "placement": "VIN to GND, as close to VIN pin as possible",
+      "reason": "CIN — input bypass capacitor. Required for stability and transient response. Recommended X7R or X5R dielectric.",
+      "datasheet_page": 2
+    },
+    {
+      "type": "capacitor",
+      "value": "1.0μF ceramic",
+      "part_number": "",
+      "placement": "VOUT to GND, as close to VOUT pin as possible",
+      "reason": "COUT — output bypass capacitor. Required for stability. Stable with ceramic, tantalum, and aluminum electrolytic. Recommended X7R or X5R dielectric if ceramic.",
+      "datasheet_page": 2
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Typical Application Circuit (p.2)",
+      "description": "Power path: VIN source → CIN (1μF ceramic, VIN to GND) → VIN pin (SOT25 pin 1) → [AP2112] → VOUT pin (SOT25 pin 5) → COUT (1μF ceramic, VOUT to GND) → load. Enable path: VEN logic signal → EN pin (SOT25 pin 3); tie EN to VIN for always-on operation. When EN is HIGH regulator is ON; when EN is LOW regulator is OFF and VOUT discharges to GND via internal 60Ω resistor.",
+      "page": 2
+    }
+  ],
+  "common_mistakes": [
+    "EN pin has internal 3MΩ pull-down resistor — if EN is left floating, the regulator will be OFF. For always-on use, tie EN directly to VIN.",
+    "EN logic: H (≥1.5V) = regulator ON; L (≤0.4V) = regulator OFF and output discharged. Do NOT rely on floating EN for ON state.",
+    "Input/output capacitors: It is RECOMMENDED to use X7R or X5R dielectric capacitor if 1.0μF ceramic is selected (Note 4).",
+    "SO-8 package has two GND pins (pins 6 and 7) — both must be connected to ground.",
+    "VIN must exceed VOUT by at least the dropout voltage for regulation. At 600mA load, dropout is 250mV typ (3.3V variant) — ensure VIN ≥ VOUT + dropout.",
+    "Absolute Maximum VIN is 6.5V — exceeding this causes permanent damage.",
+    "Thermal shutdown occurs at +160°C junction temperature. At high output current with high VIN-VOUT differential, manage PCB thermal dissipation. θJA = 184°C/W (SOT25), 120°C/W (SOT89-5), 114°C/W (SO-8).",
+    "Stresses greater than those listed under Absolute Maximum Ratings may cause permanent damage to the device (Note 5).",
+    "The AP2112 is a FIXED output voltage device — output voltage is set at ordering (1.2V, 1.8V, 2.5V, 2.6V, or 3.3V). There are no external feedback resistors.",
+    "SOT89-5 comes in two incompatible pin-out options (R5 and R5A) — verify which option is ordered before PCB layout. Pin 1 is EN on R5A but NC on R5; pin 3 is EN on R5 but NC on R5A."
+  ],
+  "notes": "Multi-package device — pin numbering differs significantly across packages. SOT25 pin mapping (canonical): 1=VIN, 2=GND, 3=EN, 4=NC, 5=VOUT. SO-8 pin mapping: 1=VOUT, 2=NC, 3=NC, 4=NC, 5=EN, 6=GND, 7=GND, 8=VIN. SOT89-5 R5: 1=NC, 2=GND, 3=EN, 4=VIN, 5=VOUT. SOT89-5 R5A: 1=EN, 2=GND, 3=NC, 4=VIN, 5=VOUT. ALWAYS verify package variant before routing PCB. Output auto-discharge feature (60Ω to GND when disabled) means VOUT will bleed down when EN is LOW — factor this into power sequencing designs.",
+  "symbol_type": "ic",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "AP2112.pdf",
+  "page_count": 18,
+  "raw_text_length": 22306,
+  "uploaded_at": "2026-03-11T08:01:57.794Z",
+  "parsed_at": "2026-03-11T10:00:00.000Z",
+  "builtin": false,
+  "human_corrections": [],
+  "example_circuit": {
+    "components": [
+      {
+        "id": "u1",
+        "slug": "AP2112",
+        "symType": "ic",
+        "designator": "U1",
+        "value": "AP2112K-3.3",
+        "x": 320,
+        "y": 270,
+        "rotation": 0
+      },
+      {
+        "id": "vcc1",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC1",
+        "value": "5V",
+        "x": 120,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "c_in",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C1",
+        "value": "1uF",
+        "x": 120,
+        "y": 260,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_cin",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND1",
+        "value": "GND",
+        "x": 120,
+        "y": 300,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_pin2",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND2",
+        "value": "GND",
+        "x": 160,
+        "y": 280,
+        "rotation": 0
+      },
+      {
+        "id": "c_out",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C2",
+        "value": "1uF",
+        "x": 500,
+        "y": 260,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_cout",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND3",
+        "value": "GND",
+        "x": 500,
+        "y": 300,
+        "rotation": 0
+      }
+    ],
+    "wires": [
+      {
+        "id": "w_vin_rail",
+        "points": [
+          {
+            "x": 120,
+            "y": 240
+          },
+          {
+            "x": 220,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "w_gnd_ic",
+        "points": [
+          {
+            "x": 220,
+            "y": 260
+          },
+          {
+            "x": 160,
+            "y": 260
+          }
+        ]
+      },
+      {
+        "id": "w_en_tie",
+        "points": [
+          {
+            "x": 220,
+            "y": 280
+          },
+          {
+            "x": 140,
+            "y": 280
+          },
+          {
+            "x": 140,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "w_vout_rail",
+        "points": [
+          {
+            "x": 420,
+            "y": 240
+          },
+          {
+            "x": 500,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "w_vout_label",
+        "points": [
+          {
+            "x": 500,
+            "y": 240
+          },
+          {
+            "x": 560,
+            "y": 240
+          }
+        ]
+      }
+    ],
+    "labels": [
+      {
+        "id": "lbl_vout",
+        "name": "VOUT",
+        "x": 560,
+        "y": 240
+      }
+    ]
+  },
+  "footprint": "SOT25",
+  "layout_example": {
+    "version": "1.0",
+    "title": "AP2112K-3.3 Layout Example",
+    "board": {
+      "width": 12,
+      "height": 8,
+      "units": "mm"
+    },
+    "component": {
+      "ref": "U1",
+      "value": "AP2112K-3.3",
+      "footprint": "SOT25",
+      "package": "SOT25 5-lead SMD (2.9x1.6mm, 0.95mm pitch)",
+      "x": 7,
+      "y": 4.5,
+      "rotation": 0
+    },
+    "recommended_clearances": {
+      "pad_to_pad": 0.2,
+      "trace_width_power": 0.3,
+      "trace_width_signal": 0.2,
+      "min_via_drill": 0.3,
+      "min_annular_ring": 0.15
+    },
+    "layout_notes": [
+      "Place CIN (1�F ceramic) as close as possible to VIN pin (pad 1) � within 1mm. Short VIN trace minimises input impedance.",
+      "Place COUT (1�F ceramic) as close as possible to VOUT pin (pad 5) � within 1mm. Long output traces can cause instability.",
+      "EN (pad 3) is tied directly to VIN with a short trace routed below the IC. Internal 3MO pull-down means EN must never float.",
+      "GND pin (pad 2) should connect to a solid ground plane with a short, direct trace or via. Low-inductance GND is essential for LDO stability.",
+      "Use X7R or X5R ceramic capacitors for CIN and COUT. Avoid Y5V/Z5U � their capacitance drops sharply with DC bias and temperature.",
+      "NC (pad 4) may be left open or connected to GND for extra solder mechanical stability. No electrical requirement.",
+      "Foldback short-circuit current is only 50mA � keep load wiring resistance low so startup is not hindered.",
+      "Thermal resistance ?JA = 184�C/W (SOT25). At 600mA / 1.7V dropout: 1.02W ? ?T = 188�C over ambient. Keep dropout low (use 3.3V?3.3V or limit current at high VIN-VOUT differential).",
+      "Output auto-discharges to GND through internal 60O when EN is LOW � account for this in power-sequencing designs.",
+      "Maximum input voltage is 6.0V recommended (6.5V absolute). Do not exceed."
+    ],
+    "test_circuit_components": [
+      {
+        "ref": "C1",
+        "value": "1�F 10V X5R",
+        "part_number": "Murata GRM155R61A105KA12D",
+        "package": "0402",
+        "type": "input_bypass",
+        "net_1": "VIN",
+        "net_2": "GND",
+        "placement": "Within 1mm of U1 pad 1 (VIN). Place close and connect with short, wide traces to both VIN rail and GND plane."
+      },
+      {
+        "ref": "C2",
+        "value": "1�F 10V X5R",
+        "part_number": "Murata GRM155R61A105KA12D",
+        "package": "0402",
+        "type": "output_bypass",
+        "net_1": "VOUT",
+        "net_2": "GND",
+        "placement": "Within 1mm of U1 pad 5 (VOUT). Place close and connect with short trace to VOUT pin and direct path to GND plane."
+      }
+    ],
+    "components": [
+      {
+        "id": "U1",
+        "ref": "U1",
+        "value": "AP2112K-3.3",
+        "footprint": "SOT25",
+        "x": 7,
+        "y": 4.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "name": "VIN",
+            "x": -0.95,
+            "y": 0.95,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.7,
+            "size_y": 0.9,
+            "net": "VIN"
+          },
+          {
+            "number": "2",
+            "name": "GND",
+            "x": 0,
+            "y": 0.95,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.7,
+            "size_y": 0.9,
+            "net": "GND"
+          },
+          {
+            "number": "3",
+            "name": "EN",
+            "x": 0.95,
+            "y": 0.95,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.7,
+            "size_y": 0.9,
+            "net": "VIN"
+          },
+          {
+            "number": "4",
+            "name": "NC",
+            "x": 0.95,
+            "y": -0.95,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.7,
+            "size_y": 0.9,
+            "net": ""
+          },
+          {
+            "number": "5",
+            "name": "VOUT",
+            "x": -0.95,
+            "y": -0.95,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.7,
+            "size_y": 0.9,
+            "net": "VOUT"
+          }
+        ]
+      },
+      {
+        "id": "C1",
+        "ref": "C1",
+        "value": "1uF X5R",
+        "footprint": "0402",
+        "x": 4,
+        "y": 5.45,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "GND"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "VIN"
+          }
+        ]
+      },
+      {
+        "id": "C2",
+        "ref": "C2",
+        "value": "1uF X5R",
+        "footprint": "0402",
+        "x": 4,
+        "y": 3.55,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "GND"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "VOUT"
+          }
+        ]
+      }
+    ],
+    "nets": [
+      {
+        "name": "VIN",
+        "pads": [
+          "U1.1",
+          "U1.3",
+          "C1.2"
+        ]
+      },
+      {
+        "name": "GND",
+        "pads": [
+          "U1.2",
+          "C1.1",
+          "C2.1"
+        ]
+      },
+      {
+        "name": "VOUT",
+        "pads": [
+          "U1.5",
+          "C2.2"
+        ]
+      },
+      {
+        "name": "NC",
+        "pads": []
+      }
+    ],
+    "traces": [
+      {
+        "net": "VIN",
+        "layer": "F.Cu",
+        "width": 0.3,
+        "segments": [
+          {
+            "start": {
+              "x": 4.5,
+              "y": 5.45
+            },
+            "end": {
+              "x": 6.05,
+              "y": 5.45
+            }
+          }
+        ]
+      },
+      {
+        "net": "VIN",
+        "layer": "F.Cu",
+        "width": 0.2,
+        "segments": [
+          {
+            "start": {
+              "x": 7.95,
+              "y": 5.45
+            },
+            "end": {
+              "x": 7.95,
+              "y": 6.2
+            }
+          },
+          {
+            "start": {
+              "x": 7.95,
+              "y": 6.2
+            },
+            "end": {
+              "x": 7.45,
+              "y": 6.7
+            }
+          },
+          {
+            "start": {
+              "x": 7.45,
+              "y": 6.7
+            },
+            "end": {
+              "x": 6.55,
+              "y": 6.7
+            }
+          },
+          {
+            "start": {
+              "x": 6.55,
+              "y": 6.7
+            },
+            "end": {
+              "x": 6.05,
+              "y": 6.2
+            }
+          },
+          {
+            "start": {
+              "x": 6.05,
+              "y": 6.2
+            },
+            "end": {
+              "x": 6.05,
+              "y": 5.45
+            }
+          }
+        ]
+      },
+      {
+        "net": "VOUT",
+        "layer": "F.Cu",
+        "width": 0.3,
+        "segments": [
+          {
+            "start": {
+              "x": 4.5,
+              "y": 3.55
+            },
+            "end": {
+              "x": 6.05,
+              "y": 3.55
+            }
+          }
+        ]
+      },
+      {
+        "net": "GND",
+        "layer": "F.Cu",
+        "width": 0.3,
+        "segments": [
+          {
+            "start": {
+              "x": 7,
+              "y": 5.45
+            },
+            "end": {
+              "x": 7,
+              "y": 3
+            }
+          },
+          {
+            "start": {
+              "x": 7,
+              "y": 3
+            },
+            "end": {
+              "x": 6.5,
+              "y": 2.5
+            }
+          },
+          {
+            "start": {
+              "x": 6.5,
+              "y": 2.5
+            },
+            "end": {
+              "x": 4,
+              "y": 2.5
+            }
+          },
+          {
+            "start": {
+              "x": 4,
+              "y": 2.5
+            },
+            "end": {
+              "x": 3.5,
+              "y": 3
+            }
+          },
+          {
+            "start": {
+              "x": 3.5,
+              "y": 3
+            },
+            "end": {
+              "x": 3.5,
+              "y": 3.55
+            }
+          }
+        ]
+      },
+      {
+        "net": "GND",
+        "layer": "F.Cu",
+        "width": 0.3,
+        "segments": [
+          {
+            "start": {
+              "x": 3.5,
+              "y": 3.55
+            },
+            "end": {
+              "x": 3.5,
+              "y": 5.45
+            }
+          }
+        ]
+      }
+    ],
+    "vias": [],
+    "thermal_notes": "?JA = 184�C/W (SOT25). At 600mA output with 1.7V dropout: Pdiss = 1.02W ? ?Tja = 188�C. To stay below 85�C junction at 25�C ambient, limit power dissipation to ~0.33W (e.g. 100mA at 3.3V from 5V). Use copper pours on GND net under and around IC for spreading.",
+    "areas": []
+  }
+}

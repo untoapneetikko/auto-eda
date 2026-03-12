@@ -1,0 +1,95 @@
+{
+  "name": "DIP-8",
+  "description": "DIP-8 through-hole IC (2.54mm pitch, 7.62mm row)",
+  "pin_count": 8,
+  "pitch": 2.54,
+  "row_spacing": 7.62,
+  "pads": [
+    {
+      "number": "1",
+      "x": -3.81,
+      "y": -3.81,
+      "type": "thru_hole",
+      "shape": "rect",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    },
+    {
+      "number": "2",
+      "x": -3.81,
+      "y": -1.27,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    },
+    {
+      "number": "3",
+      "x": -3.81,
+      "y": 1.27,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    },
+    {
+      "number": "4",
+      "x": -3.81,
+      "y": 3.81,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    },
+    {
+      "number": "5",
+      "x": 3.81,
+      "y": 3.81,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    },
+    {
+      "number": "6",
+      "x": 3.81,
+      "y": 1.27,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    },
+    {
+      "number": "7",
+      "x": 3.81,
+      "y": -1.27,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    },
+    {
+      "number": "8",
+      "x": 3.81,
+      "y": -3.81,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.6,
+      "size_y": 1.6,
+      "drill": 0.8
+    }
+  ],
+  "courtyard": {
+    "x": -5.31,
+    "y": -5.31,
+    "w": 10.62,
+    "h": 10.62
+  }
+}

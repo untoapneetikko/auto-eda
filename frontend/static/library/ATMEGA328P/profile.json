@@ -1,0 +1,414 @@
+{
+  "part_number": "ATmega328P",
+  "description": "8-bit AVR microcontroller, 32KB flash, 2KB SRAM, 1KB EEPROM, 28-pin DIP/TQFP \u2014 the Arduino Uno MCU",
+  "manufacturer": "Microchip (Atmel)",
+  "package_types": [
+    "28-pin DIP (PDIP28)",
+    "32-pad TQFP (TQFP32)",
+    "32-pad QFN (MLF32)"
+  ],
+  "supply_voltage_range": "1.8\u20135.5V (full speed requires 2.7\u20135.5V)",
+  "frequency_range": "0\u201320 MHz at 4.5\u20135.5V; 0\u201310 MHz at 2.7\u20135.5V",
+  "designator": "U",
+  "absolute_max": {
+    "vcc": "6.0V",
+    "max_pin_current": "40 mA per I/O pin",
+    "total_port_current": "200 mA per VCC/GND pair",
+    "operating_temp": "-40\u00b0C to +85\u00b0C (industrial)"
+  },
+  "key_performance": {
+    "flash": "32 KB (2 KB used by bootloader on Arduino)",
+    "sram": "2 KB",
+    "eeprom": "1 KB",
+    "timers": "2\u00d7 8-bit, 1\u00d7 16-bit",
+    "uart": "1\u00d7 USART",
+    "spi": "1\u00d7 SPI (also used for ISP programming)",
+    "i2c": "1\u00d7 TWI (I2C) on PC4/PC5",
+    "adc": "6-channel 10-bit ADC (8-channel in TQFP)",
+    "pwm": "6 PWM channels",
+    "max_current_per_pin": "40 mA source/sink"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "PC6/RESET",
+      "type": "bidirectional",
+      "description": "Port C bit 6, also active-low RESET. Pull high to run; pull low to reset. In Arduino, RESET is exposed via the reset button and ICSP header.",
+      "active": "low",
+      "internal_pull": "weak pull-up on RESET line",
+      "requirements": "Add 10k\u03a9 pull-up to VCC. If using as I/O, disable RSTDISBL fuse (irreversible). Arduino uses a 100nF cap from RESET to DTR for auto-reset.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 2,
+      "name": "PD0/RXD",
+      "type": "bidirectional",
+      "description": "Port D bit 0, UART RX. Receives serial data. On Arduino Uno this connects via USB-Serial chip.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "Leave unconnected or connect to UART TX source. 1k\u03a9 series resistor recommended if connecting to 5V UART from 3.3V system.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 3,
+      "name": "PD1/TXD",
+      "type": "bidirectional",
+      "description": "Port D bit 1, UART TX. Transmits serial data at 5V logic.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "Level-shift to 3.3V before connecting to 3.3V UART RX input.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 4,
+      "name": "PD2/INT0",
+      "type": "bidirectional",
+      "description": "Port D bit 2, external interrupt 0. Configurable rising/falling/level trigger.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "General GPIO or interrupt input. Add pull-up resistor for switch inputs.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 5,
+      "name": "PD3/INT1/OC2B",
+      "type": "bidirectional",
+      "description": "Port D bit 3, external interrupt 1, Timer2 compare B output (PWM).",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "GPIO, interrupt, or PWM output.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 6,
+      "name": "PD4/T0/XCK",
+      "type": "bidirectional",
+      "description": "Port D bit 4, Timer0 external clock input, UART external clock.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "General GPIO.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 7,
+      "name": "VCC",
+      "type": "power",
+      "description": "Digital supply voltage. Powers AVR core, flash, SRAM, and digital I/O.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF ceramic decoupling cap to GND close to pin. Optional 10\u00b5F electrolytic on board supply rail. Separate from AVCC for best ADC performance.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 8,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Digital ground. Return path for VCC.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane. Decouple VCC to this pin.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 9,
+      "name": "PB6/XTAL1",
+      "type": "bidirectional",
+      "description": "Port B bit 6, crystal oscillator input. On Arduino Uno a 16 MHz crystal is connected here.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "For crystal: connect one leg of 16 MHz crystal with 22pF cap to GND. For external clock source: drive directly, leave other side floating. For internal RC oscillator: leave both XTAL pins floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 10,
+      "name": "PB7/XTAL2",
+      "type": "bidirectional",
+      "description": "Port B bit 7, crystal oscillator output. Connect other leg of crystal with 22pF cap to GND.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect 22pF cap to GND. See XTAL1 note.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 11,
+      "name": "PD5/T1/OC0B",
+      "type": "bidirectional",
+      "description": "Port D bit 5, Timer1 external clock, Timer0 compare B output (PWM).",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "GPIO or PWM output.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 12,
+      "name": "PD6/AIN0/OC0A",
+      "type": "bidirectional",
+      "description": "Port D bit 6, analog comparator positive input, Timer0 compare A output (PWM).",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "GPIO or PWM output.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 13,
+      "name": "PD7/AIN1",
+      "type": "bidirectional",
+      "description": "Port D bit 7, analog comparator negative input.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "General GPIO.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 14,
+      "name": "PB0/ICP1/CLKO",
+      "type": "bidirectional",
+      "description": "Port B bit 0, Timer1 input capture, system clock output (when CKOUT fuse programmed).",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "General GPIO.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 15,
+      "name": "PB1/OC1A",
+      "type": "bidirectional",
+      "description": "Port B bit 1, Timer1 compare A output (PWM). 16-bit timer for high-resolution PWM.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "GPIO or PWM output.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 16,
+      "name": "PB2/SS/OC1B",
+      "type": "bidirectional",
+      "description": "Port B bit 2, SPI slave select (active-low), Timer1 compare B output (PWM).",
+      "active": "low",
+      "internal_pull": "configurable pull-up",
+      "requirements": "For SPI master mode: drive low to select slave device, or use as GPIO. Keep high when not selected as SPI slave.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 17,
+      "name": "PB3/MOSI/OC2A",
+      "type": "bidirectional",
+      "description": "Port B bit 3, SPI MOSI, Timer2 compare A output (PWM), ICSP MOSI.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "Connect to MOSI of SPI devices. Also used for ISP programming.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 18,
+      "name": "PB4/MISO",
+      "type": "bidirectional",
+      "description": "Port B bit 4, SPI MISO, ICSP MISO.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "Connect to MISO of SPI devices.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 19,
+      "name": "PB5/SCK",
+      "type": "bidirectional",
+      "description": "Port B bit 5, SPI clock, ICSP SCK. Also Arduino Uno pin 13 / onboard LED.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "SPI clock line. Shared with ISP programmer.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 20,
+      "name": "AVCC",
+      "type": "power",
+      "description": "Analog supply for ADC, Port C pins, and analog comparator. Should be same voltage as VCC (2.7\u20135.5V).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "MUST be connected even if ADC is unused. Connect to VCC through a 10\u03a9 resistor in series, then 100nF to GND. Optional: add LC filter (10\u00b5H + 100nF) for better ADC noise performance.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 21,
+      "name": "AREF",
+      "type": "input",
+      "description": "ADC voltage reference. When REFS[1:0]=00 in ADMUX, AREF pin is the reference. Left floating if using internal references (VCC or 1.1V bandgap).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add 100nF cap to GND to filter noise when using AREF. Do NOT drive above AVCC. Leave floating when using internal reference (but add 100nF anyway to prevent oscillation).",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 22,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Analog ground. Reference for AVCC and AREF.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane. Star-ground or separate analog ground pour for best ADC performance.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 23,
+      "name": "PC0/ADC0",
+      "type": "bidirectional",
+      "description": "Port C bit 0, ADC channel 0 (Arduino A0). 10-bit ADC, 0\u2013AREF range.",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "For ADC: drive with analog signal 0V to AREF. Do not enable internal pull-up when using as ADC input.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 24,
+      "name": "PC1/ADC1",
+      "type": "bidirectional",
+      "description": "Port C bit 1, ADC channel 1 (Arduino A1).",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "Same as ADC0.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 25,
+      "name": "PC2/ADC2",
+      "type": "bidirectional",
+      "description": "Port C bit 2, ADC channel 2 (Arduino A2).",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "Same as ADC0.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 26,
+      "name": "PC3/ADC3",
+      "type": "bidirectional",
+      "description": "Port C bit 3, ADC channel 3 (Arduino A3).",
+      "active": null,
+      "internal_pull": "configurable pull-up",
+      "requirements": "Same as ADC0.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 27,
+      "name": "PC4/ADC4/SDA",
+      "type": "bidirectional",
+      "description": "Port C bit 4, ADC channel 4, I2C SDA (Arduino A4). TWI/I2C data line.",
+      "active": null,
+      "internal_pull": "configurable pull-up (use external 4.7k\u03a9 for I2C)",
+      "requirements": "For I2C: add 4.7k\u03a9 pull-up to VCC. Open-drain bus \u2014 pull-up required. Do not enable internal pull-up for I2C.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 28,
+      "name": "PC5/ADC5/SCL",
+      "type": "bidirectional",
+      "description": "Port C bit 5, ADC channel 5, I2C SCL (Arduino A5). TWI/I2C clock line.",
+      "active": null,
+      "internal_pull": "configurable pull-up (use external 4.7k\u03a9 for I2C)",
+      "requirements": "For I2C: add 4.7k\u03a9 pull-up to VCC. Open-drain bus.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "100nF 0402",
+      "placement": "VCC (pin 7) to GND (pin 8)",
+      "reason": "Digital supply decoupling \u2014 required for stable operation",
+      "datasheet_page": 3
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF 0402",
+      "placement": "AVCC (pin 20) to GND (pin 22)",
+      "reason": "Analog supply decoupling \u2014 required even if ADC unused",
+      "datasheet_page": 3
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF 0402",
+      "placement": "AREF (pin 21) to GND (pin 22)",
+      "reason": "AREF noise filtering \u2014 prevents ADC oscillation",
+      "datasheet_page": 3
+    },
+    {
+      "type": "resistor",
+      "value": "10k\u03a9 0402",
+      "placement": "RESET (pin 1) to VCC",
+      "reason": "RESET pull-up \u2014 holds MCU in run state. Required.",
+      "datasheet_page": 3
+    },
+    {
+      "type": "capacitor",
+      "value": "22pF 0402",
+      "placement": "XTAL1 (pin 9) to GND",
+      "reason": "Crystal load capacitor \u2014 value depends on crystal spec, typically 12\u201322pF",
+      "datasheet_page": 4
+    },
+    {
+      "type": "capacitor",
+      "value": "22pF 0402",
+      "placement": "XTAL2 (pin 10) to GND",
+      "reason": "Crystal load capacitor \u2014 paired with pin 9 cap",
+      "datasheet_page": 4
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Minimal Arduino-compatible circuit",
+      "description": "VCC and AVCC to 5V with 100nF decoupling. 10k\u03a9 RESET pull-up. 16 MHz crystal with 2\u00d722pF load caps on XTAL1/XTAL2. Optional 100nF on AREF. Bootloader enables serial programming via RXD/TXD.",
+      "page": 3
+    }
+  ],
+  "common_mistakes": [
+    "AVCC MUST be connected to supply \u2014 leaving it unconnected causes unpredictable behavior even if ADC is unused",
+    "RESET needs a 10k\u03a9 pull-up to VCC \u2014 floating RESET causes random resets",
+    "Crystal load capacitors must match the crystal's specified CL \u2014 wrong value causes frequency error or failure to start",
+    "Do not enable internal pull-up on ADC input pins \u2014 it affects ADC accuracy",
+    "I2C (SDA/SCL) requires external 4.7k\u03a9 pull-ups \u2014 internal pull-up is too weak for most buses",
+    "GPIO pins are 5V \u2014 direct connection to 3.3V devices (ESP32, Raspberry Pi) requires level shifting",
+    "Maximum 40mA per pin, 200mA per port, 400mA total from VCC \u2014 avoid directly driving motors",
+    "Brownout detection default varies by fuse setting \u2014 set BOD level appropriate for supply voltage",
+    "Boot fuse bits determine bootloader vs. application start \u2014 incorrect fuse programming bricks the chip",
+    "SPI (PB3/PB4/PB5) is shared with ISP programming \u2014 attached SPI devices may interfere with programming"
+  ],
+  "notes": "DIP28 pinout. Arduino Uno uses ATmega328P-PU (DIP) or ATmega328P-AU (SMD TQFP). Default fuses: 16 MHz external crystal, BOD at 2.7V, bootloader enabled. ISP programming via 6-pin ICSP header (MOSI, MISO, SCK, RESET, VCC, GND). Datasheet: Microchip DS40002061A.",
+  "symbol_type": "ic",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-09T00:00:00.000Z",
+  "builtin": true,
+  "human_corrections": []
+}

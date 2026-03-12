@@ -1,0 +1,12 @@
+{
+  "name": "SOT-223",
+  "description": "SOT-223 4-pin SMD - voltage regulators (AMS1117, LM1117)",
+  "pin_count": 4,
+  "pads": [
+    {"number":"1","x":-2.3,"y":1.65,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.7},
+    {"number":"2","x":0.0,"y":1.65,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.7},
+    {"number":"3","x":2.3,"y":1.65,"type":"smd","shape":"rect","size_x":0.9,"size_y":1.7},
+    {"number":"4","x":0.0,"y":-1.65,"type":"smd","shape":"rect","size_x":3.6,"size_y":2.2}
+  ],
+  "courtyard":{"x":-3.5,"y":-2.5,"w":7.0,"h":5.5}
+}

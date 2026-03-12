@@ -1,0 +1,63 @@
+{
+  "name": "TO-220-5",
+  "description": "TO-220-5 5-pin through-hole (L7805, LM2576)",
+  "pin_count": 5,
+  "pads": [
+    {
+      "number": "1",
+      "x": -5.08,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "rect",
+      "size_x": 1.8,
+      "size_y": 1.8,
+      "drill": 1
+    },
+    {
+      "number": "2",
+      "x": -2.54,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.8,
+      "size_y": 1.8,
+      "drill": 1
+    },
+    {
+      "number": "3",
+      "x": 0,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.8,
+      "size_y": 1.8,
+      "drill": 1
+    },
+    {
+      "number": "4",
+      "x": 2.54,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.8,
+      "size_y": 1.8,
+      "drill": 1
+    },
+    {
+      "number": "5",
+      "x": 5.08,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.8,
+      "size_y": 1.8,
+      "drill": 1
+    }
+  ],
+  "courtyard": {
+    "x": -7,
+    "y": -7,
+    "w": 14,
+    "h": 12
+  }
+}

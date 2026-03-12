@@ -1,0 +1,82 @@
+{
+  "part_number": "BC547",
+  "description": "NPN general-purpose BJT transistor — small signal, 45V, 100mA, low noise. European complement to 2N2222 (lower current rating).",
+  "manufacturer": "Fairchild / ST / Many",
+  "package_types": ["TO-92"],
+  "supply_voltage_range": "Vceo: 45V max",
+  "absolute_max": {
+    "collector_emitter_voltage": "45V",
+    "collector_base_voltage": "50V",
+    "emitter_base_voltage": "6V",
+    "collector_current": "100mA",
+    "power_dissipation": "500mW (TO-92)",
+    "operating_temp": "-65°C to +150°C junction"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "C",
+      "type": "output",
+      "description": "Collector. Load connects between Vcc and collector.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "BC547 TO-92 pinout (flat face): C, B, E left-to-right — OPPOSITE to 2N2222. Very common source of errors.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 2,
+      "name": "B",
+      "type": "input",
+      "description": "Base. Requires base resistor from driver.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Base resistor required. Rb = (Vsource - 0.7) / Ib. For saturation: Ib ≥ Ic / (hFE/10).",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 3,
+      "name": "E",
+      "type": "passive",
+      "description": "Emitter. Connect to GND in typical NPN low-side switch.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to GND or emitter resistor to GND.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "resistor",
+      "value": "Base resistor (10kΩ–100kΩ typical for small signals)",
+      "placement": "In series at base from driver",
+      "reason": "Limits base current — required to prevent damage to driver",
+      "datasheet_page": 1
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "NPN low-side switch",
+      "description": "Load from Vcc to Collector. Emitter to GND. Base resistor from GPIO. GPIO HIGH turns transistor ON.",
+      "page": 1
+    }
+  ],
+  "common_mistakes": [
+    "BC547 TO-92 pinout is C, B, E — opposite to 2N2222 (E, B, C). Installing one where the other is expected = wrong orientation = circuit failure",
+    "Maximum collector current is 100mA — do not use for higher current loads",
+    "No base resistor = damage to driving source",
+    "hFE varies 110–800 across BC547A/B/C grades — always design for minimum hFE"
+  ],
+  "notes": "BC547 variants: A (hFE 110–220), B (hFE 200–450), C (hFE 420–800). Higher gain variants are better for high-impedance base drives. Pinout flat-face left-to-right: C-B-E. Compare with 2N2222 TO-92 flat-face: E-B-C. Common mistake in breadboard substitution.",
+  "symbol_type": "npn",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-08T00:00:00.000Z",
+  "builtin": true,
+  "human_corrections": []
+}

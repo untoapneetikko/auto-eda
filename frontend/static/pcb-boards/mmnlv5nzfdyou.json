@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "title": "PMA3-83LNW+ Layout Example",
+  "board": {
+    "width": 6,
+    "height": 10.5,
+    "units": "mm"
+  },
+  "components": [],
+  "nets": [
+    {
+      "name": "GND",
+      "pads": [
+        "U1.1",
+        "U1.3",
+        "U1.4",
+        "U1.5",
+        "U1.6",
+        "U1.7",
+        "U1.9",
+        "U1.10",
+        "U1.0",
+        "C1.2",
+        "L1.2"
+      ]
+    },
+    {
+      "name": "RF_IN",
+      "pads": [
+        "U1.2",
+        "L1.1",
+        "C2.1"
+      ]
+    },
+    {
+      "name": "RF_OUT_DC_IN",
+      "pads": [
+        "U1.8",
+        "L2.2",
+        "C3.2"
+      ]
+    },
+    {
+      "name": "VDD",
+      "pads": [
+        "L2.1",
+        "C1.1"
+      ]
+    },
+    {
+      "name": "RF_OUT",
+      "pads": [
+        "C3.1"
+      ]
+    },
+    {
+      "name": "RF_SRC",
+      "pads": [
+        "C2.2"
+      ]
+    }
+  ],
+  "traces": [],
+  "vias": [],
+  "id": "mmnlv5nzfdyou",
+  "updated_at": "2026-03-12T15:11:38.783Z"
+}

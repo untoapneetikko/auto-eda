@@ -1,0 +1,159 @@
+{
+  "name": "SOIC-16",
+  "description": "SOIC-16 SMD IC (1.27mm pitch, 5.08mm row)",
+  "pin_count": 16,
+  "pitch": 1.27,
+  "row_spacing": 5.08,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.54,
+      "y": -4.445,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "2",
+      "x": -2.54,
+      "y": -3.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "3",
+      "x": -2.54,
+      "y": -1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "4",
+      "x": -2.54,
+      "y": -0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "5",
+      "x": -2.54,
+      "y": 0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "6",
+      "x": -2.54,
+      "y": 1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "7",
+      "x": -2.54,
+      "y": 3.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "8",
+      "x": -2.54,
+      "y": 4.445,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "9",
+      "x": 2.54,
+      "y": 4.445,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "10",
+      "x": 2.54,
+      "y": 3.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "11",
+      "x": 2.54,
+      "y": 1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "12",
+      "x": 2.54,
+      "y": 0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "13",
+      "x": 2.54,
+      "y": -0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "14",
+      "x": 2.54,
+      "y": -1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "15",
+      "x": 2.54,
+      "y": -3.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "16",
+      "x": 2.54,
+      "y": -4.445,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    }
+  ],
+  "courtyard": {
+    "x": -3.29,
+    "y": -5.745,
+    "w": 6.58,
+    "h": 11.49
+  }
+}

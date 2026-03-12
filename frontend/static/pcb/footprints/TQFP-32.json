@@ -1,0 +1,302 @@
+{
+  "name": "TQFP-32",
+  "description": "TQFP-32 (0.8mm pitch)",
+  "pin_count": 32,
+  "pitch": 0.8,
+  "pads": [
+    {
+      "number": "1",
+      "x": -4.15,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "2",
+      "x": -4.15,
+      "y": 2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "3",
+      "x": -4.15,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "4",
+      "x": -4.15,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "5",
+      "x": -4.15,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "6",
+      "x": -4.15,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "7",
+      "x": -4.15,
+      "y": -2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "8",
+      "x": -4.15,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "9",
+      "x": -2.8,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "10",
+      "x": -2,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "11",
+      "x": -1.2,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "12",
+      "x": -0.4,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "13",
+      "x": 0.4,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "14",
+      "x": 1.2,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "15",
+      "x": 2,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "16",
+      "x": 2.8,
+      "y": -4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "17",
+      "x": 4.15,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "18",
+      "x": 4.15,
+      "y": -2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "19",
+      "x": 4.15,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "20",
+      "x": 4.15,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "21",
+      "x": 4.15,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "22",
+      "x": 4.15,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "23",
+      "x": 4.15,
+      "y": 2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "24",
+      "x": 4.15,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 0.45
+    },
+    {
+      "number": "25",
+      "x": 2.8,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "26",
+      "x": 2,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "27",
+      "x": 1.2,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "28",
+      "x": 0.4,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "29",
+      "x": -0.4,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "30",
+      "x": -1.2,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "31",
+      "x": -2,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    },
+    {
+      "number": "32",
+      "x": -2.8,
+      "y": 4.15,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.45,
+      "size_y": 1.5
+    }
+  ],
+  "courtyard": {
+    "x": -5.2,
+    "y": -5.2,
+    "w": 10.4,
+    "h": 10.4
+  }
+}

@@ -7,3 +7,6 @@ pdfplumber
 jsonschema
 python-multipart
 python-dotenv
+claude-agent-sdk
+anyio
+aiofiles

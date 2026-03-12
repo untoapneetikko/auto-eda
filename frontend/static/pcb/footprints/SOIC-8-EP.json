@@ -1,0 +1,96 @@
+{
+  "name": "SOIC-8-EP",
+  "description": "SOIC-8 + exposed thermal pad (power ICs)",
+  "pin_count": 9,
+  "pitch": 1.27,
+  "row_spacing": 5.08,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.54,
+      "y": -1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "2",
+      "x": -2.54,
+      "y": -0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "3",
+      "x": -2.54,
+      "y": 0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "4",
+      "x": -2.54,
+      "y": 1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "5",
+      "x": 2.54,
+      "y": 1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "6",
+      "x": 2.54,
+      "y": 0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "7",
+      "x": 2.54,
+      "y": -0.635,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "8",
+      "x": 2.54,
+      "y": -1.905,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "9",
+      "x": 0,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 3.4,
+      "size_y": 2
+    }
+  ],
+  "courtyard": {
+    "x": -3.29,
+    "y": -3.205,
+    "w": 6.58,
+    "h": 6.41
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "name": "SOT25",
+  "description": "SOT25 5-lead SMD LDO/logic package (Diodes Inc. designation for SOT-23-5) � 2.9x1.6mm body, 0.95mm pitch",
+  "pin_count": 5,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.95,
+      "y": 0.95,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.9
+    },
+    {
+      "number": "2",
+      "x": 0,
+      "y": 0.95,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.9
+    },
+    {
+      "number": "3",
+      "x": 0.95,
+      "y": 0.95,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.9
+    },
+    {
+      "number": "4",
+      "x": 0.95,
+      "y": -0.95,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.9
+    },
+    {
+      "number": "5",
+      "x": -0.95,
+      "y": -0.95,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.9
+    }
+  ],
+  "courtyard": {
+    "x": -1.7,
+    "y": -1.5,
+    "w": 3.4,
+    "h": 3
+  }
+}

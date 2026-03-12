@@ -1,0 +1,896 @@
+{
+  "part_number": "QPA9510",
+  "description": "3V GaAs PHEMT high-power amplifier, 100–1000 MHz, 34 dB gain, +35 dBm P1dB, 55% efficiency, analog power control",
+  "manufacturer": "Qorvo",
+  "designator": "U",
+  "package_types": [
+    "16-Pad 3x3mm QFN"
+  ],
+  "supply_voltage_range": "+2.8V to +4.8V (VCC, VCC1, VCC2); +5.0V max with Pout < 35 dBm and VSWR ≤ 2:1",
+  "absolute_max": {
+    "supply_voltage": "+6.0V (VCC, VCC1, VCC2) / -0.5V min",
+    "control_voltage": "+3.0V (APC1, APC2) / -0.5V min",
+    "device_current": "2400 mA total (ICC1 + ICC2 + ICC3)",
+    "rf_input_power": "+13 dBm (50Ω, DC 50% duty cycle)",
+    "storage_temp": "-55°C to +150°C",
+    "operating_temp": "-40°C to +85°C (case)"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "VCC1",
+      "type": "power",
+      "description": "Power supply for the pre-amplifier stage and interstage matching. This pin forms the shunt inductance needed for proper tuning of the interstage match.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Shunt inductance to GND required for interstage matching. Position and value of matching components are critical. Bypass caps (1000pF + 10nF) to GND. Refer to application circuit.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 2,
+      "name": "GND1",
+      "type": "gnd",
+      "description": "Ground connection for the pre-amplifier stage.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Keep traces physically short. Connect immediately to ground plane. Dedicated ground via holes required to minimize common inductance for stability.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 3,
+      "name": "RF_IN",
+      "type": "input",
+      "description": "RF Input. Nominally 50Ω. Actual impedance affected by interstage matching network on VCC1 (pin 1).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "External DC blocking capacitor required. Input impedance may deviate from 50Ω depending on interstage match.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 4,
+      "name": "GND2",
+      "type": "gnd",
+      "description": "Ground connection for the driver stage.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect with ~40mil (1mm) trace to ground plane to minimize noise. Dedicated ground via holes required for stability.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 5,
+      "name": "VCC2",
+      "type": "power",
+      "description": "Power supply for the driver stage and interstage matching (shared with pin 6).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Shunt inductance required for proper interstage matching. Bypass caps (1000pF + 10nF) to GND. Both pins 5 and 6 must be connected.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 6,
+      "name": "VCC2",
+      "type": "power",
+      "description": "Power supply for the driver stage and interstage matching (shared with pin 5).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Same as pin 5. Both VCC2 pins must be connected.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 7,
+      "name": "NC",
+      "type": "passive",
+      "description": "Not connected.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Leave floating. Do not connect.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 8,
+      "name": "2F0",
+      "type": "passive",
+      "description": "Second harmonic trap connection. Internally connected to RF OUT pins. Bonding wire plus external capacitor forms series resonator for second harmonic short at 2×f0.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "External capacitor to GND required to form 2f0 series trap. Improves amplifier efficiency and reduces spurious outputs. Value depends on operating frequency — see EVB BOM.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 9,
+      "name": "RF_OUT",
+      "type": "output",
+      "description": "RF Output and power supply for the output stage (shared with pads 10, 11, 12). DC bias for the final stage is fed through these pads.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "External matching network required for optimum performance. All four RF OUT pads (9–12) must be connected. DC bias fed via RF choke or matching network.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 10,
+      "name": "RF_OUT",
+      "type": "output",
+      "description": "RF Output and power supply for output stage (shared with pads 9, 11, 12).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Same as pad 9. Connect all four RF OUT pads.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 11,
+      "name": "RF_OUT",
+      "type": "output",
+      "description": "RF Output and power supply for output stage (shared with pads 9, 10, 12).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Same as pad 9. Connect all four RF OUT pads.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 12,
+      "name": "RF_OUT",
+      "type": "output",
+      "description": "RF Output and power supply for output stage (shared with pads 9, 10, 11).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Same as pad 9. Connect all four RF OUT pads.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 13,
+      "name": "NC",
+      "type": "passive",
+      "description": "Not connected.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Leave floating. Do not connect.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 14,
+      "name": "VCC",
+      "type": "power",
+      "description": "Power supply for the bias circuits.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Bypass cap to GND. Connect to same supply rail as VCC1 and VCC2.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 15,
+      "name": "APC2",
+      "type": "input",
+      "description": "Analog Power Control for the output stage.",
+      "active": "high",
+      "internal_pull": null,
+      "requirements": "0V = standby/off. 2.8V = full power. 0.2V–2.6V = gain control range (77 dB total). Max: 3.0V. Bypass cap to GND recommended.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 16,
+      "name": "APC1",
+      "type": "input",
+      "description": "Analog Power Control for driver and pre-amplifier stages. When LOW (≤0.5V at room temp), all circuits shut off.",
+      "active": "high",
+      "internal_pull": null,
+      "requirements": "Shunt bypass capacitor required. 0V = standby. 2.8V = full power. Gain control: ~1.0V for -10 dBm to 2.6V for +35 dBm. Max: 3.0V. Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 23
+    },
+    {
+      "number": 17,
+      "name": "GND_PADDLE",
+      "type": "gnd",
+      "description": "Backside paddle — RF/DC ground. Must be soldered to PCB ground plane.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "PCB vias under device are required for RF/DC grounding and thermal dissipation. Use 0.203–0.330mm finished via holes in 0.5–1.2mm grid pattern. Good solder attach mandatory for electrical performance and reliability.",
+      "ambiguous": false,
+      "datasheet_page": 24
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "DC-blocking cap (e.g. 56pF for 900MHz, see EVB BOM)",
+      "placement": "Series on RF_IN (pad 3)",
+      "reason": "DC blocking capacitor explicitly required on RF IN — datasheet pad description p.23",
+      "datasheet_page": 23
+    },
+    {
+      "type": "inductor",
+      "value": "Shunt inductance (e.g. 11nH for 900MHz)",
+      "placement": "VCC1 (pad 1) to GND",
+      "reason": "Required for interstage matching — pin 1 forms the shunt inductance, datasheet p.23",
+      "datasheet_page": 23
+    },
+    {
+      "type": "inductor",
+      "value": "Shunt inductance (frequency dependent)",
+      "placement": "VCC2 (pads 5,6) to GND",
+      "reason": "Required for interstage matching — datasheet p.23",
+      "datasheet_page": 23
+    },
+    {
+      "type": "capacitor",
+      "value": "1000pF",
+      "placement": "VCC supply to GND (close to device)",
+      "reason": "Supply bypass — per all evaluation board BOMs p.7/11/18",
+      "datasheet_page": 7
+    },
+    {
+      "type": "capacitor",
+      "value": "10nF (10000pF)",
+      "placement": "VCC supply to GND (close to device)",
+      "reason": "Low-frequency supply bypass — per all evaluation board BOMs",
+      "datasheet_page": 7
+    },
+    {
+      "type": "capacitor",
+      "value": "3.3µF tantalum",
+      "placement": "VCC supply to GND (bulk)",
+      "reason": "Bulk supply bypass — per all EVB BOMs",
+      "datasheet_page": 7
+    },
+    {
+      "type": "capacitor",
+      "value": "Bypass cap (per APC application)",
+      "placement": "APC1 (pad 16) to GND",
+      "reason": "Shunt bypass capacitor explicitly required on APC1 — datasheet pad description p.23",
+      "datasheet_page": 23
+    },
+    {
+      "type": "capacitor",
+      "value": "Series resonator cap (frequency dependent)",
+      "placement": "2F0 (pad 8) to GND",
+      "reason": "Forms second harmonic trap with bonding wire to improve efficiency and reduce spurious — datasheet p.23",
+      "datasheet_page": 23
+    },
+    {
+      "type": "network",
+      "value": "Output matching network (L/C, frequency dependent — see EVB BOMs)",
+      "placement": "RF OUT (pads 9–12) to 50Ω load",
+      "reason": "External matching network required for optimum performance — datasheet p.23",
+      "datasheet_page": 23
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "900MHz GSM (QPA9510EVB-01)",
+      "description": "L1=11nH interstage shunt on VCC1, L3=8.8nH output match, L4=3.6nH, L6=1.6nH, L2/L7=120Ω ferrite beads on supply, R1=180Ω APC bias, C11=5.6pF input, C14/C15=47pF output",
+      "page": 7
+    },
+    {
+      "name": "850MHz",
+      "description": "L1=11nH, L3=8.8nH, L4=2.2nH, L6=1.6nH, R1=220Ω. At 850MHz: 35dB gain, +34 dBm P1dB, 57% efficiency",
+      "page": 11
+    },
+    {
+      "name": "450MHz (QPA9510EVB-02)",
+      "description": "L1=12nH, L3=1µH, L4=2.7nH, L6=6.8nH. At 450MHz: 42.4 dB gain, +33.2 dBm P1dB, 49.5% efficiency",
+      "page": 18
+    },
+    {
+      "name": "169MHz (QPA9510EVB-03)",
+      "description": "L1=12nH, L3=1µH, L4=2.7nH, L6=6.8nH. At 169MHz: 41.8 dB gain, +29.4 dBm P1dB, 48.8% efficiency",
+      "page": 22
+    }
+  ],
+  "common_mistakes": [
+    "Exceeding any one or a combination of the Absolute Maximum Rating conditions may cause permanent damage to the device",
+    "Extended application of Absolute Maximum Rating conditions may reduce device reliability",
+    "ESD-Sensitive Device (HBM Class 1B, CDM Class C3) — handle with ESD precautions at all times",
+    "MSL Level 3 — moisture sensitive, bake before reflow if floor life exceeded",
+    "DC blocking capacitor is required on RF IN (pad 3) — do NOT DC-couple the RF input",
+    "Shunt bypass capacitor required on APC1 (pad 16) — omitting it causes instability",
+    "APC1 and APC2 must both be driven — floating either pin puts device in undefined state",
+    "Ground via holes are required under the backside paddle — missing vias cause thermal failure and RF performance degradation",
+    "VCC1 (pad 1) is part of the interstage matching network — changing trace length or inductance value changes gain and match, not just the supply",
+    "All four RF OUT pads (9, 10, 11, 12) must be connected — partial connection reduces power handling",
+    "GND2 (pad 4) trace length affects small-signal gain and stability — use ~40mil trace per datasheet recommendation",
+    "GND1 and GND2 require dedicated via holes to prevent common inductance — omitting vias risks oscillation",
+    "Device current at full power is 1.7–1.9A — PCB traces and supply must be rated accordingly",
+    "Standby requires BOTH APC1 and APC2 at 0V — APC2 alone at 0V does not shut down pre-amp/driver stages"
+  ],
+  "notes": "GaAs PHEMT technology. Thermal resistance Θjc = 12.5°C/W — backside paddle soldering and PCB vias mandatory for thermal management at high power. The 2F0 pin improves harmonic suppression and efficiency — do not leave floating at operating frequencies. Output matching network is highly frequency-dependent; use the relevant EVB BOM as the starting point and tune from there. Quiescent current: 208–230mA. Standby current: 58µA at room temp / 10µA at 85°C.",
+  "symbol_type": "ic",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "QPA9510_Data_Sheet.pdf",
+  "page_count": 27,
+  "raw_text_length": 20902,
+  "uploaded_at": "2026-03-08T17:48:59.741Z",
+  "parsed_at": "2026-03-10T00:00:00.000Z",
+  "human_corrections": [],
+  "example_circuit": {
+    "components": [
+      {
+        "id": "u1",
+        "slug": "QPA9510_DATA_SHEET",
+        "symType": "ic",
+        "designator": "U1",
+        "value": "QPA9510",
+        "x": 320,
+        "y": 290,
+        "rotation": 0
+      },
+      {
+        "id": "c1",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C1",
+        "value": "56pF",
+        "x": 160,
+        "y": 240,
+        "rotation": 1
+      },
+      {
+        "id": "l1",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L1",
+        "value": "11nH",
+        "x": 180,
+        "y": 200,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_vcc1",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC1_SUP",
+        "value": "+3.6V",
+        "x": 220,
+        "y": 180,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_l1",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_L1",
+        "value": "",
+        "x": 140,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_gnd1",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_P2",
+        "value": "",
+        "x": 200,
+        "y": 240,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_gnd2",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_P4",
+        "value": "",
+        "x": 200,
+        "y": 280,
+        "rotation": 0
+      },
+      {
+        "id": "l2",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L2",
+        "value": "11nH",
+        "x": 120,
+        "y": 280,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_vcc2",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC2_SUP",
+        "value": "+3.6V",
+        "x": 160,
+        "y": 260,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_l2",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_L2",
+        "value": "",
+        "x": 80,
+        "y": 300,
+        "rotation": 0
+      },
+      {
+        "id": "c6",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C6",
+        "value": "27pF",
+        "x": 160,
+        "y": 360,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_c6",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_C6",
+        "value": "",
+        "x": 160,
+        "y": 400,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_paddle",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_PAD",
+        "value": "",
+        "x": 420,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_14",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC_P14",
+        "value": "+3.6V",
+        "x": 420,
+        "y": 240,
+        "rotation": 0
+      },
+      {
+        "id": "c5",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C5",
+        "value": "100nF",
+        "x": 460,
+        "y": 220,
+        "rotation": 1
+      },
+      {
+        "id": "gnd_apc1",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_APC1",
+        "value": "",
+        "x": 480,
+        "y": 240,
+        "rotation": 0
+      },
+      {
+        "id": "r1",
+        "slug": "RESISTOR",
+        "symType": "resistor",
+        "designator": "R1",
+        "value": "220Ω",
+        "x": 500,
+        "y": 240,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_apc2",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC_APC",
+        "value": "+3.6V",
+        "x": 530,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "c2",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C2",
+        "value": "1000pF",
+        "x": 580,
+        "y": 160,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_c2",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC_BYP1",
+        "value": "+3.6V",
+        "x": 580,
+        "y": 120,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_c2",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_C2",
+        "value": "",
+        "x": 580,
+        "y": 200,
+        "rotation": 0
+      },
+      {
+        "id": "c3",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C3",
+        "value": "10nF",
+        "x": 640,
+        "y": 160,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_c3",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC_BYP2",
+        "value": "+3.6V",
+        "x": 640,
+        "y": 120,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_c3",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_C3",
+        "value": "",
+        "x": 640,
+        "y": 200,
+        "rotation": 0
+      },
+      {
+        "id": "c4",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C4",
+        "value": "3.3uF",
+        "x": 700,
+        "y": 160,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_c4",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC_BULK",
+        "value": "+3.6V",
+        "x": 700,
+        "y": 120,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_c4",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_C4",
+        "value": "",
+        "x": 700,
+        "y": 200,
+        "rotation": 0
+      },
+      {
+        "id": "l3",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L3",
+        "value": "8.8nH",
+        "x": 560,
+        "y": 340,
+        "rotation": 0
+      },
+      {
+        "id": "l4",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L4",
+        "value": "2.2nH",
+        "x": 680,
+        "y": 340,
+        "rotation": 0
+      },
+      {
+        "id": "l6",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L6",
+        "value": "1.6nH",
+        "x": 620,
+        "y": 400,
+        "rotation": 1
+      },
+      {
+        "id": "gnd_l6",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND_L6",
+        "value": "",
+        "x": 620,
+        "y": 460,
+        "rotation": 0
+      }
+    ],
+    "wires": [
+      {
+        "id": "w_rfin_c1",
+        "points": [
+          {
+            "x": 80,
+            "y": 240
+          },
+          {
+            "x": 120,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "w_c1_pin3",
+        "points": [
+          {
+            "x": 200,
+            "y": 240
+          },
+          {
+            "x": 220,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "w_gnd1",
+        "points": [
+          {
+            "x": 200,
+            "y": 220
+          },
+          {
+            "x": 220,
+            "y": 220
+          }
+        ]
+      },
+      {
+        "id": "w_gnd2",
+        "points": [
+          {
+            "x": 200,
+            "y": 260
+          },
+          {
+            "x": 220,
+            "y": 260
+          }
+        ]
+      },
+      {
+        "id": "w_vcc2_5",
+        "points": [
+          {
+            "x": 220,
+            "y": 280
+          },
+          {
+            "x": 160,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "w_vcc2_6",
+        "points": [
+          {
+            "x": 220,
+            "y": 300
+          },
+          {
+            "x": 160,
+            "y": 300
+          },
+          {
+            "x": 160,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "w_2f0",
+        "points": [
+          {
+            "x": 220,
+            "y": 340
+          },
+          {
+            "x": 160,
+            "y": 340
+          }
+        ]
+      },
+      {
+        "id": "w_apc1",
+        "points": [
+          {
+            "x": 420,
+            "y": 220
+          },
+          {
+            "x": 440,
+            "y": 220
+          }
+        ]
+      },
+      {
+        "id": "w_apc2",
+        "points": [
+          {
+            "x": 420,
+            "y": 240
+          },
+          {
+            "x": 470,
+            "y": 240
+          }
+        ]
+      },
+      {
+        "id": "w_rfout_12",
+        "points": [
+          {
+            "x": 420,
+            "y": 300
+          },
+          {
+            "x": 500,
+            "y": 300
+          }
+        ]
+      },
+      {
+        "id": "w_rfout_11",
+        "points": [
+          {
+            "x": 420,
+            "y": 320
+          },
+          {
+            "x": 500,
+            "y": 320
+          }
+        ]
+      },
+      {
+        "id": "w_rfout_10",
+        "points": [
+          {
+            "x": 420,
+            "y": 340
+          },
+          {
+            "x": 500,
+            "y": 340
+          }
+        ]
+      },
+      {
+        "id": "w_rfout_9",
+        "points": [
+          {
+            "x": 420,
+            "y": 360
+          },
+          {
+            "x": 500,
+            "y": 360
+          }
+        ]
+      },
+      {
+        "id": "w_rfout_bus",
+        "points": [
+          {
+            "x": 500,
+            "y": 300
+          },
+          {
+            "x": 500,
+            "y": 360
+          }
+        ]
+      },
+      {
+        "id": "w_bus_l3",
+        "points": [
+          {
+            "x": 500,
+            "y": 340
+          },
+          {
+            "x": 520,
+            "y": 340
+          }
+        ]
+      },
+      {
+        "id": "w_l3_l4",
+        "points": [
+          {
+            "x": 600,
+            "y": 340
+          },
+          {
+            "x": 620,
+            "y": 340
+          },
+          {
+            "x": 640,
+            "y": 340
+          }
+        ]
+      },
+      {
+        "id": "w_l6_shunt",
+        "points": [
+          {
+            "x": 620,
+            "y": 340
+          },
+          {
+            "x": 620,
+            "y": 360
+          }
+        ]
+      },
+      {
+        "id": "w_rfout_out",
+        "points": [
+          {
+            "x": 720,
+            "y": 340
+          },
+          {
+            "x": 760,
+            "y": 340
+          }
+        ]
+      }
+    ],
+    "labels": [
+      {
+        "id": "lbl_rfin",
+        "name": "RF_IN",
+        "x": 80,
+        "y": 240,
+        "rotation": 2
+      },
+      {
+        "id": "lbl_rfout",
+        "name": "RF_OUT",
+        "x": 760,
+        "y": 340,
+        "rotation": 0
+      }
+    ]
+  },
+  "footprint": "QFN-16-3x3"
+}

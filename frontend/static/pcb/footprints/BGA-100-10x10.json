@@ -1,0 +1,914 @@
+{
+  "name": "BGA-100-10x10",
+  "description": "BGA-100 10×10 ball array (0.8mm pitch)",
+  "pin_count": 100,
+  "pitch": 0.8,
+  "pads": [
+    {
+      "number": "A1",
+      "x": -3.6,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A2",
+      "x": -2.8,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A3",
+      "x": -2,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A4",
+      "x": -1.2,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A5",
+      "x": -0.4,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A6",
+      "x": 0.4,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A7",
+      "x": 1.2,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A8",
+      "x": 2,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A9",
+      "x": 2.8,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A10",
+      "x": 3.6,
+      "y": -3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B1",
+      "x": -3.6,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B2",
+      "x": -2.8,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B3",
+      "x": -2,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B4",
+      "x": -1.2,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B5",
+      "x": -0.4,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B6",
+      "x": 0.4,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B7",
+      "x": 1.2,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B8",
+      "x": 2,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B9",
+      "x": 2.8,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B10",
+      "x": 3.6,
+      "y": -2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C1",
+      "x": -3.6,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C2",
+      "x": -2.8,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C3",
+      "x": -2,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C4",
+      "x": -1.2,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C5",
+      "x": -0.4,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C6",
+      "x": 0.4,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C7",
+      "x": 1.2,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C8",
+      "x": 2,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C9",
+      "x": 2.8,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C10",
+      "x": 3.6,
+      "y": -2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D1",
+      "x": -3.6,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D2",
+      "x": -2.8,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D3",
+      "x": -2,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D4",
+      "x": -1.2,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D5",
+      "x": -0.4,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D6",
+      "x": 0.4,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D7",
+      "x": 1.2,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D8",
+      "x": 2,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D9",
+      "x": 2.8,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D10",
+      "x": 3.6,
+      "y": -1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E1",
+      "x": -3.6,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E2",
+      "x": -2.8,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E3",
+      "x": -2,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E4",
+      "x": -1.2,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E5",
+      "x": -0.4,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E6",
+      "x": 0.4,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E7",
+      "x": 1.2,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E8",
+      "x": 2,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E9",
+      "x": 2.8,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E10",
+      "x": 3.6,
+      "y": -0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F1",
+      "x": -3.6,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F2",
+      "x": -2.8,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F3",
+      "x": -2,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F4",
+      "x": -1.2,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F5",
+      "x": -0.4,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F6",
+      "x": 0.4,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F7",
+      "x": 1.2,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F8",
+      "x": 2,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F9",
+      "x": 2.8,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F10",
+      "x": 3.6,
+      "y": 0.4,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G1",
+      "x": -3.6,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G2",
+      "x": -2.8,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G3",
+      "x": -2,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G4",
+      "x": -1.2,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G5",
+      "x": -0.4,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G6",
+      "x": 0.4,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G7",
+      "x": 1.2,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G8",
+      "x": 2,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G9",
+      "x": 2.8,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G10",
+      "x": 3.6,
+      "y": 1.2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H1",
+      "x": -3.6,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H2",
+      "x": -2.8,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H3",
+      "x": -2,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H4",
+      "x": -1.2,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H5",
+      "x": -0.4,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H6",
+      "x": 0.4,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H7",
+      "x": 1.2,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H8",
+      "x": 2,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H9",
+      "x": 2.8,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H10",
+      "x": 3.6,
+      "y": 2,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I1",
+      "x": -3.6,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I2",
+      "x": -2.8,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I3",
+      "x": -2,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I4",
+      "x": -1.2,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I5",
+      "x": -0.4,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I6",
+      "x": 0.4,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I7",
+      "x": 1.2,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I8",
+      "x": 2,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I9",
+      "x": 2.8,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "I10",
+      "x": 3.6,
+      "y": 2.8,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J1",
+      "x": -3.6,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J2",
+      "x": -2.8,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J3",
+      "x": -2,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J4",
+      "x": -1.2,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J5",
+      "x": -0.4,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J6",
+      "x": 0.4,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J7",
+      "x": 1.2,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J8",
+      "x": 2,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J9",
+      "x": 2.8,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J10",
+      "x": 3.6,
+      "y": 3.6,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    }
+  ],
+  "courtyard": {
+    "x": -4,
+    "y": -4,
+    "w": 8,
+    "h": 8
+  }
+}

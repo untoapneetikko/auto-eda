@@ -1,0 +1,95 @@
+{
+  "name": "DFN-8-2x2",
+  "description": "DFN-8 2x2mm (4+4 SMD, 0.5mm pitch)",
+  "pin_count": 9,
+  "pitch": 0.5,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.85,
+      "y": 0.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "2",
+      "x": -0.85,
+      "y": 0.25,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "3",
+      "x": -0.85,
+      "y": -0.25,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "4",
+      "x": -0.85,
+      "y": -0.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "5",
+      "x": 0.85,
+      "y": -0.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "6",
+      "x": 0.85,
+      "y": -0.25,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "7",
+      "x": 0.85,
+      "y": 0.25,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "8",
+      "x": 0.85,
+      "y": 0.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.25
+    },
+    {
+      "number": "9",
+      "x": 0,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 0.9
+    }
+  ],
+  "courtyard": {
+    "x": -1.4,
+    "y": -1.325,
+    "w": 2.8000000000000003,
+    "h": 2.65
+  }
+}

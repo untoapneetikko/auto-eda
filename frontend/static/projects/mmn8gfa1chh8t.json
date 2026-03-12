@@ -1,0 +1,413 @@
+{
+  "id": "mmn8gfa1chh8t",
+  "name": "Untitled",
+  "components": [
+    {
+      "id": "cmmn8ge17viq",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "PMA3-83LNW+",
+      "x": 663.6363636363636,
+      "y": 504.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 300,
+      "_exampleY": 270
+    },
+    {
+      "id": "cmmn8ge17fs1",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "10pF",
+      "x": 493.6363636363636,
+      "y": 474.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 130,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmmn8ge17pws",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "18nH",
+      "x": 533.6363636363636,
+      "y": 514.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmmn8ge172s8",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "100pF",
+      "x": 863.6363636363636,
+      "y": 514.5454545454545,
+      "rotation": 3,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 500,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmmn8ge17232",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L2",
+      "value": "39nH",
+      "x": 803.6363636363636,
+      "y": 474.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmmn8ge17w57",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VDD",
+      "value": "5V/6V",
+      "x": 803.6363636363636,
+      "y": 324.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 90
+    },
+    {
+      "id": "cmmn8ge17zat",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": 533.6363636363636,
+      "y": 584.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 350
+    },
+    {
+      "id": "cmmn8ge178x1",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": 513.6363636363636,
+      "y": 434.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 150,
+      "_exampleY": 200
+    },
+    {
+      "id": "cmmn8ge17ew6",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "1uF",
+      "x": 823.6363636363636,
+      "y": 414.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 180
+    },
+    {
+      "id": "cmmn8ge17n92",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C4",
+      "value": "1uF",
+      "x": 823.6363636363636,
+      "y": 374.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 140
+    },
+    {
+      "id": "cmmn8ge1757l",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "GND",
+      "x": 843.6363636363636,
+      "y": 444.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn8ge15wh",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 480,
+      "_exampleY": 210
+    }
+  ],
+  "wires": [
+    {
+      "id": "wmmn8ge17t6p",
+      "points": [
+        {
+          "x": 403.6363636363636,
+          "y": 474.5454545454545
+        },
+        {
+          "x": 473.6363636363636,
+          "y": 474.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17qdf",
+      "points": [
+        {
+          "x": 533.6363636363636,
+          "y": 554.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 533.6363636363636,
+          "y": 569.5454545454545,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17q4d",
+      "points": [
+        {
+          "x": 513.6363636363636,
+          "y": 474.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 563.6363636363636,
+          "y": 474.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17jjw",
+      "points": [
+        {
+          "x": 803.6363636363636,
+          "y": 344.5454545454545
+        },
+        {
+          "x": 803.6363636363636,
+          "y": 344.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17e7k",
+      "points": [
+        {
+          "x": 803.6363636363636,
+          "y": 344.5454545454545
+        },
+        {
+          "x": 803.6363636363636,
+          "y": 344.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17nnw",
+      "points": [
+        {
+          "x": 763.6363636363636,
+          "y": 514.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 514.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge171j7",
+      "points": [
+        {
+          "x": 803.6363636363636,
+          "y": 434.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 803.6363636363636,
+          "y": 344.5454545454545,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17rh8",
+      "points": [
+        {
+          "x": 933.6363636363636,
+          "y": 514.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 933.6363636363636,
+          "y": 514.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge179xa",
+      "points": [
+        {
+          "x": 533.6363636363636,
+          "y": 434.5454545454545,
+          "isPort": false
+        },
+        {
+          "x": 563.6363636363636,
+          "y": 434.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17fg9",
+      "points": [
+        {
+          "x": 533.6363636363636,
+          "y": 474.5454545454545
+        },
+        {
+          "x": 533.6363636363636,
+          "y": 474.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17jnc",
+      "points": [
+        {
+          "x": 803.6363636363636,
+          "y": 514.5454545454545
+        },
+        {
+          "x": 803.6363636363636,
+          "y": 514.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17tc5",
+      "points": [
+        {
+          "x": 933.6363636363636,
+          "y": 514.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 933.6363636363636,
+          "y": 514.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17diq",
+      "points": [
+        {
+          "x": 883.6363636363636,
+          "y": 514.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 933.6363636363636,
+          "y": 514.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17wu0",
+      "points": [
+        {
+          "x": 803.6363636363636,
+          "y": 414.5454545454545
+        },
+        {
+          "x": 803.6363636363636,
+          "y": 414.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17n0l",
+      "points": [
+        {
+          "x": 803.6363636363636,
+          "y": 374.5454545454545
+        },
+        {
+          "x": 803.6363636363636,
+          "y": 374.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge175xb",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 424.5454545454545
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 424.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmn8ge17ift",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 424.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 374.5454545454545,
+          "isPort": true
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lmmn8ge17jsf",
+      "name": "RFIN",
+      "x": 403.6363636363636,
+      "y": 474.5454545454545,
+      "rotation": 2
+    },
+    {
+      "id": "lmmn8ge176ka",
+      "name": "RFOUT",
+      "x": 933.6363636363636,
+      "y": 514.5454545454545,
+      "rotation": 0
+    }
+  ],
+  "created_at": "2026-03-12T09:05:02.431Z",
+  "updated_at": "2026-03-12T09:05:02.434Z"
+}

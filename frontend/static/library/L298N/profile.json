@@ -1,0 +1,230 @@
+{
+  "part_number": "L298N",
+  "description": "Dual full H-bridge motor driver — 46V, 2A per channel, logic-level inputs, enable pins, current sensing",
+  "manufacturer": "STMicroelectronics",
+  "package_types": ["Multiwatt15", "PowerSO20"],
+  "supply_voltage_range": "Logic (Vss): 4.5V–7V; Motor (Vs): 4.5V–46V",
+  "absolute_max": {
+    "motor_supply_vs": "50V",
+    "logic_supply_vss": "7V",
+    "output_current_peak": "3A (peak), 2A continuous per channel",
+    "logic_input_voltage": "Vss + 0.3V",
+    "operating_temp": "-25°C to +130°C"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "SENSE_A",
+      "type": "passive",
+      "description": "Current sense resistor connection for channel A. Connect 0.5Ω resistor to GND for current limiting, or short to GND to disable.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Must not be left floating. Short to GND if current sensing not used.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 2,
+      "name": "OUT1",
+      "type": "output",
+      "description": "Motor driver output A1. Connect to one motor terminal.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add 100nF fast-recovery diodes (or Schottky) from each output to VS and GND for flyback protection.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 3,
+      "name": "OUT2",
+      "type": "output",
+      "description": "Motor driver output A2. Connect to other motor terminal of motor A.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add flyback diodes. OUT1/OUT2 drive motor A, OUT3/OUT4 drive motor B.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 4,
+      "name": "VS",
+      "type": "power",
+      "description": "Motor supply voltage. 4.5V to 46V. Powers the H-bridge outputs.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF bypass cap to GND. Separate from logic supply. Use thick PCB traces — carries full motor current.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 5,
+      "name": "IN1",
+      "type": "input",
+      "description": "Logic input for channel A direction control (H-bridge A). TTL-compatible.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Do not leave floating. Drive from MCU GPIO. Both IN1 and IN2 HIGH = brake (both outputs LOW).",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 6,
+      "name": "ENA",
+      "type": "input",
+      "description": "Enable for channel A. HIGH = enabled. LOW = both outputs disabled (high-Z). Can be used for PWM speed control.",
+      "active": "high",
+      "internal_pull": null,
+      "requirements": "Pull HIGH (via jumper or GPIO) to enable. If used for PWM, connect to MCU PWM pin.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 7,
+      "name": "IN2",
+      "type": "input",
+      "description": "Logic input for channel A direction control.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Do not leave floating. Control table: IN1=H/IN2=L = forward; IN1=L/IN2=H = reverse; IN1=IN2 = brake.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 8,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Power ground. Common ground for VS, Vss, and motor return current.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Multiple GND pins — connect all to common ground plane. High current flows through these pins.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 9,
+      "name": "VSS",
+      "type": "power",
+      "description": "Logic supply voltage. 4.5V to 7V. Powers the input logic and control circuits.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF bypass cap to GND.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 10,
+      "name": "IN3",
+      "type": "input",
+      "description": "Logic input for channel B direction control.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 11,
+      "name": "ENB",
+      "type": "input",
+      "description": "Enable for channel B. HIGH = enabled. Can be used for PWM speed control of motor B.",
+      "active": "high",
+      "internal_pull": null,
+      "requirements": "Pull HIGH or connect to PWM.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 12,
+      "name": "IN4",
+      "type": "input",
+      "description": "Logic input for channel B direction control.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 13,
+      "name": "OUT3",
+      "type": "output",
+      "description": "Motor driver output B1.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add flyback diodes.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 14,
+      "name": "OUT4",
+      "type": "output",
+      "description": "Motor driver output B2.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add flyback diodes.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    },
+    {
+      "number": 15,
+      "name": "SENSE_B",
+      "type": "passive",
+      "description": "Current sense resistor connection for channel B. Short to GND if not used.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Must not be left floating. Short to GND if current sensing not used.",
+      "ambiguous": false,
+      "datasheet_page": 3
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "placement": "VS (pin 4) to GND",
+      "reason": "Motor supply bypass — motor switching generates large current transients",
+      "datasheet_page": 3
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "placement": "VSS (pin 9) to GND",
+      "reason": "Logic supply bypass",
+      "datasheet_page": 3
+    },
+    {
+      "type": "diode",
+      "value": "8× fast recovery diodes (1N4007 or Schottky)",
+      "placement": "From each output (OUT1–OUT4) to VS and GND",
+      "reason": "Flyback protection for inductive motor loads — REQUIRED or L298N will be damaged by inductive spikes",
+      "datasheet_page": 4
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Dual DC motor control",
+      "description": "VS: motor supply. VSS: 5V logic. IN1/IN2 + ENA for motor A. IN3/IN4 + ENB for motor B. 8 flyback diodes across outputs.",
+      "page": 4
+    }
+  ],
+  "common_mistakes": [
+    "Omitting flyback diodes causes L298N damage from motor back-EMF spikes — 8 diodes required",
+    "SENSE_A and SENSE_B must not be left floating — short to GND if not used",
+    "ENA/ENB must be HIGH for outputs to work — if both are floating/low, no motor movement",
+    "L298N has ~2V dropout across H-bridge — motor receives VS-2V, not VS",
+    "VS and VSS must share common GND — floating grounds cause erratic behavior",
+    "Maximum 2A continuous — exceeding this causes thermal shutdown or damage",
+    "Logic inputs must match VSS level — using 3.3V MCU with 5V VSS may not drive inputs HIGH reliably"
+  ],
+  "notes": "L298N has significant voltage drop (~2V) across H-bridge transistors. Actual motor voltage = VS − 2V. At high currents, the package gets very hot — heatsink required above 1A. For lower-voltage, more efficient alternatives consider DRV8833 (2.7–10.8V, lower dropout) or TB6612FNG.",
+  "symbol_type": "ic",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-08T00:00:00.000Z",
+  "builtin": true,
+  "human_corrections": []
+}

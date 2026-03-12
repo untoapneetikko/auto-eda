@@ -1,0 +1,121 @@
+{
+  "name": "MCLP-12",
+  "description": "Mini-Circuits MCLP-12 (6+6 SMD, 0.4mm pitch)",
+  "pin_count": 12,
+  "pads": [
+    {
+      "number": "1",
+      "x": -1,
+      "y": -1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "2",
+      "x": -1,
+      "y": -0.6,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "3",
+      "x": -1,
+      "y": -0.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "4",
+      "x": -1,
+      "y": 0.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "5",
+      "x": -1,
+      "y": 0.6,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "6",
+      "x": -1,
+      "y": 1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "7",
+      "x": 1,
+      "y": 1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "8",
+      "x": 1,
+      "y": 0.6,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "9",
+      "x": 1,
+      "y": 0.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "10",
+      "x": 1,
+      "y": -0.2,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "11",
+      "x": 1,
+      "y": -0.6,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "12",
+      "x": 1,
+      "y": -1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    }
+  ],
+  "courtyard": {
+    "x": -1.6,
+    "y": -1.4,
+    "w": 3.2,
+    "h": 2.8
+  }
+}

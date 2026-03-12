@@ -1,0 +1,31 @@
+{
+  "name": "LTCC-0603RF",
+  "description": "LTCC 0603 RF filter (1.6x0.8mm body)",
+  "pin_count": 2,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.8,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 0.9
+    },
+    {
+      "number": "2",
+      "x": 0.8,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 0.9
+    }
+  ],
+  "courtyard": {
+    "x": -1.5,
+    "y": -0.7,
+    "w": 3,
+    "h": 1.4
+  }
+}

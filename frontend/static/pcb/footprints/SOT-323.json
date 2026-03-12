@@ -1,0 +1,40 @@
+{
+  "name": "SOT-323",
+  "description": "SC-70/SOT-323 3-pin tiny SMD",
+  "pin_count": 3,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.65,
+      "y": 1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.35,
+      "size_y": 0.45
+    },
+    {
+      "number": "2",
+      "x": 0.65,
+      "y": 1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.35,
+      "size_y": 0.45
+    },
+    {
+      "number": "3",
+      "x": 0,
+      "y": -1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.35,
+      "size_y": 0.45
+    }
+  ],
+  "courtyard": {
+    "x": -1.2,
+    "y": -1.4,
+    "w": 2.4,
+    "h": 2.8
+  }
+}

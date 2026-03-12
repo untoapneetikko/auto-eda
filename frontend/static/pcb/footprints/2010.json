@@ -1,0 +1,31 @@
+{
+  "name": "2010",
+  "description": "SMD 2010 (5.0x2.5mm) — power resistors",
+  "pin_count": 2,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.5,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 2,
+      "size_y": 1.2
+    },
+    {
+      "number": "2",
+      "x": 2.5,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 2,
+      "size_y": 1.2
+    }
+  ],
+  "courtyard": {
+    "x": -3.65,
+    "y": -0.75,
+    "w": 7.3,
+    "h": 1.5
+  }
+}

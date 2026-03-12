@@ -1,0 +1,1340 @@
+
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+1 of 27 www.qorvo.com   
+ 
+  
+ 
+ 
+QPA9510 
+3V General Purpose/GSM Power Amplifier 
+®
+ 
+16 Pad 3 x 3 mm QFN Package 
+Key Features 
+ 
+• 100 – 1000 MHz Operating Frequency Range 
+• +2.8 V to +4.8 V Single Supply  
+• 34 dB Max Gain with Analog Gain Control  
+• 55% Efficiency 
+• Achieves +35 dBm P1dB 
+• Supports GSM and E-GSM 
+• 3 x 3 mm QFN Package 
+Product Overview 
+ 
+The QPA9510 is  a  high-power,  high-gain,  high-efficiency 
+power amplifier. The device is manufactured with Qorvo’s 
+advanced GaAs process. The amplifier  provides 34 dB of 
+max gain and able to achieve +35 dBm of P1dB along with 
+flexibility in bias settings. 
+ 
+QPA9510 is  designed  for  use  as  the  final  RF  amplifier  in 
+GSM  hand-held  equipment  in  900  MHz  band and  other 
+applications in the UHF bands. An analog on-board power 
+controller  provides  over  70  dB  range  of gain adjustment. 
+This control also allows for power down with a voltage equal 
+to the logic “Low” to set the device in standby mode.  
+ 
+The QPA9510 is  tunable  over  any  sub-bands  in  the 
+operating range to optimize performance. The amplifiers sit 
+in a 3mm x 3mm compact QFN package. 
+Applications 
+ 
+• FM Radios 
+• Public Safety Radios 
+• UHF Applications 
+• Meter Readers 
+• Telematics 
+• RFID 
+• ISM Systems 
+• 3V GSM Cellular Handsets 
+Functional Block Diagram 
+ 
+15
+VCC1
+14
+2
+4
+13
+APC2
+GND2
+NCVCC2
+NC
+GND1
+3
+16
+APC1
+6785
+1
+RF OUT
+11
+9
+RF OUT
+RF OUT
+10
+12
+RF IN
+VCC
+VCC22F0
+Bias
+RF OUT
+Pin 1 Reference Mark
+Backside Paddle – RF/DC GND
+ 
+ Top View 
+ 
+Ordering Information 
+ 
+Part No. Description 
+QPA9510TR7 2,500 pieces on 7” reel (standard) 
+QPA9510SR 100 pieces on 7” short reel 
+QPA9510SB 5-piece sample bag 
+QPA9510EVB-01 900MHz Fully Tested Evaluation Board 
+QPA9510EVB-02 450MHz Fully Tested Evaluation Board 
+QPA9510EVB-03 169MHz Fully Tested Evaluation Board 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+2 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+Absolute Maximum Ratings 
+ 
+Parameter Rating 
+Storage Temperature -55 °C to 150 °C 
+Device Voltage (V
+CC
+, V
+CC1
+, V
+CC2
+) -0.5V to +6.0V 
+Control Voltage (V
+APC1
+, V
+APC2
+) -0.5V to +3.0V 
+Device Current (I
+CC1
+, I
+CC2
+, I
+CC3
+)
+ 
+2400 mA 
+RF Input Power, 50Ω, DC 50% +13 dBm 
+Exceeding any one or a combination of the Absolute Maximum Rating 
+conditions may cause permanent damage to the device. Extended 
+application of Absolute Maximum Rating conditions to the device may 
+reduce device reliability. 
+Recommended Operating Conditions 
+ 
+Parameter Min Typ Max Units 
+Device Voltage  
+(VCC, VCC1, VCC2) 
+ +3.6   
++2.7  +4.8
+(1)(2) 
+V 
+  +5.0
+(1)(2) 
+V 
+T
+CASE
+ −40  +85 °C 
+Tj for 10^6 hours MTTF   +175 °C 
+Notes: 
+1. Pout < 35 dBm 
+2. With maximum output load VSWR 2:1 
+Electrical specifications are measured at specified test conditions.  
+Specifications are not guaranteed over all recommended operating 
+conditions. 
+Switch Control Logic–Truth Table 
+ 
+Parameter APC1  APC2 
+Standby 0 V 0 V 
+Operating Mode 2.8 V 2.8 V 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+3 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+Electrical Specifications 
+ 
+Parameter Conditions 
+(1)
+ Min Typ Max Units 
+Operational Frequency Range Tune for 900MHz EVB 880  915  MHz 
+Gain P
+IN 
+= -20 dBm, Small Signal at 900MHz 32 33.8 36 dB 
+Maximum Output Power   35.4  dBm 
+Efficiency At Maximum Output Power 50 55.2  % 
+Forward Isolation 
+Standby Mode V
+APC1 
+and V
+APC2
+ = 0.3 V, 
+P
+IN 
+= +9.5 dBm 
+ -43.6  dBm 
+Second Harmonic P
+IN 
+= +9.5 dBm  -28.5  dBm 
+Third Harmonic P
+IN 
+= +9.5 dBm  -26.6  dBm 
+Non-Harmonic Spurious    -36 dBm 
+Input VSWR 
+(P
+OUT,MAX 
+– 5 dB) < P
+OUT 
+< P
+OUT,MAX
+  1.72:1   
+P
+OUT
+ < (P
+OUT,MAX 
+– 5 dB)  2.48:1   
+Output Load VSWR, 
+Stability 
+Spurious < -36 dBm, RBW = 100 kHz 
+V
+APC1 
+and V
+APC2
+ from 0.3 V to 2.6 V 
+8:1    
+Output Load VSWR, 
+Ruggedness, 3.6V 
+No damage, Vcc=3.6V, Pin=4.5dBm, -
+40<=Ta<=85 
+10:1    
+Power Control “ON” Voltage V
+APC1 
+and V
+APC2
+; Maximum P
+OUT
+  2.8  V 
+Power Control “OFF” Voltage V
+APC1 
+and V
+APC2
+; Minimum P
+OUT
+ 0.2 0.5  V 
+Gain Control Range V
+APC1 
+and V
+APC2
+ from 0.2 V to 2.6 V 77   dB 
+Gain Control Slope P
+OUT
+ from -10 dBm to +35 dBm  35.7  dB/V 
+APC Input Capacitance DC to 2 MHz   0.2 pF 
+APC Input Current 
+V
+APC1 
+and V
+APC2 
+= 2.8 V  4.6  mA 
+V
+APC1 
+and V
+APC2 
+= 0 V   25 μA 
+Turn ON/OFF Time V
+APC1 
+and V
+APC2
+ from 0 V to 2.8 V  175  ns 
+Device Current 
+(I
+CC1
+, I
+CC2 
+and I
+CC3
+) 
+At Maximum Output Power  1.7 1.9 A 
+Quiescent, P
+IN
+ < -30 dBm  208 230 mA 
+Standby Mode, P
+IN
+ < -30 dBm  58  μA 
+Standby Mode, P
+IN
+ < -30 dBm,  
+Temp = +85 °C 
+  10 μA 
+Thermal Resistance, θ
+jc
+ CW Mode, Junction to case  12.5  °C/W 
+Notes: 
+1. Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V; V
+APC1
+ and V
+APC2
+ = 2.8V; Pin=+4.5dBm; Duty Cycle = 37.5%;  
+Temp = +25 °C; 50 Ω system. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+4 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+Performance Plots – 900MHz ( QPA9510EVB-01) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+  
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+5 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Performance Plots – 900MHz (Continued) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+  
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+6 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+  
+Performance Plots – 900MHz (Continued) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+  
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+7 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+ 
+Evaluation Board – 900MHz (QPA9510EVB-01) 
+ 
+ 
+ 
+ 
+Notes: 
+1. Components shown on PCB layout but not on the schematic are not used. 
+Bill of Materials  
+ 
+Reference Des. Value Description Manuf. Part Number 
+n/a n/a Printed Circuit Board Qorvo  
+U1 n/a QPA9510 Amplifier, QFN pkg. Qorvo QPA9510 
+C14, C15 47pF CAP, 47pF, 0402, 1%, 50V, C0G Murata GRM1555C1H470JA01D 
+C1, C12 56pF CAP, 56pF, 0402, 5%, 50V, C0G Murata GRM1555C1H560JA01D 
+C11 5.6pF CAP, 5.6pF, 0402, ±0.25pF, 50V, HI-Q Johanson 500R07S5R6CV4TD 
+C9 15pF CAP, 15pF, 0402, 5%, 50V, HI-Q Johanson 500R07S150JV4TD 
+C10 11pF CAP, 11pF, 0402, 5%, 50V, HI-Q Johanson 500R07S110JV4TD 
+C18, C21 3.3uF CAP, 3.3uF, TANT-A, 20%, 25V Kyocera TAJA335M025RNJ 
+C3, C6, C13 1000pF CAP, 1000pF, 0402, 5%, 50V, C0G Murata GRM155R71H102KA01D 
+C2, C5, C16, C17 10000pF CAP, 10000pF, 0402, 10%, 50V, X7R Murata GRM155R71E103KA01D 
+C8 1.5pF CAP, 1.5pF, 0402, ±0.1pF, 100V, HI-Q Johanson 500R07S1R5BV4TD 
+C7, C19, C23 27pF CAP, 27pF, 0402, 5%, NP0, 50V, NISN Murata GRM1555C1H270JA01D 
+C20 22pF CAP, 22pF, 0402, 5%, NP0, 50V, NISN Murata GRM1555C1H150JA01D 
+R1 180Ω RES, 180 OHM, 0402, 5%, 1/10W Panasonic ERJ-2GEJ181X 
+R2, R3 0Ω RES, 0 OHM, 0402, 1/10W Kamaya RMC1/16SJPTH 
+L6 1.6nH IND, 1.6nH, 0603, 5%, W/W Coilcraft 0603CS-1N6XJLW 
+L4 3.6nH IND, 3.6nH, 0603, 5%, W/W Coilcraft 0603CS-3N6XJLW 
+L1 11nH IND, 11nH, 0603, 5%, W/W Coilcraft 0603CS-11NXJLW 
+L3 8.8nH IND, 8.8nH, 1606, 5%, W/W Coilcraft 1606-8JLC 
+L2, L7 120Ω RES, 120 OHM, 0402, Ferrite Bead, 500mA Murata BLM15AG121SN1D 
+C22, C24, C25 DNP n/a n/a  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+8 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Typical Performance – 850MHz 
+ 
+Parameter   Conditions Typical Value Units 
+Operational Frequency 
+ 
+800 830 870 MHz 
+Gain P
+IN 
+= -30 dBm, Small Signal  35.0 35.2 34.8 dB 
+Input Return Loss  13.9 13.6 13.3 dB 
+Output Return Loss  7.8 9.2 11.6 dB 
+P1dB  33.3 34.0 33.3 dBm 
+P3dB  34.6 35.1 34.9 dBm 
+Efficiency At Maximum Output Power 52.6 56.7 57.7 % 
+Notes: 
+1. Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V; V
+APC1
+ and V
+APC2
+ = 2.8V; CW; Temp = +25 °C; 50 Ω system. 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+9 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Performance Plots – 850MHz (Continued) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+  
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+10 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+  
+Performance Plots – 850MHz (Continued) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+ 
+ 
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+11 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Evaluation Board – 850MHz  
+ 
+ 
+ 
+ 
+Notes: 
+1. Components shown on PCB layout but not on the schematic are not used. 
+Bill of Materials  
+ 
+Reference Des. Value Description Manuf. Part Number 
+n/a n/a Printed Circuit Board Qorvo  
+U1 n/a QPA9510 Amplifier, QFN pkg. Qorvo QPA9510 
+C1, C12 56pF CAP, 56pF, 0402, 5%, 50V, C0G Murata GRM1555C1H560JA01D 
+C3, C6, C13 1000pF CAP, 1000pF, 0402, 5%, 50V, C0G Murata GRM155R71H102KA01D 
+C2, C5, C16, C17 10000pF CAP, 10000pF, 0402, 10%, 50V, X7R Murata GRM155R71E103KA01D 
+C7, C23 39pF CAP, 39pF, 0402, 5%, 50V, HI-Q Murata  
+C8 1.5pF CAP, 1.5pF, 0402, ±0.1pF, 100V, HI-Q Johanson 500R07S1R5BV4TD 
+C9 15pF CAP, 15pF, 0402, 5%, 50V, HI-Q Murata  
+C10 1.8pF CAP, 1.8pF, 0402, 5%, 50V, HI-Q Murata  
+C11 9.1pF CAP, 9.1pF, 0402, 5%, 100V, C0G Murata  
+C14, C15 33pF CAP, 33pF, 0402, 1%, 50V, C0G   
+C18, C21 3.3uF CAP, 3.3uF, TANT-A, 20%, 25V Kyocera TAJA335M025RNJ 
+C19 27pF CAP, 27pF, 0402, 5%, 50V, HI-Q Murata  
+C20 22pF CAP, 22pF, 0402, 5%, 50V, HI-Q Murata  
+R1 220Ω RES, 200 OHM, 0402, 5%, 1/10W   
+R2, R3 0Ω RES, 0 OHM, 0402, 1/10W Kamaya RMC1/16SJPTH 
+L1 11nH IND, 11nH, 0603, 5%, W/W Coilcraft 0603CS-11NXJLW 
+L2, L7 120Ω RES, 120 OHM, 0402, Ferrite Bead, 500mA Murata BLM15AG121SN1D 
+L3 8.8nH IND, 8.8nH, 1606, 5%, W/W Coilcraft 1606-8JLC 
+L4 2.2nH IND, 2.2nH, 0603, 5%, W/W   
+L6 1.6nH IND, 1.6nH, 0603, 5%, W/W Coilcraft 0603CS-1N6XJLW 
+C22, C24, C25 DNP n/a n/a  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+12 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+  
+Typical Performance – 700MHz 
+ 
+Parameter   Conditions Typical Value Units 
+Operational Frequency 
+ 
+670 700 730 MHz 
+Gain P
+IN 
+= -30 dBm, Small Signal  35.9 35.9 35.4 dB 
+Input Return Loss  14.6 13.3 12.7 dB 
+Output Return Loss  8.2 12.9 21.7 dB 
+P1dB  34.6 33.8 33.1 dBm 
+P3dB  36.1 35.6 34.5 dBm 
+Efficiency At Maximum Output Power 42.8 42.5 39.5 % 
+Notes: 
+1. Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +5 V; V
+APC1
+ and V
+APC2
+ = 2.6V; CW; Temp = +25 °C; 50 Ω system. 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+13 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Performance Plots – 700MHz 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+  
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+14 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+  
+Performance Plots – 700MHz (Continued) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+ 
+ 
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+15 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+ 
+  
+Typical Performance – 450MHz (QPA9510EVB-02) 
+ 
+Parameter   Conditions Typical Value Units 
+Operational Frequency  430 450 470 MHz 
+Gain P
+IN 
+= -30 dBm, Small Signal  42.9 42.4 41.9 dB 
+Input Return Loss  13.6 13.1 12.7 dB 
+Output Return Loss  8.4 10.2 12.0 dB 
+P1dB  32.3 33.2 33.1 dBm 
+P3dB  33.0 33.9 33.8 dBm 
+Efficiency At Maximum Output Power 43.7 49.5 48.9 % 
+Notes: 
+1. Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V; V
+APC1
+ and V
+APC2
+ = 2.8V; CW Temp = +25 °C; 50 Ω system. 
+ 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+16 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+Performance Plots – 450MHz (QPA9510EVB-02) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+  
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+17 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Performance Plots – 450MHz (Continued) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+ 
+ 
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+18 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+  
+  
+Evaluation Board – 450MHz (QPA9510EVB-02) 
+ 
+ 
+ 
+ 
+Notes: 
+1. Components shown on PCB layout but not on the schematic are not used. 
+Bill of Materials  
+ 
+Reference Des. Value Description Manuf. Part Number 
+n/a n/a Printed Circuit Board Qorvo  
+U1 n/a QPA9510 Amplifier, QFN pkg. Qorvo QPA9510 
+C1, C12 56pF CAP, 56pF, 0402, 5%, 50V, C0G Murata GRM1555C1H560JA01D 
+C3, C6, C13 1000pF CAP, 1000pF, 0402, 5%, 50V, C0G Murata GRM155R71H102KA01D 
+C2, C5, C16, C17 10000pF CAP, 10000pF, 0402, 10%, 50V, X7R Murata GRM155R71E103KA01D 
+C10 27pF CAP, 27pF, 0402, 5%, 50V, HI-Q Murata GJM1555C1H270JB01D 
+C11 22pF CAP, 22pF, 0402, 5%, 100V, C0G Taiyo MSASH105SCG220JFNA01 
+C14 47pF CAP, 47pF, 0402, 1%, 50V, C0G Murata GRM1555C1H470JA01D 
+C15 100pF CAP, 100pF, 0402, 1%, 50V, C0G Murata GRM1555C1H101FA01D 
+C18, C21 3.3uF CAP, 3.3uF, TANT-A, 20%, 25V Kyocera TAJA335M025RNJ 
+C19, C20 330pF CAP, 330pF, ±20%, 100V, X7R, 0402 Taiyo MSASH105SB7331MFNA01 
+C25 2pF CAP, 2pF, 0402, ±0.1pF, 50V, HI-Q Murata GJM1555C1H2R0BB01D 
+R1 180Ω RES, 180 OHM, 0402, 5%, 1/10W Kamaya RMC1/16S-181JTH 
+R2, R3, L2, L7 0Ω RES, 0 OHM, 0402, 1/10W Kamaya RMC1/16SJPTH 
+L1 12nH IND, 12nH, 0603, 5%, W/W Coilcraft 0603CS-12NXJLW 
+L3 1uH IND, 1uH, 1606, 5%, W/W   
+L4 2.7nH IND, 2.7nH, 0603, 5%, W/W Coilcraft 0603CS-2N7XJRW 
+L6 6.8nH IND, 6.8nH, 0603, 5%, W/W Coilcraft 0603CS-6N8XJRW 
+C7, C8, C9, C22, 
+C23, C24 
+DNP n/a n/a  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+19 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Typical Performance – 169MHz (QPA9510EVB-03) 
+ 
+Parameter   Conditions Typical Value Units 
+Operational Frequency 
+ 
+168 169 170 MHz 
+Gain P
+IN 
+= -30 dBm, Small Signal 41.8 41.8 41.8 dB 
+Input Return Loss  8.7 8.7 8.7 dB 
+Output Return Loss  11.9 12.5 13.3 dB 
+P1dB  29.3 29.4 29.2 dBm 
+P3dB  31.1 31.2 31.1 dBm 
+Efficiency At Maximum Output Power 47.8 48.8 47.9 % 
+Notes: 
+1. Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V; V
+APC1
+ and V
+APC2
+ = 2.8V; CW; Temp = +25 °C; 50 Ω system. 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+20 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Performance Plots – 169MHz (QPA9510EVB-03) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+  
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+21 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+  
+Performance Plots – 169MHz (Continued) 
+ 
+Test conditions unless otherwise noted: V
+CC
+ = V
+CC1
+ = V
+CC2
+ = +3.6 V, V
+APC1
+ = V
+APC2
+ = +2.8 V, I
+CQ
+ = 215 mA, Temp = +25 °C, 50 Ω system. 
+  
+ 
+ 
+  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+22 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+  
+Evaluation Board – 169MHz (QPA9510EVB-03) 
+ 
+ 
+ 
+ 
+Notes: 
+1. Components shown on PCB layout but not on the schematic are not used. 
+Bill of Materials  
+ 
+Reference Des. Value Description Manuf. Part Number 
+n/a n/a Printed Circuit Board Qorvo  
+U1 n/a QPA9510 Amplifier, QFN pkg. Qorvo QPA9510 
+C1, C12 56pF CAP, 56pF, 0402, 5%, 50V, C0G Murata GRM1555C1H560JA01D 
+C3, C6, C13 1000pF CAP, 1000pF, 0402, 5%, 50V, C0G Murata GRM155R71H102KA01D 
+C2, C5, C16, C17 10000pF CAP, 10000pF, 0402, 10%, 50V, X7R Murata GRM155R71E103KA01D 
+C10 27pF CAP, 27pF, 0402, 5%, 50V, HI-Q Murata GJM1555C1H270JB01D 
+C11 22pF CAP, 22pF, 0402, 5%, 100V, C0G Taiyo MSASH105SCG220JFNA01 
+C14 47pF CAP, 47pF, 0402, 1%, 50V, C0G Murata GRM1555C1H470JA01D 
+C15 100pF CAP, 100pF, 0402, 1%, 50V, C0G Murata GRM1555C1H101FA01D 
+C18, C21 3.3uF CAP, 3.3uF, TANT-A, 20%, 25V Kyocera TAJA335M025RNJ 
+C19, C20 330pF CAP, 330pF, ±20%, 100V, X7R, 0402 Taiyo MSASH105SB7331MFNA01 
+C25 2pF CAP, 2pF, 0402, ±0.1pF, 50V, HI-Q Murata GJM1555C1H2R0BB01D 
+R1 180Ω RES, 180 OHM, 0402, 5%, 1/10W Kamaya RMC1/16S-181JTH 
+R2, R3, L2, L7 0Ω RES, 0 OHM, 0402, 1/10W Kamaya RMC1/16SJPTH 
+L1 12nH IND, 12nH, 0603, 5%, W/W Coilcraft 0603CS-12NXJLW 
+L3 1uH IND, 1uH, 1606, 5%, W/W   
+L4 2.7nH IND, 2.7nH, 0603, 5%, W/W Coilcraft 0603CS-2N7XJRW 
+L6 6.8nH IND, 6.8nH, 0603, 5%, W/W Coilcraft 0603CS-6N8XJRW 
+C7, C8, C9, C22, 
+C23, C24 
+DNP n/a n/a  
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+23 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+ 
+ 
+Pad Configuration and Description 
+ 
+15
+VCC1
+14
+2
+4
+13
+APC2
+GND2
+NC
+VCC2
+NC
+GND1
+3
+16
+APC1
+6
+7
+8
+5
+1
+RF OUT
+11
+9
+RF OUT
+RF OUT
+10
+12
+RF IN
+VCC
+VCC2
+2F0
+Bias
+RF OUT
+Pin 1 Reference Mark
+Backside Paddle 
+–
+ 
+RF/DC GND
+ 
+ 
+Top View 
+Pad No. Label Description 
+1 VCC1 
+Power supply for the pre-amplifier stage and interstage matching. This pin forms the shunt inductance needed 
+for proper tuning of the interstage match. Refer to the application circuit for proper configuration. Note that 
+position and value of the components are important. 
+2 GND1 
+Ground connection for the pre-amplifier stage. Keep traces physically short and connect immediately to the 
+ground plane for best performance. For stability concert, this pin requires dedicated ground via holes to the 
+ground plane to minimize any common inductance. 
+3 RF IN 
+RF Input. This is a 50Ω input, but the actual impedance could be affected by the interstage matching network 
+connected on pin 1. An external DC blocking capacitor is required. 
+4 GND2 
+Ground connection for the driver stage. To minimize the noise power at the output, it is recommended to 
+connect this pin with a trace of about 40mil long to the ground plane. This will slightly reduce the small signal 
+gain. For stability concert, this pin requires dedicated ground via holes to the ground plane to minimize any 
+common inductance. 
+5, 6 VCC2 
+Power supply for the driver stage and interstage matching. This pin requires a shunt inductance for proper 
+interstage matching. Please refer to the application schematic for proper configuration. 
+7, 13 NC Not connected. 
+8 2F0 
+Connection for the second harmonic trap. This pin is internally connected to the RF OUT pins. With the bonding 
+wire together with an external capacitor form a series resonator. It should provide a second harmonic short 
+termination to improve amplifier efficiency and reduce spurious outputs. 
+9, 10, 11,12 RF OUT 
+RF Output and power supply for the output stage. Bias voltage for the final stage is provided through this wide 
+output pins. An external matching network is required to provide the optimum performance. 
+14 VCC Power supply for the bias circuits. 
+15 APC2 Power control for the output stage. See pin 16 for more details. 
+16 APC1 
+Power control for the driver and pre-amplifier stages. When this pin is “low”, all circuits shut off. A “low” is 
+typically 0.5V or less at room temperature. A shunt bypass capacitor is required. For a typical power control 
+operation, the V
+APC1 
+is about 1.0V for -10dBm to 2.6V for +35dBm RF output power. The maximum power that 
+can be achieved depends on the actual output matching; see the application circuit for more details. 
+Backside Paddle GND 
+Ground connection. The back side of the package should be connected to the ground plan though as short of a 
+connection as possible. PCB vias under the device are recommended. 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+24 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+Package Marking and Dimensions 
+ 
+Marking: Part Number – QPA9510 
+ Trace  Code – Assigned by sub-contractor 
+ 
+ 
+ 
+Notes: 
+1. All dimensions are in millimeters.  Angles are in degrees. 
+2. The terminal #1 identifier and terminal numbering conform to JESD 95-1 SPP-012. 
+3. Contact plating: Matte Sn 
+PCB Mounting Pattern 
+ 
+ 
+Notes: 
+1. All dimensions are in millimeters.  Angles are in degrees.  
+2. Use 1 oz. copper minimum for top and bottom layer metal.   
+3. ground via holes are required under the backside paddle of this device for proper RF/DC grounding and thermal dissipation.  0.203 mm to 0.330 
+mm finished hole size and 0.5 mm to 1.2 mm grid pattern recommended. 
+4. Ensure good package backside paddle solder attach for reliable operation and best electrical performance. 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+25 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+ 
+ 
+ 
+  
+Tape and Reel Information – Carrier and Cover Tape Dimensions 
+ 
+ 
+ 
+Feature Measure Symbol Size (in) Size (mm) 
+Cavity 
+Length A0 0.125 3.20 
+Width B0 0.125 3.20 
+Depth K0 0.040 1.00 
+Pitch P1 0.157 4.00 
+Centerline Distance 
+Cavity to Perforation - Length Direction P2 0.079 2.00 
+Cavity to Perforation - Width Direction F 0.217 5.50 
+Cover Tape Width C 0.362 9.20 
+Carrier Tape Width W 0.472 12.0 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+26 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+ 
+  
+Tape and Reel Information – Reel Dimensions 
+ 
+Standard T/R size = 2,500 pieces on a 13” reel. 
+ 
+Feature Measure Symbol Size (in) Size (mm) 
+Flange 
+Diameter A 12.992 330.00 
+Thickness W2 0.717 18.20 
+Space Between Flange W1 0.504 12.80 
+Hub 
+Outer Diameter N 4.016 102.00 
+Arbor Hole Diameter C 0.512 13.00 
+Key Slit Width B 0.079 2.00 
+Key Slit Diameter D 0.787 20.00 
+Tape and Reel Information – Tape Length and Label Placement 
+ 
+ 
+Notes: 
+1. Empty part cavities at the trailing and leading ends are sealed with cover tape. See EIA 481-1-A. 
+2. Labels are placed on the flange opposite the sprockets in the carrier tape. 
+
+    
+Data Sheet, February 10, 2026 
+Subject to change without notice | All rights reserved 
+27 of 27 www.qorvo.com   
+ 
+ 
+  
+ 
+ 
+QPA9510 
+ 3V General Purpose/GSM Power Amplifier 
+®
+ 
+Handling Precautions 
+ 
+Parameter Rating Standard 
+ 
+Caution!  
+ESD-Sensitive Device 
+ESD – Human Body Model (HBM) 1B ESDA / JEDEC JS-001-2012 
+ESD – Charged Device Model (CDM) C3 JEDEC JESD22-C101F 
+MSL – Moisture Sensitivity Level  MSL3 IPC/JEDEC J-STD-020 
+RoHS Compliance 
+ 
+This  part  is compliant  with  2011/65/EU  RoHS  directive  (Restrictions  on  the  Use  of  Certain  Hazardous  Substances  in  Electrical  and 
+Electronic Equipment) as amended by Directive 2015/863/EU. 
+ 
+This product also has the following attributes:  
+• Lead Free 
+• Halogen Free (Chlorine, Bromine)  
+• Antimony Free 
+• TBBP-A (C
+15
+H
+12
+Br
+4
+0
+2
+) Free 
+• PFOS Free 
+• SVHC Free 
+ 
+Contact Information 
+ 
+For the latest specifications, additional product information, worldwide sales and distribution locations: 
+  Web:  www.qorvo.com 
+ Tel:  1-844-890-8163 
+ Email:  customer.support@qorvo.com  
+Important Notice 
+ 
+ 
+The information contained in this Data Sheet and any associated documents (“Data Sheet Information”) is believed to be reliable; 
+however, Qorvo makes no warranties regarding the Data Sheet Information and assumes no responsibility or liability whatsoever for the 
+use of said information. All Data Sheet Information is subject to change without notice. Customers should obtain and verify the latest 
+relevant Data Sheet Information before placing orders for Qorvo® products. Data Sheet Information or the use thereof does not grant, 
+explicitly, implicitly or otherwise any rights or licenses to any third party with respect to patents or any other intellectual property whether 
+with regard to such Data Sheet Information itself or anything described by such information. 
+ 
+DATA SHEET INFORMATION DOES NOT CONSTITUTE A WARRANTY WITH RESPECT TO THE PRODUCTS DESCRIBED 
+HEREIN, AND QORVO HEREBY DISCLAIMS ANY AND ALL WARRANTIES WITH RESPECT TO SUCH PRODUCTS WHETHER 
+EXPRESS OR IMPLIED BY LAW, COURSE OF DEALING, COURSE OF PERFORMANCE, USAGE OF TRADE OR OTHERWISE, 
+INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. Without limiting 
+the generality of the foregoing, Qorvo® products are not warranted or authorized for use as critical components in medical, life-saving, 
+or life-sustaining applications, or other applications where a failure would reasonably be expected to cause severe personal injury or 
+death. Applications described in the Data Sheet Information are for illustrative purposes only. Customers are responsible for validating 
+that a particular product described in the Data Sheet Information is suitable for use in a particular application. 
+ 
+© 2026 Qorvo US, Inc. All rights reserved.  This document is subject to copyright laws in various jurisdictions worldwide and may not be 
+reproduced or distributed, in whole or in part, without the express written consent of Qorvo US, Inc. | QORVO® is a registered 
+trademark of Qorvo US, Inc. 
+ 

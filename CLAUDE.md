@@ -1,5 +1,10 @@
 # Auto-EDA — Orchestrator
 
+> **ALWAYS push to git after making changes.**
+> ```
+> git add -A && git commit -m "your message" && git push
+> ```
+
 ## Project Purpose
 Auto-EDA: fully automated EDA design pipeline. User uploads a datasheet PDF.
 The system produces: component symbol, footprint, schematic, placement, and routed layout.
@@ -13,7 +18,8 @@ The system produces: component symbol, footprint, schematic, placement, and rout
 | 3 | footprint | `datasheet.json` | `data/outputs/footprint.json` |
 | 4 | example-schematic | `datasheet.json` | `data/outputs/example_schematic.json` |
 | 5 | schematic | `datasheet.json` + user intent | `data/outputs/schematic.json` |
-| 6 | autoplace | `schematic.json` | `data/outputs/placement.json` |
+| 5b | connectivity | `schematic.json` | `data/outputs/connectivity.json` |
+| 6 | autoplace | `schematic.json` + `connectivity.json` | `data/outputs/placement.json` |
 | 7 | autoroute | `placement.json` + `schematic.json` | `data/outputs/routing.json` |
 | 8 | layout | all outputs | `data/outputs/final_layout.json` |
 

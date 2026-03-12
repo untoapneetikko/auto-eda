@@ -1,0 +1,655 @@
+{
+  "slug": "STM32F103C8",
+  "part_number": "STM32F103C8T6",
+  "name": "STM32F103C8",
+  "description": "STM32F103C8T6 ARM Cortex-M3 32-bit MCU, 72MHz, 64KB Flash, 20KB SRAM, LQFP-48",
+  "manufacturer": "STMicroelectronics",
+  "package_types": [
+    "LQFP-48"
+  ],
+  "supply_voltage_range": "2.0–3.6V (VDD), 2.0–3.6V (VDDA)",
+  "frequency_range": "0–72 MHz",
+  "designator": "U",
+  "absolute_max": {
+    "vdd": "4.0V",
+    "input_voltage": "VDD + 0.3V on 5V-tolerant I/O, VDD + 4V on non-tolerant I/O",
+    "max_pin_current": "25 mA per I/O pin",
+    "total_io_current": "150 mA source/sink total",
+    "operating_temp": "-40°C to +85°C (industrial)"
+  },
+  "key_performance": {
+    "core": "ARM Cortex-M3 32-bit",
+    "flash": "64 KB",
+    "sram": "20 KB",
+    "timers": "3× general-purpose, 1× advanced, 2× watchdog, 1× SysTick",
+    "uart": "3× USART",
+    "spi": "2× SPI",
+    "i2c": "2× I2C",
+    "usb": "1× USB 2.0 full-speed (12 Mbit/s)",
+    "can": "1× CAN 2.0B",
+    "adc": "2× 12-bit ADC, 10 channels",
+    "gpio": "Up to 37 GPIO (PA0-PA15, PB0-PB15, PC13-PC15)"
+  },
+  "pins": [
+    {
+      "number": "1",
+      "name": "VBAT",
+      "type": "power",
+      "description": "Backup domain power supply (1.8–3.6V). Powers RTC, backup registers, and LSE oscillator. Can be connected to VDD if no battery backup is needed.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add 100nF decoupling cap to GND. Connect to VDD if no battery backup.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "2",
+      "name": "PC13",
+      "type": "io",
+      "description": "Port C bit 13. General-purpose I/O. On Blue Pill board this drives the onboard LED.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO. Max 3 MHz output speed and 2 mA sink on PC13–PC15 when VBAT is used.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "3",
+      "name": "PC14/OSC32_IN",
+      "type": "io",
+      "description": "Port C bit 14, LSE oscillator input. When LSE enabled (RCC_BDCR.LSEON), this pin is the 32.768 kHz crystal input for RTC.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "For RTC: connect 32.768 kHz crystal between PC14/OSC32_IN and PC15/OSC32_OUT with 6pF load caps. Otherwise use as GPIO.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "4",
+      "name": "PC15/OSC32_OUT",
+      "type": "io",
+      "description": "Port C bit 15, LSE oscillator output. Crystal output for 32.768 kHz RTC oscillator.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "See PC14/OSC32_IN. Add 6pF load cap to GND when using LSE crystal.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "5",
+      "name": "PD0/OSC_IN",
+      "type": "io",
+      "description": "Port D bit 0, HSE oscillator input. When HSE enabled, connects to 8 MHz crystal or external clock source. Remapped from PA: default function on this package.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "For 8 MHz crystal: connect crystal between PD0 (OSC_IN) and PD1 (OSC_OUT) with 20pF load caps. For external clock: drive directly.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "6",
+      "name": "PD1/OSC_OUT",
+      "type": "io",
+      "description": "Port D bit 1, HSE oscillator output. Crystal output for HSE oscillator.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "See PD0/OSC_IN. Add 20pF load cap to GND.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "7",
+      "name": "NRST",
+      "type": "input",
+      "description": "System reset input (active low). Internal 40k pull-up. Schmitt trigger input. Drives a reset pulse on the internal reset network.",
+      "active": "low",
+      "internal_pull": "internal 40k pull-up to VDD",
+      "requirements": "Add 100nF cap to GND for noise filtering. Optional 10k external pull-up to VDD for additional noise immunity. Drive low to reset. External reset button: connect between NRST and GND with 100nF bypass.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "8",
+      "name": "VSSA",
+      "type": "gnd",
+      "description": "Analog ground reference for ADC. Must be connected to GND plane.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane directly. Should be at same potential as VSS.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "9",
+      "name": "VDDA",
+      "type": "power",
+      "description": "Analog supply for ADC, reset, and internal voltage reference (2.0–3.6V). Must be connected even if ADC is not used.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "MUST be connected. Add 1µF + 10nF decoupling caps to VSSA. For best ADC accuracy use LC filter from VDD.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "10",
+      "name": "PA0/WKUP/USART2_CTS/ADC12_IN0/TIM2_CH1_ETR",
+      "type": "io",
+      "description": "Port A bit 0. Wakeup from standby. USART2 CTS flow control. ADC1/2 channel 0. Timer2 channel 1 / ETR.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "11",
+      "name": "PA1/USART2_RTS/ADC12_IN1/TIM2_CH2",
+      "type": "io",
+      "description": "Port A bit 1. USART2 RTS flow control. ADC1/2 channel 1. Timer2 channel 2.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "12",
+      "name": "PA2/USART2_TX/ADC12_IN2/TIM2_CH3",
+      "type": "io",
+      "description": "Port A bit 2. USART2 TX. ADC1/2 channel 2. Timer2 channel 3.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "13",
+      "name": "PA3/USART2_RX/ADC12_IN3/TIM2_CH4",
+      "type": "io",
+      "description": "Port A bit 3. USART2 RX. ADC1/2 channel 3. Timer2 channel 4.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "14",
+      "name": "PA4/SPI1_NSS/USART2_CK/ADC12_IN4",
+      "type": "io",
+      "description": "Port A bit 4. SPI1 chip select (NSS). USART2 clock. ADC1/2 channel 4.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. NOT 5V-tolerant.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "15",
+      "name": "PA5/SPI1_SCK/ADC12_IN5",
+      "type": "io",
+      "description": "Port A bit 5. SPI1 clock. ADC1/2 channel 5.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. NOT 5V-tolerant.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "16",
+      "name": "PA6/SPI1_MISO/ADC12_IN6/TIM3_CH1",
+      "type": "io",
+      "description": "Port A bit 6. SPI1 MISO. ADC1/2 channel 6. Timer3 channel 1.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. NOT 5V-tolerant.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "17",
+      "name": "PA7/SPI1_MOSI/ADC12_IN7/TIM3_CH2",
+      "type": "io",
+      "description": "Port A bit 7. SPI1 MOSI. ADC1/2 channel 7. Timer3 channel 2.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. NOT 5V-tolerant.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "18",
+      "name": "PB0/ADC12_IN8/TIM3_CH3",
+      "type": "io",
+      "description": "Port B bit 0. ADC1/2 channel 8. Timer3 channel 3.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "19",
+      "name": "PB1/ADC12_IN9/TIM3_CH4",
+      "type": "io",
+      "description": "Port B bit 1. ADC1/2 channel 9. Timer3 channel 4.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "20",
+      "name": "PB2/BOOT1",
+      "type": "io",
+      "description": "Port B bit 2. Also serves as BOOT1 configuration input sampled at reset. Together with BOOT0 selects boot mode.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "Tie to GND (BOOT1=0) for normal flash boot. See BOOT0 (pin 44) configuration table.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "21",
+      "name": "PB10/I2C2_SCL/USART3_TX",
+      "type": "io",
+      "description": "Port B bit 10. I2C2 clock. USART3 TX.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "For I2C: add 4.7kΩ pull-up to VDD. Open-drain — do not use internal pull-up for I2C. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "22",
+      "name": "PB11/I2C2_SDA/USART3_RX",
+      "type": "io",
+      "description": "Port B bit 11. I2C2 data. USART3 RX.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "For I2C: add 4.7kΩ pull-up to VDD. Open-drain — do not use internal pull-up for I2C. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "23",
+      "name": "VSS1",
+      "type": "gnd",
+      "description": "Digital ground. Return path for VDD1 (pin 24).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "24",
+      "name": "VDD1",
+      "type": "power",
+      "description": "Digital supply voltage (2.0–3.6V). Powers digital logic core.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add 100nF ceramic decoupling cap to VSS close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "25",
+      "name": "PB12/SPI2_NSS/I2C2_SMBAI/USART3_CK/TIM1_BKIN",
+      "type": "io",
+      "description": "Port B bit 12. SPI2 NSS. I2C2 SMBus alert. USART3 clock. Timer1 break input.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "26",
+      "name": "PB13/SPI2_SCK/USART3_CTS/TIM1_CH1N",
+      "type": "io",
+      "description": "Port B bit 13. SPI2 clock. USART3 CTS. Timer1 channel 1 complementary output.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "27",
+      "name": "PB14/SPI2_MISO/TIM1_CH2N",
+      "type": "io",
+      "description": "Port B bit 14. SPI2 MISO. Timer1 channel 2 complementary output.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "28",
+      "name": "PB15/SPI2_MOSI/TIM1_CH3N",
+      "type": "io",
+      "description": "Port B bit 15. SPI2 MOSI. Timer1 channel 3 complementary output.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "29",
+      "name": "PA8/USART1_CK/TIM1_CH1/MCO",
+      "type": "io",
+      "description": "Port A bit 8. USART1 clock. Timer1 channel 1. MCO (master clock output — outputs system clock, HSI, HSE, or PLL/2).",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "30",
+      "name": "PA9/USART1_TX/TIM1_CH2",
+      "type": "io",
+      "description": "Port A bit 9. USART1 TX. Timer1 channel 2.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "31",
+      "name": "PA10/USART1_RX/TIM1_CH3",
+      "type": "io",
+      "description": "Port A bit 10. USART1 RX. Timer1 channel 3.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "32",
+      "name": "PA11/USART1_CTS/USBDM/TIM1_CH4",
+      "type": "io",
+      "description": "Port A bit 11. USART1 CTS. USB D- (full-speed). Timer1 channel 4.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "For USB: connect D- with 22Ω series resistor to USB connector. USB requires 3.3V — do not connect 5V. NOT 5V-tolerant when USB is enabled.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "33",
+      "name": "PA12/USART1_RTS/USBDP/TIM1_ETR",
+      "type": "io",
+      "description": "Port A bit 12. USART1 RTS. USB D+ (full-speed). Timer1 ETR.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "For USB: connect D+ with 22Ω series resistor to USB connector. Add 1.5kΩ pull-up to 3.3V on D+ for device enumeration (or use internal PA12 pull-up via software). NOT 5V-tolerant when USB is enabled.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "34",
+      "name": "PA13/JTMS-SWDIO",
+      "type": "io",
+      "description": "Port A bit 13. JTAG TMS / SWD data I/O. Used for debug and programming. After reset this pin defaults to SWDIO function.",
+      "active": null,
+      "internal_pull": "internal pull-up on SWDIO",
+      "requirements": "Connect to SWD programmer SWDIO. If repurposing as GPIO, disable JTAG/SWD via AFIO_MAPR — note this disables debugging.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "35",
+      "name": "VSS2",
+      "type": "gnd",
+      "description": "Digital ground. Return path for VDD2 (pin 36).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "36",
+      "name": "VDD2",
+      "type": "power",
+      "description": "Digital supply voltage (2.0–3.6V). Powers digital logic core.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add 100nF ceramic decoupling cap to VSS close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "37",
+      "name": "PA14/JTCK-SWCLK",
+      "type": "io",
+      "description": "Port A bit 14. JTAG TCK / SWD clock. Used for debug and programming. After reset defaults to SWCLK function.",
+      "active": null,
+      "internal_pull": "internal pull-down on SWCLK",
+      "requirements": "Connect to SWD programmer SWCLK. If repurposing as GPIO, disable JTAG/SWD via AFIO_MAPR.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "38",
+      "name": "PA15/JTDI",
+      "type": "io",
+      "description": "Port A bit 15. JTAG TDI. Can be remapped to SPI1_NSS, TIM2_CH1_ETR, or GPIO.",
+      "active": null,
+      "internal_pull": "internal pull-up on JTDI",
+      "requirements": "General GPIO after JTAG disable via AFIO_MAPR (SWJ_CFG). Can be remapped to SPI1 NSS.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "39",
+      "name": "PB3/JTDO",
+      "type": "io",
+      "description": "Port B bit 3. JTAG TDO / SWO (trace output). Can be remapped to SPI1_SCK or TIM2_CH2.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "General GPIO after JTAG disable. Can be remapped to SPI1 SCK or SWO for trace.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "40",
+      "name": "PB4/JNTRST",
+      "type": "io",
+      "description": "Port B bit 4. JTAG TRST (test reset). Can be remapped to SPI1_MISO or TIM3_CH1.",
+      "active": null,
+      "internal_pull": "internal pull-up on JNTRST",
+      "requirements": "General GPIO after JTAG disable via AFIO_MAPR. Can be remapped to SPI1 MISO.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "41",
+      "name": "PB5/I2C1_SMBA",
+      "type": "io",
+      "description": "Port B bit 5. I2C1 SMBus alert input. Can be remapped to SPI1_MOSI or TIM3_CH2.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "42",
+      "name": "PB6/I2C1_SCL/TIM4_CH1",
+      "type": "io",
+      "description": "Port B bit 6. I2C1 clock. Timer4 channel 1.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "For I2C: add 4.7kΩ pull-up to VDD. Open-drain. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "43",
+      "name": "PB7/I2C1_SDA/TIM4_CH2",
+      "type": "io",
+      "description": "Port B bit 7. I2C1 data. Timer4 channel 2.",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "For I2C: add 4.7kΩ pull-up to VDD. Open-drain. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "44",
+      "name": "BOOT0",
+      "type": "input",
+      "description": "Boot mode selection bit 0. Sampled at reset together with BOOT1 (PB2). Determines boot source: Flash, System memory (bootloader), or SRAM.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Tie to GND (BOOT0=0) for normal flash boot. To enter system bootloader (for UART programming): pull BOOT0 HIGH and BOOT1 (PB2) LOW then reset. On Blue Pill board this is the BOOT0 jumper.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "45",
+      "name": "PB8/TIM4_CH3/I2C1_SCL",
+      "type": "io",
+      "description": "Port B bit 8. Timer4 channel 3. I2C1 clock (remapped).",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "46",
+      "name": "PB9/TIM4_CH4/I2C1_SDA",
+      "type": "io",
+      "description": "Port B bit 9. Timer4 channel 4. I2C1 data (remapped).",
+      "active": null,
+      "internal_pull": "configurable pull-up/pull-down",
+      "requirements": "General GPIO or peripheral use. 5V-tolerant in input mode.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "47",
+      "name": "VSS3",
+      "type": "gnd",
+      "description": "Digital ground. Return path for VDD3 (pin 48).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": "48",
+      "name": "VDD3",
+      "type": "power",
+      "description": "Digital supply voltage (2.0–3.6V). Powers digital logic core.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Add 100nF ceramic decoupling cap to VSS close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "100nF 0402",
+      "placement": "Each VDD pin to adjacent VSS",
+      "reason": "Digital supply decoupling — one per VDD pin, place as close as possible to pin",
+      "datasheet_page": 1
+    },
+    {
+      "type": "capacitor",
+      "value": "4.7µF",
+      "placement": "VDD rail to GND",
+      "reason": "Bulk VDD supply decoupling — stabilizes supply under load transients",
+      "datasheet_page": 1
+    },
+    {
+      "type": "capacitor",
+      "value": "1µF",
+      "placement": "VDDA (pin 9) to VSSA (pin 8)",
+      "reason": "VDDA analog supply decoupling — required for ADC stability",
+      "datasheet_page": 1
+    },
+    {
+      "type": "capacitor",
+      "value": "10nF 0402",
+      "placement": "VDDA (pin 9) to VSSA (pin 8)",
+      "reason": "VDDA high-frequency decoupling — paired with 1µF bulk cap",
+      "datasheet_page": 1
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF 0402",
+      "placement": "VBAT (pin 1) to GND",
+      "reason": "VBAT decoupling — required for stable RTC/backup domain",
+      "datasheet_page": 1
+    },
+    {
+      "type": "resistor",
+      "value": "10kΩ 0402",
+      "placement": "NRST (pin 7) to VDD",
+      "reason": "External NRST pull-up — provides additional noise immunity beyond internal 40k pull-up",
+      "datasheet_page": 1
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF 0402",
+      "placement": "NRST (pin 7) to GND",
+      "reason": "NRST RC filter — suppresses reset glitches from power supply noise",
+      "datasheet_page": 1
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Minimal STM32F103C8 circuit",
+      "description": "VDD (3.3V) with 100nF decoupling on each VDD pin. VDDA connected to VDD via 10Ω resistor + 1µF||10nF to VSSA. VBAT to 3.3V with 100nF. NRST: 10kΩ pull-up + 100nF filter cap. BOOT0 tied to GND (normal boot). BOOT1/PB2 tied to GND. HSE: 8 MHz crystal on PD0/PD1 with 20pF load caps. SWD: SWDIO (PA13) + SWCLK (PA14) to programmer.",
+      "page": 1
+    }
+  ],
+  "common_mistakes": [
+    "VDDA MUST be connected even if ADC is not used — leaving it floating causes brownout reset or unpredictable behavior",
+    "VDD supply is 3.3V maximum — do NOT connect 5V directly to VDD pins",
+    "PA4–PA7 (SPI1) are NOT 5V-tolerant — do not connect 5V logic without level shifting",
+    "PA11/PA12 (USB D-/D+) are not 5V-tolerant when USB peripheral is active — use 3.3V USB",
+    "BOOT0 must be tied to GND for normal flash operation — floating BOOT0 causes random boot mode selection",
+    "SWD pins PA13/PA14 default to debug function after reset — repurposing them disables debugging permanently until power cycle",
+    "JTAG pins PB3/PB4/PA15 are held in JTAG mode after reset — must write AFIO_MAPR to release them as GPIO",
+    "I2C buses (PB6/PB7, PB10/PB11) require external 4.7kΩ pull-ups — internal pull-ups too weak for I2C",
+    "USB D+ needs 1.5kΩ pull-up to 3.3V for host enumeration — missing pull-up means USB device not detected",
+    "HSE crystal needs 20pF load caps on both OSC_IN and OSC_OUT — wrong capacitance causes oscillation failure or frequency error",
+    "Maximum GPIO current is 25 mA per pin, 150 mA total — do not directly drive high-current loads",
+    "PC13–PC15 and PD0–PD1 have limited drive capability (2 mA, 2 MHz max) when VBAT supply is used"
+  ],
+  "notes": "Popular Blue Pill development board uses STM32F103C8T6 in LQFP-48. ST provides STM32CubeMX for pin assignment and code generation. SWD (2-wire: SWDIO+SWCLK) is recommended over JTAG for programming/debug. Internal 8 MHz RC oscillator (HSI) can be used without external crystal. USB requires 48 MHz clock — needs either 8 MHz HSE crystal with PLL×6, or 12 MHz crystal with PLL×4.",
+  "symbol_type": "ic",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-10T00:00:00.000Z",
+  "builtin": true,
+  "package": "LQFP-48",
+  "passives": [
+    { "type": "capacitor", "value": "100nF", "description": "VDD decoupling, place near each VDD pin" },
+    { "type": "capacitor", "value": "4.7µF", "description": "Bulk VDD decoupling" },
+    { "type": "capacitor", "value": "100nF", "description": "VDDA analog supply decoupling" },
+    { "type": "capacitor", "value": "1µF", "description": "VBAT decoupling" },
+    { "type": "resistor", "value": "10k", "description": "NRST pull-up to VDD" },
+    { "type": "capacitor", "value": "100nF", "description": "NRST RC filter cap to GND" }
+  ],
+  "human_corrections": [],
+  "example_circuit": null
+}

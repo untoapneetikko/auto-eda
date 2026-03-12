@@ -1,0 +1,11 @@
+{
+  "name": "TO-92",
+  "description": "TO-92 3-pin through-hole - small transistors (BC547, 2N2222)",
+  "pin_count": 3,
+  "pads": [
+    {"number":"1","x":-1.27,"y":0,"type":"thru_hole","shape":"rect","size_x":1.6,"size_y":1.6,"drill":0.8},
+    {"number":"2","x":0.0,"y":0,"type":"thru_hole","shape":"circle","size_x":1.6,"size_y":1.6,"drill":0.8},
+    {"number":"3","x":1.27,"y":0,"type":"thru_hole","shape":"circle","size_x":1.6,"size_y":1.6,"drill":0.8}
+  ],
+  "courtyard":{"x":-2.5,"y":-2.5,"w":5.0,"h":5.0}
+}

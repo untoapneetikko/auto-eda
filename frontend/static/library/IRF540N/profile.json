@@ -1,0 +1,95 @@
+{
+  "part_number": "IRF540N",
+  "description": "N-channel power MOSFET — 100V, 33A, 44mΩ Rds(on), logic-level gate (4.5V drive capable)",
+  "manufacturer": "Vishay / International Rectifier",
+  "package_types": ["TO-220AB", "D2PAK (surface mount)"],
+  "supply_voltage_range": "Vds: 100V max; Vgs: ±20V max",
+  "absolute_max": {
+    "drain_source_voltage": "100V",
+    "gate_source_voltage": "±20V",
+    "continuous_drain_current": "33A (Tc=25°C)",
+    "power_dissipation": "130W (TO-220, with heatsink)",
+    "operating_temp": "-55°C to +175°C junction"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "G",
+      "type": "input",
+      "description": "Gate. Voltage-controlled input. The MOSFET turns ON when Vgs exceeds threshold (2–4V). Requires no DC current (capacitive input).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Gate resistor (10Ω–100Ω) in series to dampen oscillation from gate capacitance. Pull-down resistor (10kΩ–100kΩ) to GND prevents floating gate. Never leave gate floating.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 2,
+      "name": "D",
+      "type": "output",
+      "description": "Drain. Load connects between supply and drain. Current flows D→S when gate is driven.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Keep Vds within 100V. Body diode is from S to D — can conduct reverse current in half-bridge applications.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 3,
+      "name": "S",
+      "type": "passive",
+      "description": "Source. Connect to GND for N-channel low-side switch. In TO-220, the tab is connected to Drain.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "TO-220 tab = Drain (not source or GND). If tab is mounted to heatsink, heatsink is at drain potential — use insulating pad if needed.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "resistor",
+      "value": "10Ω–100Ω",
+      "placement": "Gate (pin G) in series from driver",
+      "reason": "Limits gate current transients and dampens ringing from gate capacitance",
+      "datasheet_page": 1
+    },
+    {
+      "type": "resistor",
+      "value": "10kΩ–100kΩ",
+      "placement": "Gate to GND (pull-down)",
+      "reason": "Prevents floating gate which can cause random switching",
+      "datasheet_page": 1
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "N-channel low-side switch",
+      "description": "Load from Vcc to Drain. Source to GND. Gate driven by PWM or logic signal through series resistor. Pull-down on gate.",
+      "page": 1
+    },
+    {
+      "name": "Motor speed control (PWM)",
+      "description": "Same as above with PWM signal on gate. Add flyback diode across motor.",
+      "page": 1
+    }
+  ],
+  "common_mistakes": [
+    "Leaving gate floating causes random ON/OFF switching — always use gate pull-down resistor",
+    "TO-220 tab is DRAIN not GND — mounting to metal chassis without insulator shorts drain to chassis",
+    "IRF540N is NOT a logic-level MOSFET in all cases — Vgs(th) is 2–4V. At 3.3V Vgs, Rds(on) is higher than specified. For guaranteed logic-level drive, use IRF3205 or Si2302",
+    "Gate voltage must not exceed ±20V — most gate drivers are fine, but boost converter spikes can damage gate",
+    "Body diode conducts when Vds < 0V — in H-bridge designs this is normal but must be accounted for",
+    "High Cgs (1.7nF) means gate needs sufficient drive current for fast switching — direct GPIO drive may be slow"
+  ],
+  "notes": "Vgs(th) = 2–4V. Logic-level drive at 5V gives full Rds(on) = 44mΩ. At 3.3V gate drive, Rds(on) increases significantly. For reliable 3.3V MCU drive, use a dedicated gate driver IC or a MOSFET with Vgs(th) ≤ 1V. TO-220 tab = Drain. Comparable: IRFZ44N (55V, 49A), IRF3205 (55V, 110A, lower Vgs(th)).",
+  "symbol_type": "nmos",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-08T00:00:00.000Z",
+  "builtin": true,
+  "human_corrections": []
+}

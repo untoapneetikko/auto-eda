@@ -1,0 +1,9 @@
+{
+  "name": "0402",
+  "description": "SMD 0402 (1.0x0.5mm) - resistors, capacitors, inductors",
+  "pads": [
+    {"number":"1","x":-0.5,"y":0,"type":"smd","shape":"rect","size_x":0.6,"size_y":0.6},
+    {"number":"2","x":0.5,"y":0,"type":"smd","shape":"rect","size_x":0.6,"size_y":0.6}
+  ],
+  "courtyard":{"x":-1.0,"y":-0.5,"w":2.0,"h":1.0}
+}

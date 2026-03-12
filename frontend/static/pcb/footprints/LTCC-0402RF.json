@@ -1,0 +1,31 @@
+{
+  "name": "LTCC-0402RF",
+  "description": "LTCC 0402 RF filter/balun chip (1.0x0.5mm body)",
+  "pin_count": 2,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.5,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.55
+    },
+    {
+      "number": "2",
+      "x": 0.5,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.55
+    }
+  ],
+  "courtyard": {
+    "x": -1,
+    "y": -0.5,
+    "w": 2,
+    "h": 1
+  }
+}

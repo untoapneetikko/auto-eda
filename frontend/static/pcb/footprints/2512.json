@@ -1,0 +1,31 @@
+{
+  "name": "2512",
+  "description": "SMD 2512 (6.3x3.2mm) — high power",
+  "pin_count": 2,
+  "pads": [
+    {
+      "number": "1",
+      "x": -3,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 2.8,
+      "size_y": 1.5
+    },
+    {
+      "number": "2",
+      "x": 3,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 2.8,
+      "size_y": 1.5
+    }
+  ],
+  "courtyard": {
+    "x": -4.55,
+    "y": -0.9,
+    "w": 9.1,
+    "h": 1.8
+  }
+}

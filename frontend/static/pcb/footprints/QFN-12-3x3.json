@@ -1,0 +1,142 @@
+{
+  "name": "QFN-12-3x3",
+  "description": "12-lead QFN/MCLP 3x3mm, 0.65mm pitch (DQ1225) � e.g. PMA3-83LNW+",
+  "pads": [
+    {
+      "number": "1",
+      "name": "NC",
+      "x": -0.65,
+      "y": 1.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.3,
+      "size_y": 0.7
+    },
+    {
+      "number": "2",
+      "name": "RF-IN",
+      "x": 0,
+      "y": 1.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.3,
+      "size_y": 0.7
+    },
+    {
+      "number": "3",
+      "name": "NC",
+      "x": 0.65,
+      "y": 1.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.3,
+      "size_y": 0.7
+    },
+    {
+      "number": "4",
+      "name": "NC",
+      "x": 1.75,
+      "y": 0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.3
+    },
+    {
+      "number": "5",
+      "name": "NC",
+      "x": 1.75,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.3
+    },
+    {
+      "number": "6",
+      "name": "NC",
+      "x": 1.75,
+      "y": -0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.3
+    },
+    {
+      "number": "7",
+      "name": "NC",
+      "x": 0.65,
+      "y": -1.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.3,
+      "size_y": 0.7
+    },
+    {
+      "number": "8",
+      "name": "RF-OUT/DC-IN",
+      "x": 0,
+      "y": -1.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.3,
+      "size_y": 0.7
+    },
+    {
+      "number": "9",
+      "name": "NC",
+      "x": -0.65,
+      "y": -1.75,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.3,
+      "size_y": 0.7
+    },
+    {
+      "number": "10",
+      "name": "NC",
+      "x": -1.75,
+      "y": -0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.3
+    },
+    {
+      "number": "11",
+      "name": "NC (float)",
+      "x": -1.75,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.3
+    },
+    {
+      "number": "12",
+      "name": "NC (float)",
+      "x": -1.75,
+      "y": 0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.7,
+      "size_y": 0.3
+    },
+    {
+      "number": "0",
+      "name": "GND",
+      "x": 0,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.7,
+      "size_y": 1.7
+    }
+  ],
+  "courtyard": {
+    "x": -2,
+    "y": -2,
+    "w": 4,
+    "h": 4
+  }
+}

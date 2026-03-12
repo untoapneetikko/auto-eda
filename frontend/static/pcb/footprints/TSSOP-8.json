@@ -1,0 +1,87 @@
+{
+  "name": "TSSOP-8",
+  "description": "TSSOP-8  (0.65mm pitch, 4.4mm row)",
+  "pin_count": 8,
+  "pitch": 0.65,
+  "row_spacing": 4.4,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.2,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "2",
+      "x": -2.2,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "3",
+      "x": -2.2,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "4",
+      "x": -2.2,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "5",
+      "x": 2.2,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "6",
+      "x": 2.2,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "7",
+      "x": 2.2,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "8",
+      "x": 2.2,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    }
+  ],
+  "courtyard": {
+    "x": -2.69,
+    "y": -2.265,
+    "w": 5.38,
+    "h": 4.53
+  }
+}

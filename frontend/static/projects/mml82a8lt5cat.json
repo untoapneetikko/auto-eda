@@ -1,0 +1,328 @@
+{
+  "name": "PMA3-83LNW+ 5V LNA Circuit",
+  "components": [
+    {
+      "id": "u1",
+      "slug": "LM7805",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "LM7805",
+      "x": 300,
+      "y": 200,
+      "rotation": 0
+    },
+    {
+      "id": "u2",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U2",
+      "value": "PMA3-83LNW+",
+      "x": 660,
+      "y": 400,
+      "rotation": 0
+    },
+    {
+      "id": "l1",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "39nH",
+      "x": 760,
+      "y": 220,
+      "rotation": 1
+    },
+    {
+      "id": "c1",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "100nF",
+      "x": 580,
+      "y": 200,
+      "rotation": 0
+    },
+    {
+      "id": "c2",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "100pF",
+      "x": 440,
+      "y": 370,
+      "rotation": 1
+    },
+    {
+      "id": "c3",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "100pF",
+      "x": 880,
+      "y": 410,
+      "rotation": 1
+    },
+    {
+      "id": "vcc1",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VCC1",
+      "value": "12V",
+      "x": 200,
+      "y": 140,
+      "rotation": 0
+    },
+    {
+      "id": "gnd1",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "",
+      "x": 200,
+      "y": 240,
+      "rotation": 0
+    },
+    {
+      "id": "gnd2",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "",
+      "x": 580,
+      "y": 260,
+      "rotation": 0
+    },
+    {
+      "id": "gnd3",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND3",
+      "value": "",
+      "x": 500,
+      "y": 350,
+      "rotation": 0
+    }
+  ],
+  "wires": [
+    {
+      "id": "w1",
+      "points": [
+        {
+          "x": 200,
+          "y": 160
+        },
+        {
+          "x": 200,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "id": "w2",
+      "points": [
+        {
+          "x": 200,
+          "y": 200
+        },
+        {
+          "x": 200,
+          "y": 220
+        }
+      ]
+    },
+    {
+      "id": "w3",
+      "points": [
+        {
+          "x": 400,
+          "y": 180
+        },
+        {
+          "x": 580,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "id": "w4",
+      "points": [
+        {
+          "x": 580,
+          "y": 180
+        },
+        {
+          "x": 760,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "id": "w5",
+      "points": [
+        {
+          "x": 760,
+          "y": 260
+        },
+        {
+          "x": 760,
+          "y": 410
+        }
+      ]
+    },
+    {
+      "id": "w6",
+      "points": [
+        {
+          "x": 580,
+          "y": 220
+        },
+        {
+          "x": 580,
+          "y": 240
+        }
+      ]
+    },
+    {
+      "id": "w7",
+      "points": [
+        {
+          "x": 460,
+          "y": 370
+        },
+        {
+          "x": 560,
+          "y": 370
+        }
+      ]
+    },
+    {
+      "id": "w8",
+      "points": [
+        {
+          "x": 380,
+          "y": 370
+        },
+        {
+          "x": 420,
+          "y": 370
+        }
+      ]
+    },
+    {
+      "id": "w9",
+      "points": [
+        {
+          "x": 760,
+          "y": 410
+        },
+        {
+          "x": 860,
+          "y": 410
+        }
+      ]
+    },
+    {
+      "id": "w10",
+      "points": [
+        {
+          "x": 900,
+          "y": 410
+        },
+        {
+          "x": 920,
+          "y": 410
+        }
+      ]
+    },
+    {
+      "id": "w11",
+      "points": [
+        {
+          "x": 560,
+          "y": 330
+        },
+        {
+          "x": 500,
+          "y": 330
+        }
+      ]
+    },
+    {
+      "id": "cwmml8cxhxz16",
+      "points": [
+        {
+          "x": 760,
+          "y": 330
+        },
+        {
+          "x": 760,
+          "y": 330
+        }
+      ]
+    },
+    {
+      "id": "cwmml8cxhxm3d",
+      "points": [
+        {
+          "x": 760,
+          "y": 350
+        },
+        {
+          "x": 760,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "cwmml8cxhxrqz",
+      "points": [
+        {
+          "x": 760,
+          "y": 370
+        },
+        {
+          "x": 760,
+          "y": 370
+        }
+      ]
+    },
+    {
+      "id": "cwmml8cxhx2cd",
+      "points": [
+        {
+          "x": 760,
+          "y": 390
+        },
+        {
+          "x": 760,
+          "y": 390
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lb1",
+      "name": "5V",
+      "x": 400,
+      "y": 180,
+      "rotation": 0
+    },
+    {
+      "id": "lb2",
+      "name": "RF-IN",
+      "x": 380,
+      "y": 370,
+      "rotation": 0
+    },
+    {
+      "id": "lb3",
+      "name": "RF-OUT",
+      "x": 920,
+      "y": 410,
+      "rotation": 0
+    }
+  ],
+  "id": "mml82a8lt5cat",
+  "created_at": "2026-03-10T23:09:14.709Z",
+  "updated_at": "2026-03-10T23:21:31.781Z"
+}

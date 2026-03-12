@@ -1,0 +1,43 @@
+{
+  "name": "TO-247",
+  "description": "TO-247-3 through-hole (high power MOSFET/IGBT)",
+  "pin_count": 3,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.54,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "rect",
+      "size_x": 2,
+      "size_y": 2,
+      "drill": 1.2
+    },
+    {
+      "number": "2",
+      "x": 0,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 2,
+      "size_y": 2,
+      "drill": 1.2
+    },
+    {
+      "number": "3",
+      "x": 2.54,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 2,
+      "size_y": 2,
+      "drill": 1.2
+    }
+  ],
+  "courtyard": {
+    "x": -4.5,
+    "y": -8,
+    "w": 9,
+    "h": 14
+  }
+}

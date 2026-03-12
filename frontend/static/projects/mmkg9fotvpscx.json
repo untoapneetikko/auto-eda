@@ -1,0 +1,285 @@
+{
+  "id": "mmkg9fotvpscx",
+  "name": "Untitled",
+  "components": [
+    {
+      "id": "cmmkg8wde4bv",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "PMA3-83LNW+",
+      "x": 722.5,
+      "y": 638.75,
+      "rotation": 0
+    },
+    {
+      "id": "cmmkg8wdeld6",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "10pF",
+      "x": 552.5,
+      "y": 608.75,
+      "rotation": 1
+    },
+    {
+      "id": "cmmkg8wdepqz",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "18nH",
+      "x": 592.5,
+      "y": 648.75,
+      "rotation": 1
+    },
+    {
+      "id": "cmmkg8wde4x8",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "100pF",
+      "x": 922.5,
+      "y": 648.75,
+      "rotation": 3
+    },
+    {
+      "id": "cmmkg8wdelxh",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L2",
+      "value": "39nH",
+      "x": 862.5,
+      "y": 608.75,
+      "rotation": 1
+    },
+    {
+      "id": "cmmkg8wdeuvf",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VDD",
+      "value": "5V/6V",
+      "x": 862.5,
+      "y": 518.75,
+      "rotation": 0
+    },
+    {
+      "id": "cmmkg8wdeoy5",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": 592.5,
+      "y": 718.75,
+      "rotation": 0
+    },
+    {
+      "id": "cmmkg8wde3uk",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": 572.5,
+      "y": 568.75,
+      "rotation": 1
+    }
+  ],
+  "wires": [
+    {
+      "id": "wmmkg8wdeph1",
+      "points": [
+        {
+          "x": 462.5,
+          "y": 608.75
+        },
+        {
+          "x": 532.5,
+          "y": 608.75
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdem0o",
+      "points": [
+        {
+          "x": 592.5,
+          "y": 688.75,
+          "isPort": true
+        },
+        {
+          "x": 592.5,
+          "y": 703.75,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdev79",
+      "points": [
+        {
+          "x": 572.5,
+          "y": 608.75,
+          "isPort": true
+        },
+        {
+          "x": 622.5,
+          "y": 608.75
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdekr3",
+      "points": [
+        {
+          "x": 862.5,
+          "y": 538.75
+        },
+        {
+          "x": 862.5,
+          "y": 538.75
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wde2rq",
+      "points": [
+        {
+          "x": 862.5,
+          "y": 538.75
+        },
+        {
+          "x": 862.5,
+          "y": 538.75
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdecza",
+      "points": [
+        {
+          "x": 862.5,
+          "y": 568.75,
+          "isPort": true
+        },
+        {
+          "x": 862.5,
+          "y": 538.75,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdez15",
+      "points": [
+        {
+          "x": 990,
+          "y": 650,
+          "isPort": true
+        },
+        {
+          "x": 990,
+          "y": 650
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wden2g",
+      "points": [
+        {
+          "x": 592.5,
+          "y": 568.75,
+          "isPort": false
+        },
+        {
+          "x": 622.5,
+          "y": 568.75
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdezek",
+      "points": [
+        {
+          "x": 592.5,
+          "y": 608.75
+        },
+        {
+          "x": 592.5,
+          "y": 608.75
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdetr3",
+      "points": [
+        {
+          "x": 862.5,
+          "y": 648.75
+        },
+        {
+          "x": 862.5,
+          "y": 648.75
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wdecar",
+      "points": [
+        {
+          "x": 990,
+          "y": 650,
+          "isPort": true
+        },
+        {
+          "x": 990,
+          "y": 650
+        }
+      ]
+    },
+    {
+      "id": "wmmkg8wde80u",
+      "points": [
+        {
+          "x": 942.5,
+          "y": 648.75,
+          "isPort": true
+        },
+        {
+          "x": 990,
+          "y": 650
+        }
+      ]
+    },
+    {
+      "id": "wmmkg9a0i",
+      "points": [
+        {
+          "x": 822.5,
+          "y": 648.75,
+          "isPort": true
+        },
+        {
+          "x": 902.5,
+          "y": 648.75
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lmmkg8wdebo1",
+      "name": "RFIN",
+      "x": 462.5,
+      "y": 608.75,
+      "rotation": 2
+    },
+    {
+      "id": "lmmkg8wde4x5",
+      "name": "RFOUT",
+      "x": 990,
+      "y": 650,
+      "rotation": 0
+    }
+  ],
+  "created_at": "2026-03-10T10:11:02.757Z",
+  "updated_at": "2026-03-10T10:11:02.757Z"
+}

@@ -1,0 +1,67 @@
+{
+  "name": "MCLP-6",
+  "description": "Mini-Circuits MCLP-6 (3+3 SMD, 0.45mm pitch)",
+  "pin_count": 6,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.825,
+      "y": -0.45,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.28
+    },
+    {
+      "number": "2",
+      "x": -0.825,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.28
+    },
+    {
+      "number": "3",
+      "x": -0.825,
+      "y": 0.45,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.28
+    },
+    {
+      "number": "4",
+      "x": 0.825,
+      "y": 0.45,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.28
+    },
+    {
+      "number": "5",
+      "x": 0.825,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.28
+    },
+    {
+      "number": "6",
+      "x": 0.825,
+      "y": -0.45,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.28
+    }
+  ],
+  "courtyard": {
+    "x": -1.4,
+    "y": -1,
+    "w": 2.8,
+    "h": 2
+  }
+}

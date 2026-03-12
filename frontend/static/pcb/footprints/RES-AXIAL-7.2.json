@@ -1,0 +1,33 @@
+{
+  "name": "RES-AXIAL-7.2",
+  "description": "Axial resistor 7.2mm body (0.25W-0.5W, 10mm pitch)",
+  "pin_count": 2,
+  "pads": [
+    {
+      "number": "1",
+      "x": -5,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "rect",
+      "size_x": 1.8,
+      "size_y": 1.8,
+      "drill": 0.7
+    },
+    {
+      "number": "2",
+      "x": 5,
+      "y": 0,
+      "type": "thru_hole",
+      "shape": "circle",
+      "size_x": 1.8,
+      "size_y": 1.8,
+      "drill": 0.7
+    }
+  ],
+  "courtyard": {
+    "x": -6.5,
+    "y": -2,
+    "w": 13,
+    "h": 4
+  }
+}

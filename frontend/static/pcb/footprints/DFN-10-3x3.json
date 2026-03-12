@@ -1,0 +1,113 @@
+{
+  "name": "DFN-10-3x3",
+  "description": "DFN-10 3x3mm (5+5 SMD, 0.5mm pitch)",
+  "pin_count": 11,
+  "pitch": 0.5,
+  "pads": [
+    {
+      "number": "1",
+      "x": -1.25,
+      "y": 1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "2",
+      "x": -1.25,
+      "y": 0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "3",
+      "x": -1.25,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "4",
+      "x": -1.25,
+      "y": -0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "5",
+      "x": -1.25,
+      "y": -1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "6",
+      "x": 1.25,
+      "y": -1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "7",
+      "x": 1.25,
+      "y": -0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "8",
+      "x": 1.25,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "9",
+      "x": 1.25,
+      "y": 0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "10",
+      "x": 1.25,
+      "y": 1,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.6,
+      "size_y": 0.25
+    },
+    {
+      "number": "11",
+      "x": 0,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.5,
+      "size_y": 1.5
+    }
+  ],
+  "courtyard": {
+    "x": -1.85,
+    "y": -1.575,
+    "w": 3.7,
+    "h": 3.15
+  }
+}

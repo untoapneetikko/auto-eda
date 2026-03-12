@@ -1,0 +1,131 @@
+{
+  "name": "QFN-12-2x2",
+  "description": "QFN-12 2x2mm (3 pads/side, 0.5mm pitch)",
+  "pin_count": 13,
+  "pitch": 0.5,
+  "pads": [
+    {
+      "number": "1",
+      "x": -1.175,
+      "y": 0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "2",
+      "x": -1.175,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "3",
+      "x": -1.175,
+      "y": -0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "4",
+      "x": -0.5,
+      "y": -1.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.25,
+      "size_y": 0.55
+    },
+    {
+      "number": "5",
+      "x": 0,
+      "y": -1.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.25,
+      "size_y": 0.55
+    },
+    {
+      "number": "6",
+      "x": 0.5,
+      "y": -1.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.25,
+      "size_y": 0.55
+    },
+    {
+      "number": "7",
+      "x": 1.175,
+      "y": -0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "8",
+      "x": 1.175,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "9",
+      "x": 1.175,
+      "y": 0.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.55,
+      "size_y": 0.25
+    },
+    {
+      "number": "10",
+      "x": 0.5,
+      "y": 1.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.25,
+      "size_y": 0.55
+    },
+    {
+      "number": "11",
+      "x": 0,
+      "y": 1.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.25,
+      "size_y": 0.55
+    },
+    {
+      "number": "12",
+      "x": -0.5,
+      "y": 1.175,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.25,
+      "size_y": 0.55
+    },
+    {
+      "number": "13",
+      "x": 0,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.15,
+      "size_y": 1.15
+    }
+  ],
+  "courtyard": {
+    "x": -1.75,
+    "y": -1.75,
+    "w": 3.5,
+    "h": 3.5
+  }
+}

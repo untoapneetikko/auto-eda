@@ -1,0 +1,49 @@
+{
+  "name": "D2PAK",
+  "description": "D2PAK / TO-263-3 SMD power package (3 leads + tab)",
+  "pin_count": 4,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.286,
+      "y": -2.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.1,
+      "size_y": 2.2
+    },
+    {
+      "number": "2",
+      "x": 0,
+      "y": -2.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.1,
+      "size_y": 2.2
+    },
+    {
+      "number": "3",
+      "x": 2.286,
+      "y": -2.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.1,
+      "size_y": 2.2
+    },
+    {
+      "number": "4",
+      "x": 0,
+      "y": 2.5,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 6.6,
+      "size_y": 3
+    }
+  ],
+  "courtyard": {
+    "x": -5,
+    "y": -4.5,
+    "w": 10,
+    "h": 8
+  }
+}

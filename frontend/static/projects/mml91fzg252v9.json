@@ -1,0 +1,435 @@
+{
+  "id": "mml91fzg252v9",
+  "name": "rrr",
+  "components": [
+    {
+      "id": "cmml91ck7dr5",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "PMA3-83LNW+",
+      "x": 43.636363636363626,
+      "y": 34.54545454545453,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 300,
+      "_exampleY": 270
+    },
+    {
+      "id": "cmml91ck7xh9",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "10pF",
+      "x": -126.36363636363637,
+      "y": 4.5454545454545325,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 130,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmml91ck7mh0",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "18nH",
+      "x": -86.36363636363637,
+      "y": 44.54545454545453,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmml91ck76y9",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "100pF",
+      "x": 243.63636363636363,
+      "y": 44.54545454545453,
+      "rotation": 3,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 500,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmml91ck7is2",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L2",
+      "value": "39nH",
+      "x": 183.63636363636363,
+      "y": 4.5454545454545325,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmml91ck7nt5",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VDD",
+      "value": "5V/6V",
+      "x": 183.63636363636363,
+      "y": -145.45454545454547,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 90
+    },
+    {
+      "id": "cmml91ck7a50",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": -86.36363636363637,
+      "y": 114.54545454545453,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 350
+    },
+    {
+      "id": "cmml91ck7xee",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": -106.36363636363637,
+      "y": -35.45454545454547,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 150,
+      "_exampleY": 200
+    },
+    {
+      "id": "cmml91ck7rcf",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "1uF",
+      "x": 203.63636363636363,
+      "y": -55.45454545454547,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 180
+    },
+    {
+      "id": "cmml91ck7hiw",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C4",
+      "value": "1uF",
+      "x": 203.63636363636363,
+      "y": -95.45454545454547,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 140
+    },
+    {
+      "id": "cmml91ck7zku",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "GND",
+      "x": 223.63636363636363,
+      "y": -25.454545454545467,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mml91ck79p",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 480,
+      "_exampleY": 210
+    }
+  ],
+  "wires": [
+    {
+      "id": "wmml91ck7o43",
+      "points": [
+        {
+          "x": -216.36363636363637,
+          "y": 4.5454545454545325
+        },
+        {
+          "x": -146.36363636363637,
+          "y": 4.5454545454545325
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck730q",
+      "points": [
+        {
+          "x": -86.36363636363637,
+          "y": 84.54545454545453,
+          "isPort": true
+        },
+        {
+          "x": -86.36363636363637,
+          "y": 99.54545454545453,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck74bm",
+      "points": [
+        {
+          "x": -106.36363636363637,
+          "y": 4.5454545454545325,
+          "isPort": true
+        },
+        {
+          "x": -56.363636363636374,
+          "y": 4.5454545454545325
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck77q8",
+      "points": [
+        {
+          "x": 183.63636363636363,
+          "y": -125.45454545454547
+        },
+        {
+          "x": 183.63636363636363,
+          "y": -125.45454545454547
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7j5w",
+      "points": [
+        {
+          "x": 183.63636363636363,
+          "y": -125.45454545454547
+        },
+        {
+          "x": 183.63636363636363,
+          "y": -125.45454545454547
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck77j7",
+      "points": [
+        {
+          "x": 143.63636363636363,
+          "y": 44.54545454545453,
+          "isPort": true
+        },
+        {
+          "x": 223.63636363636363,
+          "y": 44.54545454545453
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7rkw",
+      "points": [
+        {
+          "x": 183.63636363636363,
+          "y": -35.45454545454547,
+          "isPort": true
+        },
+        {
+          "x": 183.63636363636363,
+          "y": -125.45454545454547,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7x4m",
+      "points": [
+        {
+          "x": 313.6363636363636,
+          "y": 44.54545454545453,
+          "isPort": true
+        },
+        {
+          "x": 313.6363636363636,
+          "y": 44.54545454545453
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7sdv",
+      "points": [
+        {
+          "x": -86.36363636363637,
+          "y": -35.45454545454547,
+          "isPort": false
+        },
+        {
+          "x": -56.363636363636374,
+          "y": -35.45454545454547
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7jjn",
+      "points": [
+        {
+          "x": -86.36363636363637,
+          "y": 4.5454545454545325
+        },
+        {
+          "x": -86.36363636363637,
+          "y": 4.5454545454545325
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7k8c",
+      "points": [
+        {
+          "x": 183.63636363636363,
+          "y": 44.54545454545453
+        },
+        {
+          "x": 183.63636363636363,
+          "y": 44.54545454545453
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck795z",
+      "points": [
+        {
+          "x": 313.6363636363636,
+          "y": 44.54545454545453,
+          "isPort": true
+        },
+        {
+          "x": 313.6363636363636,
+          "y": 44.54545454545453
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck73dn",
+      "points": [
+        {
+          "x": 263.6363636363636,
+          "y": 44.54545454545453,
+          "isPort": true
+        },
+        {
+          "x": 313.6363636363636,
+          "y": 44.54545454545453
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7zsi",
+      "points": [
+        {
+          "x": 183.63636363636363,
+          "y": -55.45454545454547
+        },
+        {
+          "x": 183.63636363636363,
+          "y": -55.45454545454547
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7qo2",
+      "points": [
+        {
+          "x": 183.63636363636363,
+          "y": -95.45454545454547
+        },
+        {
+          "x": 183.63636363636363,
+          "y": -95.45454545454547
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7ph5",
+      "points": [
+        {
+          "x": 223.63636363636363,
+          "y": -45.45454545454547
+        },
+        {
+          "x": 223.63636363636363,
+          "y": -45.45454545454547
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7gyl",
+      "points": [
+        {
+          "x": 223.63636363636363,
+          "y": -45.45454545454547,
+          "isPort": true
+        },
+        {
+          "x": 223.63636363636363,
+          "y": -95.45454545454547,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmml91ck7apj",
+      "points": [
+        {
+          "x": 183.63636363636363,
+          "y": 74.54545454545453,
+          "isPort": true
+        },
+        {
+          "x": 183.63636363636363,
+          "y": 44.54545454545453,
+          "isPort": true
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lmml91ck7ddb",
+      "name": "RFIN",
+      "x": -216.36363636363637,
+      "y": 4.5454545454545325,
+      "rotation": 2
+    },
+    {
+      "id": "lmml91ck7olw",
+      "name": "RFOUT",
+      "x": 313.6363636363636,
+      "y": 44.54545454545453,
+      "rotation": 0
+    },
+    {
+      "id": "lmml91ck7o99",
+      "name": "BIAS",
+      "x": 183.63636363636363,
+      "y": 74.54545454545453,
+      "rotation": 1
+    }
+  ],
+  "created_at": "2026-03-10T23:36:38.146Z",
+  "updated_at": "2026-03-10T23:36:38.146Z"
+}

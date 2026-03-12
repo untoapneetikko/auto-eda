@@ -1,0 +1,194 @@
+{
+  "id": "mmi68vrwylous",
+  "name": "PMA3-83LNW+ — Application Circuit",
+  "components": [
+    {
+      "id": "u1",
+      "slug": "PMA3_83LNW",
+      "symType": "amplifier",
+      "designator": "U1",
+      "value": "PMA3-83LNW+",
+      "x": 320,
+      "y": 200,
+      "rotation": 0
+    },
+    {
+      "id": "c2",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "10pF",
+      "x": 180,
+      "y": 200,
+      "rotation": 1
+    },
+    {
+      "id": "l1",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "18nH",
+      "x": 220,
+      "y": 300,
+      "rotation": 1
+    },
+    {
+      "id": "c3",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "100pF",
+      "x": 460,
+      "y": 200,
+      "rotation": 1
+    },
+    {
+      "id": "l2",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L2",
+      "value": "39nH",
+      "x": 380,
+      "y": 120,
+      "rotation": 1
+    },
+    {
+      "id": "vdd1",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VDD",
+      "value": "5V/6V",
+      "x": 380,
+      "y": 40,
+      "rotation": 0
+    },
+    {
+      "id": "gnd1",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": 220,
+      "y": 380,
+      "rotation": 0
+    },
+    {
+      "id": "gnd2",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": 320,
+      "y": 300,
+      "rotation": 0
+    }
+  ],
+  "wires": [
+    {
+      "id": "w1",
+      "points": [
+        {
+          "x": 100,
+          "y": 200
+        },
+        {
+          "x": 160,
+          "y": 200
+        }
+      ]
+    },
+    {
+      "id": "w2",
+      "points": [
+        {
+          "x": 200,
+          "y": 200
+        },
+        {
+          "x": 270,
+          "y": 200
+        }
+      ]
+    },
+    {
+      "id": "w3",
+      "points": [
+        {
+          "x": 220,
+          "y": 200
+        },
+        {
+          "x": 220,
+          "y": 260
+        }
+      ]
+    },
+    {
+      "id": "w4",
+      "points": [
+        {
+          "x": 220,
+          "y": 340
+        },
+        {
+          "x": 220,
+          "y": 365
+        }
+      ]
+    },
+    {
+      "id": "w5",
+      "points": [
+        {
+          "x": 370,
+          "y": 200
+        },
+        {
+          "x": 440,
+          "y": 200
+        }
+      ]
+    },
+    {
+      "id": "w6",
+      "points": [
+        {
+          "x": 380,
+          "y": 200
+        },
+        {
+          "x": 380,
+          "y": 160
+        }
+      ]
+    },
+    {
+      "id": "w7",
+      "points": [
+        {
+          "x": 380,
+          "y": 80
+        },
+        {
+          "x": 380,
+          "y": 55
+        }
+      ]
+    },
+    {
+      "id": "w11",
+      "points": [
+        {
+          "x": 320,
+          "y": 240
+        },
+        {
+          "x": 320,
+          "y": 285
+        }
+      ]
+    }
+  ],
+  "created_at": "2026-03-08T19:55:24.263Z",
+  "updated_at": "2026-03-08T21:20:24.496Z"
+}

@@ -1,0 +1,141 @@
+{
+  "name": "SOIC-14",
+  "description": "SOIC-14 SMD IC (1.27mm pitch, 5.08mm row)",
+  "pin_count": 14,
+  "pitch": 1.27,
+  "row_spacing": 5.08,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.54,
+      "y": -3.81,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "2",
+      "x": -2.54,
+      "y": -2.54,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "3",
+      "x": -2.54,
+      "y": -1.27,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "4",
+      "x": -2.54,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "5",
+      "x": -2.54,
+      "y": 1.27,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "6",
+      "x": -2.54,
+      "y": 2.54,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "7",
+      "x": -2.54,
+      "y": 3.81,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "8",
+      "x": 2.54,
+      "y": 3.81,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "9",
+      "x": 2.54,
+      "y": 2.54,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "10",
+      "x": 2.54,
+      "y": 1.27,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "11",
+      "x": 2.54,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "12",
+      "x": 2.54,
+      "y": -1.27,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "13",
+      "x": 2.54,
+      "y": -2.54,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    },
+    {
+      "number": "14",
+      "x": 2.54,
+      "y": -3.81,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.9,
+      "size_y": 1.6
+    }
+  ],
+  "courtyard": {
+    "x": -3.29,
+    "y": -5.11,
+    "w": 6.58,
+    "h": 10.22
+  }
+}

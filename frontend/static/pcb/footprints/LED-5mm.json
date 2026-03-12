@@ -1,0 +1,10 @@
+{
+  "name": "LED-5mm",
+  "description": "5mm through-hole LED",
+  "pin_count": 2,
+  "pads": [
+    {"number":"1","name":"K","x":-1.27,"y":0,"type":"thru_hole","shape":"rect","size_x":1.6,"size_y":1.6,"drill":0.8},
+    {"number":"2","name":"A","x":1.27,"y":0,"type":"thru_hole","shape":"circle","size_x":1.6,"size_y":1.6,"drill":0.8}
+  ],
+  "courtyard":{"x":-4.0,"y":-3.0,"w":8.0,"h":6.0}
+}

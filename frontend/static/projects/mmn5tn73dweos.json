@@ -1,0 +1,224 @@
+{
+  "id": "mmn5tn73dweos",
+  "name": "jimi2",
+  "components": [
+    {
+      "id": "cmmn5teod6ye",
+      "slug": "AP2112",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "AP2112K-3.3",
+      "x": 817.1428571428571,
+      "y": 470,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn5teob8j",
+      "_exampleSlug": "AP2112",
+      "_exampleX": 320,
+      "_exampleY": 270
+    },
+    {
+      "id": "cmmn5teodzji",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VCC1",
+      "value": "5V",
+      "x": 617.1428571428571,
+      "y": 420,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn5teob8j",
+      "_exampleSlug": "AP2112",
+      "_exampleX": 120,
+      "_exampleY": 220
+    },
+    {
+      "id": "cmmn5teod4i6",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "1uF",
+      "x": 617.1428571428571,
+      "y": 460,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn5teob8j",
+      "_exampleSlug": "AP2112",
+      "_exampleX": 120,
+      "_exampleY": 260
+    },
+    {
+      "id": "cmmn5teod5sr",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": 617.1428571428571,
+      "y": 500,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn5teob8j",
+      "_exampleSlug": "AP2112",
+      "_exampleX": 120,
+      "_exampleY": 300
+    },
+    {
+      "id": "cmmn5teodyu3",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "GND",
+      "x": 657.1428571428571,
+      "y": 480,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn5teob8j",
+      "_exampleSlug": "AP2112",
+      "_exampleX": 160,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmmn5teodq9d",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "1uF",
+      "x": 997.1428571428571,
+      "y": 460,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn5teob8j",
+      "_exampleSlug": "AP2112",
+      "_exampleX": 500,
+      "_exampleY": 260
+    },
+    {
+      "id": "cmmn5teodbvp",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND3",
+      "value": "GND",
+      "x": 997.1428571428571,
+      "y": 500,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmn5teob8j",
+      "_exampleSlug": "AP2112",
+      "_exampleX": 500,
+      "_exampleY": 300
+    }
+  ],
+  "wires": [
+    {
+      "id": "wmmn5teodiv2",
+      "points": [
+        {
+          "x": 617.1428571428571,
+          "y": 440
+        },
+        {
+          "x": 717.1428571428571,
+          "y": 440
+        }
+      ]
+    },
+    {
+      "id": "wmmn5teodzbd",
+      "points": [
+        {
+          "x": 717.1428571428571,
+          "y": 460
+        },
+        {
+          "x": 657.1428571428571,
+          "y": 460
+        }
+      ]
+    },
+    {
+      "id": "wmmn5teodeda",
+      "points": [
+        {
+          "x": 717.1428571428571,
+          "y": 480
+        },
+        {
+          "x": 637.1428571428571,
+          "y": 480
+        },
+        {
+          "x": 637.1428571428571,
+          "y": 440
+        }
+      ]
+    },
+    {
+      "id": "wmmn5teod2q7",
+      "points": [
+        {
+          "x": 917.1428571428571,
+          "y": 440
+        },
+        {
+          "x": 997.1428571428571,
+          "y": 440
+        }
+      ]
+    },
+    {
+      "id": "wmmn5teodo0d",
+      "points": [
+        {
+          "x": 997.1428571428571,
+          "y": 440
+        },
+        {
+          "x": 1057.142857142857,
+          "y": 440
+        }
+      ]
+    },
+    {
+      "id": "cwmmn5teod60u",
+      "points": [
+        {
+          "x": 617.1428571428571,
+          "y": 440
+        },
+        {
+          "x": 617.1428571428571,
+          "y": 440
+        }
+      ]
+    },
+    {
+      "id": "cwmmn5teodtnn",
+      "points": [
+        {
+          "x": 617.1428571428571,
+          "y": 480
+        },
+        {
+          "x": 617.1428571428571,
+          "y": 480
+        }
+      ]
+    },
+    {
+      "id": "cwmmn5teoegge",
+      "points": [
+        {
+          "x": 997.1428571428571,
+          "y": 480
+        },
+        {
+          "x": 997.1428571428571,
+          "y": 480
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lmmn5teoddts",
+      "name": "VOUT",
+      "x": 1057.142857142857,
+      "y": 440
+    }
+  ],
+  "created_at": "2026-03-12T07:44:24.037Z",
+  "updated_at": "2026-03-12T13:17:09.014Z"
+}

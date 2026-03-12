@@ -1,0 +1,159 @@
+{
+  "name": "TSSOP-16",
+  "description": "TSSOP-16 (0.65mm pitch, 4.4mm row)",
+  "pin_count": 16,
+  "pitch": 0.65,
+  "row_spacing": 4.4,
+  "pads": [
+    {
+      "number": "1",
+      "x": -2.2,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "2",
+      "x": -2.2,
+      "y": -1.625,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "3",
+      "x": -2.2,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "4",
+      "x": -2.2,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "5",
+      "x": -2.2,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "6",
+      "x": -2.2,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "7",
+      "x": -2.2,
+      "y": 1.625,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "8",
+      "x": -2.2,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "9",
+      "x": 2.2,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "10",
+      "x": 2.2,
+      "y": 1.625,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "11",
+      "x": 2.2,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "12",
+      "x": 2.2,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "13",
+      "x": 2.2,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "14",
+      "x": 2.2,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "15",
+      "x": 2.2,
+      "y": -1.625,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    },
+    {
+      "number": "16",
+      "x": 2.2,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.38,
+      "size_y": 1.58
+    }
+  ],
+  "courtyard": {
+    "x": -2.69,
+    "y": -3.565,
+    "w": 5.38,
+    "h": 7.13
+  }
+}

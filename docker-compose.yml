@@ -9,6 +9,8 @@ services:
       - ./data:/app/data
       - ./agents:/app/agents
       - ./shared:/app/shared
+      # Mount Claude Code config so the CLI is already authenticated
+      - ${HOME}/.claude:/root/.claude:ro
     environment:
       - REDIS_URL=redis://redis:6379
       - DATA_DIR=/app/data
@@ -16,6 +18,26 @@ services:
       - UPLOAD_DIR=/app/data/uploads
     depends_on:
       - redis
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: python backend/worker.py
+    volumes:
+      - ./data:/app/data
+      - ./agents:/app/agents
+      - ./shared:/app/shared
+      - ./backend:/app/backend
+      # Mount Claude Code config so the CLI is already authenticated
+      - ${HOME}/.claude:/root/.claude:ro
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATA_DIR=/app/data
+      - OUTPUT_DIR=/app/data/outputs
+      - UPLOAD_DIR=/app/data/uploads
+    depends_on:
+      - redis
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -23,6 +45,16 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+    restart: unless-stopped
 
 volumes:
   redis_data:

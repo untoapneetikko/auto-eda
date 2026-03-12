@@ -1,0 +1,9 @@
+{
+  "name": "0603",
+  "description": "SMD 0603 (1.6x0.8mm) - resistors, capacitors, inductors",
+  "pads": [
+    {"number":"1","x":-0.8,"y":0,"type":"smd","shape":"rect","size_x":0.9,"size_y":0.8},
+    {"number":"2","x":0.8,"y":0,"type":"smd","shape":"rect","size_x":0.9,"size_y":0.8}
+  ],
+  "courtyard":{"x":-1.5,"y":-0.6,"w":3.0,"h":1.2}
+}

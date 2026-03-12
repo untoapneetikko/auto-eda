@@ -1,0 +1,40 @@
+{
+  "name": "SMA-SMD-EDGE",
+  "description": "SMA edge-launch SMD connector (RF 50Ω)",
+  "pin_count": 3,
+  "pads": [
+    {
+      "number": "1",
+      "x": 0,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.8,
+      "size_y": 1.8
+    },
+    {
+      "number": "2",
+      "x": 0,
+      "y": -3.3,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.3,
+      "size_y": 1.6
+    },
+    {
+      "number": "3",
+      "x": 0,
+      "y": 3.3,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.3,
+      "size_y": 1.6
+    }
+  ],
+  "courtyard": {
+    "x": -4.5,
+    "y": -4.5,
+    "w": 9,
+    "h": 9
+  }
+}

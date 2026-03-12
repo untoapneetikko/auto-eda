@@ -1,0 +1,357 @@
+{
+  "version": "1.0",
+  "title": "jimi2",
+  "projectId": "mmn5tn73dweos",
+  "board": {
+    "width": 80,
+    "height": 60,
+    "units": "mm"
+  },
+  "components": [
+    {
+      "id": "U1",
+      "ref": "U1",
+      "value": "AP2112K-3.3",
+      "footprint": "SOT25",
+      "x": 14.4,
+      "y": 11.9,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "VIN",
+          "x": -0.95,
+          "y": 0.95,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.9,
+          "net": "5V"
+        },
+        {
+          "number": "2",
+          "name": "GND",
+          "x": 0,
+          "y": 0.95,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.9,
+          "net": "GND"
+        },
+        {
+          "number": "3",
+          "name": "EN",
+          "x": 0.95,
+          "y": 0.95,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.9,
+          "net": "NET_1"
+        },
+        {
+          "number": "4",
+          "name": "NC",
+          "x": 0.95,
+          "y": -0.95,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.9,
+          "net": null
+        },
+        {
+          "number": "5",
+          "name": "VOUT",
+          "x": -0.95,
+          "y": -0.95,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.9,
+          "net": "VOUT"
+        }
+      ],
+      "_fromLE": true
+    },
+    {
+      "id": "C1",
+      "ref": "C1",
+      "value": "1uF X5R",
+      "footprint": "0402",
+      "x": 11.4,
+      "y": 12.85,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.5,
+          "size_y": 0.5,
+          "net": "GND"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.5,
+          "size_y": 0.5,
+          "net": "VIN"
+        }
+      ],
+      "_fromLE": true
+    },
+    {
+      "id": "C2",
+      "ref": "C2",
+      "value": "1uF X5R",
+      "footprint": "0402",
+      "x": 11.4,
+      "y": 10.95,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.5,
+          "size_y": 0.5,
+          "net": "GND"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.5,
+          "size_y": 0.5,
+          "net": "VOUT"
+        }
+      ],
+      "_fromLE": true
+    }
+  ],
+  "nets": [
+    {
+      "name": "5V",
+      "pads": [
+        "U1.1"
+      ]
+    },
+    {
+      "name": "GND",
+      "pads": [
+        "U1.2",
+        "C1.1",
+        "C2.1"
+      ]
+    },
+    {
+      "name": "NET_1",
+      "pads": [
+        "U1.3"
+      ]
+    },
+    {
+      "name": "VOUT",
+      "pads": [
+        "U1.5",
+        "C2.2"
+      ]
+    },
+    {
+      "name": "VIN",
+      "pads": [
+        "C1.2"
+      ]
+    }
+  ],
+  "traces": [
+    {
+      "net": "NET_1",
+      "layer": "F.Cu",
+      "width": 0.3,
+      "segments": [
+        {
+          "start": {
+            "x": 11.9,
+            "y": 12.85
+          },
+          "end": {
+            "x": 13.45,
+            "y": 12.85
+          }
+        }
+      ]
+    },
+    {
+      "net": "NET_1",
+      "layer": "F.Cu",
+      "width": 0.2,
+      "segments": [
+        {
+          "start": {
+            "x": 15.35,
+            "y": 12.85
+          },
+          "end": {
+            "x": 15.35,
+            "y": 13.6
+          }
+        },
+        {
+          "start": {
+            "x": 15.35,
+            "y": 13.6
+          },
+          "end": {
+            "x": 14.85,
+            "y": 14.1
+          }
+        },
+        {
+          "start": {
+            "x": 14.85,
+            "y": 14.1
+          },
+          "end": {
+            "x": 13.95,
+            "y": 14.1
+          }
+        },
+        {
+          "start": {
+            "x": 13.95,
+            "y": 14.1
+          },
+          "end": {
+            "x": 13.45,
+            "y": 13.6
+          }
+        },
+        {
+          "start": {
+            "x": 13.45,
+            "y": 13.6
+          },
+          "end": {
+            "x": 13.45,
+            "y": 12.85
+          }
+        }
+      ]
+    },
+    {
+      "net": "VOUT",
+      "layer": "F.Cu",
+      "width": 0.3,
+      "segments": [
+        {
+          "start": {
+            "x": 11.9,
+            "y": 10.95
+          },
+          "end": {
+            "x": 13.45,
+            "y": 10.95
+          }
+        }
+      ]
+    },
+    {
+      "net": "GND",
+      "layer": "F.Cu",
+      "width": 0.3,
+      "segments": [
+        {
+          "start": {
+            "x": 14.4,
+            "y": 12.85
+          },
+          "end": {
+            "x": 14.424784790388207,
+            "y": 10.4
+          }
+        },
+        {
+          "start": {
+            "x": 14.424784790388207,
+            "y": 10.4
+          },
+          "end": {
+            "x": 13.924784790388207,
+            "y": 9.623293267372354
+          }
+        },
+        {
+          "start": {
+            "x": 13.924784790388207,
+            "y": 9.623293267372354
+          },
+          "end": {
+            "x": 11.4,
+            "y": 9.623293267372354
+          }
+        },
+        {
+          "start": {
+            "x": 11.4,
+            "y": 9.623293267372354
+          },
+          "end": {
+            "x": 10.9,
+            "y": 10.4
+          }
+        },
+        {
+          "start": {
+            "x": 10.9,
+            "y": 10.4
+          },
+          "end": {
+            "x": 10.9,
+            "y": 10.95
+          }
+        }
+      ]
+    },
+    {
+      "net": "GND",
+      "layer": "F.Cu",
+      "width": 0.3,
+      "segments": [
+        {
+          "start": {
+            "x": 10.9,
+            "y": 10.95
+          },
+          "end": {
+            "x": 10.9,
+            "y": 12.85
+          }
+        }
+      ]
+    }
+  ],
+  "vias": [],
+  "zones": [],
+  "areas": [],
+  "_exGroupCount": 1,
+  "_exCompCount": 3,
+  "_leGroupCount": 1,
+  "_leApplied": true,
+  "id": "mmn5tqqcy6ti0",
+  "updated_at": "2026-03-12T13:17:21.672Z"
+}

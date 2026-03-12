@@ -1,0 +1,814 @@
+{
+  "id": "mmm4tbk3espl6",
+  "name": "Untitled",
+  "components": [
+    {
+      "id": "cmmm4t5z6gry",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "PMA3-83LNW+",
+      "x": 703.6363636363636,
+      "y": 494.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 300,
+      "_exampleY": 270
+    },
+    {
+      "id": "cmmm4t5z69k9",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "10pF",
+      "x": 533.6363636363636,
+      "y": 464.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 130,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmmm4t5z6tvk",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "18nH",
+      "x": 573.6363636363636,
+      "y": 504.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmmm4t5z6qsc",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "100pF",
+      "x": 903.6363636363636,
+      "y": 504.5454545454545,
+      "rotation": 3,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 500,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmmm4t5z6qpi",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L2",
+      "value": "39nH",
+      "x": 843.6363636363636,
+      "y": 464.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmmm4t5z63xk",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VDD",
+      "value": "5V/6V",
+      "x": 843.6363636363636,
+      "y": 314.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 90
+    },
+    {
+      "id": "cmmm4t5z62tw",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": 573.6363636363636,
+      "y": 574.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 350
+    },
+    {
+      "id": "cmmm4t5z65w3",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": 553.6363636363636,
+      "y": 424.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 150,
+      "_exampleY": 200
+    },
+    {
+      "id": "cmmm4t5z6f6w",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "1uF",
+      "x": 863.6363636363636,
+      "y": 404.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 180
+    },
+    {
+      "id": "cmmm4t5z69a1",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C4",
+      "value": "1uF",
+      "x": 863.6363636363636,
+      "y": 364.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 140
+    },
+    {
+      "id": "cmmm4t5z6cbn",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "GND",
+      "x": 883.6363636363636,
+      "y": 434.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t5z5zf",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 480,
+      "_exampleY": 210
+    },
+    {
+      "id": "cmmm4t7egv3v",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U2",
+      "value": "PMA3-83LNW+",
+      "x": 823.6363636363636,
+      "y": 814.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 300,
+      "_exampleY": 270
+    },
+    {
+      "id": "cmmm4t7egn52",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C5",
+      "value": "10pF",
+      "x": 653.6363636363636,
+      "y": 784.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 130,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmmm4t7egoxy",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L3",
+      "value": "18nH",
+      "x": 693.6363636363636,
+      "y": 824.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmmm4t7egikp",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C6",
+      "value": "100pF",
+      "x": 1023.6363636363636,
+      "y": 824.5454545454545,
+      "rotation": 3,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 500,
+      "_exampleY": 280
+    },
+    {
+      "id": "cmmm4t7eg3dl",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L4",
+      "value": "39nH",
+      "x": 963.6363636363636,
+      "y": 784.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 240
+    },
+    {
+      "id": "cmmm4t7egwn2",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VDD",
+      "value": "5V/6V",
+      "x": 963.6363636363636,
+      "y": 634.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 90
+    },
+    {
+      "id": "cmmm4t7egb75",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": 693.6363636363636,
+      "y": 894.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 350
+    },
+    {
+      "id": "cmmm4t7egzhu",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND3",
+      "value": "GND",
+      "x": 673.6363636363636,
+      "y": 744.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 150,
+      "_exampleY": 200
+    },
+    {
+      "id": "cmmm4t7egfov",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C7",
+      "value": "1uF",
+      "x": 983.6363636363636,
+      "y": 724.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 180
+    },
+    {
+      "id": "cmmm4t7egfim",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C8",
+      "value": "1uF",
+      "x": 983.6363636363636,
+      "y": 684.5454545454545,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 140
+    },
+    {
+      "id": "cmmm4t7eg0di",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND4",
+      "value": "GND",
+      "x": 1003.6363636363636,
+      "y": 754.5454545454545,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mmm4t7egro",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 480,
+      "_exampleY": 210
+    }
+  ],
+  "wires": [
+    {
+      "id": "wmmm4t5z65lv",
+      "points": [
+        {
+          "x": 443.6363636363636,
+          "y": 464.5454545454545
+        },
+        {
+          "x": 513.6363636363636,
+          "y": 464.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z67pz",
+      "points": [
+        {
+          "x": 573.6363636363636,
+          "y": 544.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 573.6363636363636,
+          "y": 559.5454545454545,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6c32",
+      "points": [
+        {
+          "x": 553.6363636363636,
+          "y": 464.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 603.6363636363636,
+          "y": 464.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6wfa",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 334.5454545454545
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 334.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6gcv",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 334.5454545454545
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 334.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6rrg",
+      "points": [
+        {
+          "x": 803.6363636363636,
+          "y": 504.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 883.6363636363636,
+          "y": 504.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z60ge",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 424.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 334.5454545454545,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6ces",
+      "points": [
+        {
+          "x": 973.6363636363636,
+          "y": 504.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 973.6363636363636,
+          "y": 504.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6ciq",
+      "points": [
+        {
+          "x": 573.6363636363636,
+          "y": 424.5454545454545,
+          "isPort": false
+        },
+        {
+          "x": 603.6363636363636,
+          "y": 424.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6rvb",
+      "points": [
+        {
+          "x": 573.6363636363636,
+          "y": 464.5454545454545
+        },
+        {
+          "x": 573.6363636363636,
+          "y": 464.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6dz5",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 504.5454545454545
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 504.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z60ag",
+      "points": [
+        {
+          "x": 973.6363636363636,
+          "y": 504.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 973.6363636363636,
+          "y": 504.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6ayk",
+      "points": [
+        {
+          "x": 923.6363636363636,
+          "y": 504.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 973.6363636363636,
+          "y": 504.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6880",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 404.5454545454545
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 404.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6itt",
+      "points": [
+        {
+          "x": 843.6363636363636,
+          "y": 364.5454545454545
+        },
+        {
+          "x": 843.6363636363636,
+          "y": 364.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6mrl",
+      "points": [
+        {
+          "x": 883.6363636363636,
+          "y": 414.5454545454545
+        },
+        {
+          "x": 883.6363636363636,
+          "y": 414.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t5z6qf1",
+      "points": [
+        {
+          "x": 883.6363636363636,
+          "y": 414.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 883.6363636363636,
+          "y": 364.5454545454545,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eggy9",
+      "points": [
+        {
+          "x": 563.6363636363636,
+          "y": 784.5454545454545
+        },
+        {
+          "x": 633.6363636363636,
+          "y": 784.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eggud",
+      "points": [
+        {
+          "x": 693.6363636363636,
+          "y": 864.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 693.6363636363636,
+          "y": 879.5454545454545,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egskp",
+      "points": [
+        {
+          "x": 673.6363636363636,
+          "y": 784.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 723.6363636363636,
+          "y": 784.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egana",
+      "points": [
+        {
+          "x": 963.6363636363636,
+          "y": 654.5454545454545
+        },
+        {
+          "x": 963.6363636363636,
+          "y": 654.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eg0wh",
+      "points": [
+        {
+          "x": 963.6363636363636,
+          "y": 654.5454545454545
+        },
+        {
+          "x": 963.6363636363636,
+          "y": 654.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eg6qz",
+      "points": [
+        {
+          "x": 923.6363636363636,
+          "y": 824.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 1003.6363636363636,
+          "y": 824.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eg361",
+      "points": [
+        {
+          "x": 963.6363636363636,
+          "y": 744.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 963.6363636363636,
+          "y": 654.5454545454545,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egrr9",
+      "points": [
+        {
+          "x": 1093.6363636363635,
+          "y": 824.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 1093.6363636363635,
+          "y": 824.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eg24q",
+      "points": [
+        {
+          "x": 693.6363636363636,
+          "y": 744.5454545454545,
+          "isPort": false
+        },
+        {
+          "x": 723.6363636363636,
+          "y": 744.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egn43",
+      "points": [
+        {
+          "x": 693.6363636363636,
+          "y": 784.5454545454545
+        },
+        {
+          "x": 693.6363636363636,
+          "y": 784.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egr9d",
+      "points": [
+        {
+          "x": 963.6363636363636,
+          "y": 824.5454545454545
+        },
+        {
+          "x": 963.6363636363636,
+          "y": 824.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egtpv",
+      "points": [
+        {
+          "x": 1093.6363636363635,
+          "y": 824.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 1093.6363636363635,
+          "y": 824.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egmsa",
+      "points": [
+        {
+          "x": 1043.6363636363635,
+          "y": 824.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 1093.6363636363635,
+          "y": 824.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eg88e",
+      "points": [
+        {
+          "x": 963.6363636363636,
+          "y": 724.5454545454545
+        },
+        {
+          "x": 963.6363636363636,
+          "y": 724.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eg1yc",
+      "points": [
+        {
+          "x": 963.6363636363636,
+          "y": 684.5454545454545
+        },
+        {
+          "x": 963.6363636363636,
+          "y": 684.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7egnvw",
+      "points": [
+        {
+          "x": 1003.6363636363636,
+          "y": 734.5454545454545
+        },
+        {
+          "x": 1003.6363636363636,
+          "y": 734.5454545454545
+        }
+      ]
+    },
+    {
+      "id": "wmmm4t7eg4cn",
+      "points": [
+        {
+          "x": 1003.6363636363636,
+          "y": 734.5454545454545,
+          "isPort": true
+        },
+        {
+          "x": 1003.6363636363636,
+          "y": 684.5454545454545,
+          "isPort": true
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lmmm4t5z6k2n",
+      "name": "RFIN",
+      "x": 443.6363636363636,
+      "y": 464.5454545454545,
+      "rotation": 2
+    },
+    {
+      "id": "lmmm4t5z6l5o",
+      "name": "RFOUT",
+      "x": 973.6363636363636,
+      "y": 504.5454545454545,
+      "rotation": 0
+    },
+    {
+      "id": "lmmm4t7egyau",
+      "name": "RFIN2",
+      "x": 563.6363636363636,
+      "y": 784.5454545454545,
+      "rotation": 2
+    },
+    {
+      "id": "lmmm4t7eg7g2",
+      "name": "RFOUT2",
+      "x": 1093.6363636363635,
+      "y": 824.5454545454545,
+      "rotation": 0
+    }
+  ],
+  "created_at": "2026-03-11T14:26:03.844Z",
+  "updated_at": "2026-03-11T14:26:03.844Z"
+}

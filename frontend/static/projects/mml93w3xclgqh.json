@@ -1,0 +1,403 @@
+{
+  "name": "5V Regulated PMA3-83LNW+",
+  "components": [
+    {
+      "id": "u1",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "PMA3-83LNW+",
+      "x": 300,
+      "y": 270,
+      "rotation": 0
+    },
+    {
+      "id": "c2",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "10pF",
+      "x": 130,
+      "y": 240,
+      "rotation": 1
+    },
+    {
+      "id": "l1",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "18nH",
+      "x": 170,
+      "y": 280,
+      "rotation": 1
+    },
+    {
+      "id": "c3",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "100pF",
+      "x": 500,
+      "y": 280,
+      "rotation": 3
+    },
+    {
+      "id": "l2",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L2",
+      "value": "39nH",
+      "x": 440,
+      "y": 240,
+      "rotation": 1
+    },
+    {
+      "id": "gnd1",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": 170,
+      "y": 350,
+      "rotation": 0
+    },
+    {
+      "id": "gnd_rf_in",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": 150,
+      "y": 200,
+      "rotation": 1
+    },
+    {
+      "id": "c_byp1",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C4",
+      "value": "1uF",
+      "x": 460,
+      "y": 180,
+      "rotation": 1
+    },
+    {
+      "id": "c_byp2",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C5",
+      "value": "1uF",
+      "x": 460,
+      "y": 140,
+      "rotation": 1
+    },
+    {
+      "id": "gnd_byp",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "GND",
+      "x": 480,
+      "y": 210,
+      "rotation": 0
+    },
+    {
+      "id": "reg_u1",
+      "slug": "LM7805",
+      "symType": "ic",
+      "designator": "U2",
+      "value": "LM7805",
+      "x": 360,
+      "y": 500,
+      "rotation": 0
+    },
+    {
+      "id": "reg_vcc",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VIN",
+      "value": "12V",
+      "x": 120,
+      "y": 460,
+      "rotation": 0
+    },
+    {
+      "id": "reg_c1",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C6",
+      "value": "100nF",
+      "x": 120,
+      "y": 510,
+      "rotation": 0
+    },
+    {
+      "id": "reg_c2",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C7",
+      "value": "100nF",
+      "x": 460,
+      "y": 530,
+      "rotation": 0
+    },
+    {
+      "id": "reg_gnd1",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND3",
+      "value": "",
+      "x": 120,
+      "y": 560,
+      "rotation": 0
+    },
+    {
+      "id": "reg_gnd2",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND4",
+      "value": "",
+      "x": 260,
+      "y": 560,
+      "rotation": 0
+    },
+    {
+      "id": "reg_gnd3",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND5",
+      "value": "",
+      "x": 460,
+      "y": 570,
+      "rotation": 0
+    }
+  ],
+  "wires": [
+    {
+      "id": "w_rfin",
+      "points": [
+        {
+          "x": 40,
+          "y": 240
+        },
+        {
+          "x": 110,
+          "y": 240
+        }
+      ]
+    },
+    {
+      "id": "w_l1_gnd",
+      "points": [
+        {
+          "x": 170,
+          "y": 320
+        },
+        {
+          "x": 170,
+          "y": 335
+        }
+      ]
+    },
+    {
+      "id": "w_gnd1_shunt",
+      "points": [
+        {
+          "x": 150,
+          "y": 240
+        },
+        {
+          "x": 200,
+          "y": 240
+        }
+      ]
+    },
+    {
+      "id": "w_u1_out_c3",
+      "points": [
+        {
+          "x": 400,
+          "y": 280
+        },
+        {
+          "x": 480,
+          "y": 280
+        }
+      ]
+    },
+    {
+      "id": "w_l2_vdd",
+      "points": [
+        {
+          "x": 440,
+          "y": 200
+        },
+        {
+          "x": 440,
+          "y": 110
+        }
+      ]
+    },
+    {
+      "id": "w_gnd1_l1",
+      "points": [
+        {
+          "x": 170,
+          "y": 200
+        },
+        {
+          "x": 200,
+          "y": 200
+        }
+      ]
+    },
+    {
+      "id": "w_c3_rfout",
+      "points": [
+        {
+          "x": 520,
+          "y": 280
+        },
+        {
+          "x": 570,
+          "y": 280
+        }
+      ]
+    },
+    {
+      "id": "w_gnd2_c5",
+      "points": [
+        {
+          "x": 480,
+          "y": 190
+        },
+        {
+          "x": 480,
+          "y": 140
+        }
+      ]
+    },
+    {
+      "id": "w_bias_l2",
+      "points": [
+        {
+          "x": 440,
+          "y": 310
+        },
+        {
+          "x": 440,
+          "y": 280
+        }
+      ]
+    },
+    {
+      "id": "w_reg_vin",
+      "points": [
+        {
+          "x": 120,
+          "y": 480
+        },
+        {
+          "x": 120,
+          "y": 490
+        },
+        {
+          "x": 260,
+          "y": 490
+        }
+      ]
+    },
+    {
+      "id": "w_reg_cgnd1",
+      "points": [
+        {
+          "x": 120,
+          "y": 530
+        },
+        {
+          "x": 120,
+          "y": 540
+        }
+      ]
+    },
+    {
+      "id": "w_reg_gnd",
+      "points": [
+        {
+          "x": 260,
+          "y": 510
+        },
+        {
+          "x": 260,
+          "y": 540
+        }
+      ]
+    },
+    {
+      "id": "w_reg_vout",
+      "points": [
+        {
+          "x": 460,
+          "y": 510
+        },
+        {
+          "x": 560,
+          "y": 510
+        }
+      ]
+    },
+    {
+      "id": "w_reg_cgnd2",
+      "points": [
+        {
+          "x": 460,
+          "y": 550
+        },
+        {
+          "x": 460,
+          "y": 560
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lbl_rfin",
+      "name": "RFIN",
+      "x": 40,
+      "y": 240,
+      "rotation": 2
+    },
+    {
+      "id": "lbl_rfout",
+      "name": "RFOUT",
+      "x": 570,
+      "y": 280,
+      "rotation": 0
+    },
+    {
+      "id": "lbl_bias",
+      "name": "BIAS",
+      "x": 440,
+      "y": 310,
+      "rotation": 0
+    },
+    {
+      "id": "lbl_vdd_pma3",
+      "name": "VDD",
+      "x": 440,
+      "y": 110,
+      "rotation": 0
+    },
+    {
+      "id": "lbl_vdd_reg",
+      "name": "VDD",
+      "x": 560,
+      "y": 510,
+      "rotation": 0
+    }
+  ],
+  "id": "mml93w3xclgqh",
+  "created_at": "2026-03-10T23:38:29.325Z",
+  "updated_at": "2026-03-10T23:38:29.325Z"
+}

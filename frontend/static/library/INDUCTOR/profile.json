@@ -1,0 +1,26 @@
+{
+  "part_number": "L",
+  "description": "Inductor — RF choke, DC bias feed, power supply filtering, energy storage",
+  "manufacturer": "Generic",
+  "package_types": ["0402", "0603", "0805", "THT"],
+  "symbol_type": "inductor",
+  "builtin": true,
+  "pins": [
+    { "number": 1, "name": "A", "type": "passive", "description": "Terminal A", "active": null, "internal_pull": null, "requirements": null, "ambiguous": false },
+    { "number": 2, "name": "B", "type": "passive", "description": "Terminal B", "active": null, "internal_pull": null, "requirements": null, "ambiguous": false }
+  ],
+  "required_passives": [],
+  "common_mistakes": [
+    "DC resistance (DCR) causes voltage drop — check DCR spec at your operating current",
+    "Inductor saturates at high current — operating current must stay below saturation current rating",
+    "RF choke self-resonant frequency (SRF) must be above operating frequency or it becomes a capacitor",
+    "Do not place inductors next to each other without shielding — mutual coupling causes interference"
+  ],
+  "notes": "Value in Henries (H). Common RF choke values: 18nH, 39nH, 100nH. Mark value on schematic.",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "parsed_at": "2026-03-08T00:00:00.000Z",
+  "human_corrections": []
+}

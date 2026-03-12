@@ -1,0 +1,31 @@
+{
+  "name": "0201",
+  "description": "SMD 0201 (0.6x0.3mm) — tiny passives",
+  "pin_count": 2,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.25,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.28,
+      "size_y": 0.3
+    },
+    {
+      "number": "2",
+      "x": 0.25,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.28,
+      "size_y": 0.3
+    }
+  ],
+  "courtyard": {
+    "x": -0.54,
+    "y": -0.3,
+    "w": 1.08,
+    "h": 0.6
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "part_number": "LM7805",
+  "description": "5V 1A positive linear voltage regulator — fixed output, requires input ≥7V",
+  "manufacturer": "Texas Instruments / ST / On Semi",
+  "package_types": ["TO-220", "TO-92", "D2PAK", "SOT-223"],
+  "supply_voltage_range": "7V to 35V input for 5V output",
+  "absolute_max": {
+    "input_voltage": "35V",
+    "output_current": "1.5A (with heatsink)",
+    "power_dissipation": "See thermal derating — (Vin-Vout) × Iout must not exceed device rating",
+    "operating_temp": "-40°C to +125°C junction"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "INPUT",
+      "type": "power",
+      "description": "Unregulated DC input voltage. Must be at least 2V above output (7V minimum for 5V output).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "0.33µF ceramic cap to GND required if regulator is more than 7cm from filter capacitor. Keep input wiring short.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 2,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground reference for input and output. In TO-220, this is the center pin.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to common ground. In TO-220, the metal tab is also GND — if mounted to a heatsink, the heatsink is at GND potential.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 3,
+      "name": "OUTPUT",
+      "type": "power",
+      "description": "Regulated 5V ±4% output.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "0.1µF ceramic cap to GND for stability. Can add larger electrolytic (10µF+) for transient response.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "0.33µF",
+      "placement": "INPUT to GND, close to regulator",
+      "reason": "Required if regulator is far from bulk filter capacitor — prevents oscillation. Datasheet p.1",
+      "datasheet_page": 1
+    },
+    {
+      "type": "capacitor",
+      "value": "0.1µF",
+      "placement": "OUTPUT to GND, close to regulator",
+      "reason": "Improves transient response and stability — datasheet p.1",
+      "datasheet_page": 1
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Fixed 5V regulator",
+      "description": "INPUT: 7V–35V DC with 0.33µF cap. OUTPUT: 5V with 0.1µF cap. GND to common ground.",
+      "page": 1
+    }
+  ],
+  "common_mistakes": [
+    "Minimum input-output differential is 2V — input must be at least 7V for 5V output",
+    "No heatsink at >500mA output current causes thermal shutdown (Tj = 150°C)",
+    "Power dissipation = (Vin - 5V) × Iout — at 12V input, 1A load dissipates 7W — requires heatsink",
+    "TO-220 metal tab is GND — if tab touches metal chassis or other conductors at different potential, short circuit occurs",
+    "Output voltage tolerance is ±4% — not suitable as a precision reference",
+    "LM7805 has no soft-start or enable pin — output rises immediately on power-up"
+  ],
+  "notes": "Dropout voltage ~2V. Thermal resistance TO-220: Θja ~65°C/W without heatsink. Equivalent parts: 7805, UA7805, L7805. For lower dropout use LM2940 (0.5V dropout) or AMS1117 with adjustable version.",
+  "symbol_type": "ic",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": null,
+  "filename": "builtin",
+  "uploaded_at": null,
+  "parsed_at": "2026-03-08T00:00:00.000Z",
+  "builtin": true,
+  "human_corrections": []
+}

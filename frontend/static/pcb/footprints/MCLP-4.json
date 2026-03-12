@@ -1,0 +1,49 @@
+{
+  "name": "MCLP-4",
+  "description": "Mini-Circuits MCLP-4 (ERA/PHA/GALI amplifiers, 2+2 SMD)",
+  "pin_count": 4,
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.825,
+      "y": -0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.35
+    },
+    {
+      "number": "2",
+      "x": -0.825,
+      "y": 0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.35
+    },
+    {
+      "number": "3",
+      "x": 0.825,
+      "y": 0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.35
+    },
+    {
+      "number": "4",
+      "x": 0.825,
+      "y": -0.65,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.5,
+      "size_y": 0.35
+    }
+  ],
+  "courtyard": {
+    "x": -1.4,
+    "y": -1.2,
+    "w": 2.8,
+    "h": 2.4
+  }
+}
