@@ -2,8 +2,11 @@
 FastAPI router for the Datasheet Parser Agent.
 
 Routes:
-    POST /agents/datasheet-parser/run    — accepts {"pdf_path": "..."}, runs the agent
-    GET  /agents/datasheet-parser/status — returns last run status
+    POST /agents/datasheet-parser/extract  — runs extract_pdf, writes context,
+                                             returns raw text preview + tables summary
+    POST /agents/datasheet-parser/apply    — accepts {extracted_json: {...}},
+                                             validates and writes datasheet.json
+    GET  /agents/datasheet-parser/context  — returns the current context file
 """
 
 import os
@@ -30,13 +33,17 @@ _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(_PROJECT_ROOT / "data" / "uploads")))
 
 
-class RunRequest(BaseModel):
+# ---------------------------------------------------------------------------
+# Request / response models
+# ---------------------------------------------------------------------------
+
+
+class ExtractRequest(BaseModel):
     pdf_path: str
 
     @field_validator("pdf_path")
     @classmethod
     def pdf_must_exist(cls, v: str) -> str:
-        # Resolve relative paths against the upload directory
         p = Path(v)
         if not p.is_absolute():
             p = _UPLOAD_DIR / p
@@ -45,49 +52,84 @@ class RunRequest(BaseModel):
         return str(p)
 
 
-class RunResponse(BaseModel):
+class ExtractResponse(BaseModel):
     status: str
+    raw_text_preview: str          # first 500 chars of extracted text
+    table_count: int               # number of tables found
+    context_path: str              # where context was written
+
+
+class ApplyRequest(BaseModel):
+    extracted_json: dict
+
+
+class ApplyResponse(BaseModel):
+    success: bool
     output_path: str | None
-    data: dict
-
-
-class StatusResponse(BaseModel):
-    status: str
     error: str | None
-    output_path: str | None
 
 
-@router.post("/run", response_model=RunResponse)
-async def run_agent(request: RunRequest) -> RunResponse:
+class ContextResponse(BaseModel):
+    available: bool
+    context: dict
+
+
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
+
+@router.post("/extract", response_model=ExtractResponse)
+async def extract_endpoint(request: ExtractRequest) -> ExtractResponse:
     """
-    Run the datasheet parser agent on the given PDF.
+    Extract raw text and tables from the uploaded PDF and write a context file.
 
-    The pdf_path may be an absolute path or a filename relative to the uploads directory.
-    On success, returns the structured component data and the output file path.
+    Returns a preview of the raw text (first 500 chars) and a count of tables
+    found, so the orchestrator knows what material is available for reasoning.
     """
     try:
-        data = _agent.run(request.pdf_path)
+        ctx = _agent.run(request.pdf_path)
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
-    except RuntimeError as e:
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
-    except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e)) from e
 
-    status = _agent.get_last_run_status()
-    return RunResponse(
-        status=status["status"],
-        output_path=status["output_path"],
-        data=data,
+    raw_text: str = ctx.get("raw_text", "")
+    tables: list = ctx.get("tables", [])
+
+    return ExtractResponse(
+        status="ok",
+        raw_text_preview=raw_text[:500],
+        table_count=len(tables),
+        context_path=str(_agent.CONTEXT_PATH),
     )
 
 
-@router.get("/status", response_model=StatusResponse)
-async def get_status() -> StatusResponse:
-    """Return the status of the most recent agent run."""
-    status = _agent.get_last_run_status()
-    return StatusResponse(
-        status=status["status"],
-        error=status.get("error"),
-        output_path=status.get("output_path"),
+@router.post("/apply", response_model=ApplyResponse)
+async def apply_endpoint(request: ApplyRequest) -> ApplyResponse:
+    """
+    Apply already-extracted JSON (produced by the orchestrator/Claude Code).
+
+    Validates against the shared schema and writes datasheet.json.
+    """
+    try:
+        result = _agent.apply_extraction(request.extracted_json)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+    return ApplyResponse(
+        success=result["success"],
+        output_path=result.get("output_path"),
+        error=result.get("error"),
     )
+
+
+@router.get("/context", response_model=ContextResponse)
+async def context_endpoint() -> ContextResponse:
+    """
+    Return the current datasheet_context.json written by the extract step.
+
+    If no context has been written yet, returns {available: false, context: {}}.
+    """
+    ctx = _agent.get_context()
+    return ContextResponse(available=bool(ctx), context=ctx)

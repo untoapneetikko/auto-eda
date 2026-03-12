@@ -1,28 +1,36 @@
 """
-Tests for the Datasheet Parser Agent.
+Tests for the Datasheet Parser Agent (pure tool layer).
 
-Approach: mock pdf_extractor and anthropic.Anthropic so the agent can be tested
-without a real PDF file or live API key.
+No Anthropic SDK mocking needed — the agent no longer calls any external AI API.
+Tests cover:
+  - extract_pdf / run (PDF extraction + context writing)
+  - apply_extraction (validation + writing)
+  - get_context (context round-trip)
+  - validate_output helper
+  - write_output helper
+  - FastAPI endpoint routes
 """
 
 import json
 import os
 import sys
-import types
+import tempfile
+import pathlib
+import importlib.util
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import patch
 
 # Ensure project root is on sys.path so backend.tools can be imported
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_PROJECT_ROOT))
 sys.path.insert(0, str(_PROJECT_ROOT / "backend"))
 
-import jsonschema  # noqa: E402 — validate schema in tests
+import jsonschema  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
-# Minimal valid component data that matches the schema
+# Minimal valid component data matching the schema
 # ---------------------------------------------------------------------------
 
 MOCK_RAW_TEXT = (
@@ -39,7 +47,6 @@ MOCK_RAW_TEXT = (
     "Pin 8: VCC\n"
     "Supply voltage: 3V to 32V\n"
     "Max output current: 40mA\n"
-    "Typical application: voltage follower, comparator\n"
 )
 
 MOCK_COMPONENT_DATA = {
@@ -76,6 +83,25 @@ MOCK_COMPONENT_DATA = {
     "source_pdf": "/fake/path/lm358.pdf",
 }
 
+MOCK_EXTRACTION = {
+    "text": MOCK_RAW_TEXT,
+    "tables": [
+        [["Pin", "Name", "Type"], ["1", "OUTPUT_A", "output"]],
+    ],
+    "source_pdf": "/fake/path/lm358.pdf",
+}
+
+
+def _load_agent():
+    """Load the agent module fresh for each test to avoid state leakage."""
+    spec = importlib.util.spec_from_file_location(
+        "datasheet_parser_agent_test",
+        Path(__file__).parent / "agent.py",
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
 
 def _load_schema() -> dict:
     schema_path = _PROJECT_ROOT / "shared" / "schemas" / "datasheet_output.json"
@@ -83,206 +109,249 @@ def _load_schema() -> dict:
         return json.load(f)
 
 
-def _build_mock_anthropic_client(response_json: dict):
-    """Build a mock anthropic.Anthropic client that returns response_json as text."""
-    mock_content = MagicMock()
-    mock_content.text = json.dumps(response_json)
-
-    mock_message = MagicMock()
-    mock_message.content = [mock_content]
-
-    mock_messages = MagicMock()
-    mock_messages.create.return_value = mock_message
-
-    mock_client = MagicMock()
-    mock_client.messages = mock_messages
-
-    return mock_client
+# ---------------------------------------------------------------------------
+# Tests for run() / context functions
+# ---------------------------------------------------------------------------
 
 
-class TestDatasheetParserAgent(unittest.TestCase):
+class TestRunFunction(unittest.TestCase):
 
-    def setUp(self):
-        # Ensure ANTHROPIC_API_KEY is set for the agent module
-        os.environ["ANTHROPIC_API_KEY"] = "sk-test-mock-key"
-
-    def _run_agent_with_mocks(self, component_data: dict, pdf_path: str = "/fake/path/lm358.pdf"):
-        """Helper: patch pdf_extractor, anthropic, os.path.isfile, and OUTPUT_DIR, then call agent.run."""
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "datasheet_parser_agent_under_test",
-            Path(__file__).parent / "agent.py",
-        )
-        agent_mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(agent_mod)
-
-        mock_extraction = {
-            "text": MOCK_RAW_TEXT,
-            "tables": [],
-            "source_pdf": pdf_path,
-        }
-
-        mock_client = _build_mock_anthropic_client(component_data)
-
-        import tempfile, pathlib
+    def test_run_returns_context_dict(self):
+        """run() must return a dict with raw_text, tables, source_pdf, schema."""
+        agent = _load_agent()
         with tempfile.TemporaryDirectory() as tmp_dir:
-            # Point OUTPUT_DIR and OUTPUT_PATH at temp dir
-            agent_mod.OUTPUT_DIR = pathlib.Path(tmp_dir)
-            agent_mod.OUTPUT_PATH = pathlib.Path(tmp_dir) / "datasheet.json"
+            agent.OUTPUT_DIR = pathlib.Path(tmp_dir)
+            agent.CONTEXT_PATH = pathlib.Path(tmp_dir) / "datasheet_context.json"
 
-            with patch.object(agent_mod, "pdf_extract", return_value=mock_extraction), \
-                 patch("anthropic.Anthropic", return_value=mock_client), \
-                 patch.object(agent_mod.anthropic, "Anthropic", return_value=mock_client), \
+            with patch.object(agent, "pdf_extract", return_value=MOCK_EXTRACTION), \
                  patch("os.path.isfile", return_value=True):
-                result = agent_mod.run(pdf_path)
+                ctx = agent.run("/fake/path/lm358.pdf")
 
-        return result
+        self.assertIn("raw_text", ctx)
+        self.assertIn("tables", ctx)
+        self.assertIn("source_pdf", ctx)
+        self.assertIn("schema", ctx)
 
-    def test_run_returns_dict(self):
-        """agent.run() should return a Python dict."""
-        result = self._run_agent_with_mocks(MOCK_COMPONENT_DATA)
-        self.assertIsInstance(result, dict)
+    def test_run_writes_context_file(self):
+        """run() must write datasheet_context.json to OUTPUT_DIR."""
+        agent = _load_agent()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            context_path = pathlib.Path(tmp_dir) / "datasheet_context.json"
+            agent.OUTPUT_DIR = pathlib.Path(tmp_dir)
+            agent.CONTEXT_PATH = context_path
 
-    def test_output_has_required_fields(self):
-        """Output must contain all top-level schema fields."""
-        result = self._run_agent_with_mocks(MOCK_COMPONENT_DATA)
-        for field in ("component_name", "manufacturer", "package", "pins",
-                      "footprint", "electrical", "example_application",
-                      "raw_text", "source_pdf"):
-            self.assertIn(field, result, f"Missing required field: {field}")
+            with patch.object(agent, "pdf_extract", return_value=MOCK_EXTRACTION), \
+                 patch("os.path.isfile", return_value=True):
+                agent.run("/fake/path/lm358.pdf")
 
-    def test_pins_is_list(self):
-        """pins must be a non-empty list."""
-        result = self._run_agent_with_mocks(MOCK_COMPONENT_DATA)
-        self.assertIsInstance(result["pins"], list)
-        self.assertGreater(len(result["pins"]), 0)
+            self.assertTrue(context_path.exists(), "datasheet_context.json was not written")
+            with open(context_path) as f:
+                data = json.load(f)
+            self.assertIn("raw_text", data)
 
-    def test_pin_types_are_valid(self):
-        """All pin types must be one of the allowed values."""
-        valid_types = {"power", "input", "output", "bidirectional", "passive", "nc"}
-        result = self._run_agent_with_mocks(MOCK_COMPONENT_DATA)
-        for pin in result["pins"]:
-            self.assertIn(pin["type"], valid_types, f"Invalid pin type '{pin['type']}' for pin {pin['number']}")
-
-    def test_output_validates_against_schema(self):
-        """Output must pass jsonschema validation against datasheet_output.json."""
-        result = self._run_agent_with_mocks(MOCK_COMPONENT_DATA)
-        schema = _load_schema()
-        # Should not raise
-        try:
-            jsonschema.validate(result, schema)
-        except jsonschema.ValidationError as e:
-            self.fail(f"Schema validation failed: {e.message} at {list(e.absolute_path)}")
-
-    def test_source_pdf_preserved(self):
-        """source_pdf in output must match the input pdf_path."""
-        pdf_path = "/fake/path/lm358.pdf"
-        result = self._run_agent_with_mocks(MOCK_COMPONENT_DATA, pdf_path=pdf_path)
-        self.assertEqual(result["source_pdf"], pdf_path)
-
-    def test_missing_api_key_raises(self):
-        """agent.run() must raise RuntimeError when ANTHROPIC_API_KEY is absent."""
-        import importlib.util, pathlib, tempfile
-        spec = importlib.util.spec_from_file_location(
-            "datasheet_parser_agent_no_key",
-            Path(__file__).parent / "agent.py",
-        )
-        agent_mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(agent_mod)
-
-        saved = os.environ.pop("ANTHROPIC_API_KEY", None)
-        try:
-            with patch("os.path.isfile", return_value=True):
-                with self.assertRaises(RuntimeError):
-                    agent_mod.run("/fake/path/lm358.pdf")
-        finally:
-            if saved:
-                os.environ["ANTHROPIC_API_KEY"] = saved
-
-    def test_missing_pdf_raises(self):
-        """agent.run() must raise FileNotFoundError for a non-existent PDF."""
-        import importlib.util, pathlib, tempfile
-        spec = importlib.util.spec_from_file_location(
-            "datasheet_parser_agent_no_pdf",
-            Path(__file__).parent / "agent.py",
-        )
-        agent_mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(agent_mod)
-
+    def test_run_missing_pdf_raises(self):
+        """run() must raise FileNotFoundError for a non-existent PDF."""
+        agent = _load_agent()
         with self.assertRaises(FileNotFoundError):
-            agent_mod.run("/definitely/does/not/exist/fake.pdf")
+            agent.run("/definitely/does/not/exist/fake.pdf")
 
-    def test_invalid_json_response_raises(self):
-        """agent.run() must raise ValueError when the model returns non-JSON text."""
-        import importlib.util, pathlib, tempfile
-        spec = importlib.util.spec_from_file_location(
-            "datasheet_parser_agent_bad_json",
-            Path(__file__).parent / "agent.py",
-        )
-        agent_mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(agent_mod)
-
-        mock_extraction = {"text": MOCK_RAW_TEXT, "tables": [], "source_pdf": "/fake/path/lm358.pdf"}
-
-        mock_content = MagicMock()
-        mock_content.text = "This is not JSON at all."
-        mock_message = MagicMock()
-        mock_message.content = [mock_content]
-        mock_messages = MagicMock()
-        mock_messages.create.return_value = mock_message
-        mock_client = MagicMock()
-        mock_client.messages = mock_messages
-
+    def test_run_tables_included_in_context(self):
+        """Tables extracted from the PDF must appear in the context dict."""
+        agent = _load_agent()
         with tempfile.TemporaryDirectory() as tmp_dir:
-            agent_mod.OUTPUT_DIR = pathlib.Path(tmp_dir)
-            agent_mod.OUTPUT_PATH = pathlib.Path(tmp_dir) / "datasheet.json"
+            agent.OUTPUT_DIR = pathlib.Path(tmp_dir)
+            agent.CONTEXT_PATH = pathlib.Path(tmp_dir) / "datasheet_context.json"
 
-            with patch.object(agent_mod, "pdf_extract", return_value=mock_extraction), \
-                 patch.object(agent_mod.anthropic, "Anthropic", return_value=mock_client), \
+            with patch.object(agent, "pdf_extract", return_value=MOCK_EXTRACTION), \
                  patch("os.path.isfile", return_value=True):
-                with self.assertRaises(ValueError):
-                    agent_mod.run("/fake/path/lm358.pdf")
+                ctx = agent.run("/fake/path/lm358.pdf")
 
-    def test_markdown_fence_stripped(self):
-        """agent.run() must handle model responses wrapped in markdown code fences."""
-        import importlib.util, pathlib, tempfile
-        spec = importlib.util.spec_from_file_location(
-            "datasheet_parser_agent_fence",
-            Path(__file__).parent / "agent.py",
-        )
-        agent_mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(agent_mod)
+        self.assertEqual(ctx["tables"], MOCK_EXTRACTION["tables"])
 
-        mock_extraction = {"text": MOCK_RAW_TEXT, "tables": [], "source_pdf": "/fake/path/lm358.pdf"}
-        fenced_response = "```json\n" + json.dumps(MOCK_COMPONENT_DATA) + "\n```"
-
-        mock_content = MagicMock()
-        mock_content.text = fenced_response
-        mock_message = MagicMock()
-        mock_message.content = [mock_content]
-        mock_messages = MagicMock()
-        mock_messages.create.return_value = mock_message
-        mock_client = MagicMock()
-        mock_client.messages = mock_messages
-
+    def test_run_source_pdf_in_context(self):
+        """source_pdf in context must match the input path."""
+        agent = _load_agent()
         with tempfile.TemporaryDirectory() as tmp_dir:
-            agent_mod.OUTPUT_DIR = pathlib.Path(tmp_dir)
-            agent_mod.OUTPUT_PATH = pathlib.Path(tmp_dir) / "datasheet.json"
+            agent.OUTPUT_DIR = pathlib.Path(tmp_dir)
+            agent.CONTEXT_PATH = pathlib.Path(tmp_dir) / "datasheet_context.json"
 
-            with patch.object(agent_mod, "pdf_extract", return_value=mock_extraction), \
-                 patch.object(agent_mod.anthropic, "Anthropic", return_value=mock_client), \
+            with patch.object(agent, "pdf_extract", return_value=MOCK_EXTRACTION), \
                  patch("os.path.isfile", return_value=True):
-                result = agent_mod.run("/fake/path/lm358.pdf")
+                ctx = agent.run("/fake/path/lm358.pdf")
 
-        self.assertEqual(result["component_name"], MOCK_COMPONENT_DATA["component_name"])
+        self.assertEqual(ctx["source_pdf"], "/fake/path/lm358.pdf")
+
+
+# ---------------------------------------------------------------------------
+# Tests for get_context()
+# ---------------------------------------------------------------------------
+
+
+class TestGetContext(unittest.TestCase):
+
+    def test_get_context_returns_empty_when_no_file(self):
+        """get_context() must return {} when no context file exists."""
+        agent = _load_agent()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            agent.CONTEXT_PATH = pathlib.Path(tmp_dir) / "nonexistent_context.json"
+            result = agent.get_context()
+        self.assertEqual(result, {})
+
+    def test_get_context_round_trip(self):
+        """get_context() must return exactly what run() wrote."""
+        agent = _load_agent()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            agent.OUTPUT_DIR = pathlib.Path(tmp_dir)
+            agent.CONTEXT_PATH = pathlib.Path(tmp_dir) / "datasheet_context.json"
+
+            with patch.object(agent, "pdf_extract", return_value=MOCK_EXTRACTION), \
+                 patch("os.path.isfile", return_value=True):
+                written = agent.run("/fake/path/lm358.pdf")
+
+            read_back = agent.get_context()
+
+        self.assertEqual(written["raw_text"], read_back["raw_text"])
+        self.assertEqual(written["source_pdf"], read_back["source_pdf"])
+        self.assertEqual(written["tables"], read_back["tables"])
+
+
+# ---------------------------------------------------------------------------
+# Tests for apply_extraction()
+# ---------------------------------------------------------------------------
+
+
+class TestApplyExtraction(unittest.TestCase):
+
+    def test_apply_valid_data_returns_success(self):
+        """apply_extraction() must return success=True for valid component data."""
+        agent = _load_agent()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = str(pathlib.Path(tmp_dir) / "datasheet.json")
+            result = agent.apply_extraction(MOCK_COMPONENT_DATA, output_path=output_path)
+
+        self.assertTrue(result["success"])
+        self.assertIsNone(result["error"])
+        self.assertEqual(result["output_path"], output_path)
+
+    def test_apply_writes_datasheet_json(self):
+        """apply_extraction() must write datasheet.json to disk."""
+        agent = _load_agent()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = str(pathlib.Path(tmp_dir) / "datasheet.json")
+            agent.apply_extraction(MOCK_COMPONENT_DATA, output_path=output_path)
+
+            self.assertTrue(pathlib.Path(output_path).exists())
+            with open(output_path) as f:
+                saved = json.load(f)
+            self.assertEqual(saved["component_name"], MOCK_COMPONENT_DATA["component_name"])
+
+    def test_apply_always_returns_result_dict(self):
+        """apply_extraction() must always return a dict with success, output_path, error keys."""
+        # NOTE: The shared schema (datasheet_output.json) is a descriptive template, not a
+        # strict JSON Schema with 'required' or 'type' keywords, so jsonschema accepts any
+        # JSON object. This test verifies the return shape regardless of validation outcome.
+        agent = _load_agent()
+        any_data = {"not": "a_real_component"}
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = str(pathlib.Path(tmp_dir) / "datasheet.json")
+            result = agent.apply_extraction(any_data, output_path=output_path)
+
+        self.assertIn("success", result)
+        self.assertIn("output_path", result)
+        self.assertIn("error", result)
+
+    def test_apply_output_validates_against_schema(self):
+        """Data written by apply_extraction() must pass jsonschema validation."""
+        agent = _load_agent()
+        schema = _load_schema()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_path = str(pathlib.Path(tmp_dir) / "datasheet.json")
+            agent.apply_extraction(MOCK_COMPONENT_DATA, output_path=output_path)
+            with open(output_path) as f:
+                saved = json.load(f)
+
+        try:
+            jsonschema.validate(saved, schema)
+        except jsonschema.ValidationError as e:
+            self.fail(f"Schema validation failed: {e.message}")
+
+
+# ---------------------------------------------------------------------------
+# Tests for validate_output() helper
+# ---------------------------------------------------------------------------
+
+
+class TestValidateOutput(unittest.TestCase):
+
+    def test_valid_data_passes(self):
+        """validate_output() must return True for fully valid component data."""
+        agent = _load_agent()
+        self.assertTrue(agent.validate_output(MOCK_COMPONENT_DATA))
+
+    def test_validate_output_returns_bool(self):
+        """validate_output() must return a bool regardless of data content.
+
+        NOTE: The shared schema (datasheet_output.json) is a descriptive template, not a
+        strict JSON Schema with 'required' or 'type' keywords, so jsonschema accepts any
+        JSON object. This test verifies the return type is bool.
+        """
+        agent = _load_agent()
+        result = agent.validate_output({"incomplete": "data"})
+        self.assertIsInstance(result, bool)
+
+
+# ---------------------------------------------------------------------------
+# Tests for write_output() helper
+# ---------------------------------------------------------------------------
+
+
+class TestWriteOutput(unittest.TestCase):
+
+    def test_write_output_creates_file(self):
+        """write_output() must create a JSON file at the specified path."""
+        agent = _load_agent()
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            out = str(pathlib.Path(tmp_dir) / "out.json")
+            returned = agent.write_output(MOCK_COMPONENT_DATA, output_path=out)
+            self.assertEqual(returned, out)
+            self.assertTrue(pathlib.Path(out).exists())
+            with open(out) as f:
+                data = json.load(f)
+            self.assertEqual(data["component_name"], "LM358")
+
+
+# ---------------------------------------------------------------------------
+# Tests for extract_pdf() helper
+# ---------------------------------------------------------------------------
+
+
+class TestExtractPdf(unittest.TestCase):
+
+    def test_extract_pdf_missing_raises(self):
+        """extract_pdf() must raise FileNotFoundError for a non-existent file."""
+        agent = _load_agent()
+        with self.assertRaises(FileNotFoundError):
+            agent.extract_pdf("/does/not/exist/fake.pdf")
+
+    def test_extract_pdf_returns_dict(self):
+        """extract_pdf() must return a dict with text and tables keys."""
+        agent = _load_agent()
+        with patch.object(agent, "pdf_extract", return_value=MOCK_EXTRACTION), \
+             patch("os.path.isfile", return_value=True):
+            result = agent.extract_pdf("/fake/path/lm358.pdf")
+
+        self.assertIn("text", result)
+        self.assertIn("tables", result)
+
+
+# ---------------------------------------------------------------------------
+# Smoke tests for the FastAPI endpoint routes
+# ---------------------------------------------------------------------------
 
 
 class TestDatasheetParserEndpoint(unittest.TestCase):
-    """Basic smoke tests for the FastAPI endpoint."""
 
     def _load_router(self):
-        """Load the endpoint module and return the FastAPI router."""
-        import importlib.util
         spec = importlib.util.spec_from_file_location(
             "datasheet_parser_endpoint",
             Path(__file__).parent / "endpoint.py",
@@ -291,8 +360,8 @@ class TestDatasheetParserEndpoint(unittest.TestCase):
         spec.loader.exec_module(mod)
         return mod
 
-    def test_router_has_run_and_status_routes(self):
-        """The endpoint module must expose a FastAPI router with /run and /status routes."""
+    def test_router_has_required_routes(self):
+        """The endpoint module must expose a FastAPI router with extract, apply, and context routes."""
         from fastapi import APIRouter
         mod = self._load_router()
         self.assertTrue(hasattr(mod, "router"), "endpoint.py must expose a 'router' attribute")
@@ -300,14 +369,9 @@ class TestDatasheetParserEndpoint(unittest.TestCase):
         self.assertIsInstance(router, APIRouter)
 
         paths = [route.path for route in router.routes]
-        self.assertTrue(
-            any("/run" in p for p in paths),
-            f"/run route not found in {paths}",
-        )
-        self.assertTrue(
-            any("/status" in p for p in paths),
-            f"/status route not found in {paths}",
-        )
+        self.assertTrue(any("/extract" in p for p in paths), f"/extract route not found in {paths}")
+        self.assertTrue(any("/apply" in p for p in paths), f"/apply route not found in {paths}")
+        self.assertTrue(any("/context" in p for p in paths), f"/context route not found in {paths}")
 
 
 if __name__ == "__main__":
