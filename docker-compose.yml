@@ -52,9 +52,8 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    # Quick tunnel — no account needed, URL printed in logs on startup
+    command: tunnel --no-autoupdate --url http://app:8000
     depends_on:
       - app
     restart: unless-stopped
