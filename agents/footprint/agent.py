@@ -1,37 +1,30 @@
 """
 agents/footprint/agent.py
 
-Footprint Agent — IPC-7351 PCB footprint generator using Anthropic SDK.
+Footprint Agent — pure tools layer.
 
-Pipeline:
-  1. Read  data/outputs/datasheet.json
-  2. Call  claude-sonnet-4-20250514 to design footprint per IPC-7351
-  3. Write data/outputs/footprint.json  (validated against footprint_output.json)
-  4. Write data/outputs/footprint.kicad_mod  (valid KiCad 7 S-expression)
-  5. Validate both artefacts
+Claude Code (the orchestrator) handles all reasoning. This module:
+  1. Reads datasheet.json and returns a compact summary (get_datasheet_summary)
+  2. Accepts a footprint dict designed by the orchestrator, validates it,
+     generates .kicad_mod, and writes outputs (apply_footprint)
 
-Environment variables (from .env or environment):
-  ANTHROPIC_API_KEY   – required
-  OUTPUT_DIR          – default: data/outputs
-  SCHEMA_DIR          – default: shared/schemas
+No Anthropic SDK calls here. This is intentional.
 """
 
 from __future__ import annotations
 
+import io
 import json
 import logging
 import os
 import sys
 from pathlib import Path
-
-import anthropic
-from dotenv import load_dotenv
+from typing import Any
+from unittest.mock import patch as _patch
 
 # ── resolve project root so relative paths always work ────────────────────
 _AGENT_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _AGENT_DIR.parent.parent
-
-load_dotenv(_PROJECT_ROOT / ".env")
 
 # ── logging ───────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -49,278 +42,217 @@ FOOTPRINT_JSON = OUTPUT_DIR / "footprint.json"
 FOOTPRINT_KICAD = OUTPUT_DIR / "footprint.kicad_mod"
 FOOTPRINT_SCHEMA = SCHEMA_DIR / "footprint_output.json"
 
-MODEL = "claude-sonnet-4-20250514"
+
+# ── ensure tools directory is importable ─────────────────────────────────
+def _ensure_tools_on_path() -> None:
+    tools_dir = str(_PROJECT_ROOT / "backend" / "tools")
+    if tools_dir not in sys.path:
+        sys.path.insert(0, tools_dir)
 
 
-# ── IPC-7351 system prompt ────────────────────────────────────────────────
-SYSTEM_PROMPT = """\
-You are a precision PCB footprint engineer. You create KiCad-compatible footprints
-that strictly follow IPC-7351B / IPC-7352 land-pattern standards.
-
-CRITICAL RULES — never break these:
-1. NEVER guess dimensions. Use only values found in the datasheet.
-   If a value is absent, use the IPC-7351 nominal for that package type.
-   Always record the source of each dimension in the "sources" field.
-2. Manufacturing tolerances: add +0.1 mm to all land-pattern dimensions
-   (pad width, pad height) beyond the nominal component lead dimensions.
-3. Courtyard clearance: the courtyard rectangle must clear ALL pads by a
-   minimum of 0.25 mm on every side.
-4. Pin 1 marking: pin 1 must always be distinguishable — either a square
-   pad shape (rect) when other pads are oval/round, or a silkscreen triangle/
-   line marker at pad 1. Include both when possible.
-5. Silkscreen must NOT overlap any copper pad. Keep silkscreen lines at
-   least 0.2 mm from pad edges.
-6. Reference designator on F.SilkS layer; value on F.Fab layer.
-7. SMD pads must include F.Cu, F.Paste, and F.Mask layers.
-8. Through-hole pads must include drill diameter from datasheet.
-   If missing, use IPC-7251 column C (least-material condition) drill size.
-9. All dimensions in millimetres to 4 decimal places.
-10. Output ONLY valid JSON — no markdown, no prose.
-
-Output schema (return exactly this JSON structure):
-{
-  "name": "<footprint name, IPC-7351 naming convention>",
-  "package": "<package type, e.g. SOT-23, SOIC-8, QFN-16>",
-  "ipc_standard": "IPC-7351B",
-  "pad_count": <integer>,
-  "pitch_mm": <float | null>,
-  "sources": {
-    "<dimension_key>": "<datasheet | IPC-7351 nominal>"
-  },
-  "pads": [
-    {
-      "number": <integer>,
-      "type": "smd | thru_hole",
-      "shape": "rect | oval | circle",
-      "x": <float>,
-      "y": <float>,
-      "width": <float>,
-      "height": <float>,
-      "drill": <float | null>
-    }
-  ],
-  "courtyard": {
-    "x": <float>,
-    "y": <float>,
-    "width": <float>,
-    "height": <float>
-  },
-  "silkscreen": [
-    {"type": "line | arc | text", "data": { ... }}
-  ],
-  "format": "kicad_mod"
-}
-
-The courtyard x,y is the centre of the rectangle (usually 0,0 for symmetric parts).
-width/height are the FULL dimensions (not half-extents).
-
-For silkscreen lines, data = {"x1":f, "y1":f, "x2":f, "y2":f}.
-For silkscreen arcs, data = {"x":f, "y":f, "radius":f, "start_angle":f, "end_angle":f}.
-For silkscreen text, data = {"x":f, "y":f, "text":"string"}.
-
-Pin 1 silkscreen marker: add a small triangle or a short line near pad 1
-(outside the pad area) as an additional marker.
-"""
-
-USER_PROMPT_TEMPLATE = """\
-Design an IPC-7351 PCB footprint for the following component.
-
-DATASHEET DATA:
-{datasheet_json}
-
-Instructions:
-- Package type: {package}
-- Pin count: {pin_count}
-- Use IPC-7351 land-pattern calculator values for this package where the
-  datasheet does not provide exact land dimensions.
-- Apply +0.1 mm manufacturing tolerance to all pad dimensions.
-- Ensure courtyard clears all pads by at least 0.25 mm.
-- Mark pin 1 with both a square pad shape AND a silkscreen line marker.
-- Do not overlap silkscreen with any copper pad.
-- Output valid JSON only — no markdown fences, no extra text.
-"""
+def _ensure_agent_on_path() -> None:
+    agent_dir = str(_AGENT_DIR)
+    if agent_dir not in sys.path:
+        sys.path.insert(0, agent_dir)
 
 
-def _read_datasheet() -> dict:
-    """Read and return datasheet.json. Raises if missing or malformed."""
-    if not DATASHEET_JSON.exists():
-        raise FileNotFoundError(f"datasheet.json not found at {DATASHEET_JSON}")
-    with open(DATASHEET_JSON, encoding="utf-8") as f:
+# ── public API ────────────────────────────────────────────────────────────
+
+def get_datasheet_summary(datasheet_path: str | Path | None = None) -> dict[str, Any]:
+    """
+    Read datasheet.json and return a compact summary dict.
+
+    The summary contains only what the orchestrator needs to design a footprint:
+      - package        : package type string (e.g. "SOT-23")
+      - pad_count      : number of pins / pads
+      - pitch_mm       : pin pitch in mm, or None if not available
+      - courtyard_mm   : {"x": float, "y": float} body courtyard hint, or None
+      - electrical     : subset of electrical characteristics (vcc_max, i_max_ma, etc.)
+      - component_name : component identifier string
+
+    Parameters
+    ----------
+    datasheet_path : optional override path for datasheet.json (used in tests)
+
+    Raises
+    ------
+    FileNotFoundError  – if datasheet.json does not exist
+    ValueError         – if datasheet.json is malformed / missing required fields
+    """
+    path = Path(datasheet_path) if datasheet_path else DATASHEET_JSON
+    if not path.exists():
+        raise FileNotFoundError(f"datasheet.json not found at {path}")
+
+    with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    log.info("Read datasheet.json: component=%s package=%s",
-             data.get("component_name"), data.get("package"))
-    return data
 
+    if not isinstance(data, dict):
+        raise ValueError("datasheet.json must be a JSON object")
 
-def _call_anthropic(datasheet: dict) -> dict:
-    """
-    Call claude-sonnet-4-20250514 and parse the returned JSON footprint dict.
-    Retries once on JSON parse failure.
-    """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise EnvironmentError(
-            "ANTHROPIC_API_KEY is not set. Add it to .env or the environment."
-        )
+    # Extract footprint block (may or may not be present)
+    fp_block: dict[str, Any] = data.get("footprint") or {}
 
-    client = anthropic.Anthropic(api_key=api_key)
-
-    package = datasheet.get("package", "unknown")
-    pin_count = len(datasheet.get("pins", []))
-
-    user_prompt = USER_PROMPT_TEMPLATE.format(
-        datasheet_json=json.dumps(datasheet, indent=2),
-        package=package,
-        pin_count=pin_count,
-    )
-
-    log.info("Calling %s for package=%s pin_count=%d", MODEL, package, pin_count)
-
-    for attempt in range(2):
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-
-        raw = response.content[0].text.strip()
-        log.debug("Raw LLM response (%d chars): %s...", len(raw), raw[:200])
-
-        # Strip accidental markdown fences
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-            raw = raw.strip()
-
-        try:
-            footprint = json.loads(raw)
-            log.info("Parsed footprint JSON successfully on attempt %d", attempt + 1)
-            return footprint
-        except json.JSONDecodeError as exc:
-            log.warning("JSON parse failed (attempt %d): %s", attempt + 1, exc)
-            if attempt == 1:
-                raise ValueError(
-                    f"LLM returned invalid JSON after 2 attempts: {exc}"
-                ) from exc
-
-    # unreachable
-    raise RuntimeError("Unexpected exit from retry loop")
-
-
-def _validate_footprint_json(data: dict) -> bool:
-    """Validate footprint.json against its JSON schema using schema_validator."""
-    import io
-    from unittest.mock import patch as _patch
-
-    # Add the backend/tools directory to path
-    tools_dir = str(_PROJECT_ROOT / "backend" / "tools")
-    if tools_dir not in sys.path:
-        sys.path.insert(0, tools_dir)
-
-    import schema_validator  # type: ignore
-
-    # Redirect print to avoid Unicode console errors on Windows
-    buf = io.StringIO()
-    with _patch("builtins.print", lambda *a, **k: buf.write(" ".join(str(x) for x in a) + "\n")):
-        result = schema_validator.validate(str(FOOTPRINT_JSON), str(FOOTPRINT_SCHEMA))
-
-    log.info("Schema validation result: %s | %s", result, buf.getvalue().strip())
-    return result
-
-
-def _validate_kicad_mod() -> bool:
-    """Validate .kicad_mod using kicad_validator."""
-    import io
-    from unittest.mock import patch as _patch
-
-    tools_dir = str(_PROJECT_ROOT / "backend" / "tools")
-    if tools_dir not in sys.path:
-        sys.path.insert(0, tools_dir)
-
-    import kicad_validator  # type: ignore
-
-    buf = io.StringIO()
-    with _patch("builtins.print", lambda *a, **k: buf.write(" ".join(str(x) for x in a) + "\n")):
-        result = kicad_validator.validate_sexpr(str(FOOTPRINT_KICAD))
-
-    log.info("KiCad validation result: %s | %s", result, buf.getvalue().strip())
-    return result
-
-
-def _strip_extra_fields(fp: dict) -> dict:
-    """
-    Return a copy of fp containing only the keys required by footprint_output.json
-    so the schema validator does not trip over extra keys.
-    """
-    required_keys = {"name", "pads", "courtyard", "silkscreen", "format"}
-    return {k: v for k, v in fp.items() if k in required_keys}
-
-
-def run() -> dict:
-    """
-    Main entry point. Orchestrates the full footprint generation pipeline.
-    Returns the footprint dict.
-    Raises on validation failure.
-    """
-    # 1. Read input
-    datasheet = _read_datasheet()
-
-    # 2. Generate footprint via Anthropic
-    footprint_full = _call_anthropic(datasheet)
-
-    # Ensure required keys are present
-    if "format" not in footprint_full:
-        footprint_full["format"] = "kicad_mod"
-    if "silkscreen" not in footprint_full:
-        footprint_full["silkscreen"] = []
-
-    # 3. Write full footprint JSON (includes extra fields like sources/package)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    with open(FOOTPRINT_JSON, "w", encoding="utf-8") as f:
-        json.dump(footprint_full, f, indent=2)
-    log.info("Wrote %s", FOOTPRINT_JSON)
-
-    # 4. Validate JSON against schema (use stripped version for strict validation)
-    stripped = _strip_extra_fields(footprint_full)
-    # Write stripped version temporarily to validate, then restore full version
-    with open(FOOTPRINT_JSON, "w", encoding="utf-8") as f:
-        json.dump(stripped, f, indent=2)
-
-    valid_json = _validate_footprint_json(stripped)
-    if not valid_json:
-        raise ValueError("footprint.json failed schema validation")
-
-    # Restore full footprint JSON after validation passes
-    with open(FOOTPRINT_JSON, "w", encoding="utf-8") as f:
-        json.dump(footprint_full, f, indent=2)
-
-    # 5. Generate .kicad_mod
-    # Import here to avoid circular imports at module level
-    _agent_dir = str(_AGENT_DIR)
-    if _agent_dir not in sys.path:
-        sys.path.insert(0, _agent_dir)
-    from kicad_mod_writer import write as write_kicad_mod  # type: ignore
-
-    kicad_content = write_kicad_mod(footprint_full)
-    with open(FOOTPRINT_KICAD, "w", encoding="utf-8") as f:
-        f.write(kicad_content)
-    log.info("Wrote %s", FOOTPRINT_KICAD)
-
-    # 6. Validate .kicad_mod
-    valid_kicad = _validate_kicad_mod()
-    if not valid_kicad:
-        raise ValueError("footprint.kicad_mod failed KiCad validation")
+    summary: dict[str, Any] = {
+        "component_name": data.get("component_name") or data.get("name") or "unknown",
+        "package": (
+            fp_block.get("standard")
+            or data.get("package")
+            or "unknown"
+        ),
+        "pad_count": (
+            fp_block.get("pad_count")
+            or len(data.get("pins", []))
+        ),
+        "pitch_mm": fp_block.get("pitch_mm"),
+        "courtyard_mm": fp_block.get("courtyard_mm"),
+        "electrical": data.get("electrical"),
+    }
 
     log.info(
-        "Footprint agent complete: %s  pads=%d",
-        footprint_full.get("name"),
-        len(footprint_full.get("pads", [])),
+        "get_datasheet_summary: component=%s package=%s pad_count=%s",
+        summary["component_name"],
+        summary["package"],
+        summary["pad_count"],
     )
-    return footprint_full
+    return summary
 
 
-if __name__ == "__main__":
-    result = run()
-    print(json.dumps(result, indent=2))
+def apply_footprint(
+    footprint_dict: dict[str, Any],
+    output_dir: str | Path | None = None,
+) -> dict[str, Any]:
+    """
+    Validate a footprint dict designed by the orchestrator, generate a
+    .kicad_mod file, and write both artefacts to data/outputs/.
+
+    Parameters
+    ----------
+    footprint_dict : footprint definition matching shared/schemas/footprint_output.json.
+                     Extra keys (package, ipc_standard, sources, etc.) are allowed
+                     and will be preserved in footprint.json but stripped before
+                     schema validation.
+    output_dir     : optional override for the output directory (used in tests)
+
+    Returns
+    -------
+    {
+        "success": bool,
+        "files":   list[str],   # absolute paths of written files
+        "errors":  list[str],   # empty on success
+    }
+    """
+    _ensure_tools_on_path()
+    _ensure_agent_on_path()
+
+    out_dir = Path(output_dir) if output_dir else OUTPUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    footprint_json_path = out_dir / "footprint.json"
+    footprint_kicad_path = out_dir / "footprint.kicad_mod"
+
+    errors: list[str] = []
+    files: list[str] = []
+
+    # ── 1. Normalise required keys ─────────────────────────────────────────
+    fp = dict(footprint_dict)  # shallow copy; don't mutate caller's dict
+    if "format" not in fp:
+        fp["format"] = "kicad_mod"
+    if "silkscreen" not in fp:
+        fp["silkscreen"] = []
+
+    # ── 2. Validate against schema (stripped to required keys only) ────────
+    required_keys = {"name", "pads", "courtyard", "silkscreen", "format"}
+    stripped = {k: v for k, v in fp.items() if k in required_keys}
+
+    schema_path = SCHEMA_DIR / "footprint_output.json"
+    if not schema_path.exists():
+        errors.append(f"Schema not found at {schema_path}")
+        return {"success": False, "files": files, "errors": errors}
+
+    # Write stripped version to a temp file for schema_validator
+    import tempfile
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".json", delete=False, encoding="utf-8"
+    ) as tmp_f:
+        json.dump(stripped, tmp_f)
+        tmp_path = tmp_f.name
+
+    try:
+        import schema_validator  # type: ignore
+
+        buf = io.StringIO()
+        with _patch("builtins.print", lambda *a, **k: buf.write(" ".join(str(x) for x in a) + "\n")):
+            schema_ok = schema_validator.validate(tmp_path, str(schema_path))
+
+        if not schema_ok:
+            errors.append(f"footprint dict failed schema validation: {buf.getvalue().strip()}")
+            return {"success": False, "files": files, "errors": errors}
+
+        log.info("Schema validation passed")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"Schema validation error: {exc}")
+        return {"success": False, "files": files, "errors": errors}
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+    # ── 3. Write full footprint.json (preserves extra metadata keys) ───────
+    try:
+        with open(footprint_json_path, "w", encoding="utf-8") as f:
+            json.dump(fp, f, indent=2)
+        files.append(str(footprint_json_path))
+        log.info("Wrote %s", footprint_json_path)
+    except OSError as exc:
+        errors.append(f"Failed to write footprint.json: {exc}")
+        return {"success": False, "files": files, "errors": errors}
+
+    # ── 4. Generate .kicad_mod via kicad_mod_writer ────────────────────────
+    try:
+        from kicad_mod_writer import write as write_kicad_mod  # type: ignore
+
+        kicad_content = write_kicad_mod(fp)
+        with open(footprint_kicad_path, "w", encoding="utf-8") as f:
+            f.write(kicad_content)
+        log.info("Wrote %s", footprint_kicad_path)
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"kicad_mod_writer failed: {exc}")
+        return {"success": False, "files": files, "errors": errors}
+
+    # ── 5. Validate .kicad_mod ─────────────────────────────────────────────
+    try:
+        import kicad_validator  # type: ignore
+
+        buf = io.StringIO()
+        with _patch("builtins.print", lambda *a, **k: buf.write(" ".join(str(x) for x in a) + "\n")):
+            kicad_ok = kicad_validator.validate_sexpr(str(footprint_kicad_path))
+
+        if not kicad_ok:
+            errors.append(f"footprint.kicad_mod failed KiCad validation: {buf.getvalue().strip()}")
+            return {"success": False, "files": files, "errors": errors}
+
+        files.append(str(footprint_kicad_path))
+        log.info("KiCad validation passed")
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"KiCad validation error: {exc}")
+        return {"success": False, "files": files, "errors": errors}
+
+    log.info(
+        "apply_footprint complete: %s  pads=%d  files=%s",
+        fp.get("name"),
+        len(fp.get("pads", [])),
+        files,
+    )
+    return {"success": True, "files": files, "errors": []}
+
+
+def run() -> dict[str, Any]:
+    """
+    Removed: orchestration is now handled by Claude Code (the orchestrator).
+
+    Use get_datasheet_summary() to read inputs and apply_footprint() to
+    write outputs. This function exists only as a backwards-compatibility stub.
+    """
+    raise NotImplementedError(
+        "run() has been removed. "
+        "Use get_datasheet_summary() + apply_footprint() instead. "
+        "Claude Code (the orchestrator) designs the footprint between those two calls."
+    )

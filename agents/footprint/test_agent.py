@@ -1,7 +1,8 @@
 """
 agents/footprint/test_agent.py
 
-Tests for the footprint agent using a synthetic SOT-23 datasheet.
+Tests for the footprint agent tools layer.
+No Anthropic SDK involved — Claude Code handles reasoning; Python is tools only.
 
 Run with:
   cd /path/to/pcb-agent-footprint
@@ -17,10 +18,9 @@ import json
 import os
 import sys
 import tempfile
-import textwrap
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # ── Add project root + tools to sys.path ──────────────────────────────────
 _HERE = Path(__file__).resolve().parent
@@ -58,14 +58,14 @@ SOT23_DATASHEET: dict[str, Any] = {
     "source_pdf": "data/uploads/mmbt2222a.pdf",
 }
 
-# ── A deterministic mock LLM response for SOT-23 ─────────────────────────
+# ── Known-good SOT-23 footprint dict (orchestrator-designed) ─────────────
 # IPC-7351 SOT-23 land pattern (IPC density level B / nominal):
 #   Pad width (X): 1.0 mm + 0.1 tolerance = 1.1 mm
-#   Pad height (Y): 1.4 mm + 0.1 tolerance = 1.5 mm
+#   Pad height (Y): 1.3 mm + 0.1 tolerance = 1.4 mm
 #   Pitch: 0.95 mm
 #   Left pads at x=-0.95, right pad at x=+0.95
-#   Courtyard: 3.0 mm x 2.8 mm (clears all pads by >= 0.25 mm)
-MOCK_LLM_FOOTPRINT: dict[str, Any] = {
+#   Courtyard: 3.50 mm x 2.85 mm (clears all pads by >= 0.25 mm)
+SOT23_FOOTPRINT: dict[str, Any] = {
     "name": "SOT-23",
     "package": "SOT-23",
     "ipc_standard": "IPC-7351B",
@@ -77,18 +77,6 @@ MOCK_LLM_FOOTPRINT: dict[str, Any] = {
         "pad_height": "IPC-7351 nominal + 0.1mm tolerance",
         "courtyard": "IPC-7351 nominal + 0.25mm clearance",
     },
-    # SOT-23 IPC-7351 land pattern (density level B):
-    #   Pads 1 & 2 on the left column (x = -0.95), offset ±0.475 in Y
-    #   Pad 3 on the right (x = +0.95), centred in Y
-    #   Pad width = 1.0mm + 0.1mm tolerance = 1.1mm
-    #   Pad height = 1.3mm + 0.1mm tolerance = 1.4mm
-    #   Leftmost pad edge  = -0.95 - 0.55 = -1.50
-    #   Rightmost pad edge = +0.95 + 0.55 = +1.50
-    #   Top pad edge       = -0.475 - 0.70 = -1.175
-    #   Bottom pad edge    = +0.475 + 0.70 = +1.175
-    #   Courtyard must clear all by >= 0.25 mm:
-    #     width  = (1.50 + 0.25)*2 = 3.50
-    #     height = (1.175 + 0.25)*2 = 2.85  → use 2.90 for margin
     "pads": [
         {
             "number": 1,
@@ -124,8 +112,6 @@ MOCK_LLM_FOOTPRINT: dict[str, Any] = {
     "courtyard": {
         "x": 0.0,
         "y": 0.0,
-        # width:  left pad left edge=-1.50, courtyard left = -1.75 → half=1.75 → width=3.50
-        # height: top pad top=-1.175, courtyard top=-1.425 → half=1.425 → height=2.85
         "width": 3.50,
         "height": 2.85,
     },
@@ -142,34 +128,14 @@ MOCK_LLM_FOOTPRINT: dict[str, Any] = {
 }
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────
-
-def _make_mock_anthropic_client(response_json: dict) -> MagicMock:
-    """Create a mock anthropic.Anthropic client that returns response_json."""
-    mock_content = MagicMock()
-    mock_content.text = json.dumps(response_json)
-
-    mock_response = MagicMock()
-    mock_response.content = [mock_content]
-
-    mock_messages = MagicMock()
-    mock_messages.create.return_value = mock_response
-
-    mock_client = MagicMock()
-    mock_client.messages = mock_messages
-
-    return mock_client
-
-
-# ── Tests ─────────────────────────────────────────────────────────────────
+# ── kicad_mod_writer tests ────────────────────────────────────────────────
 
 def test_kicad_mod_writer_produces_valid_sexpr():
     """kicad_mod_writer.write() must produce balanced S-expressions."""
     from kicad_mod_writer import write  # type: ignore
 
-    content = write(MOCK_LLM_FOOTPRINT)
+    content = write(SOT23_FOOTPRINT)
 
-    # Check balanced parentheses
     depth = 0
     for ch in content:
         if ch == "(":
@@ -186,7 +152,7 @@ def test_kicad_mod_writer_contains_required_elements():
     """kicad_mod_writer output must contain key KiCad tokens."""
     from kicad_mod_writer import write  # type: ignore
 
-    content = write(MOCK_LLM_FOOTPRINT)
+    content = write(SOT23_FOOTPRINT)
 
     assert '(footprint "SOT-23"' in content, "Missing footprint declaration"
     assert '(layer "F.Cu")' in content, "Missing layer declaration"
@@ -196,14 +162,10 @@ def test_kicad_mod_writer_contains_required_elements():
     assert '"F.SilkS"' in content, "Missing silkscreen layer"
     assert '"F.Fab"' in content, "Missing fab layer"
 
-    # All 3 pads must appear
     for pad_num in ("1", "2", "3"):
         assert f'(pad "{pad_num}"' in content, f"Missing pad {pad_num}"
 
-    # Pin 1 must be rect shape
     assert '(pad "1" smd rect' in content, "Pin 1 must be rect (square) for identification"
-
-    # SMD layers
     assert '"F.Cu" "F.Paste" "F.Mask"' in content, "SMD pad missing paste/mask layers"
 
     print("PASS: kicad_mod_writer contains all required elements")
@@ -214,7 +176,7 @@ def test_kicad_validator_accepts_output():
     from kicad_mod_writer import write  # type: ignore
     import kicad_validator  # type: ignore
 
-    content = write(MOCK_LLM_FOOTPRINT)
+    content = write(SOT23_FOOTPRINT)
 
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".kicad_mod", delete=False, encoding="utf-8"
@@ -223,7 +185,6 @@ def test_kicad_validator_accepts_output():
         tmp_path = f.name
 
     try:
-        # Redirect stdout to avoid Unicode console issues on Windows
         buf = io.StringIO()
         with patch("builtins.print", lambda *a, **k: buf.write(" ".join(str(x) for x in a) + "\n")):
             result = kicad_validator.validate_sexpr(tmp_path)
@@ -239,7 +200,7 @@ def test_schema_validator_accepts_footprint_json():
     import schema_validator  # type: ignore
 
     required_keys = {"name", "pads", "courtyard", "silkscreen", "format"}
-    stripped = {k: v for k, v in MOCK_LLM_FOOTPRINT.items() if k in required_keys}
+    stripped = {k: v for k, v in SOT23_FOOTPRINT.items() if k in required_keys}
 
     schema_path = _PROJECT_ROOT / "shared" / "schemas" / "footprint_output.json"
     assert schema_path.exists(), f"Schema not found: {schema_path}"
@@ -261,114 +222,214 @@ def test_schema_validator_accepts_footprint_json():
     print("PASS: schema_validator accepts footprint.json")
 
 
-def test_agent_run_end_to_end_mocked():
-    """
-    Full agent.run() pipeline with mocked Anthropic client and temp directories.
-    Verifies that footprint.json and footprint.kicad_mod are written and valid.
-    """
-    from kicad_mod_writer import write  # type: ignore
-    import schema_validator  # type: ignore
+# ── get_datasheet_summary tests ───────────────────────────────────────────
+
+def test_get_datasheet_summary_returns_compact_dict():
+    """get_datasheet_summary() must return all expected keys from a datasheet file."""
+    import agent as agent_module  # type: ignore
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        ds_path = Path(tmpdir) / "datasheet.json"
+        ds_path.write_text(json.dumps(SOT23_DATASHEET, indent=2), encoding="utf-8")
+
+        summary = agent_module.get_datasheet_summary(ds_path)
+
+    assert summary["component_name"] == "MMBT2222A", f"Wrong name: {summary['component_name']}"
+    assert summary["package"] == "SOT-23", f"Wrong package: {summary['package']}"
+    assert summary["pad_count"] == 3, f"Wrong pad_count: {summary['pad_count']}"
+    assert summary["pitch_mm"] == 0.95, f"Wrong pitch_mm: {summary['pitch_mm']}"
+    assert summary["courtyard_mm"] == {"x": 1.8, "y": 2.9}, (
+        f"Wrong courtyard_mm: {summary['courtyard_mm']}"
+    )
+    assert isinstance(summary["electrical"], dict), "electrical must be a dict"
+
+    print("PASS: get_datasheet_summary returns compact dict")
+
+
+def test_get_datasheet_summary_missing_file_raises():
+    """get_datasheet_summary() must raise FileNotFoundError when file is absent."""
+    import agent as agent_module  # type: ignore
+
+    try:
+        agent_module.get_datasheet_summary("/nonexistent/path/datasheet.json")
+        assert False, "Expected FileNotFoundError"
+    except FileNotFoundError:
+        pass
+
+    print("PASS: get_datasheet_summary raises FileNotFoundError for missing file")
+
+
+def test_get_datasheet_summary_fallback_fields():
+    """get_datasheet_summary() must fall back gracefully when footprint block is absent."""
+    import agent as agent_module  # type: ignore
+
+    minimal_ds = {
+        "component_name": "MyChip",
+        "package": "DIP-8",
+        "pins": [{"number": i} for i in range(1, 9)],
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        ds_path = Path(tmpdir) / "datasheet.json"
+        ds_path.write_text(json.dumps(minimal_ds), encoding="utf-8")
+
+        summary = agent_module.get_datasheet_summary(ds_path)
+
+    assert summary["package"] == "DIP-8"
+    assert summary["pad_count"] == 8
+    assert summary["pitch_mm"] is None
+    assert summary["courtyard_mm"] is None
+
+    print("PASS: get_datasheet_summary falls back gracefully")
+
+
+# ── apply_footprint tests ─────────────────────────────────────────────────
+
+def test_apply_footprint_sot23_success():
+    """apply_footprint() with a known-good SOT-23 dict must write valid outputs."""
+    import agent as agent_module  # type: ignore
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = agent_module.apply_footprint(SOT23_FOOTPRINT, output_dir=tmpdir)
+
+    assert result["success"] is True, f"apply_footprint failed: {result['errors']}"
+    assert len(result["errors"]) == 0, f"Unexpected errors: {result['errors']}"
+
+    # Both artefacts must be listed in files
+    file_names = [Path(p).name for p in result["files"]]
+    assert "footprint.json" in file_names, f"footprint.json not in files: {result['files']}"
+    assert "footprint.kicad_mod" in file_names, f"footprint.kicad_mod not in files: {result['files']}"
+
+    print("PASS: apply_footprint SOT-23 success")
+
+
+def test_apply_footprint_writes_valid_json():
+    """apply_footprint() must write a valid JSON file with the expected keys."""
+    import agent as agent_module  # type: ignore
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = agent_module.apply_footprint(SOT23_FOOTPRINT, output_dir=tmpdir)
+        assert result["success"], f"apply_footprint failed: {result['errors']}"
+
+        with open(Path(tmpdir) / "footprint.json", encoding="utf-8") as f:
+            fp = json.load(f)
+
+    assert fp["name"] == "SOT-23", f"Wrong name: {fp['name']}"
+    assert len(fp["pads"]) == 3, f"Expected 3 pads, got {len(fp['pads'])}"
+    assert fp["format"] == "kicad_mod"
+    # Extra keys (package, ipc_standard, sources) must be preserved
+    assert fp.get("package") == "SOT-23", "Extra key 'package' should be preserved"
+    assert "sources" in fp, "Extra key 'sources' should be preserved"
+
+    print("PASS: apply_footprint writes valid JSON with preserved keys")
+
+
+def test_apply_footprint_writes_valid_kicad_mod():
+    """apply_footprint() must produce a .kicad_mod that passes kicad_validator."""
+    import agent as agent_module  # type: ignore
     import kicad_validator  # type: ignore
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmp = Path(tmpdir)
-        outputs = tmp / "outputs"
-        outputs.mkdir()
+        result = agent_module.apply_footprint(SOT23_FOOTPRINT, output_dir=tmpdir)
+        assert result["success"], f"apply_footprint failed: {result['errors']}"
 
-        # Write datasheet.json
-        (outputs / "datasheet.json").write_text(
-            json.dumps(SOT23_DATASHEET, indent=2), encoding="utf-8"
-        )
+        kicad_path = Path(tmpdir) / "footprint.kicad_mod"
+        buf = io.StringIO()
+        with patch("builtins.print", lambda *a, **k: buf.write(" ".join(str(x) for x in a) + "\n")):
+            ok = kicad_validator.validate_sexpr(str(kicad_path))
 
-        mock_client = _make_mock_anthropic_client(MOCK_LLM_FOOTPRINT)
+    assert ok, f"footprint.kicad_mod failed KiCad validation: {buf.getvalue()}"
+    print("PASS: apply_footprint writes valid .kicad_mod")
 
-        # Patch environment and anthropic.Anthropic constructor
-        env_overrides = {
-            "OUTPUT_DIR": str(outputs),
-            "SCHEMA_DIR": str(_PROJECT_ROOT / "shared" / "schemas"),
-            "ANTHROPIC_API_KEY": "test-key-mock",
-        }
 
-        import agent as agent_module  # type: ignore  # noqa: PLC0415
+def test_apply_footprint_courtyard_clears_pads():
+    """Courtyard in SOT23_FOOTPRINT must clear all pads by >= 0.25 mm."""
+    import agent as agent_module  # type: ignore
 
-        # Temporarily re-point module-level path constants
-        orig_output_dir = agent_module.OUTPUT_DIR
-        orig_datasheet = agent_module.DATASHEET_JSON
-        orig_footprint_json = agent_module.FOOTPRINT_JSON
-        orig_footprint_kicad = agent_module.FOOTPRINT_KICAD
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = agent_module.apply_footprint(SOT23_FOOTPRINT, output_dir=tmpdir)
+        assert result["success"], f"apply_footprint failed: {result['errors']}"
 
-        agent_module.OUTPUT_DIR = outputs
-        agent_module.DATASHEET_JSON = outputs / "datasheet.json"
-        agent_module.FOOTPRINT_JSON = outputs / "footprint.json"
-        agent_module.FOOTPRINT_KICAD = outputs / "footprint.kicad_mod"
-
-        try:
-            with patch("anthropic.Anthropic", return_value=mock_client):
-                with patch.dict(os.environ, env_overrides):
-                    result = agent_module.run()
-        finally:
-            agent_module.OUTPUT_DIR = orig_output_dir
-            agent_module.DATASHEET_JSON = orig_datasheet
-            agent_module.FOOTPRINT_JSON = orig_footprint_json
-            agent_module.FOOTPRINT_KICAD = orig_footprint_kicad
-
-        # Verify outputs exist
-        assert (outputs / "footprint.json").exists(), "footprint.json was not written"
-        assert (outputs / "footprint.kicad_mod").exists(), "footprint.kicad_mod was not written"
-
-        # Verify footprint.json is valid JSON with expected keys
-        with open(outputs / "footprint.json", encoding="utf-8") as f:
+        with open(Path(tmpdir) / "footprint.json", encoding="utf-8") as f:
             fp = json.load(f)
 
-        assert fp["name"] == "SOT-23", f"Unexpected name: {fp['name']}"
-        assert len(fp["pads"]) == 3, f"Expected 3 pads, got {len(fp['pads'])}"
-        assert fp["format"] == "kicad_mod"
+    cy = fp["courtyard"]
+    hw = cy["width"] / 2.0
+    hh = cy["height"] / 2.0
 
-        # Verify courtyard clears pads by >= 0.25mm
-        cy = fp["courtyard"]
-        hw = cy["width"] / 2.0
-        hh = cy["height"] / 2.0
-        for pad in fp["pads"]:
-            pad_right = pad["x"] + pad["width"] / 2.0
-            pad_left = pad["x"] - pad["width"] / 2.0
-            pad_top = pad["y"] - pad["height"] / 2.0
-            pad_bottom = pad["y"] + pad["height"] / 2.0
+    for pad in fp["pads"]:
+        pad_right  = pad["x"] + pad["width"] / 2.0
+        pad_left   = pad["x"] - pad["width"] / 2.0
+        pad_top    = pad["y"] - pad["height"] / 2.0
+        pad_bottom = pad["y"] + pad["height"] / 2.0
 
-            cy_right = cy["x"] + hw
-            cy_left = cy["x"] - hw
-            cy_top = cy["y"] - hh
-            cy_bottom = cy["y"] + hh
+        cy_right  = cy["x"] + hw
+        cy_left   = cy["x"] - hw
+        cy_top    = cy["y"] - hh
+        cy_bottom = cy["y"] + hh
 
-            assert cy_right - pad_right >= 0.24, (
-                f"Pad {pad['number']} right edge too close to courtyard: "
-                f"clearance={cy_right - pad_right:.3f}mm < 0.25mm"
-            )
-            assert pad_left - cy_left >= 0.24, (
-                f"Pad {pad['number']} left edge too close to courtyard: "
-                f"clearance={pad_left - cy_left:.3f}mm < 0.25mm"
-            )
-            assert pad_top - cy_top >= 0.24, (
-                f"Pad {pad['number']} top edge too close to courtyard: "
-                f"clearance={pad_top - cy_top:.3f}mm < 0.25mm"
-            )
-            assert cy_bottom - pad_bottom >= 0.24, (
-                f"Pad {pad['number']} bottom edge too close to courtyard: "
-                f"clearance={cy_bottom - pad_bottom:.3f}mm < 0.25mm"
-            )
+        assert cy_right - pad_right >= 0.24, (
+            f"Pad {pad['number']} right edge too close to courtyard: "
+            f"clearance={cy_right - pad_right:.3f}mm < 0.25mm"
+        )
+        assert pad_left - cy_left >= 0.24, (
+            f"Pad {pad['number']} left edge too close to courtyard: "
+            f"clearance={pad_left - cy_left:.3f}mm < 0.25mm"
+        )
+        assert pad_top - cy_top >= 0.24, (
+            f"Pad {pad['number']} top edge too close to courtyard: "
+            f"clearance={pad_top - cy_top:.3f}mm < 0.25mm"
+        )
+        assert cy_bottom - pad_bottom >= 0.24, (
+            f"Pad {pad['number']} bottom edge too close to courtyard: "
+            f"clearance={cy_bottom - pad_bottom:.3f}mm < 0.25mm"
+        )
 
-        # Validate kicad_mod
-        kicad_ok = kicad_validator.validate_sexpr(str(outputs / "footprint.kicad_mod"))
-        assert kicad_ok, "footprint.kicad_mod failed kicad_validator"
+    print("PASS: courtyard clears all pads by >= 0.25mm")
 
-        print("PASS: end-to-end agent run produces valid outputs")
-        return result
+
+def test_apply_footprint_adds_default_keys():
+    """apply_footprint() must add 'format' and 'silkscreen' if absent."""
+    import agent as agent_module  # type: ignore
+
+    minimal = {
+        "name": "SOT-23",
+        "pads": SOT23_FOOTPRINT["pads"],
+        "courtyard": SOT23_FOOTPRINT["courtyard"],
+        # no 'format', no 'silkscreen'
+    }
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = agent_module.apply_footprint(minimal, output_dir=tmpdir)
+        assert result["success"], f"apply_footprint failed: {result['errors']}"
+
+        with open(Path(tmpdir) / "footprint.json", encoding="utf-8") as f:
+            fp = json.load(f)
+
+    assert fp["format"] == "kicad_mod", "format default not added"
+    assert fp["silkscreen"] == [], "silkscreen default not added"
+
+    print("PASS: apply_footprint adds default keys")
+
+
+def test_run_raises_not_implemented():
+    """run() must raise NotImplementedError (orchestration moved to Claude Code)."""
+    import agent as agent_module  # type: ignore
+
+    try:
+        agent_module.run()
+        assert False, "Expected NotImplementedError"
+    except NotImplementedError:
+        pass
+
+    print("PASS: run() raises NotImplementedError")
 
 
 def test_pin1_is_rect_in_kicad_mod():
     """Pin 1 pad must be rendered as 'rect' in the kicad_mod (for identification)."""
     from kicad_mod_writer import write  # type: ignore
 
-    content = write(MOCK_LLM_FOOTPRINT)
+    content = write(SOT23_FOOTPRINT)
     assert '(pad "1" smd rect' in content, (
         "Pin 1 must be rect shape in .kicad_mod for manufacturing identification"
     )
@@ -377,7 +438,7 @@ def test_pin1_is_rect_in_kicad_mod():
 
 def test_courtyard_dimensions_are_positive():
     """Courtyard dimensions must be positive floats."""
-    cy = MOCK_LLM_FOOTPRINT["courtyard"]
+    cy = SOT23_FOOTPRINT["courtyard"]
     assert cy["width"] > 0, "Courtyard width must be positive"
     assert cy["height"] > 0, "Courtyard height must be positive"
     print("PASS: courtyard dimensions are positive")
@@ -391,9 +452,17 @@ def run_all_tests() -> None:
         test_kicad_mod_writer_contains_required_elements,
         test_kicad_validator_accepts_output,
         test_schema_validator_accepts_footprint_json,
+        test_get_datasheet_summary_returns_compact_dict,
+        test_get_datasheet_summary_missing_file_raises,
+        test_get_datasheet_summary_fallback_fields,
+        test_apply_footprint_sot23_success,
+        test_apply_footprint_writes_valid_json,
+        test_apply_footprint_writes_valid_kicad_mod,
+        test_apply_footprint_courtyard_clears_pads,
+        test_apply_footprint_adds_default_keys,
+        test_run_raises_not_implemented,
         test_pin1_is_rect_in_kicad_mod,
         test_courtyard_dimensions_are_positive,
-        test_agent_run_end_to_end_mocked,
     ]
 
     passed = 0
