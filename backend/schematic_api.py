@@ -1445,10 +1445,13 @@ _PIPELINE_AGENTS = {
     "example-schematic": {"label": "Example Schematic",  "icon": "📐",  "desc": "Build a reference application schematic for the component"},
     "layout-example":    {"label": "Layout Example",     "icon": "🖼️",  "desc": "Generate PCB layout example for a component's typical application circuit"},
     "schematic":         {"label": "Schematic Agent",    "icon": "🗺️",  "desc": "Design the full project schematic from a brief description"},
+    "schematic-gui":     {"label": "Schematic GUI",      "icon": "✏️",  "desc": "Fix bugs in the schematic canvas editor: wires, symbols, nets, labels, undo"},
     "connectivity":      {"label": "Connectivity Check", "icon": "🔗",  "desc": "Verify net connectivity, detect orphans, floating pins, loops"},
     "autoplace":         {"label": "Auto Placer",        "icon": "🧩",  "desc": "Place components on the PCB canvas using heuristic clustering"},
     "autoroute":         {"label": "Auto Router",        "icon": "〰️",  "desc": "Route PCB traces between component pads"},
     "layout":            {"label": "Layout Assembler",   "icon": "📋",  "desc": "Assemble the final PCB layout JSON and KiCad PCB file"},
+    "layout-gui":        {"label": "Layout GUI",         "icon": "🖥️",  "desc": "Fix bugs in the PCB editor: routing, DRC, layer panel, ratsnest, selection"},
+    "import-export":     {"label": "Import / Export",    "icon": "📤",  "desc": "Fix Gerber export, KiCad export, schematic import, BOM export issues"},
 }
 
 PROJECT_ROOT_SA = Path(__file__).parent.parent
