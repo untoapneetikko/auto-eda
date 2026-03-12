@@ -1,5 +1,5 @@
 """
-Auto-Route Agent — routes PCB traces using Claude claude-sonnet-4-20250514.
+Auto-Route Agent — pure Python routing tools, no Anthropic SDK.
 
 Pipeline position: Step 7 of 8
 Input:  data/outputs/placement.json + data/outputs/schematic.json
@@ -14,6 +14,11 @@ Routing priority:
 
 Never route under crystals or oscillators.
 Minimize vias — each via adds ~1nH inductance.
+
+Claude Code handles all LLM reasoning. This module is pure tools:
+  - get_routing_context()  — read inputs, return structured context for orchestrator
+  - apply_routing()        — validate + post-process + write routing from orchestrator dict
+  - _seed_routing()        — Manhattan/MST fallback, callable standalone
 """
 
 from __future__ import annotations
@@ -25,13 +30,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-import anthropic
-from dotenv import load_dotenv
-
 from trace_width_calculator import calculate_trace_width, classify_net
 
-# ── Environment ────────────────────────────────────────────────────────────────
-load_dotenv()
+# ── Paths ───────────────────────────────────────────────────────────────────────
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data" / "outputs"
@@ -42,8 +43,6 @@ PLACEMENT_FILE = DATA_DIR / "placement.json"
 SCHEMATIC_FILE = DATA_DIR / "schematic.json"
 ROUTING_FILE = DATA_DIR / "routing.json"
 ROUTING_SCHEMA = SCHEMA_DIR / "routing_output.json"
-
-MODEL = "claude-sonnet-4-20250514"
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -93,7 +92,7 @@ def detect_crystals(components: list[dict]) -> set[str]:
 
 def build_net_map(schematic: dict) -> dict[str, list[dict]]:
     """
-    Build a map of net_name → list of {reference, pin} dicts.
+    Build a map of net_name -> list of {reference, pin} dicts.
     This represents the ratsnest — all pads that share a net.
     """
     net_map: dict[str, list[dict]] = {}
@@ -158,8 +157,8 @@ def manhattan_route(
 
 def build_initial_routing(schematic: dict, placement: dict, crystal_refs: set[str]) -> dict:
     """
-    Build an initial routing solution using Manhattan routes.
-    This is the fallback/seed routing that Claude can refine.
+    Build an initial routing solution using Manhattan routes and a greedy MST.
+    This is the fallback/seed routing that the orchestrator can start from.
     Returns a routing_output.json-compatible dict.
     """
     placements_list = placement.get("placements", [])
@@ -241,133 +240,6 @@ def build_initial_routing(schematic: dict, placement: dict, crystal_refs: set[st
     return {"traces": traces, "vias": vias}
 
 
-def build_claude_prompt(schematic: dict, placement: dict, initial_routing: dict) -> str:
-    """
-    Build the prompt for Claude to review and improve the routing.
-    """
-    nets = schematic.get("nets", [])
-    components = schematic.get("components", [])
-    placements = placement.get("placements", [])
-    board = placement.get("board", {"width_mm": 100.0, "height_mm": 80.0})
-
-    # Summarise net types for the prompt
-    net_summary = []
-    for net in nets:
-        name = net["name"]
-        ntype = classify_net(name)
-        current = estimate_current(name, ntype)
-        width_info = calculate_trace_width(name, current)
-        net_summary.append({
-            "name": name,
-            "type": ntype,
-            "width_mm": width_info["width_mm"],
-            "priority": routing_priority(name),
-        })
-    net_summary.sort(key=lambda n: n["priority"])
-
-    prompt = f"""You are an expert PCB layout engineer. Review and improve the following PCB routing.
-
-## Board
-- Size: {board.get('width_mm', 100)}mm × {board.get('height_mm', 80)}mm
-- Layers: 2 (F.Cu = top copper, B.Cu = bottom copper)
-- Technology: Standard FR4 1.6mm, 35μm copper
-
-## Components ({len(components)} total)
-{json.dumps(components[:20], indent=2)}
-{f'... and {len(components) - 20} more components' if len(components) > 20 else ''}
-
-## Placements
-{json.dumps(placements, indent=2)}
-
-## Nets ({len(nets)} total) — sorted by routing priority
-{json.dumps(net_summary, indent=2)}
-
-## Initial Routing (Manhattan routes — needs improvement)
-{json.dumps(initial_routing, indent=2)}
-
-## Routing Rules (MUST FOLLOW ALL)
-1. **Priority order**: Route power traces first (widest), then high-speed signals, then analog, then control signals, then low-priority signals last.
-2. **Trace widths**:
-   - Power (VCC/VDD/GND/PWR nets): width = current_amps × 0.4 mm/A, minimum 0.4mm
-   - High-speed (CLK/USB/ETH nets): 0.3mm for 50Ω controlled impedance on FR4
-   - Signal traces: 0.2mm preferred, 0.15mm absolute minimum
-   - NEVER produce a trace with width_mm < 0.15
-3. **Minimize vias**: Each via adds ~1nH inductance. Use vias only when layer change is unavoidable.
-4. **Never route under crystals or oscillators** (refs starting with Y, XTAL, OSC, X).
-5. **No trace shorts**: No two traces on the same layer may cross unless they are on the same net.
-6. **Clearance**: Maintain ≥ 0.2mm clearance between traces on the same layer.
-7. **Return paths**: Route GND/power return paths as short as possible.
-8. **Differential pairs**: Route differential pairs (DP/DM, P/N) together with matched length ±0.1mm.
-
-## Output Format
-Return ONLY a valid JSON object matching this schema exactly:
-{{
-  "traces": [
-    {{
-      "net": "<net name>",
-      "layer": "F.Cu",
-      "width_mm": <float>,
-      "path": [{{"x": <float>, "y": <float>}}, ...]
-    }}
-  ],
-  "vias": [
-    {{"net": "<net name>", "x": <float>, "y": <float>, "drill_mm": 0.3}}
-  ]
-}}
-
-Rules for the JSON:
-- All coordinates in mm
-- path must have at least 2 points
-- width_mm must be ≥ 0.15 for ALL traces
-- Power traces (GND, VCC, etc.) must have width_mm ≥ 0.4
-- Only include vias when a layer change is genuinely needed
-- Every net in the schematic must have at least one trace segment
-
-Improve the routing: reduce total wire length, eliminate unnecessary bends, fix any clearance violations, and ensure power traces are wider than signal traces. Return the complete improved routing JSON now."""
-
-    return prompt
-
-
-def call_claude(prompt: str) -> dict:
-    """
-    Call Claude claude-sonnet-4-20250514 to generate/improve routing.
-    Returns the parsed routing JSON dict.
-    """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise EnvironmentError(
-            "ANTHROPIC_API_KEY not set. Add it to .env or export it in your shell."
-        )
-
-    client = anthropic.Anthropic(api_key=api_key)
-
-    print(f"[autoroute] Calling {MODEL}...")
-    message = client.messages.create(
-        model=MODEL,
-        max_tokens=8192,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    raw_text = message.content[0].text.strip()
-    print(f"[autoroute] Claude responded ({len(raw_text)} chars)")
-
-    # Extract JSON from the response (Claude may include explanation text)
-    json_start = raw_text.find("{")
-    json_end = raw_text.rfind("}") + 1
-    if json_start == -1 or json_end == 0:
-        raise ValueError(
-            f"Claude did not return valid JSON. Response:\n{raw_text[:500]}"
-        )
-
-    json_str = raw_text[json_start:json_end]
-    try:
-        routing = json.loads(json_str)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to parse Claude's JSON response: {e}\n\nRaw:\n{json_str[:500]}")
-
-    return routing
-
-
 def validate_routing_schema(routing: dict) -> list[str]:
     """
     Validate the routing dict against the expected schema.
@@ -389,7 +261,7 @@ def validate_routing_schema(routing: dict) -> list[str]:
                 errors.append(f"{prefix}: missing field '{field}'")
         if "path" in trace:
             if len(trace["path"]) < 2:
-                errors.append(f"{prefix}: path must have ≥ 2 points")
+                errors.append(f"{prefix}: path must have >= 2 points")
             for j, pt in enumerate(trace["path"]):
                 if "x" not in pt or "y" not in pt:
                     errors.append(f"{prefix}.path[{j}]: missing x or y")
@@ -415,6 +287,7 @@ def fix_routing_issues(routing: dict, schematic: dict) -> dict:
     Post-process routing to fix common issues:
     - Clamp trace widths to minimum
     - Ensure power traces have correct width
+    - Default layer to F.Cu
     - Remove zero-length segments
     """
     for trace in routing.get("traces", []):
@@ -425,6 +298,8 @@ def fix_routing_issues(routing: dict, schematic: dict) -> dict:
         width = trace.get("width_mm", 0.2)
         if width < 0.15:
             trace["width_mm"] = 0.15
+        else:
+            trace["width_mm"] = width
 
         # Enforce power trace minimum
         if net_type == "power" and trace["width_mm"] < 0.4:
@@ -487,108 +362,212 @@ def check_all_nets_routed(schematic: dict, routing: dict) -> list[str]:
     return unrouted
 
 
-def run(
+# ── Public tool API (called by orchestrator / endpoints) ────────────────────────
+
+def get_routing_context(
     placement_path: Path = PLACEMENT_FILE,
     schematic_path: Path = SCHEMATIC_FILE,
-    output_path: Path = ROUTING_FILE,
-    use_claude: bool = True,
 ) -> dict:
     """
-    Main entry point — run the full auto-route pipeline.
+    Read placement.json and schematic.json and return a structured context dict
+    ready for the orchestrator (Claude Code) to reason over.
 
-    Returns the routing dict on success, raises on failure.
+    Returns:
+        {
+            "board": { width_mm, height_mm },
+            "nets": [
+                {
+                    "name": str,
+                    "type": "power"|"highspeed"|"analog"|"signal",
+                    "priority": int,          # 0=power … 3=signal
+                    "width_mm": float,        # pre-computed trace width
+                    "estimated_current_amps": float,
+                    "pads": [ {"reference": str, "pin": ..., "x": float, "y": float} ]
+                }
+            ],
+            "no_route_refs": [str],           # crystal/oscillator refs
+            "components": [...],              # raw component list from schematic
+            "placements": [...],              # raw placement list
+        }
     """
-    print("[autoroute] ── Auto-Route Agent starting ──")
-
-    # Step 1: Load inputs
-    print(f"[autoroute] Loading placement: {placement_path}")
     placement = load_json(placement_path)
-
-    print(f"[autoroute] Loading schematic: {schematic_path}")
     schematic = load_json(schematic_path)
 
-    # Step 2: Detect crystals / no-route zones
-    all_components = schematic.get("components", [])
-    crystal_refs = detect_crystals(all_components)
-    if crystal_refs:
-        print(f"[autoroute] Crystals/oscillators detected (no-route zones): {crystal_refs}")
+    board = placement.get("board", {"width_mm": 100.0, "height_mm": 80.0})
+    placements_list = placement.get("placements", [])
+    components = schematic.get("components", [])
 
-    # Step 3: Build initial Manhattan routing as seed
-    print("[autoroute] Building seed routing...")
-    initial_routing = build_initial_routing(schematic, placement, crystal_refs)
-    print(f"[autoroute] Seed: {len(initial_routing['traces'])} traces, {len(initial_routing['vias'])} vias")
+    # Build position lookup
+    pos_by_ref: dict[str, dict] = {p["reference"]: p for p in placements_list}
 
-    # Step 4: Use Claude to improve routing
-    routing = initial_routing
-    if use_claude:
-        try:
-            prompt = build_claude_prompt(schematic, placement, initial_routing)
-            claude_routing = call_claude(prompt)
+    # Detect no-route zones
+    crystal_refs = detect_crystals(components)
 
-            # Validate Claude's response before accepting it
-            schema_errors = validate_routing_schema(claude_routing)
-            if schema_errors:
-                print("[autoroute] Claude's routing had schema errors — using seed routing:")
-                for err in schema_errors:
-                    print(f"  - {err}")
-            else:
-                routing = claude_routing
-                print(f"[autoroute] Using Claude routing: {len(routing['traces'])} traces, {len(routing['vias'])} vias")
-        except Exception as e:
-            print(f"[autoroute] Claude call failed ({e}) — falling back to seed routing")
+    # Build enriched net list
+    net_map = build_net_map(schematic)
+    nets_out = []
+    for net_name, pads in net_map.items():
+        net_type = classify_net(net_name)
+        current = estimate_current(net_name, net_type)
+        width_info = calculate_trace_width(net_name, current)
 
-    # Step 5: Post-process / fix common issues
-    routing = fix_routing_issues(routing, schematic)
+        # Attach pad positions
+        enriched_pads = []
+        for pad in pads:
+            pos = pos_by_ref.get(pad["reference"])
+            enriched_pads.append({
+                "reference": pad["reference"],
+                "pin": pad["pin"],
+                "x": pos["x"] if pos else None,
+                "y": pos["y"] if pos else None,
+            })
 
-    # Step 6: Validate schema
-    schema_errors = validate_routing_schema(routing)
+        nets_out.append({
+            "name": net_name,
+            "type": net_type,
+            "priority": routing_priority(net_name),
+            "width_mm": width_info["width_mm"],
+            "estimated_current_amps": current,
+            "pads": enriched_pads,
+        })
+
+    # Sort by routing priority
+    nets_out.sort(key=lambda n: n["priority"])
+
+    return {
+        "board": board,
+        "nets": nets_out,
+        "no_route_refs": sorted(crystal_refs),
+        "components": components,
+        "placements": placements_list,
+    }
+
+
+def _seed_routing(
+    placement_path: Path = PLACEMENT_FILE,
+    schematic_path: Path = SCHEMATIC_FILE,
+) -> dict:
+    """
+    Run the Manhattan/greedy-MST seed router and return the raw routing dict.
+    Does NOT write to disk — caller decides what to do with the result.
+    Exposed via GET /agents/autoroute/seed so the orchestrator can use it
+    as a starting point or fallback.
+    """
+    placement = load_json(placement_path)
+    schematic = load_json(schematic_path)
+    crystal_refs = detect_crystals(schematic.get("components", []))
+    routing = build_initial_routing(schematic, placement, crystal_refs)
+    print(f"[autoroute] Seed routing: {len(routing['traces'])} traces, {len(routing['vias'])} vias")
+    return routing
+
+
+def apply_routing(
+    routing_dict: dict,
+    output_dir: Path | None = None,
+    schematic_path: Path = SCHEMATIC_FILE,
+) -> dict:
+    """
+    Accept a routing dict from the orchestrator, post-process it, validate it,
+    run DRC, and write data/outputs/routing.json.
+
+    Args:
+        routing_dict:  The routing produced by the orchestrator (traces + vias).
+        output_dir:    Override output directory (default: DATA_DIR).
+        schematic_path: Path to schematic.json for net completeness check.
+
+    Returns:
+        {
+            "success": bool,
+            "drc_passed": bool | None,
+            "errors": [str],          # schema errors or DRC errors
+            "traces_count": int,
+            "vias_count": int,
+            "unrouted_nets": [str],
+        }
+    """
+    output_path = (output_dir or DATA_DIR) / "routing.json"
+    errors: list[str] = []
+
+    # Step 1: Load schematic for net checks (optional — skip if file missing)
+    try:
+        schematic = load_json(schematic_path)
+    except FileNotFoundError:
+        schematic = {"components": []}
+
+    # Step 2: Post-process — clamp widths, enforce power minimum, default layer
+    routing_dict = fix_routing_issues(routing_dict, schematic)
+
+    # Step 3: Schema validation
+    schema_errors = validate_routing_schema(routing_dict)
     if schema_errors:
-        print("[autoroute] Schema validation errors:")
-        for err in schema_errors:
-            print(f"  ❌ {err}")
-        raise ValueError(f"Routing output failed schema validation ({len(schema_errors)} errors)")
-    else:
-        print("[autoroute] ✅ Schema validation passed")
+        errors.extend(schema_errors)
+        return {
+            "success": False,
+            "drc_passed": None,
+            "errors": errors,
+            "traces_count": len(routing_dict.get("traces", [])),
+            "vias_count": len(routing_dict.get("vias", [])),
+            "unrouted_nets": [],
+        }
 
-    # Step 7: Check all nets are routed
-    unrouted = check_all_nets_routed(schematic, routing)
+    # Step 4: Check net completeness
+    unrouted = check_all_nets_routed(schematic, routing_dict)
     if unrouted:
-        print(f"[autoroute] ⚠ Unrouted nets ({len(unrouted)}): {unrouted}")
-    else:
-        print("[autoroute] ✅ All nets routed")
+        print(f"[autoroute] Unrouted nets ({len(unrouted)}): {unrouted}")
 
-    # Step 8: Write output
-    save_json(output_path, routing)
+    # Step 5: Write output
+    save_json(output_path, routing_dict)
 
-    # Step 9: Run DRC
-    print("[autoroute] Running DRC...")
+    # Step 6: Run DRC
     drc_passed, drc_output = run_drc(output_path)
     print(drc_output.strip())
     if not drc_passed:
-        print("[autoroute] ⚠ DRC reported errors — review routing.json before sign-off")
-    else:
-        print("[autoroute] ✅ DRC passed")
+        errors.append(f"DRC failed: {drc_output.strip()}")
 
-    print("[autoroute] ── Done ──")
-    return routing
+    return {
+        "success": True,
+        "drc_passed": drc_passed,
+        "errors": errors,
+        "traces_count": len(routing_dict.get("traces", [])),
+        "vias_count": len(routing_dict.get("vias", [])),
+        "unrouted_nets": unrouted,
+    }
+
+
+def run(*args, **kwargs) -> None:
+    """
+    Removed: Claude Code now drives routing via get_routing_context() + apply_routing().
+    Use the endpoint or call those functions directly.
+    """
+    raise NotImplementedError(
+        "run() is no longer implemented. "
+        "Use get_routing_context() to fetch context for the orchestrator, "
+        "_seed_routing() for the greedy MST fallback, "
+        "and apply_routing(routing_dict) to write the final result."
+    )
 
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="PCB Auto-Route Agent")
-    parser.add_argument("--placement", default=str(PLACEMENT_FILE), help="Path to placement.json")
-    parser.add_argument("--schematic", default=str(SCHEMATIC_FILE), help="Path to schematic.json")
-    parser.add_argument("--output", default=str(ROUTING_FILE), help="Path to write routing.json")
-    parser.add_argument(
-        "--no-claude", action="store_true", help="Use only seed routing (no Anthropic API call)"
-    )
+    parser = argparse.ArgumentParser(description="PCB Auto-Route Agent tools")
+    subparsers = parser.add_subparsers(dest="command")
+
+    ctx_parser = subparsers.add_parser("context", help="Print routing context JSON")
+    ctx_parser.add_argument("--placement", default=str(PLACEMENT_FILE))
+    ctx_parser.add_argument("--schematic", default=str(SCHEMATIC_FILE))
+
+    seed_parser = subparsers.add_parser("seed", help="Run seed routing and print JSON")
+    seed_parser.add_argument("--placement", default=str(PLACEMENT_FILE))
+    seed_parser.add_argument("--schematic", default=str(SCHEMATIC_FILE))
+
     args = parser.parse_args()
 
-    result = run(
-        placement_path=Path(args.placement),
-        schematic_path=Path(args.schematic),
-        output_path=Path(args.output),
-        use_claude=not args.no_claude,
-    )
-    print(f"\n[autoroute] Routing complete: {len(result['traces'])} traces, {len(result['vias'])} vias")
+    if args.command == "context":
+        ctx = get_routing_context(Path(args.placement), Path(args.schematic))
+        print(json.dumps(ctx, indent=2))
+    elif args.command == "seed":
+        seed = _seed_routing(Path(args.placement), Path(args.schematic))
+        print(json.dumps(seed, indent=2))
+    else:
+        parser.print_help()

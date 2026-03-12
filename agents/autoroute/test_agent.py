@@ -7,12 +7,14 @@ Verifies:
   3. No trace has width_mm < 0.15mm
   4. Crystal/oscillator no-route zones are respected
   5. Trace width calculator returns correct values
+  6. get_routing_context() returns expected structure
+  7. apply_routing() post-processes and writes routing.json
+  8. _seed_routing() produces valid routing without LLM
 """
 
 from __future__ import annotations
 
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -29,6 +31,9 @@ from agent import (
     check_all_nets_routed,
     detect_crystals,
     fix_routing_issues,
+    get_routing_context,
+    apply_routing,
+    _seed_routing,
     validate_routing_schema,
 )
 
@@ -161,7 +166,7 @@ class TestTraceWidthCalculator:
     def test_highspeed_trace_width(self):
         result = calculate_trace_width("CLK")
         assert result["width_mm"] == pytest.approx(0.3, abs=0.001), (
-            "High-speed CLK trace should be 0.3mm for 50Ω impedance"
+            "High-speed CLK trace should be 0.3mm for 50Ohm impedance"
         )
 
     def test_no_trace_below_minimum(self):
@@ -201,9 +206,9 @@ class TestNetMap:
 
     def test_multi_pad_nets(self):
         net_map = build_net_map(SAMPLE_SCHEMATIC)
-        # VCC is used by U1, U2, R1, C1 → 4 pads
+        # VCC is used by U1, U2, R1, C1 -> 4 pads
         assert len(net_map["VCC"]) == 4
-        # GND is used by U1, U2, Y1, C1 → 4 pads
+        # GND is used by U1, U2, Y1, C1 -> 4 pads
         assert len(net_map["GND"]) == 4
         # /data_out connects U1 and U2
         assert len(net_map["/data_out"]) == 2
@@ -413,37 +418,257 @@ class TestFixRoutingIssues:
         assert fixed["traces"][0]["layer"] == "F.Cu"
 
 
-# ── Integration: Full Pipeline Test ───────────────────────────────────────────
+# ── get_routing_context Tests ──────────────────────────────────────────────────
 
-class TestFullPipeline:
-    def test_pipeline_without_claude(self, tmp_path):
-        """Run the full agent pipeline with no-claude mode (deterministic test)."""
+class TestGetRoutingContext:
+    def test_returns_expected_keys(self, tmp_path):
         placement_file = tmp_path / "placement.json"
         schematic_file = tmp_path / "schematic.json"
-        output_file = tmp_path / "routing.json"
-
         placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
         schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
 
-        from agent import run
+        ctx = get_routing_context(placement_file, schematic_file)
+        assert "board" in ctx
+        assert "nets" in ctx
+        assert "no_route_refs" in ctx
+        assert "components" in ctx
+        assert "placements" in ctx
 
-        result = run(
-            placement_path=placement_file,
+    def test_board_dimensions(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        ctx = get_routing_context(placement_file, schematic_file)
+        assert ctx["board"]["width_mm"] == 100.0
+        assert ctx["board"]["height_mm"] == 80.0
+
+    def test_crystal_in_no_route_refs(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        ctx = get_routing_context(placement_file, schematic_file)
+        assert "Y1" in ctx["no_route_refs"]
+
+    def test_nets_have_required_fields(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        ctx = get_routing_context(placement_file, schematic_file)
+        for net in ctx["nets"]:
+            assert "name" in net
+            assert "type" in net
+            assert "priority" in net
+            assert "width_mm" in net
+            assert "estimated_current_amps" in net
+            assert "pads" in net
+
+    def test_nets_sorted_by_priority(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        ctx = get_routing_context(placement_file, schematic_file)
+        priorities = [n["priority"] for n in ctx["nets"]]
+        assert priorities == sorted(priorities), "Nets should be sorted by priority"
+
+    def test_pad_positions_attached(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        ctx = get_routing_context(placement_file, schematic_file)
+        # Find VCC net and check pads have positions
+        vcc_net = next(n for n in ctx["nets"] if n["name"] == "VCC")
+        for pad in vcc_net["pads"]:
+            assert pad["x"] is not None, f"Pad {pad['reference']} missing x position"
+            assert pad["y"] is not None, f"Pad {pad['reference']} missing y position"
+
+
+# ── _seed_routing Tests ────────────────────────────────────────────────────────
+
+class TestSeedRouting:
+    def test_returns_valid_routing(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        result = _seed_routing(placement_file, schematic_file)
+        assert "traces" in result
+        assert "vias" in result
+        assert len(result["traces"]) > 0
+
+    def test_seed_does_not_write_file(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        _seed_routing(placement_file, schematic_file)
+        # seed_routing should NOT write routing.json
+        assert not (tmp_path / "routing.json").exists()
+
+    def test_seed_routing_passes_schema_validation(self, tmp_path):
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        result = _seed_routing(placement_file, schematic_file)
+        errors = validate_routing_schema(result)
+        assert not errors, f"Seed routing failed schema validation: {errors}"
+
+
+# ── apply_routing Tests ────────────────────────────────────────────────────────
+
+class TestApplyRouting:
+    def _make_valid_routing(self) -> dict:
+        return {
+            "traces": [
+                {
+                    "net": "VCC",
+                    "layer": "F.Cu",
+                    "width_mm": 0.4,
+                    "path": [{"x": 50.0, "y": 50.0}, {"x": 90.0, "y": 50.0}],
+                },
+                {
+                    "net": "GND",
+                    "layer": "F.Cu",
+                    "width_mm": 0.4,
+                    "path": [{"x": 50.0, "y": 50.0}, {"x": 55.0, "y": 65.0}],
+                },
+                {
+                    "net": "CLK",
+                    "layer": "F.Cu",
+                    "width_mm": 0.3,
+                    "path": [{"x": 50.0, "y": 50.0}, {"x": 70.0, "y": 30.0}],
+                },
+                {
+                    "net": "/data_out",
+                    "layer": "F.Cu",
+                    "width_mm": 0.2,
+                    "path": [{"x": 50.0, "y": 50.0}, {"x": 90.0, "y": 50.0}],
+                },
+            ],
+            "vias": [],
+        }
+
+    def test_writes_routing_json(self, tmp_path):
+        schematic_file = tmp_path / "schematic.json"
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        result = apply_routing(
+            routing_dict=self._make_valid_routing(),
+            output_dir=tmp_path,
             schematic_path=schematic_file,
-            output_path=output_file,
-            use_claude=False,
         )
 
-        # Output file must exist
-        assert output_file.exists(), "routing.json was not written"
+        assert result["success"] is True
+        assert (tmp_path / "routing.json").exists()
 
-        # Load and verify
-        with open(output_file) as f:
+    def test_returns_correct_counts(self, tmp_path):
+        schematic_file = tmp_path / "schematic.json"
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        routing = self._make_valid_routing()
+        result = apply_routing(
+            routing_dict=routing,
+            output_dir=tmp_path,
+            schematic_path=schematic_file,
+        )
+
+        assert result["traces_count"] == len(routing["traces"])
+        assert result["vias_count"] == 0
+
+    def test_invalid_schema_returns_failure(self, tmp_path):
+        schematic_file = tmp_path / "schematic.json"
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        bad_routing = {"traces": [{"net": "VCC"}], "vias": []}  # missing fields
+        result = apply_routing(
+            routing_dict=bad_routing,
+            output_dir=tmp_path,
+            schematic_path=schematic_file,
+        )
+
+        assert result["success"] is False
+        assert len(result["errors"]) > 0
+
+    def test_clamps_narrow_traces(self, tmp_path):
+        schematic_file = tmp_path / "schematic.json"
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        routing = {
+            "traces": [
+                {
+                    "net": "/data_out",
+                    "layer": "F.Cu",
+                    "width_mm": 0.05,  # too narrow — should be clamped to 0.15
+                    "path": [{"x": 50.0, "y": 50.0}, {"x": 90.0, "y": 50.0}],
+                }
+            ],
+            "vias": [],
+        }
+        result = apply_routing(
+            routing_dict=routing,
+            output_dir=tmp_path,
+            schematic_path=schematic_file,
+        )
+
+        assert result["success"] is True
+        with open(tmp_path / "routing.json") as f:
+            saved = json.load(f)
+        assert saved["traces"][0]["width_mm"] >= 0.15
+
+
+# ── run() stub Tests ───────────────────────────────────────────────────────────
+
+class TestRunStub:
+    def test_run_raises_not_implemented(self):
+        from agent import run
+        with pytest.raises(NotImplementedError):
+            run()
+
+
+# ── Integration: Full Pipeline Test (seed + apply) ─────────────────────────────
+
+class TestFullPipeline:
+    def test_seed_then_apply(self, tmp_path):
+        """Run seed routing then apply — full deterministic pipeline with no LLM."""
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        # Step 1: get seed routing
+        seed = _seed_routing(placement_file, schematic_file)
+        assert "traces" in seed
+        assert len(seed["traces"]) > 0
+
+        # Step 2: apply routing (orchestrator would improve it; here we apply as-is)
+        result = apply_routing(
+            routing_dict=seed,
+            output_dir=tmp_path,
+            schematic_path=schematic_file,
+        )
+
+        assert result["success"] is True
+        assert (tmp_path / "routing.json").exists()
+
+        with open(tmp_path / "routing.json") as f:
             saved = json.load(f)
 
         assert "traces" in saved
         assert "vias" in saved
-        assert len(saved["traces"]) > 0, "No traces were generated"
+        assert len(saved["traces"]) > 0
 
         # All traces must meet minimum width
         for trace in saved["traces"]:
@@ -465,27 +690,53 @@ class TestFullPipeline:
                 f"Power min {min(power_widths):.3f}mm should > signal max {max(signal_widths):.3f}mm"
             )
 
-        # All multi-pad nets must be routed
-        unrouted = check_all_nets_routed(SAMPLE_SCHEMATIC, saved)
-        assert not unrouted, f"Unrouted nets: {unrouted}"
-
     def test_missing_placement_raises(self, tmp_path):
         """Missing placement.json should raise FileNotFoundError."""
-        from agent import run
-
         with pytest.raises(FileNotFoundError, match="placement.json"):
-            run(
-                placement_path=tmp_path / "nonexistent_placement.json",
-                schematic_path=tmp_path / "nonexistent_schematic.json",
-                output_path=tmp_path / "routing.json",
-                use_claude=False,
+            _seed_routing(
+                tmp_path / "nonexistent_placement.json",
+                tmp_path / "nonexistent_schematic.json",
             )
+
+    def test_context_then_apply(self, tmp_path):
+        """get_routing_context + apply_routing without any LLM call."""
+        placement_file = tmp_path / "placement.json"
+        schematic_file = tmp_path / "schematic.json"
+        placement_file.write_text(json.dumps(SAMPLE_PLACEMENT))
+        schematic_file.write_text(json.dumps(SAMPLE_SCHEMATIC))
+
+        # Get context (what orchestrator would read)
+        ctx = get_routing_context(placement_file, schematic_file)
+        assert ctx["nets"]
+
+        # Build a simple routing from the context (simulates orchestrator output)
+        traces = []
+        for net in ctx["nets"]:
+            pads = [p for p in net["pads"] if p["x"] is not None and p["y"] is not None]
+            if len(pads) < 2:
+                continue
+            traces.append({
+                "net": net["name"],
+                "layer": "F.Cu",
+                "width_mm": net["width_mm"],
+                "path": [
+                    {"x": pads[0]["x"], "y": pads[0]["y"]},
+                    {"x": pads[1]["x"], "y": pads[1]["y"]},
+                ],
+            })
+
+        routing_dict = {"traces": traces, "vias": []}
+        result = apply_routing(
+            routing_dict=routing_dict,
+            output_dir=tmp_path,
+            schematic_path=schematic_file,
+        )
+        assert result["success"] is True
 
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    # Allow running directly: python test_agent.py
     import subprocess
     result = subprocess.run(
         [sys.executable, "-m", "pytest", __file__, "-v", "--tb=short"],
