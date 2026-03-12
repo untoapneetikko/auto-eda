@@ -1606,12 +1606,21 @@ async def api_pipeline_agent_chat(name: str, request: Request):
             else:
                 prompt = f"{_pa_system_prompt(name)}\n\n---\nUser: {user_msg}"
 
+            stderr_lines: list[str] = []
+
+            def _capture_stderr(line: str) -> None:
+                stderr_lines.append(line)
+                _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
+                                                    "chunk": f"\n[stderr] {line}", "is_tool": True})
+
             opts = ClaudeAgentOptions(
                 cwd=_pa_cwd(name),
                 allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep"],
                 permission_mode="bypassPermissions",
                 max_turns=40,
                 resume=existing_session,  # None on first call, session_id thereafter
+                env={"IS_SANDBOX": "1"},   # Allow bypassPermissions when running as root in Docker
+                stderr=_capture_stderr,    # Capture subprocess stderr for debugging
             )
 
             async for sdk_msg in query(prompt=prompt, options=opts):
