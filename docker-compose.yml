@@ -11,6 +11,8 @@ services:
       - ./shared:/app/shared
       - ./frontend:/app/frontend
       - ./backend:/app/backend
+      # Mount live .git so agents can commit/push from inside the container
+      - ./.git:/app/.git
       # Mount Claude Code config (writable so agents can save session history)
       - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude
     environment:
@@ -18,6 +20,8 @@ services:
       - DATA_DIR=/app/data
       - OUTPUT_DIR=/app/data/outputs
       - UPLOAD_DIR=/app/data/uploads
+      # GitHub token for agent git push — set in .env or shell: export GITHUB_TOKEN=ghp_...
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
       - redis
     restart: unless-stopped
@@ -31,6 +35,7 @@ services:
       - ./shared:/app/shared
       - ./backend:/app/backend
       - ./frontend:/app/frontend
+      - ./.git:/app/.git
       # Mount Claude Code config (writable so agents can save session history)
       - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude
     environment:
@@ -38,6 +43,7 @@ services:
       - DATA_DIR=/app/data
       - OUTPUT_DIR=/app/data/outputs
       - UPLOAD_DIR=/app/data/uploads
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
       - redis
     restart: unless-stopped
