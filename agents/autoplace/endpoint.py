@@ -2,8 +2,10 @@
 FastAPI router for the Auto-Place agent.
 
 Endpoints:
-    POST /agents/autoplace/run    — trigger a placement run (async via background task)
-    GET  /agents/autoplace/status — return current run status
+    GET  /agents/autoplace/context  — return placement context from schematic.json
+    POST /agents/autoplace/apply    — validate and persist a placement dict
+    POST /agents/autoplace/run      — 501 Not Implemented (orchestration is in Claude Code)
+    GET  /agents/autoplace/status   — 501 Not Implemented (no async jobs any more)
 
 Mount this router in backend/main.py:
     from agents.autoplace.endpoint import router as autoplace_router
@@ -11,22 +13,13 @@ Mount this router in backend/main.py:
 """
 from __future__ import annotations
 
-import json
 import logging
 import os
-import threading
-import time
-import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-
-# ---------------------------------------------------------------------------
-# Lazy import of the agent so the router can be imported even without
-# ANTHROPIC_API_KEY set (it is only needed at run time).
-# ---------------------------------------------------------------------------
 
 log = logging.getLogger(__name__)
 
@@ -34,119 +27,34 @@ router = APIRouter(prefix="/agents/autoplace", tags=["autoplace"])
 
 _ROOT = Path(__file__).parent.parent.parent
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", str(_ROOT / "data" / "outputs")))
-PLACEMENT_FILE = OUTPUT_DIR / "placement.json"
-
-# ---------------------------------------------------------------------------
-# In-memory job state (sufficient for single-node; swap for Redis in prod)
-# ---------------------------------------------------------------------------
-
-class _JobState:
-    def __init__(self) -> None:
-        self._lock = threading.Lock()
-        self._jobs: dict[str, dict[str, Any]] = {}
-
-    def create(self, job_id: str, params: dict[str, Any]) -> None:
-        with self._lock:
-            self._jobs[job_id] = {
-                "job_id": job_id,
-                "status": "queued",
-                "started_at": time.time(),
-                "finished_at": None,
-                "error": None,
-                "params": params,
-                "result_path": None,
-            }
-
-    def update(self, job_id: str, **kwargs: Any) -> None:
-        with self._lock:
-            if job_id in self._jobs:
-                self._jobs[job_id].update(kwargs)
-
-    def get(self, job_id: str) -> dict[str, Any] | None:
-        with self._lock:
-            return dict(self._jobs.get(job_id, {}))
-
-    def latest(self) -> dict[str, Any] | None:
-        """Return the most recently created job."""
-        with self._lock:
-            if not self._jobs:
-                return None
-            return dict(sorted(self._jobs.items(), key=lambda kv: kv[1]["started_at"])[-1][1])
-
-
-_state = _JobState()
 
 # ---------------------------------------------------------------------------
 # Request / response models
 # ---------------------------------------------------------------------------
 
 
-class RunRequest(BaseModel):
-    schematic_path: str | None = Field(
-        default=None,
-        description="Absolute path to schematic.json.  Defaults to OUTPUT_DIR/schematic.json.",
+class ContextResponse(BaseModel):
+    project_name: str
+    board: dict[str, float]
+    components: list[dict[str, Any]]
+    net_connections: dict[str, list[str]]
+
+
+class ApplyRequest(BaseModel):
+    placement_dict: dict[str, Any] = Field(
+        description="Placement dict with 'board' and 'placements' keys."
     )
     board_width_mm: float = Field(default=100.0, description="PCB board width in mm")
     board_height_mm: float = Field(default=80.0, description="PCB board height in mm")
 
 
-class RunResponse(BaseModel):
-    job_id: str
-    status: str
+class ApplyResponse(BaseModel):
+    success: bool
+    violations: list[dict[str, Any]]
+    drc_passed: bool
+    drc_output: str
+    placement_path: str | None
     message: str
-
-
-class StatusResponse(BaseModel):
-    job_id: str | None
-    status: str
-    started_at: float | None
-    finished_at: float | None
-    error: str | None
-    result_path: str | None
-    n_placements: int | None
-
-
-# ---------------------------------------------------------------------------
-# Background task
-# ---------------------------------------------------------------------------
-
-
-def _run_agent(job_id: str, params: dict[str, Any]) -> None:
-    """Execute the placement agent in the background."""
-    _state.update(job_id, status="running", started_at=time.time())
-
-    try:
-        # Import here to allow the module to load without ANTHROPIC_API_KEY.
-        from agents.autoplace.agent import run_placement  # noqa: PLC0415
-
-        schematic: dict[str, Any] | None = None
-        if params.get("schematic_path"):
-            with open(params["schematic_path"]) as f:
-                schematic = json.load(f)
-
-        result = run_placement(
-            schematic=schematic,
-            board_width=params.get("board_width_mm", 100.0),
-            board_height=params.get("board_height_mm", 80.0),
-        )
-
-        _state.update(
-            job_id,
-            status="done",
-            finished_at=time.time(),
-            result_path=str(PLACEMENT_FILE),
-            n_placements=len(result.get("placements", [])),
-        )
-        log.info("Job %s completed successfully (%d placements)", job_id, len(result.get("placements", [])))
-
-    except Exception as exc:  # noqa: BLE001
-        log.exception("Job %s failed: %s", job_id, exc)
-        _state.update(
-            job_id,
-            status="failed",
-            finished_at=time.time(),
-            error=str(exc),
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -154,73 +62,104 @@ def _run_agent(job_id: str, params: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/run", response_model=RunResponse, summary="Trigger a placement run")
-async def run_autoplace(request: RunRequest, background_tasks: BackgroundTasks) -> RunResponse:
+@router.get(
+    "/context",
+    response_model=ContextResponse,
+    summary="Return placement context from schematic.json",
+)
+async def get_context(
+    schematic_path: str | None = None,
+    board_width_mm: float = 100.0,
+    board_height_mm: float = 80.0,
+) -> ContextResponse:
     """
-    Trigger an asynchronous component placement run.
+    Read schematic.json and return structured placement context.
 
-    The agent reads schematic.json, calls Claude to compute optimal positions,
-    validates with the courtyard optimizer, and writes placement.json.
+    The orchestrator (Claude Code) reads this before designing placements.
     """
-    job_id = str(uuid.uuid4())
-    params = {
-        "schematic_path": request.schematic_path,
-        "board_width_mm": request.board_width_mm,
-        "board_height_mm": request.board_height_mm,
-    }
-    _state.create(job_id, params)
-    background_tasks.add_task(_run_agent, job_id, params)
-    log.info("Queued placement job %s", job_id)
-    return RunResponse(
-        job_id=job_id,
-        status="queued",
-        message=f"Placement job {job_id} queued.  Poll GET /agents/autoplace/status?job_id={job_id}",
+    from agents.autoplace.agent import get_placement_context  # noqa: PLC0415
+
+    try:
+        ctx = get_placement_context(
+            schematic_path=schematic_path,
+            board_width_mm=board_width_mm,
+            board_height_mm=board_height_mm,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        log.exception("get_placement_context failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return ContextResponse(**ctx)
+
+
+@router.post(
+    "/apply",
+    response_model=ApplyResponse,
+    summary="Validate and persist a placement dict",
+)
+async def apply_placement_endpoint(request: ApplyRequest) -> ApplyResponse:
+    """
+    Apply a placement dict produced by the orchestrator.
+
+    Runs courtyard overlap check (Polars) and external DRC, then writes
+    data/outputs/placement.json.  Returns success status and any violations.
+    """
+    from agents.autoplace.agent import apply_placement  # noqa: PLC0415
+
+    # Inject board dimensions into the placement dict if not already present.
+    placement_dict = dict(request.placement_dict)
+    placement_dict.setdefault("board", {})
+    placement_dict["board"].setdefault("width_mm", request.board_width_mm)
+    placement_dict["board"].setdefault("height_mm", request.board_height_mm)
+
+    try:
+        result = apply_placement(placement_dict=placement_dict)
+    except Exception as exc:  # noqa: BLE001
+        log.exception("apply_placement failed: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return ApplyResponse(**result)
+
+
+@router.post(
+    "/run",
+    status_code=501,
+    summary="Not implemented — orchestration is in Claude Code",
+)
+async def run_autoplace() -> dict[str, str]:
+    """
+    Trigger a placement run.
+
+    This endpoint is no longer implemented.  Orchestration is handled by
+    Claude Code.  Use GET /context then POST /apply instead.
+    """
+    raise HTTPException(
+        status_code=501,
+        detail=(
+            "POST /run is not implemented. "
+            "Use GET /agents/autoplace/context to read schematic data, "
+            "then POST /agents/autoplace/apply with the placement dict."
+        ),
     )
 
 
-@router.get("/status", response_model=StatusResponse, summary="Get placement run status")
-async def get_status(job_id: str | None = None) -> StatusResponse:
+@router.get(
+    "/status",
+    status_code=501,
+    summary="Not implemented — no async jobs any more",
+)
+async def get_status() -> dict[str, str]:
     """
-    Return status of a placement job.
+    Return run status.
 
-    If `job_id` is omitted, returns the status of the most recent job.
+    This endpoint is no longer implemented.  apply_placement is synchronous.
     """
-    if job_id:
-        job = _state.get(job_id)
-        if not job:
-            raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
-    else:
-        job = _state.latest()
-        if not job:
-            # No jobs yet — check if a placement file exists from a previous run.
-            if PLACEMENT_FILE.exists():
-                with open(PLACEMENT_FILE) as f:
-                    data = json.load(f)
-                return StatusResponse(
-                    job_id=None,
-                    status="done",
-                    started_at=None,
-                    finished_at=None,
-                    error=None,
-                    result_path=str(PLACEMENT_FILE),
-                    n_placements=len(data.get("placements", [])),
-                )
-            return StatusResponse(
-                job_id=None,
-                status="idle",
-                started_at=None,
-                finished_at=None,
-                error=None,
-                result_path=None,
-                n_placements=None,
-            )
-
-    return StatusResponse(
-        job_id=job.get("job_id"),
-        status=job.get("status", "unknown"),
-        started_at=job.get("started_at"),
-        finished_at=job.get("finished_at"),
-        error=job.get("error"),
-        result_path=job.get("result_path"),
-        n_placements=job.get("n_placements"),
+    raise HTTPException(
+        status_code=501,
+        detail=(
+            "GET /status is not implemented. "
+            "POST /agents/autoplace/apply is synchronous and returns results directly."
+        ),
     )
