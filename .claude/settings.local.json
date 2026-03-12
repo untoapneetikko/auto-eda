@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(cd \"C:\\\\Users\\\\akiny\\\\Desktop\\\\auto-eda\" && mv UsersakinyDesktopauto-eda/* . && mv UsersakinyDesktopauto-eda/.git . && mv UsersakinyDesktopauto-eda/.env.example . && mv UsersakinyDesktopauto-eda/.gitignore . && rmdir UsersakinyDesktopauto-eda 2>&1)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Skill(claude-api)",
+      "Bash(for d:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $d ===\")",
+      "Read(//c/Users/akiny/Desktop/auto-eda/agents/**)",
+      "Bash(done)",
+      "Bash(python --version && pip --version)",
+      "Bash(redis-cli ping:*)",
+      "Bash(where redis-server:*)",
+      "Bash(cd C:/Users/akiny/Desktop/auto-eda && pip install -r requirements.txt 2>&1 | tail -20)",
+      "Bash(docker run:*)",
+      "Bash(docker info:*)",
+      "Bash(docker context:*)",
+      "Bash(winget install:*)",
+      "Bash(winget search:*)",
+      "Bash(Start-Process \"C:\\\\Program Files\\\\Redis\\\\redis-server.exe\" -ArgumentList \"C:\\\\Program Files\\\\Redis\\\\redis.windows.conf\" -WindowStyle Hidden 2>&1; sleep 2; \"C:\\\\Program Files\\\\Redis\\\\redis-cli.exe\" ping)",
+      "Bash(cp /c/Users/akiny/Desktop/schematic_designer/index.html /c/Users/akiny/Desktop/auto-eda/frontend/static/index.html && echo \"index.html copied\"\ncp /c/Users/akiny/Desktop/schematic_designer/pcb.html /c/Users/akiny/Desktop/auto-eda/frontend/static/pcb.html && echo \"pcb.html copied\")",
+      "Bash(curl -s http://localhost:8000/api/library 2>&1 | head -100)",
+      "Bash(lsof -i :8000 -t 2>/dev/null || netstat -ano 2>/dev/null | grep \":8000 \" | head -5)",
+      "Bash(cmd /c \"taskkill /F /IM python.exe\" 2>&1 | head -5)",
+      "Bash(curl -s http://localhost:8000/api/library 2>&1)"
+    ]
+  }
+}

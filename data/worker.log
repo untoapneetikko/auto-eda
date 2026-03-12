@@ -1,0 +1,1 @@
+[worker] Started. Listening on redis://localhost:6379 queue=pipeline:queue

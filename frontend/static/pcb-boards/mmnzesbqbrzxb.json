@@ -1,0 +1,539 @@
+{
+  "version": "1.0",
+  "title": "setti",
+  "projectId": "6b751a3a673f",
+  "board": {
+    "width": 80,
+    "height": 60,
+    "units": "mm"
+  },
+  "components": [
+    {
+      "id": "U1",
+      "ref": "U1",
+      "value": "PMA3-83LNW+",
+      "footprint": "QFN-12-3x3",
+      "x": 11,
+      "y": 13,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "NC",
+          "x": -0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N4"
+        },
+        {
+          "number": "2",
+          "name": "RF-IN",
+          "x": 0,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "RFIN"
+        },
+        {
+          "number": "3",
+          "name": "NC",
+          "x": 0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N5"
+        },
+        {
+          "number": "4",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N6"
+        },
+        {
+          "number": "5",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N7"
+        },
+        {
+          "number": "6",
+          "name": "NC",
+          "x": 1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N13"
+        },
+        {
+          "number": "7",
+          "name": "NC",
+          "x": 0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N12"
+        },
+        {
+          "number": "8",
+          "name": "RF-OUT/DC-IN",
+          "x": 0,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "RFOUT"
+        },
+        {
+          "number": "9",
+          "name": "NC",
+          "x": -0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": "N11"
+        },
+        {
+          "number": "10",
+          "name": "NC",
+          "x": -1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "N10"
+        },
+        {
+          "number": "11",
+          "name": "NC (float)",
+          "x": -1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "NET_2"
+        },
+        {
+          "number": "12",
+          "name": "NC (float)",
+          "x": -1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": "NET_2"
+        },
+        {
+          "number": "0",
+          "name": "GND",
+          "x": 0,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 1.7,
+          "size_y": 1.7,
+          "net": "GND (PADDLE)"
+        }
+      ],
+      "_fromLE": true
+    },
+    {
+      "id": "L2",
+      "ref": "L2",
+      "value": "39nH 0402",
+      "footprint": "0402",
+      "x": 9.5,
+      "y": 9,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N15"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "5V/6V"
+        }
+      ],
+      "_fromLE": true
+    },
+    {
+      "id": "C1",
+      "ref": "C1",
+      "value": "0.01\u00b5F 0402",
+      "footprint": "0402",
+      "x": 11,
+      "y": 9,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N16"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "GND"
+        }
+      ],
+      "_fromLE": true
+    },
+    {
+      "id": "C3",
+      "ref": "C3",
+      "value": "100pF 0402",
+      "footprint": "0402",
+      "x": 12.5,
+      "y": 9,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RFOUT"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N12"
+        }
+      ],
+      "_fromLE": true
+    },
+    {
+      "id": "L1",
+      "ref": "L1",
+      "value": "18nH 0402",
+      "footprint": "0402",
+      "x": 10.5,
+      "y": 17,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "GND"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N14"
+        }
+      ],
+      "_fromLE": true
+    },
+    {
+      "id": "C2",
+      "ref": "C2",
+      "value": "10pF 0402",
+      "footprint": "0402",
+      "x": 12,
+      "y": 17,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RFIN"
+        },
+        {
+          "number": "2",
+          "name": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "N3"
+        }
+      ],
+      "_fromLE": true
+    }
+  ],
+  "nets": [
+    {
+      "name": "N4",
+      "pads": [
+        "U1.1"
+      ]
+    },
+    {
+      "name": "RFIN",
+      "pads": [
+        "U1.2",
+        "C2.1"
+      ]
+    },
+    {
+      "name": "N5",
+      "pads": [
+        "U1.3"
+      ]
+    },
+    {
+      "name": "N6",
+      "pads": [
+        "U1.4"
+      ]
+    },
+    {
+      "name": "N7",
+      "pads": [
+        "U1.5"
+      ]
+    },
+    {
+      "name": "N13",
+      "pads": [
+        "U1.6"
+      ]
+    },
+    {
+      "name": "N12",
+      "pads": [
+        "U1.7",
+        "C3.2"
+      ]
+    },
+    {
+      "name": "RFOUT",
+      "pads": [
+        "U1.8",
+        "C3.1"
+      ]
+    },
+    {
+      "name": "N11",
+      "pads": [
+        "U1.9"
+      ]
+    },
+    {
+      "name": "N10",
+      "pads": [
+        "U1.10"
+      ]
+    },
+    {
+      "name": "NET_2",
+      "pads": [
+        "U1.11",
+        "U1.12"
+      ]
+    },
+    {
+      "name": "GND (PADDLE)",
+      "pads": [
+        "U1.0"
+      ]
+    },
+    {
+      "name": "N15",
+      "pads": [
+        "L2.1"
+      ]
+    },
+    {
+      "name": "5V/6V",
+      "pads": [
+        "L2.2"
+      ]
+    },
+    {
+      "name": "N16",
+      "pads": [
+        "C1.1"
+      ]
+    },
+    {
+      "name": "GND",
+      "pads": [
+        "C1.2",
+        "L1.1"
+      ]
+    },
+    {
+      "name": "N14",
+      "pads": [
+        "L1.2"
+      ]
+    },
+    {
+      "name": "N3",
+      "pads": [
+        "C2.2"
+      ]
+    }
+  ],
+  "traces": [
+    {
+      "net": "RFOUT",
+      "segments": [
+        {
+          "start": {
+            "x": 11,
+            "y": 11.25
+          },
+          "end": {
+            "x": 11,
+            "y": 9.5
+          }
+        },
+        {
+          "start": {
+            "x": 11,
+            "y": 9.5
+          },
+          "end": {
+            "x": 9.5,
+            "y": 9.5
+          }
+        },
+        {
+          "start": {
+            "x": 11,
+            "y": 9.5
+          },
+          "end": {
+            "x": 12.5,
+            "y": 9.5
+          }
+        }
+      ]
+    },
+    {
+      "net": "RFIN",
+      "segments": [
+        {
+          "start": {
+            "x": 11,
+            "y": 14.75
+          },
+          "end": {
+            "x": 12,
+            "y": 17.31191986577228
+          }
+        },
+        {
+          "start": {
+            "x": 12,
+            "y": 17.31191986577228
+          },
+          "end": {
+            "x": 9.73,
+            "y": 16.71191986577228
+          }
+        },
+        {
+          "start": {
+            "x": 12,
+            "y": 17.31191986577228
+          },
+          "end": {
+            "x": 12,
+            "y": 17.31191986577228
+          }
+        }
+      ]
+    }
+  ],
+  "vias": [],
+  "zones": [],
+  "areas": [],
+  "_exGroupCount": 1,
+  "_exCompCount": 7,
+  "_leGroupCount": 1,
+  "_leApplied": true,
+  "id": "mmnzesbqbrzxb",
+  "updated_at": "2026-03-12T21:30:45.388679+00:00"
+}
