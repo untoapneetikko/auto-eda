@@ -1610,6 +1610,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
 
         try:
             from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage, SystemMessage, AssistantMessage  # type: ignore
+            from claude_agent_sdk.types import ThinkingConfigAdaptive  # type: ignore
 
             # First message: prepend system context; subsequent: just the user message
             if existing_session:
@@ -1650,6 +1651,8 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                 resume=existing_session,  # None on first call, session_id thereafter
                 env={"IS_SANDBOX": "1"},   # Allow bypassPermissions when running as root in Docker
                 stderr=_capture_stderr,    # Capture subprocess stderr for debugging
+                thinking=ThinkingConfigAdaptive(type="adaptive"),  # Show Claude's reasoning
+                effort="high",             # Use more thinking for complex tasks
             )
 
             async for sdk_msg in query(prompt=prompt, options=opts):
