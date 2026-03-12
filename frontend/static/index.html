@@ -8149,7 +8149,7 @@ function _handlePipelineSSE(evt, data) {
     else if (evt === 'pipeline_agent_done')  _paState[name].status = data.status === 'done' ? 'done' : data.status === 'error' ? 'error' : 'idle';
     const card = document.getElementById('pa-card-' + name);
     if (card) {
-      card.className = `pa-card${_paState[name].status === 'running' ? ' pa-running' : _paState[name].status === 'done' ? ' pa-done' : _paState[name].status === 'error' ? ' pa-error' : ''}`;
+      card.className = `pa-card${_paState[name].status === 'running' ? ' pa-running' : _paState[name].status === 'error' ? ' pa-error' : ''}`;
     }
   }
 
@@ -8200,16 +8200,15 @@ function _handlePipelineSSE(evt, data) {
   else if (evt === 'pipeline_agent_done') {
     _paHideThinking();
     _paUpdateModalStatus(data.status === 'done' ? 'done' : data.status === 'error' ? 'error' : 'idle');
-    // Finalise ts on last message
-    const msgEl = document.getElementById('pa-msg-' + data.msg_id);
-    if (msgEl) {
-      const ts = msgEl.querySelector('.pa-msg-ts');
-      if (ts) ts.textContent = new Date().toLocaleTimeString();
-    }
     const sessEl = document.getElementById('pa-modal-session');
     if (sessEl && data.session_id) sessEl.textContent = '⬤ session active';
     const btn = document.getElementById('pa-send-btn');
     if (btn) btn.disabled = false;
+    // Always reload full history from server to guarantee response is shown
+    fetch(`/api/pipeline/agents/${name}/history`)
+      .then(r => r.json())
+      .then(hist => { if (name === _activePaAgent) _paRenderHistory(hist); })
+      .catch(() => {});
     document.getElementById('pa-chat-input')?.focus();
     setTimeout(pipelineAgentsLoad, 400);
   }
