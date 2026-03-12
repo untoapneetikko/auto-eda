@@ -278,7 +278,7 @@
   #agents-drawer {
     position: fixed; top: 0; right: 0; width: 33vw; min-width: 320px; max-width: 860px;
     height: 100vh; background: #0d0f17; border-left: 1px solid var(--border);
-    z-index: 999; display: flex; flex-direction: column;
+    z-index: 999; display: flex; flex-direction: column; overflow: hidden;
     transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
     box-shadow: -8px 0 40px rgba(0,0,0,0.55);
   }
@@ -316,6 +316,15 @@
   .adr-close { background: none; border: none; color: #6b7280; font-size: 17px; cursor: pointer; line-height: 1; padding: 0 2px; }
   .adr-close:hover { color: var(--text); }
   .adr-body { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
+  .adr-section-hdr {
+    display: flex; align-items: center; gap: 8px; padding: 9px 14px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted); cursor: pointer; user-select: none; flex-shrink: 0;
+  }
+  .adr-section-hdr:hover { color: var(--text); }
+  .adr-section-hdr .adr-chevron { margin-left: auto; transition: transform .2s; font-style: normal; }
+  .adr-section-hdr.collapsed .adr-chevron { transform: rotate(-90deg); }
   /* ── AI Build section ── */
   #section-build { background:var(--bg); overflow-y:auto; }
   .build-page { max-width:860px; margin:0 auto; padding:40px 24px 80px; }
@@ -427,10 +436,9 @@
   .pa-chat-btn:hover { background:var(--accent); color:#fff; }
   .pa-chat-btn.running { background:rgba(239,68,68,0.1); border-color:#ef4444; color:#ef4444; }
 
-  /* ── Agent CLI Modal ── */
-  #pa-modal { display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.82); align-items:center; justify-content:center; }
-  #pa-modal.open { display:flex; }
-  .pa-modal-box { width:780px; max-width:96vw; height:82vh; max-height:700px; background:#0d0f17; border:1px solid #2a2d3a; border-radius:10px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 24px 80px rgba(0,0,0,0.7); }
+  /* ── Agent Chat Pane (inline in drawer) ── */
+  #pa-chat-pane { display:none; position:absolute; top:0; left:5px; right:0; bottom:0; background:#0d0f17; z-index:5; flex-direction:column; }
+  #pa-chat-pane.open { display:flex; }
   .pa-modal-hdr { display:flex; align-items:center; gap:9px; padding:10px 16px; background:#111320; border-bottom:1px solid #1e2130; flex-shrink:0; }
   .pa-modal-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
   .pa-modal-title { font-size:13px; font-weight:700; color:#e2e8f0; flex:1; }
@@ -477,14 +485,13 @@
 
 <!-- ── Top Navigation ─────────────────────────────────────────────────────── -->
 <header>
-  <h1>Schematic Designer</h1>
-  <nav class="main-nav" style="margin-left:24px;display:flex;gap:4px;">
+  <button onclick="switchSection('build')" style="background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(168,85,247,0.25));border:1px solid rgba(168,85,247,0.5);color:#c084fc;border-radius:7px;padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">✨ Build</button>
+  <nav class="main-nav" style="margin-left:16px;display:flex;gap:4px;">
     <button class="nav-tab active" id="nav-library" onclick="switchSection('library')">📚 Library</button>
     <button class="nav-tab" id="nav-schematic" onclick="switchSection('schematic')">📐 Schematic</button>
     <button class="nav-tab" id="nav-pcb" onclick="switchSection('pcb')">🔲 PCB</button>
-    <button class="nav-tab" id="nav-generate" onclick="switchSection('generate')">🎫 Generate</button>
-    <button class="nav-tab" id="nav-agents" onclick="toggleAgentsDrawer()">🤖 Agents</button>
-    <button class="nav-tab" id="nav-build" onclick="switchSection('build')" style="background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(168,85,247,0.2));border:1px solid rgba(168,85,247,0.4);color:#c084fc;">✨ Build</button>
+    <button class="nav-tab" id="nav-generate" style="display:none;"></button>
+    <button class="nav-tab" id="nav-build" style="display:none;"></button>
   </nav>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
     <span class="phase-badge">Phase 2 — Schematic Designer</span>
@@ -552,59 +559,7 @@
   <iframe id="pcb-frame" style="flex:1;border:none;width:100%;height:100%;" allowfullscreen></iframe>
 </div>
 
-<!-- ══ SECTION: GENERATE ═════════════════════════════════════════════════ -->
-<div id="section-generate" class="app-section hidden" style="display:flex;flex-direction:row;height:calc(100vh - 49px);overflow:hidden;">
-  <!-- Sidebar -->
-  <div style="width:150px;flex-shrink:0;border-right:1px solid var(--border);padding:12px 0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;background:var(--surface);">
-    <div style="padding:4px 14px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Type</div>
-    <button class="imp-filter-btn active" id="gt-filter-all" onclick="gtSetFilter('all',this)"><span style="font-size:12px;">🎫</span> All <span class="imp-filter-count" id="gt-count-all">0</span></button>
-    <button class="imp-filter-btn" id="gt-filter-footprint" onclick="gtSetFilter('footprint',this)"><span style="font-size:12px;">🔲</span> Footprint <span class="imp-filter-count" id="gt-count-footprint">0</span></button>
-    <button class="imp-filter-btn" id="gt-filter-example" onclick="gtSetFilter('example',this)"><span style="font-size:12px;">📐</span> Example <span class="imp-filter-count" id="gt-count-example">0</span></button>
-    <button class="imp-filter-btn" id="gt-filter-layout" onclick="gtSetFilter('layout',this)"><span style="font-size:12px;">🗺</span> Layout <span class="imp-filter-count" id="gt-count-layout">0</span></button>
-    <button class="imp-filter-btn" id="gt-filter-datasheet" onclick="gtSetFilter('datasheet',this)"><span style="font-size:12px;">🔷</span> Profile <span class="imp-filter-count" id="gt-count-datasheet">0</span></button>
-    <div style="margin:8px 14px;border-top:1px solid var(--border);"></div>
-    <div style="padding:4px 14px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Status</div>
-    <button class="imp-filter-btn" id="gt-filter-pending" onclick="gtSetFilter('pending',this)"><span class="imp-filter-dot" style="background:#d97706"></span> Pending <span class="imp-filter-count" id="gt-count-pending">0</span></button>
-    <button class="imp-filter-btn" id="gt-filter-done" onclick="gtSetFilter('done',this)"><span class="imp-filter-dot" style="background:#16a34a"></span> Done <span class="imp-filter-count" id="gt-count-done">0</span></button>
-  </div>
-  <!-- List -->
-  <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
-    <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <h2 style="font-size:14px;font-weight:700;margin:0;" id="gt-header-title">All Tickets</h2>
-      <span style="font-size:11px;color:var(--text-muted);" id="gt-header-count">0 tickets</span>
-    </div>
-    <div style="flex:1;overflow-y:auto;" id="gt-list">
-      <div style="padding:40px 20px;text-align:center;color:var(--text-muted);">
-        <div style="font-size:28px;opacity:.2;margin-bottom:10px;">🎫</div>
-        <div style="font-size:13px;font-weight:600;">No generate tickets yet</div>
-        <div style="font-size:11px;margin-top:6px;">Tickets are created automatically when auto-generation fails.<br>Go to Library → Component Layout → ⚡ Generate Footprint.</div>
-      </div>
-    </div>
-  </div>
-  <!-- Detail panel -->
-  <div style="width:440px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:var(--surface);" id="gt-detail">
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:12px;text-align:center;padding:20px;" id="gt-detail-empty">
-      <div><div style="font-size:24px;opacity:.2;margin-bottom:8px;">📋</div>Select a ticket to view the prompt</div>
-    </div>
-    <div style="display:none;flex-direction:column;flex:1;overflow:hidden;" id="gt-detail-content">
-      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;">
-        <div style="font-size:12px;font-weight:700;" id="gt-detail-title"></div>
-        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-          <span id="gt-detail-status-badge" style="font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;"></span>
-          <button onclick="gtMarkDone()" id="gt-done-btn" style="background:var(--accent);border:none;border-radius:4px;color:#fff;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">✓ Mark Done</button>
-          <button onclick="gtRetract()" id="gt-retract-btn" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:4px;color:#f59e0b;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;" title="Restore the component to its state before this ticket ran">↩ Retract</button>
-          <button onclick="gtDelete()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:4px;color:#ef4444;padding:3px 8px;font-size:11px;cursor:pointer;">✕</button>
-        </div>
-      </div>
-      <div style="padding:10px 16px;font-size:11px;color:var(--text-muted);flex-shrink:0;" id="gt-detail-meta"></div>
-      <div style="flex:1;overflow-y:auto;padding:0 16px 16px;">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px;">Claude Code Prompt — click to copy</div>
-        <div id="gt-prompt-text" class="copy-prompt" onclick="copyText(this)" title="Click to copy" style="font-size:11px;white-space:pre-wrap;min-height:80px;"></div>
-        <div class="copy-hint">Click the box to copy · Paste into Claude Code · Come back and mark Done when finished.</div>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- section-generate removed — tickets now live in the agents drawer -->
 
 <!-- ══ AGENTS DRAWER TOGGLE ════════════════════════════════════════════════ -->
 <button id="agents-drawer-toggle" onclick="toggleAgentsDrawer()" title="Open Agents Panel">
@@ -714,31 +669,75 @@
       </div>
     </div>
 
-  </div><!-- /adr-body -->
-</div><!-- /agents-drawer -->
+    <!-- ── Generate Tickets ──────────────────────────────────────────── -->
+    <div style="border-top:2px solid var(--border);">
+      <div class="adr-section-hdr" id="adr-tickets-hdr" onclick="toggleAdrSection('tickets')">
+        🎫 Generate Tickets
+        <span id="gt-header-count" style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+        <i class="adr-chevron">▾</i>
+      </div>
+      <div id="adr-tickets-body">
+        <!-- Filter pills -->
+        <div id="gt-tickets-filters" style="display:flex;flex-wrap:wrap;gap:4px;padding:8px 12px 6px;border-bottom:1px solid var(--border);">
+          <button class="imp-filter-btn active" id="gt-filter-all" onclick="gtSetFilter('all',this)">🎫 All <span class="imp-filter-count" id="gt-count-all">0</span></button>
+          <button class="imp-filter-btn" id="gt-filter-footprint" onclick="gtSetFilter('footprint',this)">🔲 FP <span class="imp-filter-count" id="gt-count-footprint">0</span></button>
+          <button class="imp-filter-btn" id="gt-filter-example" onclick="gtSetFilter('example',this)">📐 Ex <span class="imp-filter-count" id="gt-count-example">0</span></button>
+          <button class="imp-filter-btn" id="gt-filter-layout" onclick="gtSetFilter('layout',this)">🗺 Lay <span class="imp-filter-count" id="gt-count-layout">0</span></button>
+          <button class="imp-filter-btn" id="gt-filter-datasheet" onclick="gtSetFilter('datasheet',this)">🔷 Prof <span class="imp-filter-count" id="gt-count-datasheet">0</span></button>
+          <button class="imp-filter-btn" id="gt-filter-pending" onclick="gtSetFilter('pending',this)"><span class="imp-filter-dot" style="background:#d97706;display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;"></span>Pending <span class="imp-filter-count" id="gt-count-pending">0</span></button>
+          <button class="imp-filter-btn" id="gt-filter-done" onclick="gtSetFilter('done',this)"><span class="imp-filter-dot" style="background:#16a34a;display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;"></span>Done <span class="imp-filter-count" id="gt-count-done">0</span></button>
+        </div>
+        <!-- Ticket list -->
+        <div style="max-height:220px;overflow-y:auto;" id="gt-list">
+          <div style="padding:28px 16px;text-align:center;color:var(--text-muted);">
+            <div style="font-size:22px;opacity:.2;margin-bottom:8px;">🎫</div>
+            <div style="font-size:12px;font-weight:600;">No tickets yet</div>
+            <div style="font-size:10px;margin-top:4px;line-height:1.5;">Created automatically when auto-generation fails.</div>
+          </div>
+        </div>
+        <!-- Ticket detail inline -->
+        <div id="gt-detail" style="border-top:1px solid var(--border);">
+          <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:11px;" id="gt-detail-empty">
+            <div style="font-size:18px;opacity:.2;margin-bottom:6px;">📋</div>Select a ticket
+          </div>
+          <div style="display:none;flex-direction:column;" id="gt-detail-content">
+            <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div style="font-size:11px;font-weight:700;flex:1;min-width:0;" id="gt-detail-title"></div>
+              <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
+                <span id="gt-detail-status-badge" style="font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;"></span>
+                <button onclick="gtMarkDone()" id="gt-done-btn" style="background:var(--accent);border:none;border-radius:4px;color:#fff;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">✓ Done</button>
+                <button onclick="gtRetract()" id="gt-retract-btn" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:4px;color:#f59e0b;padding:2px 6px;font-size:10px;font-weight:700;cursor:pointer;" title="Retract">↩</button>
+                <button onclick="gtDelete()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:4px;color:#ef4444;padding:2px 6px;font-size:10px;cursor:pointer;">✕</button>
+              </div>
+            </div>
+            <div style="padding:5px 12px;font-size:10px;color:var(--text-muted);" id="gt-detail-meta"></div>
+            <div style="padding:0 12px 12px;">
+              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Prompt — click to copy</div>
+              <div id="gt-prompt-text" class="copy-prompt" onclick="copyText(this)" title="Click to copy" style="font-size:10px;white-space:pre-wrap;min-height:50px;max-height:180px;overflow-y:auto;"></div>
+              <div class="copy-hint" style="font-size:9px;">Click to copy · Paste into Claude Code · Mark Done when finished.</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /adr-tickets-body -->
+    </div>
 
-<!-- ══ AGENT CLI MODAL ════════════════════════════════════════════════════ -->
-<div id="pa-modal" onclick="if(event.target===this)paChatClose()">
-  <div class="pa-modal-box">
-    <!-- Header -->
+  <!-- ── Inline Agent Chat Pane (slides over drawer content) ── -->
+  <div id="pa-chat-pane">
     <div class="pa-modal-hdr">
-      <span id="pa-modal-icon" style="font-size:16px;flex-shrink:0;">🤖</span>
+      <button class="pa-modal-close" onclick="paChatClose()" title="Back to agents" style="font-size:14px;margin-right:4px;">←</button>
+      <span id="pa-modal-icon" style="font-size:15px;flex-shrink:0;">🤖</span>
       <span class="pa-modal-title" id="pa-modal-title">Agent</span>
       <span class="pa-modal-session" id="pa-modal-session"></span>
       <span class="pa-modal-status idle" id="pa-modal-status">idle</span>
-      <button class="pa-modal-close" onclick="paChatClose()">✕</button>
     </div>
-    <!-- Toolbar -->
     <div class="pa-modal-toolbar">
       <span style="font-size:10px;color:#4b5563;font-family:monospace;flex:1;" id="pa-modal-agent-name"></span>
-      <button class="pa-modal-tool-btn" onclick="paChatClear()">🗑 Clear history</button>
+      <button class="pa-modal-tool-btn" onclick="paChatClear()">🗑 Clear</button>
       <button class="pa-modal-tool-btn" onclick="paChatStop()">■ Stop</button>
     </div>
-    <!-- Chat area -->
     <div class="pa-chat-area" id="pa-chat-area">
       <div class="pa-system-line">— Session start —</div>
     </div>
-    <!-- Input -->
     <div class="pa-input-bar">
       <span class="pa-prompt-sym">▸</span>
       <div class="pa-input-wrap">
@@ -750,7 +749,9 @@
       <button class="pa-send-btn" id="pa-send-btn" onclick="paChatSend()">Send ↵</button>
     </div>
   </div>
-</div>
+
+  </div><!-- /adr-body -->
+</div><!-- /agents-drawer -->
 
 <!-- ══ SECTION: BUILD ══════════════════════════════════════════════════════ -->
 <div id="section-build" class="app-section hidden">
@@ -2099,7 +2100,7 @@ async function gtLoad() {
 
 function gtSetFilter(f, btn) {
   gtFilter = f;
-  document.querySelectorAll('#section-generate .imp-filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#gt-tickets-filters .imp-filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   gtRender();
 }
@@ -2389,7 +2390,7 @@ async function gtCreateTicket(type, slug, profile, rawText = null, extraNotes = 
   });
   showGenToast(`🎫 GT-${String(ticket.id).padStart(3,'0')} — ${title}`);
   // Refresh Generate tab if it's currently open
-  if (!document.getElementById('section-generate')?.classList.contains('hidden')) {
+  if (document.getElementById('agents-drawer')?.classList.contains('open')) {
     await gtLoad();
     gtSelect(ticket.id);
   }
@@ -4928,15 +4929,12 @@ async function copyText(el) {
 
 // ── Section switching ──────────────────────────────────────────────────────
 function switchSection(name) {
-  ['library','schematic','pcb','generate','build'].forEach(s => {
+  ['library','schematic','pcb','build'].forEach(s => {
     const sec = document.getElementById('section-' + s);
     const nav = document.getElementById('nav-' + s);
     if (sec) sec.classList.toggle('hidden', s !== name);
     if (nav) nav.classList.toggle('active', s === name);
   });
-  // agents nav button is never "active" as a section — it toggles the drawer
-  const navAgents = document.getElementById('nav-agents');
-  if (navAgents) navAgents.classList.remove('active');
   if (name === 'schematic') {
     setTimeout(() => { editor._resize(); renderSchPalette(document.getElementById('sch-lib-search')?.value || ''); }, 50);
   }
@@ -4955,12 +4953,6 @@ function switchSection(name) {
       // No project — just ensure canvas is correctly sized after becoming visible
       setTimeout(() => { try { frame?.contentWindow?.postMessage({ type: 'tabVisible' }, '*'); } catch(_) {} }, 100);
     }
-  }
-  if (name === 'generate') {
-    gtLoad();
-  }
-  if (name === 'agents') {
-    agentsLoad();
   }
   if (name === 'build') {
     buildLoad();
@@ -7960,9 +7952,19 @@ function toggleAgentsDrawer(forceOpen) {
   if (navBtn) navBtn.classList.toggle('active', _drawerOpen);
   if (_drawerOpen) {
     agentsLoad();
+    gtLoad();
   } else {
     clearTimeout(_agentsTimer);
   }
+}
+
+function toggleAdrSection(key) {
+  const body = document.getElementById('adr-' + key + '-body');
+  const hdr  = document.getElementById('adr-' + key + '-hdr');
+  if (!body) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  if (hdr) hdr.classList.toggle('collapsed', !hidden);
 }
 
 function _initDrawerResize() {
@@ -8098,14 +8100,16 @@ async function paOpenChat(name) {
   const agent = _paState[name];
   if (!agent) return;
 
-  // Update modal header
+  // Ensure drawer is open
+  if (!_drawerOpen) toggleAgentsDrawer(true);
+
+  // Update pane header
   document.getElementById('pa-modal-icon').textContent = agent.icon;
   document.getElementById('pa-modal-title').textContent = agent.label;
   document.getElementById('pa-modal-agent-name').textContent = `agents/${name}`;
 
-  // Show modal
-  document.getElementById('pa-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  // Show inline pane
+  document.getElementById('pa-chat-pane').classList.add('open');
 
   // Update status badge
   _paUpdateModalStatus(agent.status);
@@ -8119,8 +8123,7 @@ async function paOpenChat(name) {
 }
 
 function paChatClose() {
-  document.getElementById('pa-modal').classList.remove('open');
-  document.body.style.overflow = '';
+  document.getElementById('pa-chat-pane').classList.remove('open');
   _activePaAgent = null;
 }
 
