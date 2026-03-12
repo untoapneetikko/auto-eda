@@ -370,14 +370,6 @@
   @keyframes agentPulse { 0%{box-shadow:0 0 0 0 rgba(34,197,94,0.5)} 70%{box-shadow:0 0 0 7px rgba(34,197,94,0)} 100%{box-shadow:0 0 0 0 rgba(34,197,94,0)} }
   .agents-live-label { font-size:11px; color:#22c55e; font-weight:700; }
   .agents-auto-label { font-size:11px; color:var(--text-muted); margin-left:auto; }
-  .agents-columns { display:flex; flex:0 0 auto; height:calc(50vh - 30px); min-height:200px; overflow:hidden; gap:0; }
-  .agents-col { flex:1; display:flex; flex-direction:column; border-right:1px solid var(--border); min-width:0; overflow:hidden; }
-  .agents-col:last-child { border-right:none; }
-  .agents-col-header { padding:12px 18px 10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; flex-shrink:0; background:var(--surface); }
-  .agents-col-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); }
-  .agents-col-count { font-size:11px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:1px 7px; color:var(--text-muted); margin-left:auto; }
-  .agents-col-body { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
-  .agents-col-empty { flex:1; display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:12px; opacity:.5; }
   .agent-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; }
   .agent-card.active { border-color:rgba(108,99,255,0.5); background:rgba(108,99,255,0.06); }
   .agent-card.locked-other { border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.04); }
@@ -414,11 +406,12 @@
   .pipeline-section { border-top:1px solid var(--border); padding:14px 18px 18px; background:var(--bg); flex-shrink:0; }
   .pipeline-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
   .pipeline-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:9px; }
-  .pa-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:11px 13px; display:flex; flex-direction:column; gap:5px; transition:border-color .15s,background .15s; cursor:pointer; }
-  .pa-card:hover { border-color:var(--accent); }
-  .pa-card.pa-running { border-color:rgba(108,99,255,0.6); background:rgba(108,99,255,0.05); }
-  .pa-card.pa-done    { border-color:rgba(22,163,74,0.35); background:rgba(22,163,74,0.04); }
-  .pa-card.pa-error   { border-color:rgba(239,68,68,0.35); background:rgba(239,68,68,0.04); }
+  .pa-card { background:var(--surface); border:1px solid rgba(34,197,94,0.3); background:rgba(34,197,94,0.04); border-radius:8px; padding:11px 13px; display:flex; flex-direction:column; gap:5px; transition:border-color .15s,background .15s; cursor:pointer; }
+  .pa-card:hover { border-color:rgba(34,197,94,0.7); background:rgba(34,197,94,0.08); }
+  .pa-card.pa-running { border-color:#f59e0b; background:rgba(245,158,11,0.08); }
+  .pa-card.pa-running:hover { border-color:#fbbf24; background:rgba(245,158,11,0.14); }
+  .pa-card.pa-error   { border-color:rgba(239,68,68,0.5); background:rgba(239,68,68,0.06); }
+  .pa-card.pa-error:hover { border-color:#ef4444; background:rgba(239,68,68,0.1); }
   .pa-card-top { display:flex; align-items:center; gap:7px; }
   .pa-icon { font-size:15px; flex-shrink:0; }
   .pa-name { font-size:12px; font-weight:700; color:var(--text); flex:1; }
@@ -585,29 +578,13 @@
     <div class="da-bar">
       <div class="da-bar-label">⚡ Design Assistant — Claude Code on server</div>
       <div class="da-bar-hint">Describe any design change. Claude Code runs on the server and edits files directly.</div>
-      <div class="da-input-row">
+      <div class="da-input-row" style="align-items:stretch;">
         <textarea class="da-textarea" id="da-prompt" rows="2"
-          placeholder="e.g. "Fix the component save bug" or "Generate footprint for QPA9510""
+          placeholder="Describe what you need — Claude Code will handle it"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();daSend()}"
           oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-        <select class="da-agent-select" id="da-agent-select">
-          <option value="orchestrator">🎯 Orchestrator</option>
-          <option value="datasheet-parser">📄 Datasheet Parser</option>
-          <option value="library">📚 Library GUI</option>
-          <option value="component">🔷 Component Designer</option>
-          <option value="footprint">🔲 Footprint Designer</option>
-          <option value="example-schematic">📐 Example Schematic</option>
-          <option value="layout-example">🖼️ Layout Example</option>
-          <option value="schematic">🗺️ Schematic Agent</option>
-          <option value="schematic-gui">✏️ Schematic GUI</option>
-          <option value="connectivity">🔗 Connectivity Check</option>
-          <option value="autoplace">🧩 Auto Placer</option>
-          <option value="autoroute">〰️ Auto Router</option>
-          <option value="layout">📋 Layout Assembler</option>
-          <option value="layout-gui">🖥️ Layout GUI</option>
-          <option value="import-export">📤 Import / Export</option>
-        </select>
-        <button class="da-send" onclick="daSend()">Run ↵</button>
+        <input type="hidden" id="da-agent-select" value="orchestrator">
+        <button class="da-send" onclick="daSend()" style="align-self:stretch;height:auto;">Run ↵</button>
       </div>
       <div class="da-flow">
         <span class="da-flow-step">Prompt</span>
@@ -617,37 +594,6 @@
         <span class="da-flow-step">Claude Code CLI</span>
         <span class="da-flow-arrow">→</span>
         <span class="da-flow-step">Edit files</span>
-      </div>
-    </div>
-
-    <!-- ── Live Agents ───────────────────────────────────────────────── -->
-    <div class="agents-columns" style="height:auto;min-height:120px;max-height:260px;">
-      <div class="agents-col">
-        <div class="agents-col-header">
-          <span class="agents-col-title">🟣 Working</span>
-          <span class="agents-col-count" id="agents-working-count">0</span>
-        </div>
-        <div class="agents-col-body" id="agents-working-list">
-          <div class="agents-col-empty">No agents active</div>
-        </div>
-      </div>
-      <div class="agents-col">
-        <div class="agents-col-header">
-          <span class="agents-col-title">⏳ Queue</span>
-          <span class="agents-col-count" id="agents-queue-count">0</span>
-        </div>
-        <div class="agents-col-body" id="agents-queue-list">
-          <div class="agents-col-empty">No tickets</div>
-        </div>
-      </div>
-      <div class="agents-col">
-        <div class="agents-col-header">
-          <span class="agents-col-title">✅ Done</span>
-          <span class="agents-col-count" id="agents-done-count">0</span>
-        </div>
-        <div class="agents-col-body" id="agents-done-list">
-          <div class="agents-col-empty">Nothing yet</div>
-        </div>
       </div>
     </div>
 
@@ -7857,39 +7803,20 @@ function agentsLiveCard(agent) {
 async function agentsLoad() {
   clearTimeout(_agentsTimer);
 
-  const liveAgents = await fetch('/api/agents').then(r => r.json()).catch(() => []);
+  await pipelineAgentsLoad();
 
-  const working    = liveAgents.filter(a => a.status === 'working' || a.status === 'stale');
-  const doneAgents = liveAgents.filter(a => a.status === 'done');
-
-  const wEl = document.getElementById('agents-working-list');
-  const qEl = document.getElementById('agents-queue-list');
-  const dEl = document.getElementById('agents-done-list');
-
-  if (wEl) wEl.innerHTML = working.length ? working.map(agentsLiveCard).join('') : '<div class="agents-col-empty">No agents active</div>';
-  if (qEl) qEl.innerHTML = '<div class="agents-col-empty">No tickets in queue</div>';
-  if (dEl) dEl.innerHTML = doneAgents.length ? doneAgents.map(agentsLiveCard).join('') : '<div class="agents-col-empty">Nothing completed yet</div>';
-
-  const activeCount = working.length;
-  const wc = document.getElementById('agents-working-count'); if (wc) wc.textContent = activeCount;
-  const qc = document.getElementById('agents-queue-count');   if (qc) qc.textContent = 0;
-  const dc = document.getElementById('agents-done-count');    if (dc) dc.textContent = doneAgents.length;
+  // Badge = number of running pipeline agents
+  const running = Object.values(_paState).filter(a => a.status === 'running').length;
+  const badge = document.getElementById('agents-toggle-badge');
+  if (badge) { badge.textContent = running; badge.classList.toggle('visible', running > 0); }
 
   const liveEl = document.getElementById('agents-live-indicator');
-  if (liveEl) liveEl.style.display = activeCount ? 'flex' : 'none';
+  if (liveEl) liveEl.style.display = running ? 'flex' : 'none';
   const acEl = document.getElementById('agents-active-count');
-  if (acEl) acEl.textContent = activeCount + ' active';
+  if (acEl) acEl.textContent = running + ' running';
 
   const tsEl = document.getElementById('agents-last-refresh');
-  if (tsEl) tsEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
-
-  // Also refresh pipeline agents
-  pipelineAgentsLoad();
-
-  // Update toggle badge
-  const badge = document.getElementById('agents-toggle-badge');
-  const activeN = document.querySelectorAll('#agents-working-list .agent-card').length;
-  if (badge) { badge.textContent = activeN; badge.classList.toggle('visible', activeN > 0); }
+  if (tsEl) tsEl.textContent = new Date().toLocaleTimeString();
 
   // Auto-refresh every 3s while drawer is open
   const drawer = document.getElementById('agents-drawer');
@@ -8020,7 +7947,7 @@ function paTimeAgo(iso) {
 function paCard(agent) {
   const st = agent.status;
   const dotCls = st === 'running' ? 'running' : st === 'done' ? 'done' : st === 'error' ? 'error' : 'idle';
-  const cardCls = st === 'running' ? 'pa-running' : st === 'done' ? 'pa-done' : st === 'error' ? 'pa-error' : '';
+  const cardCls = st === 'running' ? 'pa-running' : st === 'error' ? 'pa-error' : '';
   const statusLabel = st === 'running' ? '⚡ Running' : st === 'done' ? '✓ Done' : st === 'error' ? '✗ Error' : 'Idle';
   const msgBadge = agent.msg_count ? `<span class="pa-badge">${agent.msg_count} msg${agent.msg_count!==1?'s':''}</span>` : '';
   const preview = agent.last_msg ? `<div class="pa-msg-preview">${esc(agent.last_msg)}</div>` : '';
