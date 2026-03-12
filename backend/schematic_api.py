@@ -1430,5 +1430,119 @@ def api_gen_tickets_retract(tid: int):
     return {"ok": True, "restored_snapshot": snap_file.stem}
 
 
+# ── Pipeline Agents ──────────────────────────────────────────────────────────
+# In-memory state: agent_name → {status, last_run, log, run_id}
+_PIPELINE_AGENTS = {
+    "datasheet-parser":  {"label": "Datasheet Parser",  "icon": "📄", "desc": "Parse component datasheets into structured JSON profiles"},
+    "component":         {"label": "Component Designer","icon": "🔷", "desc": "Generate KiCad symbol and rich component profile from parsed data"},
+    "footprint":         {"label": "Footprint Designer","icon": "🔲", "desc": "Generate PCB footprint JSON from component package information"},
+    "example-schematic": {"label": "Example Schematic", "icon": "📐", "desc": "Build a reference application schematic for the component"},
+    "schematic":         {"label": "Schematic Agent",   "icon": "🗺️", "desc": "Design the full project schematic from a brief description"},
+    "connectivity":      {"label": "Connectivity Check","icon": "🔗", "desc": "Verify net connectivity, detect orphans, floating pins, loops"},
+    "autoplace":         {"label": "Auto Placer",       "icon": "🧩", "desc": "Place components on the PCB canvas using heuristic clustering"},
+    "autoroute":         {"label": "Auto Router",       "icon": "〰️", "desc": "Route PCB traces between component pads"},
+    "layout":            {"label": "Layout Assembler",  "icon": "📋", "desc": "Assemble the final PCB layout JSON and KiCad PCB file"},
+}
+_pipeline_state: dict[str, dict] = {
+    name: {"status": "idle", "last_run": None, "log": "", "run_id": None}
+    for name in _PIPELINE_AGENTS
+}
+_pipeline_tasks: dict[str, asyncio.Task] = {}
+
+PROJECT_ROOT_SA = Path(__file__).parent.parent
+
+@router.get("/pipeline/agents")
+def api_pipeline_agents_list():
+    """Return all pipeline agents with their current state."""
+    result = []
+    for name, meta in _PIPELINE_AGENTS.items():
+        state = _pipeline_state[name]
+        result.append({
+            "name": name,
+            "label": meta["label"],
+            "icon": meta["icon"],
+            "desc": meta["desc"],
+            "status": state["status"],
+            "last_run": state["last_run"],
+            "log": state["log"][-2000:] if state["log"] else "",
+        })
+    return result
+
+@router.post("/pipeline/agents/{name}/run")
+async def api_pipeline_agent_run(name: str, request: Request):
+    """Awaken a specific pipeline agent — spawns a Claude Code session."""
+    if name not in _PIPELINE_AGENTS:
+        raise HTTPException(404, f"Unknown agent: {name}")
+    if _pipeline_state[name]["status"] == "running":
+        raise HTTPException(409, "Agent is already running")
+
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    user_input = body.get("input", "")
+
+    # Load agent's CLAUDE.md for context
+    claude_md_path = PROJECT_ROOT_SA / "agents" / name / "CLAUDE.md"
+    agent_context = ""
+    if claude_md_path.exists():
+        agent_context = f"\n\n---\nAgent context from CLAUDE.md:\n{claude_md_path.read_text(encoding='utf-8')}"
+
+    cwd = str(PROJECT_ROOT_SA / "agents" / name) if (PROJECT_ROOT_SA / "agents" / name).exists() else str(PROJECT_ROOT_SA)
+
+    task_prompt = (
+        f"You are the '{name}' EDA pipeline agent for the auto-eda project.\n"
+        f"Project root: {PROJECT_ROOT_SA}\n"
+        f"Your outputs should go to: {PROJECT_ROOT_SA / 'data' / 'outputs'}\n"
+        f"\nUser request: {user_input or 'Run your standard pipeline step.'}"
+        f"{agent_context}"
+    )
+
+    run_id = f"{name}-{int(time.time())}"
+    _pipeline_state[name].update({"status": "running", "last_run": datetime.now(timezone.utc).isoformat(), "log": "", "run_id": run_id})
+    _broadcast("pipeline_agent_started", {"name": name, "run_id": run_id, "label": _PIPELINE_AGENTS[name]["label"]})
+
+    async def _run():
+        log_lines: list[str] = []
+        try:
+            from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage  # type: ignore
+            opts = ClaudeAgentOptions(
+                cwd=cwd,
+                allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep"],
+                permission_mode="bypassPermissions",
+                max_turns=30,
+            )
+            async for msg in query(prompt=task_prompt, options=opts):
+                if isinstance(msg, ResultMessage):
+                    log_lines.append(f"[result] {msg.result[:500]}")
+                else:
+                    txt = str(msg)[:200]
+                    log_lines.append(txt)
+                _pipeline_state[name]["log"] = "\n".join(log_lines[-50:])
+                _broadcast("pipeline_agent_log", {"name": name, "line": log_lines[-1] if log_lines else ""})
+            _pipeline_state[name]["status"] = "done"
+            _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "done"})
+        except Exception as exc:
+            _pipeline_state[name]["status"] = "error"
+            _pipeline_state[name]["log"] += f"\n[error] {exc}"
+            _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "error", "error": str(exc)})
+
+    task = asyncio.create_task(_run())
+    _pipeline_tasks[name] = task
+    return {"ok": True, "run_id": run_id, "name": name}
+
+@router.post("/pipeline/agents/{name}/stop")
+async def api_pipeline_agent_stop(name: str):
+    """Cancel a running pipeline agent task."""
+    if name not in _PIPELINE_AGENTS:
+        raise HTTPException(404, f"Unknown agent: {name}")
+    task = _pipeline_tasks.get(name)
+    if task and not task.done():
+        task.cancel()
+        _pipeline_state[name]["status"] = "idle"
+        _broadcast("pipeline_agent_done", {"name": name, "status": "cancelled"})
+    return {"ok": True}
+
 # ── Startup: rebuild index ─────────────────────────────────────────────────────
 _update_index()

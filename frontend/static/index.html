@@ -345,6 +345,36 @@
   .agent-card-obs { font-size:11px; color:var(--text-muted); line-height:1.4; max-height:54px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
   .agent-card-time { font-size:10px; color:var(--text-muted); margin-top:2px; }
   .agent-card-pri { font-size:10px; font-weight:700; border-radius:4px; padding:1px 6px; flex-shrink:0; }
+
+  /* ── Pipeline Agents ── */
+  .pipeline-section { border-top:1px solid var(--border); padding:16px 20px 20px; background:var(--bg); flex-shrink:0; overflow-y:auto; max-height:50vh; }
+  .pipeline-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .pipeline-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; }
+  .pa-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; gap:6px; transition:border-color .15s; }
+  .pa-card.pa-running { border-color:rgba(108,99,255,0.6); background:rgba(108,99,255,0.05); }
+  .pa-card.pa-done    { border-color:rgba(22,163,74,0.4);  background:rgba(22,163,74,0.04); }
+  .pa-card.pa-error   { border-color:rgba(239,68,68,0.4);  background:rgba(239,68,68,0.04); }
+  .pa-card-top { display:flex; align-items:center; gap:7px; }
+  .pa-icon { font-size:16px; flex-shrink:0; }
+  .pa-name { font-size:12px; font-weight:700; color:var(--text); }
+  .pa-status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-left:auto; }
+  .pa-status-dot.idle    { background:#4b5563; border:1.5px dashed #6b7280; }
+  .pa-status-dot.running { background:#6c63ff; box-shadow:0 0 0 0 rgba(108,99,255,0.5); animation:agentPulse2 2s infinite; }
+  .pa-status-dot.done    { background:#16a34a; }
+  .pa-status-dot.error   { background:#ef4444; }
+  .pa-desc { font-size:11px; color:var(--text-muted); line-height:1.4; }
+  .pa-log  { font-size:10px; font-family:monospace; color:#a5b4fc; background:#0a0c12; border-radius:4px; padding:6px 8px; max-height:60px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; display:none; }
+  .pa-log.visible { display:block; }
+  .pa-footer { display:flex; align-items:center; gap:7px; margin-top:2px; }
+  .pa-last-run { font-size:10px; color:var(--text-muted); flex:1; }
+  .pa-btn { font-size:11px; font-weight:700; border-radius:5px; padding:4px 12px; cursor:pointer; border:1px solid; transition:all .15s; flex-shrink:0; }
+  .pa-btn-awake  { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+  .pa-btn-awake:hover { background:var(--accent); color:#fff; }
+  .pa-btn-stop   { background:rgba(239,68,68,0.1); border-color:#ef4444; color:#ef4444; }
+  .pa-btn-stop:hover { background:#ef4444; color:#fff; }
+  .pa-input-row  { display:none; gap:6px; margin-top:2px; }
+  .pa-input-row.visible { display:flex; }
+  .pa-input { flex:1; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:5px; padding:4px 8px; font-size:11px; }
 </style>
 </head>
 <body>
@@ -522,6 +552,18 @@
         <div class="agents-col-body" id="agents-done-list">
           <div class="agents-col-empty">Nothing completed yet</div>
         </div>
+      </div>
+    </div>
+
+    <!-- ── Pipeline Agents ───────────────────────────────────────────── -->
+    <div class="pipeline-section">
+      <div class="pipeline-section-title">
+        ⚡ EDA Pipeline Agents
+        <span style="font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">Awaken any agent to run it standalone via Claude Code CLI</span>
+      </div>
+      <div class="pipeline-grid" id="pipeline-agents-grid">
+        <!-- populated by pipelineAgentsLoad() -->
+        <div style="color:var(--text-muted);font-size:12px;grid-column:1/-1;padding:8px 0;">Loading…</div>
       </div>
     </div>
   </div>
@@ -703,6 +745,9 @@ evtSource.addEventListener('profile_updated', e => {
   loadLibrary();
   if (selectedSlug === slug) loadProfile(slug);
 });
+evtSource.addEventListener('pipeline_agent_started', e => _handlePipelineSSE('pipeline_agent_started', JSON.parse(e.data)));
+evtSource.addEventListener('pipeline_agent_log',     e => _handlePipelineSSE('pipeline_agent_log',     JSON.parse(e.data)));
+evtSource.addEventListener('pipeline_agent_done',    e => _handlePipelineSSE('pipeline_agent_done',    JSON.parse(e.data)));
 
 // ── Designer mode toggle (must be before init call) ──────────────────────────
 const DESIGNER_TABS = ['generate', 'agents'];
@@ -8241,10 +8286,137 @@ async function agentsLoad() {
   const tsEl = document.getElementById('agents-last-refresh');
   if (tsEl) tsEl.textContent = 'Updated ' + new Date().toLocaleTimeString();
 
+  // Also refresh pipeline agents
+  pipelineAgentsLoad();
+
   // Auto-refresh every 3s while tab is visible
   const sec = document.getElementById('section-agents');
   if (sec && !sec.classList.contains('hidden')) {
     _agentsTimer = setTimeout(agentsLoad, 3000);
+  }
+}
+
+// ── Pipeline Agents ──────────────────────────────────────────────────────────
+let _paState = {}; // name → agent object from API
+
+function paTimeAgo(iso) {
+  if (!iso) return 'Never run';
+  const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (diff < 60) return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  return Math.floor(diff/86400) + 'd ago';
+}
+
+function paCard(agent) {
+  const st = agent.status; // idle | running | done | error
+  const dotCls = st === 'running' ? 'running' : st === 'done' ? 'done' : st === 'error' ? 'error' : 'idle';
+  const cardCls = st === 'running' ? 'pa-running' : st === 'done' ? 'pa-done' : st === 'error' ? 'pa-error' : '';
+  const statusLabel = st === 'running' ? '⚡ Running…' : st === 'done' ? '✓ Done' : st === 'error' ? '✗ Error' : 'Idle';
+  const hasLog = agent.log && agent.log.trim().length > 0;
+  const btn = st === 'running'
+    ? `<button class="pa-btn pa-btn-stop" onclick="paStop('${agent.name}')">■ Stop</button>`
+    : `<button class="pa-btn pa-btn-awake" onclick="paAwake('${agent.name}')">⚡ Awake</button>`;
+  return `<div class="pa-card ${cardCls}" id="pa-card-${agent.name}">
+    <div class="pa-card-top">
+      <span class="pa-icon">${agent.icon}</span>
+      <span class="pa-name">${esc(agent.label)}</span>
+      <span class="pa-status-dot ${dotCls}" title="${statusLabel}"></span>
+    </div>
+    <div class="pa-desc">${esc(agent.desc)}</div>
+    <div class="pa-input-row${st === 'idle' || st === 'done' || st === 'error' ? '' : ''}" id="pa-input-row-${agent.name}">
+      <input class="pa-input" id="pa-input-${agent.name}" placeholder="Optional: context or slug…" onkeydown="if(event.key==='Enter')paRunWithInput('${agent.name}')">
+    </div>
+    <pre class="pa-log${hasLog ? ' visible' : ''}" id="pa-log-${agent.name}">${esc((agent.log||'').slice(-800))}</pre>
+    <div class="pa-footer">
+      <span class="pa-last-run">${statusLabel} · ${paTimeAgo(agent.last_run)}</span>
+      ${btn}
+    </div>
+  </div>`;
+}
+
+async function pipelineAgentsLoad() {
+  const agents = await fetch('/api/pipeline/agents').then(r=>r.json()).catch(()=>[]);
+  _paState = {};
+  agents.forEach(a => _paState[a.name] = a);
+  const grid = document.getElementById('pipeline-agents-grid');
+  if (grid) grid.innerHTML = agents.length ? agents.map(paCard).join('') : '<div style="color:var(--text-muted);font-size:12px;">No pipeline agents found.</div>';
+}
+
+function paAwake(name) {
+  // Show input row then run
+  const row = document.getElementById('pa-input-row-' + name);
+  if (row) {
+    if (!row.classList.contains('visible')) {
+      row.classList.add('visible');
+      const inp = document.getElementById('pa-input-' + name);
+      if (inp) inp.focus();
+      return;
+    }
+  }
+  paRunWithInput(name);
+}
+
+async function paRunWithInput(name) {
+  const inp = document.getElementById('pa-input-' + name);
+  const input = inp ? inp.value.trim() : '';
+  await paRun(name, input);
+}
+
+async function paRun(name, input) {
+  const card = document.getElementById('pa-card-' + name);
+  if (card) {
+    card.classList.remove('pa-done','pa-error');
+    card.classList.add('pa-running');
+  }
+  // Optimistic update
+  if (_paState[name]) _paState[name].status = 'running';
+  const btn = card ? card.querySelector('.pa-btn') : null;
+  if (btn) { btn.className = 'pa-btn pa-btn-stop'; btn.textContent = '■ Stop'; btn.setAttribute('onclick', `paStop('${name}')`); }
+  const logEl = document.getElementById('pa-log-' + name);
+  if (logEl) { logEl.textContent = 'Starting…'; logEl.classList.add('visible'); }
+
+  const res = await fetch(`/api/pipeline/agents/${name}/run`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({input}),
+  }).then(r=>r.json()).catch(e=>({error: String(e)}));
+
+  if (res.error) {
+    if (logEl) logEl.textContent = 'Error: ' + res.error;
+    if (card) { card.classList.remove('pa-running'); card.classList.add('pa-error'); }
+    if (_paState[name]) _paState[name].status = 'error';
+  }
+}
+
+async function paStop(name) {
+  await fetch(`/api/pipeline/agents/${name}/stop`, {method:'POST'}).catch(()=>{});
+  if (_paState[name]) _paState[name].status = 'idle';
+  pipelineAgentsLoad();
+}
+
+// Listen to SSE for pipeline agent updates
+function _handlePipelineSSE(evt, data) {
+  if (evt === 'pipeline_agent_started') {
+    const card = document.getElementById('pa-card-' + data.name);
+    if (card) { card.classList.remove('pa-done','pa-error'); card.classList.add('pa-running'); }
+    const logEl = document.getElementById('pa-log-' + data.name);
+    if (logEl) { logEl.textContent = 'Starting…'; logEl.classList.add('visible'); }
+  } else if (evt === 'pipeline_agent_log') {
+    const logEl = document.getElementById('pa-log-' + data.name);
+    if (logEl) {
+      logEl.textContent += (logEl.textContent ? '\n' : '') + (data.line || '');
+      logEl.scrollTop = logEl.scrollHeight;
+      logEl.classList.add('visible');
+    }
+  } else if (evt === 'pipeline_agent_done') {
+    const card = document.getElementById('pa-card-' + data.name);
+    if (card) {
+      card.classList.remove('pa-running');
+      card.classList.add(data.status === 'done' ? 'pa-done' : 'pa-error');
+    }
+    // Refresh full state after a moment
+    setTimeout(pipelineAgentsLoad, 500);
   }
 }
 
