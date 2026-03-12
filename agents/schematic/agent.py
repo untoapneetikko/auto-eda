@@ -1,23 +1,16 @@
 """
-agent.py — Schematic Agent
+agent.py — Schematic Agent (tool layer — no LLM calls)
 
 Reads:
   data/outputs/datasheet.json
   data/outputs/component.json
   data/outputs/example_schematic.json
 
-Accepts:
-  project_brief (str) — user's design intent
+Exposes:
+  get_design_context()  — compact summary for the orchestrator to read before designing
+  apply_schematic(schematic_dict, output_dir=None)  — validate + write schematic.json
 
-Produces:
-  data/outputs/schematic.json  (matches shared/schemas/schematic_output.json)
-
-Process:
-  1. Load all three input files
-  2. Pre-compute net names via net_namer.suggest_net_names()
-  3. Call Claude with a structured prompt containing all inputs + brief
-  4. Parse and validate the JSON response against the schema
-  5. Write validated output to disk
+The orchestrator (Claude Code) does the reasoning.  Python is pure tools.
 """
 
 from __future__ import annotations
@@ -26,12 +19,9 @@ import json
 import os
 import re
 import sys
-import textwrap
+import subprocess
 from pathlib import Path
 from typing import Any
-
-import anthropic
-from dotenv import load_dotenv
 
 # Local helpers
 from net_namer import suggest_net_names  # noqa: E402
@@ -39,8 +29,6 @@ from net_namer import suggest_net_names  # noqa: E402
 # ---------------------------------------------------------------------------
 # Environment / paths
 # ---------------------------------------------------------------------------
-
-load_dotenv()
 
 _ROOT = Path(os.getenv("DATA_DIR", Path(__file__).parent.parent.parent / "data"))
 _OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", _ROOT / "outputs"))
@@ -52,8 +40,6 @@ COMPONENT_PATH = _OUTPUT_DIR / "component.json"
 EXAMPLE_SCH_PATH = _OUTPUT_DIR / "example_schematic.json"
 SCHEMATIC_OUT_PATH = _OUTPUT_DIR / "schematic.json"
 SCHEMA_PATH = _SCHEMA_DIR / "schematic_output.json"
-
-MODEL = "claude-sonnet-4-20250514"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -79,171 +65,25 @@ def _extract_json_block(text: str) -> str:
     return text.strip()
 
 
-def _validate(output_path: Path) -> bool:
-    """Run schema_validator.py. Returns True if valid."""
-    import subprocess  # noqa: PLC0415
+def _validate(output_path: Path) -> tuple[bool, list[str]]:
+    """
+    Run schema_validator.py against output_path.
+
+    Returns (valid: bool, errors: list[str]).
+    """
+    if not _VALIDATOR.exists():
+        # No external validator — skip silently
+        return True, []
 
     result = subprocess.run(
         [sys.executable, str(_VALIDATOR), str(output_path), str(SCHEMA_PATH)],
         capture_output=True,
         text=True,
     )
-    print(result.stdout, end="")
+    errors: list[str] = []
     if result.returncode != 0:
-        print(result.stderr, file=sys.stderr)
-    return result.returncode == 0
-
-
-def _build_prompt(
-    datasheet: dict[str, Any],
-    component: dict[str, Any],
-    example_schematic: dict[str, Any],
-    project_brief: str,
-    net_hints: dict[str, str],
-) -> str:
-    schema = _load_json(SCHEMA_PATH, "schematic_output schema")
-
-    return textwrap.dedent(f"""
-        You are an expert electronics engineer designing a complete project schematic.
-
-        ## Project Brief
-        {project_brief}
-
-        ## Pre-computed Net Name Suggestions
-        The following mappings were derived from the component's pin functions.
-        Use these names verbatim; do NOT invent NET001-style names.
-
-        ```json
-        {json.dumps(net_hints, indent=2)}
-        ```
-
-        ## Datasheet Data
-        ```json
-        {json.dumps(datasheet, indent=2)}
-        ```
-
-        ## Component Symbol Data
-        ```json
-        {json.dumps(component, indent=2)}
-        ```
-
-        ## Example Application Schematic (from datasheet)
-        ```json
-        {json.dumps(example_schematic, indent=2)}
-        ```
-
-        ## Required Output Schema
-        ```json
-        {json.dumps(schema, indent=2)}
-        ```
-
-        ## Design Rules — follow these exactly
-
-        ### Step 1 — Name all nets BEFORE placing any components
-        - Every net must have a meaningful human-readable name.
-        - Power nets: include voltage in name (VCC_3V3, VCC_5V, VCC_12V).
-        - Interface nets: I2C_SDA, SPI_MOSI, UART_TX, etc.
-        - Active-low signals: prefix with n (nRESET, nOE, nFAULT).
-        - Analog nets: ADC_IN, DAC_OUT, VREF.
-        - NEVER use NET001 / NET002 / etc.
-        - Use the pre-computed suggestions above wherever they apply.
-
-        ### Step 2 — Place power symbols first
-        - Every distinct supply rail must appear in `power_symbols`.
-        - At minimum: the rail that powers the main IC and GND.
-
-        ### Step 3 — Place main IC, then supporting passives
-        - Main IC reference: U1.
-        - Decoupling capacitors: C1, C2, … adjacent to power pins.
-        - Pull-up/pull-down resistors: R1, R2, …
-        - Other passives follow conventional designators.
-
-        ### Step 4 — No floating pins
-        - Every pin that is not connected to a net must be listed in `connections`
-          with the net name "NC" (no-connect marker).
-        - NC pins are included; they just use the "NC" net name.
-
-        ### Step 5 — Output format
-        - Return ONLY valid JSON matching the schema above.
-        - Do not include any explanatory text outside the JSON.
-        - `format` field must be exactly `"kicad_sch"`.
-        - Net `type` values: `"power"`, `"signal"`, or `"gnd"`.
-        - Positions use float coordinates on a 50-mil grid (multiples of 50).
-        - The `project_name` should reflect the user's project brief.
-    """).strip()
-
-
-# ---------------------------------------------------------------------------
-# Main entry point
-# ---------------------------------------------------------------------------
-
-
-def run(project_brief: str) -> dict[str, Any]:
-    """
-    Design a schematic for the given project_brief.
-
-    Returns the validated schematic dict and writes it to data/outputs/schematic.json.
-    Raises on validation failure.
-    """
-    # 1. Load inputs
-    datasheet = _load_json(DATASHEET_PATH, "datasheet.json")
-    component = _load_json(COMPONENT_PATH, "component.json")
-    example_schematic = _load_json(EXAMPLE_SCH_PATH, "example_schematic.json")
-
-    # 2. Pre-compute net name hints
-    net_hints = suggest_net_names(datasheet)
-    print(f"[schematic-agent] net hints: {json.dumps(net_hints, indent=2)}")
-
-    # 3. Build prompt
-    prompt = _build_prompt(datasheet, component, example_schematic, project_brief, net_hints)
-
-    # 4. Call Claude
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise EnvironmentError("ANTHROPIC_API_KEY is not set")
-
-    client = anthropic.Anthropic(api_key=api_key)
-    print(f"[schematic-agent] calling {MODEL}…")
-
-    message = client.messages.create(
-        model=MODEL,
-        max_tokens=4096,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-    )
-
-    raw_text = message.content[0].text
-    print(f"[schematic-agent] received {len(raw_text)} chars from model")
-
-    # 5. Parse response
-    json_str = _extract_json_block(raw_text)
-    try:
-        schematic: dict[str, Any] = json.loads(json_str)
-    except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"Model returned invalid JSON: {exc}\n\nRaw output:\n{raw_text[:2000]}"
-        ) from exc
-
-    # 6. Post-process: enforce NC for any connection-less pins listed in component
-    schematic = _ensure_no_floating_pins(schematic, component)
-
-    # 7. Write output
-    _OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    with open(SCHEMATIC_OUT_PATH, "w") as fh:
-        json.dump(schematic, fh, indent=2)
-    print(f"[schematic-agent] wrote {SCHEMATIC_OUT_PATH}")
-
-    # 8. Validate
-    if not _validate(SCHEMATIC_OUT_PATH):
-        raise RuntimeError(
-            "schematic.json failed schema validation. Check output above."
-        )
-
-    return schematic
+        errors = [line for line in (result.stderr + result.stdout).splitlines() if line.strip()]
+    return result.returncode == 0, errors
 
 
 def _ensure_no_floating_pins(
@@ -252,7 +92,7 @@ def _ensure_no_floating_pins(
     """
     For every pin declared in component.json, ensure that the main IC component
     (U1) has a connection entry.  Missing pins are added with net="NC".
-    This enforces the no-floating-pins rule even if Claude missed some.
+    This enforces the no-floating-pins rule even if the orchestrator missed some.
     """
     all_pins: list[dict[str, Any]] = (
         component.get("symbol", {}).get("pins", [])
@@ -275,15 +115,153 @@ def _ensure_no_floating_pins(
 
 
 # ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+
+def get_design_context() -> dict[str, Any]:
+    """
+    Read datasheet.json + component.json + example_schematic.json from the
+    standard output directory and return a compact combined summary.
+
+    The summary contains:
+      - component_name   — human-readable name from component.json
+      - pins             — list of {number, name, type, function} from datasheet
+      - example_nets     — net names present in example_schematic.json (if available)
+      - suggested_nets   — output of net_namer.suggest_net_names(datasheet)
+
+    Raises FileNotFoundError if datasheet.json or component.json are missing.
+    example_schematic.json is optional — missing file yields an empty list.
+    """
+    datasheet = _load_json(DATASHEET_PATH, "datasheet.json")
+    component = _load_json(COMPONENT_PATH, "component.json")
+
+    # example_schematic is optional
+    example_nets: list[str] = []
+    if EXAMPLE_SCH_PATH.exists():
+        try:
+            example_sch = _load_json(EXAMPLE_SCH_PATH, "example_schematic.json")
+            example_nets = [
+                n.get("name", "")
+                for n in example_sch.get("nets", [])
+                if n.get("name")
+            ]
+        except Exception:  # noqa: BLE001
+            example_nets = []
+
+    suggested_nets = suggest_net_names(datasheet)
+
+    # Compact pin list from datasheet
+    pins = [
+        {
+            "number": p.get("number"),
+            "name": p.get("name", ""),
+            "type": p.get("type", ""),
+            "function": p.get("function", ""),
+        }
+        for p in datasheet.get("pins", [])
+    ]
+
+    # Component name: try several common locations
+    component_name = (
+        component.get("name")
+        or component.get("part_number")
+        or component.get("symbol", {}).get("name")
+        or "Unknown"
+    )
+
+    return {
+        "component_name": component_name,
+        "pins": pins,
+        "example_nets": example_nets,
+        "suggested_nets": suggested_nets,
+    }
+
+
+def apply_schematic(
+    schematic_dict: dict[str, Any],
+    output_dir: str | Path | None = None,
+) -> dict[str, Any]:
+    """
+    Accept a schematic dict from the orchestrator, post-process it, validate it
+    against the schema, and write data/outputs/schematic.json.
+
+    Steps:
+      1. Load component.json to get pin list (needed for floating-pin check).
+      2. Run _ensure_no_floating_pins() on the schematic.
+      3. Write to disk.
+      4. Run schema validation.
+
+    Returns:
+      {"success": True, "errors": []}                on success
+      {"success": False, "errors": ["...", ...]}     on validation failure
+    """
+    out_dir = Path(output_dir) if output_dir else _OUTPUT_DIR
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "schematic.json"
+
+    # Load component for floating-pin enforcement
+    component: dict[str, Any] = {}
+    if COMPONENT_PATH.exists():
+        try:
+            component = _load_json(COMPONENT_PATH, "component.json")
+        except Exception:  # noqa: BLE001
+            component = {}
+
+    # Post-process
+    schematic_dict = _ensure_no_floating_pins(schematic_dict, component)
+
+    # Write
+    with open(out_path, "w") as fh:
+        json.dump(schematic_dict, fh, indent=2)
+
+    # Validate
+    valid, errors = _validate(out_path)
+    return {"success": valid, "errors": errors}
+
+
+# ---------------------------------------------------------------------------
+# Legacy entry point — replaced by orchestrator; do not call
+# ---------------------------------------------------------------------------
+
+
+def run(project_brief: str) -> dict[str, Any]:  # noqa: ARG001
+    raise NotImplementedError(
+        "run() has been removed. The orchestrator (Claude Code) now designs the "
+        "schematic. Use get_design_context() to read inputs and apply_schematic() "
+        "to write the result."
+    )
+
+
+# ---------------------------------------------------------------------------
 # CLI usage
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    brief = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else (
-        "Design a breakout board for the component described in datasheet.json. "
-        "Include decoupling capacitors, power supply filtering, and expose all I/O "
-        "on 0.1-inch headers."
-    )
-    result = run(brief)
-    print(f"[schematic-agent] done — {len(result.get('components', []))} components, "
-          f"{len(result.get('nets', []))} nets")
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Schematic agent tool layer")
+    sub = parser.add_subparsers(dest="cmd")
+
+    sub.add_parser("context", help="Print design context as JSON")
+
+    apply_p = sub.add_parser("apply", help="Apply a schematic JSON file")
+    apply_p.add_argument("schematic_file", help="Path to schematic JSON to apply")
+
+    args = parser.parse_args()
+
+    if args.cmd == "context":
+        ctx = get_design_context()
+        print(json.dumps(ctx, indent=2))
+
+    elif args.cmd == "apply":
+        with open(args.schematic_file) as fh:
+            sch = json.load(fh)
+        result = apply_schematic(sch)
+        print(json.dumps(result, indent=2))
+        if not result["success"]:
+            sys.exit(1)
+
+    else:
+        parser.print_help()
+        sys.exit(1)

@@ -1,13 +1,15 @@
 """
-test_agent.py — Unit and integration tests for the schematic agent.
+test_agent.py — Unit tests for the schematic agent tool layer.
 
 Tests:
-  1. No NET001-style names in any net or connection
-  2. All power nets include a voltage designator (e.g. VCC_3V3, VCC_5V)
-  3. Every IC pin has a connection entry (no floating pins; NC markers present)
-  4. net_namer produces descriptive names for common pin functions
-  5. _extract_json_block correctly extracts fenced and bare JSON
-  6. _ensure_no_floating_pins fills missing pins with NC
+  1.  No NET001-style names in any net or connection
+  2.  All power nets include a voltage designator (e.g. VCC_3V3, VCC_5V)
+  3.  Every IC pin has a connection entry (no floating pins; NC markers present)
+  4.  net_namer produces descriptive names for common pin functions
+  5.  _extract_json_block correctly extracts fenced and bare JSON
+  6.  _ensure_no_floating_pins fills missing pins with NC
+  7.  apply_schematic() writes schematic.json and returns {success, errors}
+  8.  get_design_context() returns correct structure from fixture files
 """
 
 from __future__ import annotations
@@ -15,8 +17,10 @@ from __future__ import annotations
 import json
 import re
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 # ---------------------------------------------------------------------------
 # Make sure local modules are importable without installing as a package
@@ -24,7 +28,12 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent))
 
 from net_namer import suggest_net_names  # noqa: E402
-from agent import _ensure_no_floating_pins, _extract_json_block  # noqa: E402
+from agent import (  # noqa: E402
+    _ensure_no_floating_pins,
+    _extract_json_block,
+    apply_schematic,
+    get_design_context,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +184,7 @@ def _component_8pin() -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# Test functions
+# Test functions — existing logic tests
 # ---------------------------------------------------------------------------
 
 def test_no_net001_names_in_valid_schematic() -> None:
@@ -197,7 +206,6 @@ def test_net001_detected_in_bad_schematic() -> None:
 def test_power_nets_include_voltage() -> None:
     sch = _valid_schematic()
     power_nets = _power_net_names(sch)
-    # Every power net (that is not GND / AGND / PGND) should have a voltage suffix
     gnd_like = re.compile(r"^(A?P?GND|DGND)$", re.IGNORECASE)
     missing_voltage = [
         n for n in power_nets
@@ -233,7 +241,6 @@ def test_ensure_no_floating_pins_fills_nc() -> None:
     fixed = _ensure_no_floating_pins(sch, comp)
     all_connected, missing = _all_pin_numbers_connected(fixed, comp["symbol"]["pins"])
     assert all_connected, f"Still floating after fix: {missing}"
-    # Verify the fixed pins are marked NC
     u1_conns = next(c for c in fixed["components"] if c["reference"] == "U1")["connections"]
     nc_pins = [c["pin"] for c in u1_conns if c["net"] == "NC"]
     assert len(nc_pins) == 6, f"Expected 6 NC pins, got {nc_pins}"
@@ -336,10 +343,228 @@ def test_extract_json_block_raw() -> None:
 
 
 # ---------------------------------------------------------------------------
+# apply_schematic() tests
+# ---------------------------------------------------------------------------
+
+def test_apply_schematic_writes_file_and_returns_success() -> None:
+    """apply_schematic() should write schematic.json to a temp dir."""
+    sch = _valid_schematic()
+    comp = _component_8pin()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        # Patch COMPONENT_PATH so the floating-pin check uses our fixture
+        with patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"):
+            # Write a component.json the function can load
+            (tmp_path / "component.json").write_text(json.dumps(comp))
+
+            result = apply_schematic(sch, output_dir=tmp_path)
+
+        out_file = tmp_path / "schematic.json"
+        assert out_file.exists(), "schematic.json was not written"
+        written = json.loads(out_file.read_text())
+        assert written["project_name"] == "Test Project"
+        assert isinstance(result, dict), "apply_schematic must return a dict"
+        assert "success" in result, "result must have 'success' key"
+        assert "errors" in result, "result must have 'errors' key"
+
+    print("PASS test_apply_schematic_writes_file_and_returns_success")
+
+
+def test_apply_schematic_enforces_nc_for_floating_pins() -> None:
+    """apply_schematic() must fill missing pins with NC automatically."""
+    sch = _floating_pin_schematic()
+    comp = _component_8pin()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+
+        with patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"):
+            (tmp_path / "component.json").write_text(json.dumps(comp))
+            apply_schematic(sch, output_dir=tmp_path)
+
+        written = json.loads((tmp_path / "schematic.json").read_text())
+
+    all_connected, missing = _all_pin_numbers_connected(written, comp["symbol"]["pins"])
+    assert all_connected, f"Floating pins remain after apply_schematic: {missing}"
+    print("PASS test_apply_schematic_enforces_nc_for_floating_pins")
+
+
+def test_apply_schematic_returns_dict_with_correct_keys() -> None:
+    """apply_schematic() must return a dict with 'success' (bool) and 'errors' (list)."""
+    sch = _valid_schematic()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        result = apply_schematic(sch, output_dir=Path(tmp))
+
+    assert isinstance(result["success"], bool), "'success' must be bool"
+    assert isinstance(result["errors"], list), "'errors' must be list"
+    print("PASS test_apply_schematic_returns_dict_with_correct_keys")
+
+
+# ---------------------------------------------------------------------------
+# get_design_context() tests
+# ---------------------------------------------------------------------------
+
+def _write_fixture_files(tmp: Path) -> None:
+    """Write minimal datasheet.json and component.json to tmp for testing."""
+    datasheet = {
+        "pins": [
+            {"number": 1, "name": "VCC", "type": "power", "function": "Supply"},
+            {"number": 2, "name": "GND", "type": "power", "function": "Ground"},
+            {"number": 3, "name": "SDA", "type": "bidirectional", "function": "I2C data"},
+            {"number": 4, "name": "NC",  "type": "nc",   "function": "No connect"},
+        ]
+    }
+    component = {
+        "name": "TEST_IC",
+        "symbol": {
+            "pins": [
+                {"number": i, "name": f"P{i}", "type": "passive"} for i in range(1, 5)
+            ]
+        }
+    }
+    (tmp / "datasheet.json").write_text(json.dumps(datasheet))
+    (tmp / "component.json").write_text(json.dumps(component))
+
+
+def test_get_design_context_returns_required_keys() -> None:
+    """get_design_context() must return component_name, pins, example_nets, suggested_nets."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        _write_fixture_files(tmp_path)
+
+        with (
+            patch("agent.DATASHEET_PATH", new=tmp_path / "datasheet.json"),
+            patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"),
+            patch("agent.EXAMPLE_SCH_PATH", new=tmp_path / "example_schematic.json"),
+        ):
+            ctx = get_design_context()
+
+    assert "component_name" in ctx, "Missing 'component_name'"
+    assert "pins" in ctx, "Missing 'pins'"
+    assert "example_nets" in ctx, "Missing 'example_nets'"
+    assert "suggested_nets" in ctx, "Missing 'suggested_nets'"
+    print("PASS test_get_design_context_returns_required_keys")
+
+
+def test_get_design_context_component_name() -> None:
+    """get_design_context() extracts component name from component.json."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        _write_fixture_files(tmp_path)
+
+        with (
+            patch("agent.DATASHEET_PATH", new=tmp_path / "datasheet.json"),
+            patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"),
+            patch("agent.EXAMPLE_SCH_PATH", new=tmp_path / "example_schematic.json"),
+        ):
+            ctx = get_design_context()
+
+    assert ctx["component_name"] == "TEST_IC", (
+        f"Expected 'TEST_IC', got '{ctx['component_name']}'"
+    )
+    print("PASS test_get_design_context_component_name")
+
+
+def test_get_design_context_pins_list() -> None:
+    """get_design_context() returns a list of pin dicts with required fields."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        _write_fixture_files(tmp_path)
+
+        with (
+            patch("agent.DATASHEET_PATH", new=tmp_path / "datasheet.json"),
+            patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"),
+            patch("agent.EXAMPLE_SCH_PATH", new=tmp_path / "example_schematic.json"),
+        ):
+            ctx = get_design_context()
+
+    pins = ctx["pins"]
+    assert len(pins) == 4, f"Expected 4 pins, got {len(pins)}"
+    for p in pins:
+        assert "number" in p
+        assert "name" in p
+        assert "type" in p
+        assert "function" in p
+    print("PASS test_get_design_context_pins_list")
+
+
+def test_get_design_context_suggested_nets_uses_net_namer() -> None:
+    """get_design_context() 'suggested_nets' is non-empty and maps pin functions."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        _write_fixture_files(tmp_path)
+
+        with (
+            patch("agent.DATASHEET_PATH", new=tmp_path / "datasheet.json"),
+            patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"),
+            patch("agent.EXAMPLE_SCH_PATH", new=tmp_path / "example_schematic.json"),
+        ):
+            ctx = get_design_context()
+
+    suggested = ctx["suggested_nets"]
+    assert isinstance(suggested, dict), "'suggested_nets' must be a dict"
+    assert len(suggested) > 0, "'suggested_nets' must not be empty"
+    # GND and VCC should be present in values
+    values = set(suggested.values())
+    assert "GND" in values, f"Expected GND in suggested nets, got {values}"
+    print("PASS test_get_design_context_suggested_nets_uses_net_namer")
+
+
+def test_get_design_context_example_nets_empty_when_file_missing() -> None:
+    """get_design_context() returns empty example_nets when example_schematic.json absent."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        _write_fixture_files(tmp_path)
+        # Intentionally do NOT write example_schematic.json
+
+        with (
+            patch("agent.DATASHEET_PATH", new=tmp_path / "datasheet.json"),
+            patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"),
+            patch("agent.EXAMPLE_SCH_PATH", new=tmp_path / "example_schematic.json"),
+        ):
+            ctx = get_design_context()
+
+    assert ctx["example_nets"] == [], (
+        f"Expected empty list when file missing, got {ctx['example_nets']}"
+    )
+    print("PASS test_get_design_context_example_nets_empty_when_file_missing")
+
+
+def test_get_design_context_example_nets_populated() -> None:
+    """get_design_context() populates example_nets from example_schematic.json."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        _write_fixture_files(tmp_path)
+
+        example_sch = {
+            "nets": [
+                {"name": "VCC_3V3", "type": "power"},
+                {"name": "GND",     "type": "gnd"},
+            ]
+        }
+        (tmp_path / "example_schematic.json").write_text(json.dumps(example_sch))
+
+        with (
+            patch("agent.DATASHEET_PATH", new=tmp_path / "datasheet.json"),
+            patch("agent.COMPONENT_PATH", new=tmp_path / "component.json"),
+            patch("agent.EXAMPLE_SCH_PATH", new=tmp_path / "example_schematic.json"),
+        ):
+            ctx = get_design_context()
+
+    assert "VCC_3V3" in ctx["example_nets"]
+    assert "GND" in ctx["example_nets"]
+    print("PASS test_get_design_context_example_nets_populated")
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 
 _ALL_TESTS = [
+    # Existing schematic-logic tests
     test_no_net001_names_in_valid_schematic,
     test_net001_detected_in_bad_schematic,
     test_power_nets_include_voltage,
@@ -347,13 +572,26 @@ _ALL_TESTS = [
     test_no_floating_pins_in_valid_schematic,
     test_ensure_no_floating_pins_fills_nc,
     test_floating_pin_schematic_detected_before_fix,
+    # net_namer tests
     test_net_namer_power_pins,
     test_net_namer_interface_pins,
     test_net_namer_nc_pins,
     test_net_namer_no_net001,
+    # _extract_json_block tests
     test_extract_json_block_fenced,
     test_extract_json_block_bare,
     test_extract_json_block_raw,
+    # apply_schematic() tests
+    test_apply_schematic_writes_file_and_returns_success,
+    test_apply_schematic_enforces_nc_for_floating_pins,
+    test_apply_schematic_returns_dict_with_correct_keys,
+    # get_design_context() tests
+    test_get_design_context_returns_required_keys,
+    test_get_design_context_component_name,
+    test_get_design_context_pins_list,
+    test_get_design_context_suggested_nets_uses_net_namer,
+    test_get_design_context_example_nets_empty_when_file_missing,
+    test_get_design_context_example_nets_populated,
 ]
 
 
