@@ -1643,18 +1643,34 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                 # fallback: dump first 200 chars of JSON
                 return f"{tool_name}: {json.dumps(inp)[:200]}"
 
-            opts = ClaudeAgentOptions(
-                cwd=_pa_cwd(name),
-                allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"],
-                permission_mode="bypassPermissions",
-                max_turns=40,
-                resume=existing_session,  # None on first call, session_id thereafter
-                env={"IS_SANDBOX": "1"},   # Allow bypassPermissions when running as root in Docker
-                stderr=_capture_stderr,    # Capture subprocess stderr for debugging
-                thinking=ThinkingConfigAdaptive(type="adaptive"),  # Show Claude's reasoning only when needed
-            )
+            def _make_opts(session_id):
+                return ClaudeAgentOptions(
+                    cwd=_pa_cwd(name),
+                    allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"],
+                    permission_mode="bypassPermissions",
+                    max_turns=40,
+                    resume=session_id,
+                    env={"IS_SANDBOX": "1"},
+                    stderr=_capture_stderr,
+                    thinking=ThinkingConfigAdaptive(type="adaptive"),
+                )
 
-            async for sdk_msg in query(prompt=prompt, options=opts):
+            async def _stream(session_id, retry=True):
+                try:
+                    async for msg in query(prompt=prompt, options=_make_opts(session_id)):
+                        yield msg
+                except Exception as e:
+                    if retry and session_id:
+                        # Session expired or invalid — broadcast warning and retry fresh
+                        _pipeline_sessions[name] = None
+                        _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
+                                                            "chunk": "\n[session expired, restarting…]\n", "is_tool": True})
+                        async for msg in _stream(None, retry=False):
+                            yield msg
+                    else:
+                        raise
+
+            async for sdk_msg in _stream(existing_session):
                 if isinstance(sdk_msg, SystemMessage) and sdk_msg.subtype == "init":
                     _pipeline_sessions[name] = sdk_msg.data.get("session_id")
                 elif isinstance(sdk_msg, AssistantMessage):
