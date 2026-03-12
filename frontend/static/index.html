@@ -347,6 +347,21 @@
   .agent-card-pri { font-size:10px; font-weight:700; border-radius:4px; padding:1px 6px; flex-shrink:0; }
 
   /* ── Pipeline Agents ── */
+  /* ── Design Assistant bar ── */
+  .da-bar { padding:14px 20px 12px; border-bottom:2px solid rgba(108,99,255,0.25); background:linear-gradient(135deg,rgba(108,99,255,0.07),rgba(168,85,247,0.04)); flex-shrink:0; }
+  .da-bar-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#818cf8; margin-bottom:8px; display:flex; align-items:center; gap:7px; }
+  .da-bar-label::after { content:''; flex:1; height:1px; background:rgba(108,99,255,0.15); }
+  .da-bar-hint { font-size:11px; color:var(--text-muted); margin-bottom:8px; line-height:1.5; }
+  .da-input-row { display:flex; gap:8px; align-items:flex-end; }
+  .da-textarea { flex:1; background:#111828; border:1px solid rgba(108,99,255,0.3); border-radius:7px; color:#e2e8f0; font-size:12.5px; font-family:inherit; padding:9px 12px; resize:none; min-height:40px; max-height:120px; outline:none; line-height:1.5; transition:border-color .15s; }
+  .da-textarea:focus { border-color:#6c63ff; }
+  .da-textarea::placeholder { color:#374151; }
+  .da-agent-select { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:8px 10px; font-size:11px; cursor:pointer; flex-shrink:0; outline:none; }
+  .da-send { background:#6c63ff; border:none; color:#fff; border-radius:7px; padding:9px 18px; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0; transition:background .12s; white-space:nowrap; }
+  .da-send:hover { background:#5b52e0; }
+  .da-flow { display:flex; gap:6px; align-items:center; margin-top:8px; flex-wrap:wrap; }
+  .da-flow-step { font-size:10px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:2px 7px; }
+  .da-flow-arrow { font-size:11px; color:#374151; }
   .pipeline-section { border-top:1px solid var(--border); padding:14px 18px 18px; background:var(--bg); flex-shrink:0; }
   .pipeline-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
   .pipeline-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:9px; }
@@ -554,6 +569,43 @@
 <!-- ══ SECTION: AGENTS ════════════════════════════════════════════════════ -->
 <div id="section-agents" class="app-section hidden">
   <div class="agents-layout">
+
+    <!-- ── Design Assistant ─────────────────────────────────────────── -->
+    <div class="da-bar">
+      <div class="da-bar-label">⚡ Design Assistant — Claude Code on server</div>
+      <div class="da-bar-hint">Describe any design change — add a component, fix connectivity, generate a schematic, route the PCB. Claude Code runs on the server and edits files directly.</div>
+      <div class="da-input-row">
+        <textarea class="da-textarea" id="da-prompt" rows="2"
+          placeholder="e.g. "Add 100nF bypass caps to all VCC pins on the ESP32 schematic" or "Parse the uploaded datasheet and create a library component""
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();daSend()}"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+        <select class="da-agent-select" id="da-agent-select">
+          <option value="orchestrator">🎯 Orchestrator (auto-route)</option>
+          <option value="datasheet-parser">📄 Datasheet Parser</option>
+          <option value="component">🔷 Component Designer</option>
+          <option value="footprint">🔲 Footprint Designer</option>
+          <option value="example-schematic">📐 Example Schematic</option>
+          <option value="schematic">🗺️ Schematic Agent</option>
+          <option value="connectivity">🔗 Connectivity Check</option>
+          <option value="autoplace">🧩 Auto Placer</option>
+          <option value="autoroute">〰️ Auto Router</option>
+          <option value="layout">📋 Layout Assembler</option>
+        </select>
+        <button class="da-send" onclick="daSend()">Run ↵</button>
+      </div>
+      <div class="da-flow">
+        <span class="da-flow-step">Browser prompt</span>
+        <span class="da-flow-arrow">→</span>
+        <span class="da-flow-step">FastAPI server</span>
+        <span class="da-flow-arrow">→</span>
+        <span class="da-flow-step">Claude Code CLI</span>
+        <span class="da-flow-arrow">→</span>
+        <span class="da-flow-step">Edit project files</span>
+        <span class="da-flow-arrow">→</span>
+        <span class="da-flow-step">SSE stream → UI update</span>
+      </div>
+    </div>
+
     <div class="agents-topbar">
       <h2>🤖 Agents</h2>
       <button class="agents-refresh-btn" onclick="agentsLoad()">↻ Refresh</button>
@@ -8375,6 +8427,31 @@ async function agentsLoad() {
 // ── Pipeline Agents ──────────────────────────────────────────────────────────
 let _paState = {};        // name → agent summary object
 let _activePaAgent = null; // currently open agent name
+
+// ── Design Assistant ──────────────────────────────────────────────────────────
+async function daSend() {
+  const prompt = document.getElementById('da-prompt')?.value.trim();
+  const agentName = document.getElementById('da-agent-select')?.value || 'orchestrator';
+  if (!prompt) return;
+
+  // Clear input
+  const ta = document.getElementById('da-prompt');
+  ta.value = '';
+  ta.style.height = 'auto';
+
+  // Open the chat modal for that agent pre-loaded, then send
+  await pipelineAgentsLoad(); // make sure state is current
+  if (!_paState[agentName]) {
+    // Fallback: agents haven't loaded yet
+    await new Promise(r => setTimeout(r, 600));
+  }
+  await paOpenChat(agentName);
+
+  // Pre-fill and send the prompt
+  const inp = document.getElementById('pa-chat-input');
+  if (inp) inp.value = prompt;
+  await paChatSend();
+}
 
 function paTimeAgo(iso) {
   if (!iso) return 'Never run';

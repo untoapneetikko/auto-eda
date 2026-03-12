@@ -1469,14 +1469,26 @@ def _pa_next_id() -> int:
 def _pa_system_prompt(name: str) -> str:
     """Build the initial system context for a pipeline agent."""
     claude_md = PROJECT_ROOT_SA / "agents" / name / "CLAUDE.md"
+    root_claude_md = PROJECT_ROOT_SA / "CLAUDE.md"
     ctx = ""
+    if root_claude_md.exists():
+        ctx += f"\n\n# Project CLAUDE.md\n{root_claude_md.read_text(encoding='utf-8')}"
     if claude_md.exists():
-        ctx = f"\n\n# Agent CLAUDE.md\n{claude_md.read_text(encoding='utf-8')}"
+        ctx += f"\n\n# Agent CLAUDE.md ({name})\n{claude_md.read_text(encoding='utf-8')}"
+
+    lib_dir = PROJECT_ROOT_SA / "frontend" / "static" / "library"
+    slugs = [d.name for d in lib_dir.iterdir() if d.is_dir()] if lib_dir.exists() else []
+
     return (
         f"You are the '{name}' EDA pipeline agent for the auto-eda project.\n"
         f"Project root: {PROJECT_ROOT_SA}\n"
-        f"Output directory: {PROJECT_ROOT_SA / 'data' / 'outputs'}\n"
-        f"Library directory: {PROJECT_ROOT_SA / 'frontend' / 'static' / 'library'}\n"
+        f"Output dir:   {PROJECT_ROOT_SA / 'data' / 'outputs'}\n"
+        f"Library dir:  {lib_dir}  ({len(slugs)} components: {', '.join(slugs[:10])}{'…' if len(slugs)>10 else ''})\n"
+        f"Projects dir: {PROJECT_ROOT_SA / 'frontend' / 'static' / 'projects'}\n"
+        f"Uploads dir:  {PROJECT_ROOT_SA / 'data' / 'uploads'}\n"
+        f"\nIMPORTANT: You have full read/write access to the project files. "
+        f"When the user asks you to change the design, directly edit the relevant JSON files in the library/, projects/, or data/ directories. "
+        f"After writing files, briefly summarise what changed.\n"
         f"{ctx}"
     )
 
@@ -1628,6 +1640,8 @@ async def api_pipeline_agent_chat(name: str, request: Request):
             _pipeline_state[name]["status"] = "done"
             _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "done",
                                                "msg_id": resp_id, "session_id": _pipeline_sessions[name]})
+            # Notify the UI to refresh library/projects in case agent wrote files
+            _broadcast("library_updated", {"reason": f"agent:{name}"})
         except asyncio.CancelledError:
             _pipeline_state[name]["status"] = "idle"
             _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "cancelled", "msg_id": resp_id})
