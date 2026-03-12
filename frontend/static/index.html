@@ -8103,6 +8103,12 @@ async function paChatSend() {
   const btn = document.getElementById('pa-send-btn');
   if (btn) btn.disabled = true;
 
+  // Show user message immediately — don't wait for SSE
+  const now = new Date().toISOString();
+  const tempId = 'tmp-' + Date.now();
+  _paAppendMsg({ id: tempId, role: 'user', content: msg, ts: now });
+  _paShowThinking('Sending…');
+
   const res = await fetch(`/api/pipeline/agents/${_activePaAgent}/chat`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -8110,11 +8116,16 @@ async function paChatSend() {
   }).then(r=>r.json()).catch(e=>({error: String(e)}));
 
   if (res.error) {
+    _paHideThinking();
     const area = document.getElementById('pa-chat-area');
     if (area) area.insertAdjacentHTML('beforeend', `<div class="pa-system-line" style="color:#ef4444;">Error: ${esc(res.error)}</div>`);
     if (btn) btn.disabled = false;
+  } else {
+    // Replace temp message id so SSE dedup works
+    const tmpEl = document.getElementById('pa-msg-' + tempId);
+    if (tmpEl && res.msg_id) tmpEl.id = 'pa-msg-' + res.msg_id;
+    _paShowThinking('Waiting for agent…');
   }
-  // SSE will handle adding messages + re-enabling button
 }
 
 function paChatKeydown(e) {
@@ -8161,9 +8172,9 @@ function _handlePipelineSSE(evt, data) {
 
   if (evt === 'pipeline_agent_started') {
     _paUpdateModalStatus('running');
-    // Append user message from data.msg
-    if (data.msg) _paAppendMsg(data.msg);
-    _paShowThinking();
+    // Only append user msg if not already shown (paChatSend shows it immediately)
+    if (data.msg && !document.getElementById('pa-msg-' + data.msg.id)) _paAppendMsg(data.msg);
+    _paShowThinking('Agent starting…');
     document.getElementById('pa-send-btn') && (document.getElementById('pa-send-btn').disabled = true);
   }
   else if (evt === 'pipeline_agent_msg_start') {

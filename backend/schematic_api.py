@@ -1737,6 +1737,8 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                     m["streaming"] = False
                     break
             _pipeline_state[name]["status"] = "error"
+            # Clear session so next message starts fresh instead of resuming a broken session
+            _pipeline_sessions[name] = None
             _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "error",
                                                "msg_id": resp_id, "error": str(exc)})
 
