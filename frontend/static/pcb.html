@@ -2241,7 +2241,7 @@ async function importSchematic(projectData) {
 // DRC — delegated to Python API
 // ═══════════════════════════════════════════════════════════════
 async function runDRC(board, dr, fpData) {
-  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  const boardId = editor?.board?.id || _activeBoardId;
   try {
     let res;
     if (boardId) {
@@ -3264,31 +3264,30 @@ async function doImport(){
 
 // ── Auto Route ────────────────────────────────────────────
 async function runAutoRoute() {
-  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  // board ID lives in editor.board.id (set after save) or _activeBoardId
+  const boardId = editor?.board?.id || _activeBoardId;
   const btn = document.getElementById('btn-autoroute');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Routing…'; }
   try {
     let res;
     if (boardId) {
-      if (editor?._saveBoard) await editor._saveBoard();
+      await saveBoard();
       res = await fetch(`/api/pcb/${boardId}/autoroute`, { method: 'POST' });
     } else {
       res = await fetch('/api/pcb/autoroute', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ board: editor?.board || editor?._getBoardData?.() || {} })
+        body: JSON.stringify({ board: editor?.board || {} })
       });
     }
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'Autoroute failed');
-    if (data.traces && editor) {
-      if (editor.board) editor.board.traces = data.traces;
-      if (editor._render) editor._render();
-      else if (editor.render) editor.render();
+    if (data.traces && editor?.board) {
+      editor.board.traces = data.traces;
+      editor.render(); rebuildCompList(); updateBoardInfo();
     }
     const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets`;
     const status = document.getElementById('status-bar') || document.getElementById('route-status');
-    if (status) status.textContent = msg; else console.log(msg);
-    if (editor && editor.render) { editor.render(); rebuildCompList(); updateBoardInfo(); }
+    if (status) status.textContent = msg;
     if (btn) { btn.disabled = false; btn.textContent = '⚡ Auto-Route'; }
   } catch(e) {
     alert('Autoroute failed: ' + e.message);
@@ -3301,14 +3300,23 @@ async function runAutoPlace() {
   const btn = document.getElementById('btn-autoplace');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Placing…'; }
   try {
-    const context = await fetch('/agents/autoplace/context').then(r => r.json());
-    const res = await fetch('/agents/autoplace/apply', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ placement_dict: context, board_width_mm: 100, board_height_mm: 80 })
-    });
+    const boardId = editor?.board?.id || _activeBoardId;
+    let res;
+    if (boardId) {
+      await saveBoard();
+      res = await fetch(`/api/pcb/${boardId}/autoplace`, { method: 'POST' });
+    } else {
+      res = await fetch('/api/pcb/autoplace', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ board: editor?.board || {} })
+      });
+    }
     const data = await res.json();
-    if (data.success && editor?.render) editor.render();
-    if (editor && editor.render) { rebuildCompList(); updateBoardInfo(); }
+    if (!res.ok) throw new Error(data.detail || data.error || 'Auto-place failed');
+    if (data.components && editor?.board) {
+      editor.board.components = data.components;
+      editor.render(); rebuildCompList(); updateBoardInfo();
+    }
   } catch(e) {
     alert('Auto-place failed: ' + e.message);
   } finally {
@@ -3746,7 +3754,7 @@ function saveLayerRules(){
 
 // ── Gerber ───────────────────────────────────────────────────
 async function exportGerber() {
-  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  const boardId = editor?.board?.id || _activeBoardId;
   if (!boardId) { alert('Save the board first before exporting.'); return; }
   const res = await fetch(`/api/pcb/${boardId}/export/gerber`);
   if (!res.ok) { alert('Gerber export failed: ' + (await res.text())); return; }
@@ -3764,7 +3772,7 @@ async function downloadGerberZip() {
 
 // ── KiCad Export ─────────────────────────────────────────────
 async function exportKiCad() {
-  const boardId = editor?._boardId || editor?.boardId || window._currentBoardId;
+  const boardId = editor?.board?.id || _activeBoardId;
   if (!boardId) { alert('Save the board first before exporting.'); return; }
   const res = await fetch(`/api/pcb/${boardId}/export/kicad`);
   if (!res.ok) { alert('KiCad export failed: ' + (await res.text())); return; }

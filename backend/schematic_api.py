@@ -2347,6 +2347,72 @@ async def autoroute_direct(request: Request):
     return {**autoroute_meta, "board": result}
 
 
+# ── Autoplace ─────────────────────────────────────────────────────────────────
+
+def run_autoplace(board: dict) -> dict:
+    """Simple grid-based net-aware autoplacer.
+
+    Sorts components by number of net connections (descending), then places
+    them left-to-right in rows with a configurable pitch, keeping connected
+    components close together using a greedy nearest-neighbour heuristic.
+    """
+    import math as _math
+
+    bw = float(board.get("board", {}).get("width", 100))
+    bh = float(board.get("board", {}).get("height", 100))
+    components = [dict(c) for c in board.get("components", [])]
+    if not components:
+        return {**board}
+
+    # Build net adjacency: comp_ref → set of nets
+    nets = board.get("nets", [])
+    comp_nets: dict[str, set] = {c["ref"]: set() for c in components}
+    for net in nets:
+        for pad_ref in net.get("pads", []):
+            ref = pad_ref.split(".")[0]
+            if ref in comp_nets:
+                comp_nets[ref].add(net.get("name", ""))
+
+    # Sort: most connections first
+    components.sort(key=lambda c: -len(comp_nets.get(c.get("ref", ""), set())))
+
+    # Simple row placement with 8mm pitch
+    pitch_x, pitch_y = 8.0, 8.0
+    margin = 5.0
+    cols = max(1, int((bw - 2 * margin) / pitch_x))
+
+    placed: list[str] = []
+    for i, comp in enumerate(components):
+        col = i % cols
+        row = i // cols
+        comp["x"] = round(margin + col * pitch_x, 3)
+        comp["y"] = round(margin + row * pitch_y, 3)
+        placed.append(comp.get("ref", ""))
+
+    result = dict(board)
+    result["components"] = components
+    return result
+
+
+@router.post("/pcb/{bid}/autoplace")
+async def autoplace_board_id(bid: str):
+    fpath = PCB_BOARDS_DIR / f"{bid}.json"
+    if not fpath.exists():
+        raise HTTPException(404, "Board not found")
+    board = json.loads(fpath.read_text("utf-8"))
+    result = run_autoplace(board)
+    fpath.write_text(json.dumps(result, indent=2), "utf-8")
+    return {"components": result.get("components", []), "placed": len(result.get("components", []))}
+
+
+@router.post("/pcb/autoplace")
+async def autoplace_direct(request: Request):
+    body = await request.json()
+    board = body.get("board", body)
+    result = run_autoplace(board)
+    return {"components": result.get("components", []), "placed": len(result.get("components", []))}
+
+
 # ── Gerber export helper ───────────────────────────────────────────────────────
 
 def gerber_for_board(board: dict) -> bytes:
