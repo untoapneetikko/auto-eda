@@ -1439,7 +1439,7 @@ def api_gen_tickets_retract(tid: int):
 _PIPELINE_AGENTS = {
     "orchestrator":      {"label": "Orchestrator",       "icon": "🎯",  "desc": "Run the full 9-step EDA pipeline end-to-end from datasheet to PCB"},
     "datasheet-parser":  {"label": "Datasheet Parser",   "icon": "📄",  "desc": "Parse component datasheets into structured JSON profiles"},
-    "library":           {"label": "Library",            "icon": "📚",  "desc": "Manage component library: fix profiles, version history, component save/load bugs"},
+    "library":           {"label": "Library GUI",         "icon": "📚",  "desc": "Manage component library: fix profiles, version history, component save/load bugs"},
     "component":         {"label": "Component Designer", "icon": "🔷",  "desc": "Generate KiCad symbol and rich component profile from parsed data"},
     "footprint":         {"label": "Footprint Designer", "icon": "🔲",  "desc": "Generate PCB footprint JSON from component package information"},
     "example-schematic": {"label": "Example Schematic",  "icon": "📐",  "desc": "Build a reference application schematic for the component"},

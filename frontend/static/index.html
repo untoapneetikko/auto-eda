@@ -274,8 +274,48 @@
   .le-add-btn:hover { background:var(--accent); border-color:var(--accent); color:#fff; }
   .le-bom-row.le-added .le-add-btn { background:rgba(34,197,94,0.15); border-color:#22c55e55; color:#22c55e; }
 
-  /* ── Agents view ── */
-  #section-agents { background:var(--bg); }
+  /* ── Agents Drawer ── */
+  #agents-drawer {
+    position: fixed; top: 0; right: 0; width: 33vw; min-width: 320px; max-width: 860px;
+    height: 100vh; background: #0d0f17; border-left: 1px solid var(--border);
+    z-index: 999; display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: -8px 0 40px rgba(0,0,0,0.55);
+  }
+  #agents-drawer.open { transform: translateX(0); }
+  #agents-drawer-resize {
+    position: absolute; left: 0; top: 0; width: 5px; height: 100%;
+    cursor: col-resize; z-index: 10; background: transparent; transition: background .15s;
+  }
+  #agents-drawer-resize:hover, #agents-drawer-resize.dragging { background: rgba(108,99,255,0.4); }
+  #agents-drawer-toggle {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 998; background: var(--surface2); border: 1px solid var(--border);
+    border-right: none; border-radius: 8px 0 0 8px; padding: 14px 7px;
+    cursor: pointer; display: flex; flex-direction: column; align-items: center;
+    gap: 6px; color: var(--text-muted); transition: all .2s;
+  }
+  #agents-drawer-toggle:hover { background: var(--surface); border-color: var(--accent); color: var(--text); }
+  #agents-drawer-toggle .dtgl-icon { font-size: 15px; }
+  #agents-drawer-toggle .dtgl-label {
+    font-size: 9px; font-weight: 700; writing-mode: vertical-lr;
+    text-orientation: mixed; transform: rotate(180deg);
+    letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted);
+  }
+  #agents-drawer-toggle .dtgl-badge {
+    width: 16px; height: 16px; border-radius: 50%; background: var(--accent);
+    color: #fff; font-size: 9px; font-weight: 700; display: none;
+    align-items: center; justify-content: center;
+  }
+  #agents-drawer-toggle .dtgl-badge.visible { display: flex; }
+  .adr-header {
+    display: flex; align-items: center; gap: 9px; padding: 11px 14px 11px 18px;
+    background: #111320; border-bottom: 1px solid #1e2130; flex-shrink: 0;
+  }
+  .adr-title { font-size: 13px; font-weight: 700; color: var(--text); flex: 1; }
+  .adr-close { background: none; border: none; color: #6b7280; font-size: 17px; cursor: pointer; line-height: 1; padding: 0 2px; }
+  .adr-close:hover { color: var(--text); }
+  .adr-body { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
   /* ── AI Build section ── */
   #section-build { background:var(--bg); overflow-y:auto; }
   .build-page { max-width:860px; margin:0 auto; padding:40px 24px 80px; }
@@ -443,7 +483,7 @@
     <button class="nav-tab" id="nav-schematic" onclick="switchSection('schematic')">📐 Schematic</button>
     <button class="nav-tab" id="nav-pcb" onclick="switchSection('pcb')">🔲 PCB</button>
     <button class="nav-tab" id="nav-generate" onclick="switchSection('generate')">🎫 Generate</button>
-    <button class="nav-tab" id="nav-agents" onclick="switchSection('agents')">🤖 Agents</button>
+    <button class="nav-tab" id="nav-agents" onclick="toggleAgentsDrawer()">🤖 Agents</button>
     <button class="nav-tab" id="nav-build" onclick="switchSection('build')" style="background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(168,85,247,0.2));border:1px solid rgba(168,85,247,0.4);color:#c084fc;">✨ Build</button>
   </nav>
   <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
@@ -566,57 +606,74 @@
   </div>
 </div>
 
-<!-- ══ SECTION: AGENTS ════════════════════════════════════════════════════ -->
-<div id="section-agents" class="app-section hidden">
-  <div class="agents-layout">
+<!-- ══ AGENTS DRAWER TOGGLE ════════════════════════════════════════════════ -->
+<button id="agents-drawer-toggle" onclick="toggleAgentsDrawer()" title="Open Agents Panel">
+  <span class="dtgl-icon">🤖</span>
+  <span class="dtgl-label">Agents</span>
+  <span class="dtgl-badge" id="agents-toggle-badge">0</span>
+</button>
 
-    <!-- ── Design Assistant ─────────────────────────────────────────── -->
+<!-- ══ AGENTS DRAWER ═══════════════════════════════════════════════════════ -->
+<div id="agents-drawer">
+  <div id="agents-drawer-resize"></div>
+
+  <!-- Header -->
+  <div class="adr-header">
+    <span style="font-size:15px;">🤖</span>
+    <span class="adr-title">Agents</span>
+    <span id="agents-live-indicator" style="display:none;align-items:center;gap:5px;">
+      <span class="agents-live-dot"></span>
+      <span class="agents-live-label" id="agents-active-count">0 active</span>
+    </span>
+    <span class="agents-auto-label" id="agents-last-refresh" style="font-size:10px;color:var(--text-muted);"></span>
+    <button class="agents-refresh-btn" onclick="agentsLoad()" style="flex-shrink:0;">↻</button>
+    <button class="adr-close" onclick="toggleAgentsDrawer(false)" title="Close">✕</button>
+  </div>
+
+  <!-- Scrollable body -->
+  <div class="adr-body">
+
+    <!-- ── Design Assistant ──────────────────────────────────────────── -->
     <div class="da-bar">
       <div class="da-bar-label">⚡ Design Assistant — Claude Code on server</div>
-      <div class="da-bar-hint">Describe any design change — add a component, fix connectivity, generate a schematic, route the PCB. Claude Code runs on the server and edits files directly.</div>
+      <div class="da-bar-hint">Describe any design change. Claude Code runs on the server and edits files directly.</div>
       <div class="da-input-row">
         <textarea class="da-textarea" id="da-prompt" rows="2"
-          placeholder="e.g. "Add 100nF bypass caps to all VCC pins on the ESP32 schematic" or "Parse the uploaded datasheet and create a library component""
+          placeholder="e.g. "Fix the component save bug" or "Generate footprint for QPA9510""
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();daSend()}"
           oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
         <select class="da-agent-select" id="da-agent-select">
-          <option value="orchestrator">🎯 Orchestrator (auto-route)</option>
+          <option value="orchestrator">🎯 Orchestrator</option>
           <option value="datasheet-parser">📄 Datasheet Parser</option>
+          <option value="library">📚 Library GUI</option>
           <option value="component">🔷 Component Designer</option>
           <option value="footprint">🔲 Footprint Designer</option>
           <option value="example-schematic">📐 Example Schematic</option>
+          <option value="layout-example">🖼️ Layout Example</option>
           <option value="schematic">🗺️ Schematic Agent</option>
+          <option value="schematic-gui">✏️ Schematic GUI</option>
           <option value="connectivity">🔗 Connectivity Check</option>
           <option value="autoplace">🧩 Auto Placer</option>
           <option value="autoroute">〰️ Auto Router</option>
           <option value="layout">📋 Layout Assembler</option>
+          <option value="layout-gui">🖥️ Layout GUI</option>
+          <option value="import-export">📤 Import / Export</option>
         </select>
         <button class="da-send" onclick="daSend()">Run ↵</button>
       </div>
       <div class="da-flow">
-        <span class="da-flow-step">Browser prompt</span>
+        <span class="da-flow-step">Prompt</span>
         <span class="da-flow-arrow">→</span>
-        <span class="da-flow-step">FastAPI server</span>
+        <span class="da-flow-step">FastAPI</span>
         <span class="da-flow-arrow">→</span>
         <span class="da-flow-step">Claude Code CLI</span>
         <span class="da-flow-arrow">→</span>
-        <span class="da-flow-step">Edit project files</span>
-        <span class="da-flow-arrow">→</span>
-        <span class="da-flow-step">SSE stream → UI update</span>
+        <span class="da-flow-step">Edit files</span>
       </div>
     </div>
 
-    <div class="agents-topbar">
-      <h2>🤖 Agents</h2>
-      <button class="agents-refresh-btn" onclick="agentsLoad()">↻ Refresh</button>
-      <span id="agents-live-indicator" style="display:none;align-items:center;gap:5px;">
-        <span class="agents-live-dot"></span>
-        <span class="agents-live-label" id="agents-active-count">0 active</span>
-      </span>
-      <span class="agents-auto-label" id="agents-last-refresh"></span>
-    </div>
-    <div class="agents-columns">
-      <!-- Active agents -->
+    <!-- ── Live Agents ───────────────────────────────────────────────── -->
+    <div class="agents-columns" style="height:auto;min-height:120px;max-height:260px;">
       <div class="agents-col">
         <div class="agents-col-header">
           <span class="agents-col-title">🟣 Working</span>
@@ -626,40 +683,39 @@
           <div class="agents-col-empty">No agents active</div>
         </div>
       </div>
-      <!-- Queue -->
       <div class="agents-col">
         <div class="agents-col-header">
           <span class="agents-col-title">⏳ Queue</span>
           <span class="agents-col-count" id="agents-queue-count">0</span>
         </div>
         <div class="agents-col-body" id="agents-queue-list">
-          <div class="agents-col-empty">No tickets in queue</div>
+          <div class="agents-col-empty">No tickets</div>
         </div>
       </div>
-      <!-- Recently completed -->
       <div class="agents-col">
         <div class="agents-col-header">
-          <span class="agents-col-title">✅ Recently Done</span>
+          <span class="agents-col-title">✅ Done</span>
           <span class="agents-col-count" id="agents-done-count">0</span>
         </div>
         <div class="agents-col-body" id="agents-done-list">
-          <div class="agents-col-empty">Nothing completed yet</div>
+          <div class="agents-col-empty">Nothing yet</div>
         </div>
       </div>
     </div>
 
     <!-- ── Pipeline Agents ───────────────────────────────────────────── -->
-    <div class="pipeline-section">
+    <div class="pipeline-section" style="flex:1;">
       <div class="pipeline-section-title">
         ⚡ EDA Pipeline Agents
-        <span style="font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">Click any agent to open the Claude Code CLI terminal</span>
+        <span style="font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">Click to open CLI terminal</span>
       </div>
-      <div class="pipeline-grid" id="pipeline-agents-grid">
+      <div class="pipeline-grid" id="pipeline-agents-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
         <div style="color:var(--text-muted);font-size:12px;grid-column:1/-1;padding:8px 0;">Loading…</div>
       </div>
     </div>
-  </div>
-</div>
+
+  </div><!-- /adr-body -->
+</div><!-- /agents-drawer -->
 
 <!-- ══ AGENT CLI MODAL ════════════════════════════════════════════════════ -->
 <div id="pa-modal" onclick="if(event.target===this)paChatClose()">
@@ -4872,12 +4928,15 @@ async function copyText(el) {
 
 // ── Section switching ──────────────────────────────────────────────────────
 function switchSection(name) {
-  ['library','schematic','pcb','generate','agents','build'].forEach(s => {
+  ['library','schematic','pcb','generate','build'].forEach(s => {
     const sec = document.getElementById('section-' + s);
     const nav = document.getElementById('nav-' + s);
     if (sec) sec.classList.toggle('hidden', s !== name);
     if (nav) nav.classList.toggle('active', s === name);
   });
+  // agents nav button is never "active" as a section — it toggles the drawer
+  const navAgents = document.getElementById('nav-agents');
+  if (navAgents) navAgents.classList.remove('active');
   if (name === 'schematic') {
     setTimeout(() => { editor._resize(); renderSchPalette(document.getElementById('sch-lib-search')?.value || ''); }, 50);
   }
@@ -7878,12 +7937,88 @@ async function agentsLoad() {
   // Also refresh pipeline agents
   pipelineAgentsLoad();
 
-  // Auto-refresh every 3s while tab is visible
-  const sec = document.getElementById('section-agents');
-  if (sec && !sec.classList.contains('hidden')) {
+  // Update toggle badge
+  const badge = document.getElementById('agents-toggle-badge');
+  const activeN = document.querySelectorAll('#agents-working-list .agent-card').length;
+  if (badge) { badge.textContent = activeN; badge.classList.toggle('visible', activeN > 0); }
+
+  // Auto-refresh every 3s while drawer is open
+  const drawer = document.getElementById('agents-drawer');
+  if (drawer && drawer.classList.contains('open')) {
     _agentsTimer = setTimeout(agentsLoad, 3000);
   }
 }
+
+// ── Agents Drawer ─────────────────────────────────────────────────────────────
+let _drawerOpen = false;
+
+function toggleAgentsDrawer(forceOpen) {
+  const drawer = document.getElementById('agents-drawer');
+  _drawerOpen = forceOpen !== undefined ? forceOpen : !_drawerOpen;
+  drawer.classList.toggle('open', _drawerOpen);
+  const navBtn = document.getElementById('nav-agents');
+  if (navBtn) navBtn.classList.toggle('active', _drawerOpen);
+  if (_drawerOpen) {
+    agentsLoad();
+  } else {
+    clearTimeout(_agentsTimer);
+  }
+}
+
+function _initDrawerResize() {
+  const handle = document.getElementById('agents-drawer-resize');
+  const drawer = document.getElementById('agents-drawer');
+  if (!handle || !drawer) return;
+  let startX, startW;
+  handle.addEventListener('mousedown', e => {
+    startX = e.clientX; startW = drawer.offsetWidth;
+    handle.classList.add('dragging');
+    document.addEventListener('mousemove', _onDrawerMove);
+    document.addEventListener('mouseup', _onDrawerUp);
+    e.preventDefault();
+  });
+}
+function _onDrawerMove(e) {
+  const drawer = document.getElementById('agents-drawer');
+  const startX = _onDrawerMove._sx || 0, startW = _onDrawerMove._sw || drawer.offsetWidth;
+  if (!_onDrawerMove._init) return;
+  const dx = _onDrawerMove._sx - e.clientX;
+  const newW = Math.max(300, Math.min(window.innerWidth * 0.8, _onDrawerMove._sw + dx));
+  drawer.style.width = newW + 'px';
+}
+function _onDrawerUp() {
+  const handle = document.getElementById('agents-drawer-resize');
+  if (handle) handle.classList.remove('dragging');
+  document.removeEventListener('mousemove', _onDrawerMove);
+  document.removeEventListener('mouseup', _onDrawerUp);
+  _onDrawerMove._init = false;
+}
+
+// fixed resize init — attach once
+(function() {
+  document.addEventListener('DOMContentLoaded', () => {
+    const handle = document.getElementById('agents-drawer-resize');
+    const drawer = document.getElementById('agents-drawer');
+    if (!handle || !drawer) return;
+    handle.addEventListener('mousedown', e => {
+      const sx = e.clientX, sw = drawer.offsetWidth;
+      handle.classList.add('dragging');
+      function move(ev) {
+        const dx = sx - ev.clientX;
+        const nw = Math.max(300, Math.min(window.innerWidth * 0.82, sw + dx));
+        drawer.style.width = nw + 'px';
+      }
+      function up() {
+        handle.classList.remove('dragging');
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+      }
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+      e.preventDefault();
+    });
+  });
+})();
 
 // ── Pipeline Agents ──────────────────────────────────────────────────────────
 let _paState = {};        // name → agent summary object
