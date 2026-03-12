@@ -1,30 +1,24 @@
 """
-Tests for the Example Schematic Agent.
+Tests for the Example Schematic Agent (tools layer).
 
-Uses a synthetic LM358 dual op-amp datasheet JSON (no real API call needed
-for schema/structure tests; real Claude call is gated behind an integration
-flag so the suite can run in CI without credentials).
+No Anthropic SDK calls are made. Claude Code handles reasoning;
+this suite tests the pure Python tooling only.
 
 Run all tests:
     pytest agents/example-schematic/test_agent.py -v
 
-Run only unit tests (no API call):
+Run only unit tests:
     pytest agents/example-schematic/test_agent.py -v -m "not integration"
-
-Run including integration (requires ANTHROPIC_API_KEY):
-    pytest agents/example-schematic/test_agent.py -v -m integration
 """
 
 from __future__ import annotations
 
 import json
-import os
 import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -221,23 +215,12 @@ class TestSchemaCompliance:
         fields — that is the validator's current design. Instead verify that our
         agent code itself always sets project_name.
         """
-        bad = {k: v for k, v in MINIMAL_VALID_SCHEMATIC.items() if k != "project_name"}
-        # The validator subprocess is permissive, but the agent always adds project_name.
-        # Confirm the key is present in a well-formed schematic.
         assert "project_name" in MINIMAL_VALID_SCHEMATIC
 
     def test_format_field_is_kicad_sch(self):
-        """
-        The agent always enforces format == 'kicad_sch'.
-        Verify the minimal schematic carries the correct value.
-        """
         assert MINIMAL_VALID_SCHEMATIC["format"] == "kicad_sch"
 
     def test_net_type_values_are_valid(self):
-        """
-        Net types must be one of power|signal|gnd.
-        Verify the minimal schematic uses only valid types.
-        """
         valid_types = {"power", "signal", "gnd"}
         for net in MINIMAL_VALID_SCHEMATIC["nets"]:
             assert net["type"] in valid_types, \
@@ -327,7 +310,6 @@ class TestAssumedFlag:
     def test_no_assumed_also_valid(self):
         import copy
         schematic = copy.deepcopy(MINIMAL_VALID_SCHEMATIC)
-        # Remove assumed field entirely from one component
         schematic["components"][1].pop("assumed", None)
         ok, msg = _schema_valid(schematic)
         assert ok, f"Schema rejected component without assumed field: {msg}"
@@ -370,7 +352,6 @@ class TestNetlistBuilder:
         from netlist_builder import build_netlist_summary
 
         schematic = copy.deepcopy(MINIMAL_VALID_SCHEMATIC)
-        # Add a component with a net that nothing else connects to
         schematic["components"].append({
             "reference": "R4",
             "value": "1k",
@@ -387,143 +368,133 @@ class TestNetlistBuilder:
         assert "dangling" in summary.lower()
 
 
-class TestAgentParsing:
-    """Test internal agent helpers without network calls."""
+class TestGetApplicationContext:
+    """Test get_application_context() tool."""
 
-    def test_strip_code_fences(self):
-        from agent import _strip_code_fences
+    def test_returns_required_keys(self, tmp_path):
+        from agent import get_application_context
 
-        raw = '```json\n{"key": "value"}\n```'
-        assert _strip_code_fences(raw) == '{"key": "value"}'
-
-        no_fence = '{"key": "value"}'
-        assert _strip_code_fences(no_fence) == '{"key": "value"}'
-
-        triple_only = '```\n{"key": "value"}\n```'
-        assert _strip_code_fences(triple_only) == '{"key": "value"}'
-
-    def test_build_user_prompt_contains_component_name(self):
-        from agent import _build_user_prompt
-
-        prompt = _build_user_prompt(LM358_DATASHEET)
-        assert "LM358" in prompt
-        assert "Texas Instruments" in prompt
-
-    def test_build_user_prompt_contains_pin_info(self):
-        from agent import _build_user_prompt
-
-        prompt = _build_user_prompt(LM358_DATASHEET)
-        assert "IN1+" in prompt or "IN1-" in prompt or "OUT1" in prompt
-
-    def test_build_user_prompt_contains_passives(self):
-        from agent import _build_user_prompt
-
-        prompt = _build_user_prompt(LM358_DATASHEET)
-        assert "10k" in prompt
-
-    def test_run_writes_output(self, tmp_path, monkeypatch):
-        """Mock the Claude call and verify agent.run() writes a valid output file."""
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-dummy-key-not-real")
-        from agent import run
-
-        # Write sample datasheet
         ds_path = tmp_path / "datasheet.json"
-        out_path = tmp_path / "example_schematic.json"
         _write_json(LM358_DATASHEET, ds_path)
 
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text=json.dumps(MINIMAL_VALID_SCHEMATIC))]
+        ctx = get_application_context(ds_path)
+        assert ctx["component_name"] == "LM358"
+        assert ctx["package"] == "SOIC-8"
+        assert "example_application" in ctx
 
-        with patch("anthropic.Anthropic") as MockClient:
-            instance = MockClient.return_value
-            instance.messages.create.return_value = mock_response
+    def test_example_application_section_is_preserved(self, tmp_path):
+        from agent import get_application_context
 
-            result = run(ds_path, out_path)
+        ds_path = tmp_path / "datasheet.json"
+        _write_json(LM358_DATASHEET, ds_path)
 
-        assert out_path.exists(), "Output file was not written"
-        assert result["project_name"] == "LM358 Application Circuit"
-        assert result["format"] == "kicad_sch"
+        ctx = get_application_context(ds_path)
+        ea = ctx["example_application"]
+        assert "description" in ea
+        assert "required_passives" in ea
+        assert "typical_schematic_notes" in ea
 
-        ok, msg = _schema_valid(result)
-        assert ok, f"Output does not match schema: {msg}"
-
-    def test_run_raises_on_missing_datasheet(self, tmp_path):
-        from agent import run
+    def test_raises_on_missing_datasheet(self, tmp_path):
+        from agent import get_application_context
 
         with pytest.raises(FileNotFoundError):
-            run(tmp_path / "nonexistent.json", tmp_path / "out.json")
+            get_application_context(tmp_path / "nonexistent.json")
 
-    def test_run_raises_on_invalid_json_response(self, tmp_path, monkeypatch):
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-dummy-key-not-real")
-        from agent import run
-
-        ds_path = tmp_path / "datasheet.json"
-        _write_json(LM358_DATASHEET, ds_path)
-
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="This is not JSON at all.")]
-
-        with patch("anthropic.Anthropic") as MockClient:
-            instance = MockClient.return_value
-            instance.messages.create.return_value = mock_response
-
-            with pytest.raises(ValueError, match="non-JSON"):
-                run(ds_path, tmp_path / "out.json")
-
-
-# ---------------------------------------------------------------------------
-# Integration test — requires ANTHROPIC_API_KEY and live Claude
-# ---------------------------------------------------------------------------
-
-@pytest.mark.integration
-class TestIntegration:
-    """Live API tests. Skipped unless ANTHROPIC_API_KEY is set."""
-
-    @pytest.fixture(autouse=True)
-    def require_api_key(self):
-        if not os.getenv("ANTHROPIC_API_KEY"):
-            pytest.skip("ANTHROPIC_API_KEY not set — skipping integration tests")
-
-    def test_full_run_lm358(self, tmp_path):
-        """Run the full agent against LM358 datasheet and verify output quality."""
-        from agent import run
-        from netlist_builder import build_netlist_summary
+    def test_missing_fields_return_empty_defaults(self, tmp_path):
+        from agent import get_application_context
 
         ds_path = tmp_path / "datasheet.json"
-        out_path = tmp_path / "example_schematic.json"
-        _write_json(LM358_DATASHEET, ds_path)
+        _write_json({}, ds_path)
 
-        result = run(ds_path, out_path)
+        ctx = get_application_context(ds_path)
+        assert ctx["component_name"] == ""
+        assert ctx["package"] == ""
+        assert ctx["example_application"] == {}
 
-        # 1. Schema valid
-        ok, msg = _schema_valid(result)
-        assert ok, f"Schema validation failed: {msg}"
 
-        # 2. No generic net names
-        for net in result.get("nets", []):
-            name = net["name"]
-            assert not NET_GENERIC_PATTERN.match(name), \
-                f"Integration test: generic net name '{name}' in output"
+class TestApplySchematic:
+    """Test apply_schematic() tool."""
 
-        # 3. All passives have values
-        for comp in result.get("components", []):
-            ref = comp.get("reference", "")
-            if PASSIVE_REF_PATTERN.match(ref):
-                value = comp.get("value", "").strip()
-                assert value and value.lower() not in ("", "?", "unknown", "tbd"), \
-                    f"Integration test: passive {ref} has no value"
+    def test_valid_schematic_succeeds(self, tmp_path):
+        from agent import apply_schematic
+        import copy
 
-        # 4. Power symbols present
-        assert "VCC" in result.get("power_symbols", []) or \
-               any(n["type"] == "power" for n in result.get("nets", [])), \
-            "No VCC power rail found"
-        assert "GND" in result.get("power_symbols", []) or \
-               any(n["type"] == "gnd" for n in result.get("nets", [])), \
-            "No GND rail found"
+        result = apply_schematic(copy.deepcopy(MINIMAL_VALID_SCHEMATIC), output_dir=tmp_path)
+        assert result["success"] is True
+        assert result["errors"] == []
+        assert len(result["netlist_summary"]) > 0
+        assert (tmp_path / "example_schematic.json").exists()
 
-        # 5. Netlist summary generates without error
-        summary = build_netlist_summary(result)
-        assert len(summary) > 100, "Netlist summary suspiciously short"
+    def test_output_file_is_valid_json(self, tmp_path):
+        from agent import apply_schematic
+        import copy
 
-        # 6. Output file exists
-        assert out_path.exists()
+        apply_schematic(copy.deepcopy(MINIMAL_VALID_SCHEMATIC), output_dir=tmp_path)
+        with open(tmp_path / "example_schematic.json") as f:
+            data = json.load(f)
+        assert data["project_name"] == "LM358 Application Circuit"
+
+    def test_format_field_is_enforced(self, tmp_path):
+        from agent import apply_schematic
+        import copy
+
+        schematic = copy.deepcopy(MINIMAL_VALID_SCHEMATIC)
+        schematic["format"] = "wrong_format"
+        result = apply_schematic(schematic, output_dir=tmp_path)
+        # format is always overwritten to kicad_sch
+        with open(tmp_path / "example_schematic.json") as f:
+            data = json.load(f)
+        assert data["format"] == "kicad_sch"
+
+    def test_generic_net_names_reported_in_errors(self, tmp_path):
+        from agent import apply_schematic
+        import copy
+
+        schematic = copy.deepcopy(MINIMAL_VALID_SCHEMATIC)
+        schematic["nets"].append({"name": "NET001", "label": "NET001", "type": "signal"})
+
+        result = apply_schematic(schematic, output_dir=tmp_path)
+        # Validation warnings are included in errors even if schema passes
+        assert any("NET001" in e for e in result["errors"])
+
+    def test_missing_passive_value_reported_in_errors(self, tmp_path):
+        from agent import apply_schematic
+        import copy
+
+        schematic = copy.deepcopy(MINIMAL_VALID_SCHEMATIC)
+        schematic["components"][1]["value"] = ""  # R1 with no value
+
+        result = apply_schematic(schematic, output_dir=tmp_path)
+        assert any("R1" in e for e in result["errors"])
+
+    def test_netlist_summary_contains_component_refs(self, tmp_path):
+        from agent import apply_schematic
+        import copy
+
+        result = apply_schematic(copy.deepcopy(MINIMAL_VALID_SCHEMATIC), output_dir=tmp_path)
+        for ref in ("U1", "R1", "R2", "R3", "C1"):
+            assert ref in result["netlist_summary"], f"{ref} missing from netlist_summary"
+
+    def test_netlist_summary_contains_net_names(self, tmp_path):
+        from agent import apply_schematic
+        import copy
+
+        result = apply_schematic(copy.deepcopy(MINIMAL_VALID_SCHEMATIC), output_dir=tmp_path)
+        for net in ("VCC", "GND", "INPUT_SIGNAL"):
+            assert net in result["netlist_summary"], f"{net} missing from netlist_summary"
+
+
+class TestRunStub:
+    """run() must raise NotImplementedError."""
+
+    def test_run_raises_not_implemented(self):
+        from agent import run
+
+        with pytest.raises(NotImplementedError):
+            run()
+
+    def test_run_raises_with_args(self):
+        from agent import run
+
+        with pytest.raises(NotImplementedError):
+            run("some_arg", key="value")
