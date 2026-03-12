@@ -8164,11 +8164,17 @@ function _handlePipelineSSE(evt, data) {
     }
   }
 
-  // Route to modal only if this agent is open
-  if (name !== _activePaAgent) {
-    if (evt === 'pipeline_agent_done') setTimeout(pipelineAgentsLoad, 400);
-    return;
+  // On done: reload history into server cache regardless of pane state, re-render if open
+  if (evt === 'pipeline_agent_done') {
+    setTimeout(pipelineAgentsLoad, 400);
+    fetch(`/api/pipeline/agents/${name}/history`)
+      .then(r => r.json())
+      .then(hist => { if (name === _activePaAgent) _paRenderHistory(hist); })
+      .catch(() => {});
   }
+
+  // Route live updates to pane only if this agent is open
+  if (name !== _activePaAgent) return;
 
   if (evt === 'pipeline_agent_started') {
     _paUpdateModalStatus('running');
@@ -8215,11 +8221,6 @@ function _handlePipelineSSE(evt, data) {
     if (sessEl && data.session_id) sessEl.textContent = '⬤ session active';
     const btn = document.getElementById('pa-send-btn');
     if (btn) btn.disabled = false;
-    // Always reload full history from server to guarantee response is shown
-    fetch(`/api/pipeline/agents/${name}/history`)
-      .then(r => r.json())
-      .then(hist => { if (name === _activePaAgent) _paRenderHistory(hist); })
-      .catch(() => {});
     document.getElementById('pa-chat-input')?.focus();
     setTimeout(pipelineAgentsLoad, 400);
   }

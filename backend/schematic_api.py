@@ -1651,8 +1651,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                 resume=existing_session,  # None on first call, session_id thereafter
                 env={"IS_SANDBOX": "1"},   # Allow bypassPermissions when running as root in Docker
                 stderr=_capture_stderr,    # Capture subprocess stderr for debugging
-                thinking=ThinkingConfigAdaptive(type="adaptive"),  # Show Claude's reasoning
-                effort="high",             # Use more thinking for complex tasks
+                thinking=ThinkingConfigAdaptive(type="adaptive"),  # Show Claude's reasoning only when needed
             )
 
             async for sdk_msg in query(prompt=prompt, options=opts):
