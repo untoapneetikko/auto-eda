@@ -1,18 +1,66 @@
 {
-  "symbol": {
-    "name": "string",
-    "reference": "string",
-    "pins": [
-      {
-        "number": "integer",
-        "name": "string",
-        "direction": "left|right|top|bottom",
-        "type": "power|input|output|bidirectional|passive|nc",
-        "x": "float",
-        "y": "float"
-      }
-    ],
-    "body": {"width": "float", "height": "float"},
-    "format": "kicad_sym"
-  }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ComponentOutput",
+  "description": "KiCad symbol definition produced by the component/symbol generator agent",
+  "type": "object",
+  "required": ["symbol"],
+  "properties": {
+    "symbol": {
+      "type": "object",
+      "required": ["name", "reference", "pins", "body", "format"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Symbol name matching the component part number"
+        },
+        "reference": {
+          "type": "string",
+          "description": "Reference designator prefix, e.g. U, R, C"
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["number", "name", "direction", "type", "x", "y"],
+            "properties": {
+              "number": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "name": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": ["left", "right", "top", "bottom"]
+              },
+              "type": {
+                "type": "string",
+                "enum": ["power", "input", "output", "bidirectional", "passive", "nc"]
+              },
+              "x": {"type": "number"},
+              "y": {"type": "number"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "body": {
+          "type": "object",
+          "required": ["width", "height"],
+          "properties": {
+            "width": {"type": "number", "exclusiveMinimum": 0},
+            "height": {"type": "number", "exclusiveMinimum": 0}
+          },
+          "additionalProperties": false
+        },
+        "format": {
+          "type": "string",
+          "enum": ["kicad_sym"],
+          "description": "Output format identifier"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
 }

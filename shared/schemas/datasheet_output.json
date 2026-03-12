@@ -1,31 +1,102 @@
 {
-  "component_name": "string",
-  "manufacturer": "string",
-  "package": "string",
-  "pins": [
-    {
-      "number": "integer",
-      "name": "string",
-      "type": "power|input|output|bidirectional|passive|nc",
-      "function": "string"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DatasheetOutput",
+  "description": "Structured output produced by the datasheet parser agent",
+  "type": "object",
+  "required": ["component_name", "manufacturer", "package", "pins", "footprint", "electrical", "raw_text", "source_pdf"],
+  "properties": {
+    "component_name": {
+      "type": "string",
+      "description": "Full part number / component name"
+    },
+    "manufacturer": {
+      "type": "string"
+    },
+    "package": {
+      "type": "string",
+      "description": "Package designator, e.g. SOIC-8, QFN-16"
+    },
+    "pins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["number", "name", "type"],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["power", "input", "output", "bidirectional", "passive", "nc"]
+          },
+          "function": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "footprint": {
+      "type": "object",
+      "required": ["standard", "pad_count"],
+      "properties": {
+        "standard": {
+          "type": "string",
+          "description": "KiCad-style footprint identifier, e.g. Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
+        },
+        "pad_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "pitch_mm": {
+          "type": ["number", "null"],
+          "description": "Pad-to-pad pitch in millimetres; null when not applicable (e.g. BGA)"
+        },
+        "courtyard_mm": {
+          "type": "object",
+          "required": ["x", "y"],
+          "properties": {
+            "x": {"type": "number"},
+            "y": {"type": "number"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "electrical": {
+      "type": "object",
+      "properties": {
+        "vcc_min": {"type": ["number", "null"]},
+        "vcc_max": {"type": ["number", "null"]},
+        "i_max_ma": {"type": ["number", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "example_application": {
+      "type": ["object", "null"],
+      "properties": {
+        "description": {"type": "string"},
+        "required_passives": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "typical_schematic_notes": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "raw_text": {
+      "type": "string",
+      "description": "Full extracted text from the datasheet PDF"
+    },
+    "source_pdf": {
+      "type": "string",
+      "description": "Original PDF filename or URL"
     }
-  ],
-  "footprint": {
-    "standard": "string",
-    "pad_count": "integer",
-    "pitch_mm": "float",
-    "courtyard_mm": {"x": "float", "y": "float"}
   },
-  "electrical": {
-    "vcc_min": "float",
-    "vcc_max": "float",
-    "i_max_ma": "float"
-  },
-  "example_application": {
-    "description": "string",
-    "required_passives": ["string"],
-    "typical_schematic_notes": "string"
-  },
-  "raw_text": "string",
-  "source_pdf": "string"
+  "additionalProperties": false
 }

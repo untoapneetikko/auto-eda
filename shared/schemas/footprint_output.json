@@ -1,18 +1,79 @@
 {
-  "name": "string",
-  "pads": [
-    {
-      "number": "integer",
-      "type": "smd|thru_hole",
-      "shape": "rect|oval|circle",
-      "x": "float",
-      "y": "float",
-      "width": "float",
-      "height": "float",
-      "drill": "float"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FootprintOutput",
+  "description": "KiCad footprint (.kicad_mod) definition produced by the footprint generator agent",
+  "type": "object",
+  "required": ["name", "pads", "courtyard", "format"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Footprint name, e.g. Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
+    },
+    "pads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["number", "type", "shape", "x", "y", "width", "height"],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": ["smd", "thru_hole"]
+          },
+          "shape": {
+            "type": "string",
+            "enum": ["rect", "oval", "circle"]
+          },
+          "x": {"type": "number"},
+          "y": {"type": "number"},
+          "width": {"type": "number", "exclusiveMinimum": 0},
+          "height": {"type": "number", "exclusiveMinimum": 0},
+          "drill": {
+            "type": ["number", "null"],
+            "description": "Drill diameter in mm; null for SMD pads",
+            "exclusiveMinimum": 0
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "courtyard": {
+      "type": "object",
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number"},
+        "y": {"type": "number"},
+        "width": {"type": "number", "exclusiveMinimum": 0},
+        "height": {"type": "number", "exclusiveMinimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "silkscreen": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "data"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["line", "arc", "text"]
+          },
+          "data": {
+            "type": "object",
+            "description": "Type-specific silkscreen element data"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "format": {
+      "type": "string",
+      "enum": ["kicad_mod"],
+      "description": "Output format identifier"
     }
-  ],
-  "courtyard": {"x": "float", "y": "float", "width": "float", "height": "float"},
-  "silkscreen": [{"type": "line|arc|text", "data": "object"}],
-  "format": "kicad_mod"
+  },
+  "additionalProperties": false
 }

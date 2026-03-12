@@ -1,13 +1,74 @@
 {
-  "traces": [
-    {
-      "net": "string",
-      "layer": "string",
-      "width_mm": "float",
-      "path": [{"x": "float", "y": "float"}]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "RoutingOutput",
+  "description": "Trace and via routing decisions produced by the routing agent",
+  "type": "object",
+  "required": ["traces", "vias"],
+  "properties": {
+    "traces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["net", "layer", "width_mm", "path"],
+        "properties": {
+          "net": {
+            "type": "string",
+            "description": "Net name this trace belongs to"
+          },
+          "layer": {
+            "type": "string",
+            "description": "PCB layer name, e.g. F.Cu, B.Cu, In1.Cu"
+          },
+          "width_mm": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Trace width in millimetres"
+          },
+          "path": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "required": ["x", "y"],
+              "properties": {
+                "x": {"type": "number"},
+                "y": {"type": "number"}
+              },
+              "additionalProperties": false
+            },
+            "description": "Ordered list of waypoints defining the trace polyline"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "vias": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["net", "x", "y", "drill_mm"],
+        "properties": {
+          "net": {
+            "type": "string",
+            "description": "Net name this via connects"
+          },
+          "x": {
+            "type": "number",
+            "description": "X position in millimetres"
+          },
+          "y": {
+            "type": "number",
+            "description": "Y position in millimetres"
+          },
+          "drill_mm": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Via drill diameter in millimetres"
+          }
+        },
+        "additionalProperties": false
+      }
     }
-  ],
-  "vias": [
-    {"net": "string", "x": "float", "y": "float", "drill_mm": "float"}
-  ]
+  },
+  "additionalProperties": false
 }

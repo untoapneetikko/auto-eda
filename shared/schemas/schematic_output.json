@@ -1,17 +1,95 @@
 {
-  "project_name": "string",
-  "nets": [
-    {"name": "string", "label": "string", "type": "power|signal|gnd"}
-  ],
-  "components": [
-    {
-      "reference": "string",
-      "value": "string",
-      "footprint": "string",
-      "position": {"x": "float", "y": "float"},
-      "connections": [{"pin": "integer", "net": "string"}]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SchematicOutput",
+  "description": "KiCad schematic (.kicad_sch) definition produced by the schematic generator agent",
+  "type": "object",
+  "required": ["project_name", "nets", "components", "power_symbols", "format"],
+  "properties": {
+    "project_name": {
+      "type": "string"
+    },
+    "nets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Net identifier, e.g. VCC, GND, NET_001"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable net label shown on schematic"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["power", "signal", "gnd"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reference", "value", "footprint", "position", "connections"],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "Unique reference designator, e.g. U1, R3, C12"
+          },
+          "value": {
+            "type": "string",
+            "description": "Component value or part number, e.g. 10k, 100nF, LM358"
+          },
+          "footprint": {
+            "type": "string",
+            "description": "KiCad footprint library:name reference"
+          },
+          "position": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": {
+              "x": {"type": "number"},
+              "y": {"type": "number"}
+            },
+            "additionalProperties": false
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["pin", "net"],
+              "properties": {
+                "pin": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "net": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "power_symbols": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of power net names that have explicit power symbols, e.g. VCC, GND"
+    },
+    "format": {
+      "type": "string",
+      "enum": ["kicad_sch"],
+      "description": "Output format identifier"
     }
-  ],
-  "power_symbols": ["string"],
-  "format": "kicad_sch"
+  },
+  "additionalProperties": false
 }

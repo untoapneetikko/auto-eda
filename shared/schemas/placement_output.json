@@ -1,13 +1,62 @@
 {
-  "board": {"width_mm": "float", "height_mm": "float"},
-  "placements": [
-    {
-      "reference": "string",
-      "x": "float",
-      "y": "float",
-      "rotation": "float",
-      "layer": "F.Cu|B.Cu",
-      "rationale": "string"
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PlacementOutput",
+  "description": "Component placement decisions produced by the placement agent",
+  "type": "object",
+  "required": ["board", "placements"],
+  "properties": {
+    "board": {
+      "type": "object",
+      "required": ["width_mm", "height_mm"],
+      "properties": {
+        "width_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "placements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reference", "x", "y", "rotation", "layer"],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "Reference designator matching a component in the schematic, e.g. U1"
+          },
+          "x": {
+            "type": "number",
+            "description": "X position in millimetres from board origin"
+          },
+          "y": {
+            "type": "number",
+            "description": "Y position in millimetres from board origin"
+          },
+          "rotation": {
+            "type": "number",
+            "description": "Rotation in degrees (0–359.9)",
+            "minimum": 0,
+            "exclusiveMaximum": 360
+          },
+          "layer": {
+            "type": "string",
+            "enum": ["F.Cu", "B.Cu"],
+            "description": "Board side: front copper or back copper"
+          },
+          "rationale": {
+            "type": "string",
+            "description": "Human-readable explanation of why the component was placed here"
+          }
+        },
+        "additionalProperties": false
+      }
     }
-  ]
+  },
+  "additionalProperties": false
 }
