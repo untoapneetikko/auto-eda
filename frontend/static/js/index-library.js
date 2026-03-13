@@ -521,10 +521,39 @@ Then parse this component:
               <div style="margin-top:6px;font-size:10px;color:var(--text-muted);text-align:center;">All dimensions in mm · Click pad to select</div>
             </div>
             <!-- Pad table -->
-            <div style="flex:1;min-width:240px;">
+            <div style="flex:1;min-width:200px;">
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px;">Pads</div>
               <div id="fp-pad-list" style="font-size:11px;"></div>
               <button onclick="fpAddPad()" style="margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 10px;font-size:11px;cursor:pointer;">+ Add Pad</button>
+            </div>
+            <!-- Layer panel (mirrors PCB layer management) -->
+            <div style="min-width:160px;flex-shrink:0;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px;">Layers</div>
+              <div id="fp-layer-list" style="display:flex;flex-direction:column;gap:1px;"></div>
+              <!-- Paste / Mask parameters -->
+              <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px;">Paste / Mask</div>
+                <div style="display:flex;flex-direction:column;gap:5px;">
+                  <label style="display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+                    <span title="Solder mask opening = pad + this value on each side">Mask exp.</span>
+                    <span style="display:flex;align-items:center;gap:3px;">
+                      <input id="fp-mask-exp" type="number" step="0.01" min="0" max="1" value="0.10"
+                        onchange="if(fpEditor){fpEditor.maskExpansion=Math.max(0,parseFloat(this.value)||0.1);fpEditor._render();}"
+                        style="width:52px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:3px;padding:1px 3px;font-size:10px;text-align:right;">
+                      <span style="font-size:10px;">mm</span>
+                    </span>
+                  </label>
+                  <label style="display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:11px;color:var(--text-muted);">
+                    <span title="Solder paste opening = pad − this value on each side (SMD only)">Paste gap</span>
+                    <span style="display:flex;align-items:center;gap:3px;">
+                      <input id="fp-paste-gap" type="number" step="0.01" min="0" max="1" value="0.05"
+                        onchange="if(fpEditor){fpEditor.pasteGap=Math.max(0,parseFloat(this.value)||0.05);fpEditor._render();}"
+                        style="width:52px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:3px;padding:1px 3px;font-size:10px;text-align:right;">
+                      <span style="font-size:10px;">mm</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
           <!-- Footprint metadata -->

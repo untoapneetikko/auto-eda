@@ -10,6 +10,18 @@ class FootprintEditor {
     this.panState = null;
     this.onSelect = null; // callback(padIdx)
     this.onChange = null; // callback(padIdx)
+    // ── Layer management (mirrors PCB editor layers) ──
+    this.layers = {
+      'Courtyard': { color: '#ffee00', visible: true,  displayName: 'Courtyard' },
+      'F.Fab':     { color: '#888866', visible: false, displayName: 'Fab / Outline' },
+      'F.Paste':   { color: '#aaaaaa', visible: true,  displayName: 'Solder Paste' },
+      'F.Mask':    { color: '#1a7a2a', visible: true,  displayName: 'Solder Mask' },
+      'F.Cu':      { color: '#cc6633', visible: true,  displayName: 'Top Copper' },
+      'F.SilkS':   { color: '#cccccc', visible: true,  displayName: 'Silkscreen' },
+    };
+    // ── Paste / mask parametrisation ──
+    this.maskExpansion = 0.10; // mm expansion beyond pad edge (each side)
+    this.pasteGap      = 0.05; // mm reduction from pad edge (each side)
     this._bind();
   }
 
@@ -118,6 +130,47 @@ class FootprintEditor {
     this.svg.addEventListener('mouseleave', () => { this.panState = null; });
   }
 
+  // ── Per-layer pad shape renderer ─────────────────────────────────────────
+  // Returns SVG markup for `pad` on the given layer string.
+  _padLayer(pad, i, layer) {
+    const s = this._toS(pad.x, pad.y);
+    const lyr = this.layers[layer];
+    if (!lyr) return '';
+
+    if (layer === 'F.Mask') {
+      // Expanded shape around every pad (solder mask opening)
+      const exp = this.maskExpansion * this.zoom;
+      const col = lyr.color;
+      if (pad.type === 'thru_hole') {
+        const r = Math.max(pad.size_x||1, pad.size_y||1)/2 * this.zoom + exp;
+        return `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${col}55"/>`;
+      }
+      const pw = (pad.size_x||1)*this.zoom + 2*exp;
+      const ph = (pad.size_y||1)*this.zoom + 2*exp;
+      if (pad.shape === 'circle') {
+        return `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${(Math.min(pw,ph)/2).toFixed(1)}" fill="${col}55"/>`;
+      }
+      // Rounded rect for SMD mask openings (KiCad style)
+      const rx = Math.min(3, pw*0.15);
+      return `<rect x="${(s.x-pw/2).toFixed(1)}" y="${(s.y-ph/2).toFixed(1)}" width="${pw.toFixed(1)}" height="${ph.toFixed(1)}" rx="${rx.toFixed(1)}" fill="${col}55"/>`;
+    }
+
+    if (layer === 'F.Paste') {
+      // Only SMD pads get solder paste
+      if (pad.type === 'thru_hole') return '';
+      const red = this.pasteGap * this.zoom;
+      const pw = Math.max(2, (pad.size_x||1)*this.zoom - 2*red);
+      const ph = Math.max(2, (pad.size_y||1)*this.zoom - 2*red);
+      const col = lyr.color;
+      if (pad.shape === 'circle') {
+        return `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${(Math.min(pw,ph)/2).toFixed(1)}" fill="${col}99"/>`;
+      }
+      return `<rect x="${(s.x-pw/2).toFixed(1)}" y="${(s.y-ph/2).toFixed(1)}" width="${pw.toFixed(1)}" height="${ph.toFixed(1)}" fill="${col}99"/>`;
+    }
+
+    return '';
+  }
+
   _padH(pad, i) {
     const s = this._toS(pad.x, pad.y);
     const pw = (pad.size_x||1)*this.zoom, ph = (pad.size_y||1)*this.zoom;
@@ -163,22 +216,96 @@ class FootprintEditor {
     const o = this._toS(0,0);
     out += `<line x1="${o.x-12}" y1="${o.y}" x2="${o.x+12}" y2="${o.y}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>`;
     out += `<line x1="${o.x}" y1="${o.y-12}" x2="${o.x}" y2="${o.y+12}" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>`;
-    // Courtyard
+
     const cy = this.data.courtyard || this._autoCY();
     const cs = this._toS(cy.x, cy.y);
-    out += `<rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="rgba(255,255,100,0.35)" stroke-width="0.8" stroke-dasharray="4,3"/>`;
-    // Pads
-    for (let i = 0; i < this.data.pads.length; i++) out += this._padH(this.data.pads[i], i);
-    // Pin 1 marker
-    const p1 = this.data.pads[0], p1s = this._toS(p1.x, p1.y);
-    const ay = p1s.y - (p1.size_y||1)*this.zoom/2 - 9;
-    out += `<polygon points="${p1s.x-5},${ay-7} ${p1s.x+5},${ay-7} ${p1s.x},${ay-1}" fill="rgba(255,255,255,0.55)"/>`;
-    // Dims
+
+    // ── Layer: Courtyard ──────────────────────────────────────────────────
+    if (this.layers['Courtyard']?.visible) {
+      const cCol = this.layers['Courtyard'].color;
+      out += `<rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="${cCol}55" stroke-width="1" stroke-dasharray="4,3"/>`;
+    }
+
+    // ── Layer: F.Fab (component outline — solid courtyard) ────────────────
+    if (this.layers['F.Fab']?.visible) {
+      const fCol = this.layers['F.Fab'].color;
+      out += `<rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="${fCol}66" stroke-width="0.8"/>`;
+    }
+
+    // ── Layer: F.Paste (solder paste — reduced SMD pads) ──────────────────
+    if (this.layers['F.Paste']?.visible) {
+      for (let i = 0; i < this.data.pads.length; i++)
+        out += this._padLayer(this.data.pads[i], i, 'F.Paste');
+    }
+
+    // ── Layer: F.Mask (solder mask opening — expanded pads) ───────────────
+    if (this.layers['F.Mask']?.visible) {
+      for (let i = 0; i < this.data.pads.length; i++)
+        out += this._padLayer(this.data.pads[i], i, 'F.Mask');
+    }
+
+    // ── Layer: F.Cu (copper pads) ─────────────────────────────────────────
+    if (this.layers['F.Cu']?.visible !== false) {
+      for (let i = 0; i < this.data.pads.length; i++) out += this._padH(this.data.pads[i], i);
+    }
+
+    // ── Layer: F.SilkS (silkscreen — pin 1 marker) ────────────────────────
+    if (this.layers['F.SilkS']?.visible) {
+      const p1 = this.data.pads[0], p1s = this._toS(p1.x, p1.y);
+      const ay = p1s.y - (p1.size_y||1)*this.zoom/2 - 9;
+      const silkCol = this.layers['F.SilkS'].color;
+      out += `<polygon points="${p1s.x-5},${ay-7} ${p1s.x+5},${ay-7} ${p1s.x},${ay-1}" fill="${silkCol}cc"/>`;
+    }
+
+    // Dims (always shown)
     const xs = this.data.pads.flatMap(p => [p.x-(p.size_x||1)/2, p.x+(p.size_x||1)/2]);
     const ys = this.data.pads.flatMap(p => [p.y-(p.size_y||1)/2, p.y+(p.size_y||1)/2]);
     const sx = (Math.max(...xs)-Math.min(...xs)).toFixed(2), sy2 = (Math.max(...ys)-Math.min(...ys)).toFixed(2);
-    out += `<text x="6" y="${h-6}" font-family="system-ui" font-size="9" fill="rgba(255,255,255,0.4)">${sx} × ${sy2} mm · ${this.data.pads.length} pads</text>`;
+    out += `<text x="6" y="${h-6}" font-family="system-ui" font-size="9" fill="rgba(255,255,255,0.4)">${sx} × ${sy2} mm · ${this.data.pads.length} pads · mask+${(this.maskExpansion||0.1).toFixed(2)} paste-${(this.pasteGap||0.05).toFixed(2)}</text>`;
     this.svg.innerHTML = out;
+  }
+}
+
+// ── Footprint Layer Panel ────────────────────────────────────────────────────
+// Mirrors pcb-panels.js buildLayerPanel() but targets #fp-layer-list
+function buildFPLayerPanel() {
+  const ul = document.getElementById('fp-layer-list');
+  if (!ul || !fpEditor) return;
+  ul.innerHTML = '';
+  for (const [name, lyr] of Object.entries(fpEditor.layers)) {
+    const d = document.createElement('div');
+    d.style.cssText = 'display:flex;align-items:center;gap:5px;padding:3px 4px;border-radius:3px;user-select:none;font-size:11px;' +
+      (lyr.visible ? '' : 'opacity:0.45;');
+
+    // Color dot with inline color picker
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:12px;height:12px;border-radius:2px;flex-shrink:0;position:relative;cursor:pointer;background:${lyr.color};`;
+    const cp = document.createElement('input');
+    cp.type = 'color'; cp.value = lyr.color;
+    cp.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:none;';
+    cp.oninput = e => { e.stopPropagation(); lyr.color = cp.value; dot.style.background = lyr.color; if (fpEditor) fpEditor._render(); };
+    cp.onclick = e => e.stopPropagation();
+    dot.appendChild(cp);
+
+    // Layer name
+    const nm = document.createElement('span');
+    nm.textContent = lyr.displayName || name;
+    nm.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);';
+
+    // Eye toggle
+    const eye = document.createElement('span');
+    eye.textContent = lyr.visible ? '👁' : '○';
+    eye.style.cssText = 'font-size:11px;color:var(--text-muted);cursor:pointer;flex-shrink:0;';
+    eye.title = 'Toggle visibility';
+    eye.onclick = e => {
+      e.stopPropagation();
+      lyr.visible = !lyr.visible;
+      buildFPLayerPanel();
+      if (fpEditor) fpEditor._render();
+    };
+
+    d.appendChild(dot); d.appendChild(nm); d.appendChild(eye);
+    ul.appendChild(d);
   }
 }
 
@@ -198,6 +325,12 @@ async function initFootprintTab(slug) {
     fpEditor.onSelect = (idx) => { _fpSelectedPad = idx; fpRenderPadList(); };
     fpEditor.onChange = (idx) => { fpSyncPadToTable(idx); };
   }
+  // Sync paste/mask inputs with current editor values
+  const maskInp = document.getElementById('fp-mask-exp');
+  if (maskInp && fpEditor) maskInp.value = fpEditor.maskExpansion.toFixed(2);
+  const pasteInp = document.getElementById('fp-paste-gap');
+  if (pasteInp && fpEditor) pasteInp.value = fpEditor.pasteGap.toFixed(2);
+  buildFPLayerPanel();
   // Load footprint list into select
   const sel = document.getElementById('fp-select');
   if (!sel) return;
@@ -227,6 +360,7 @@ async function loadFootprint(name) {
   }
   if (fpEditor) { fpEditor.data = _fpData; fpEditor._fit(); fpEditor._render(); }
   fpRenderPadList();
+  buildFPLayerPanel();
 }
 
 async function onFootprintSelect(name) {
