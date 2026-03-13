@@ -2403,7 +2403,10 @@ window.addEventListener('load',()=>{
   updateWorkLayerBadge();
   editor.render();
   updateToolPanel('select');
-  loadBoardTabs().then(()=>{
+  // In app-frame mode the parent sends importProject which sets _currentProjectId,
+  // so don't load all boards at startup — wait for that message to scope the tabs.
+  const _initTabLoad = isAppFrame ? Promise.resolve() : loadBoardTabs();
+  _initTabLoad.then(()=>{
     // Restore last board from localStorage — standalone mode only.
     // In embedded/app-frame mode the parent page controls the board via importProject messages,
     // so we must not pre-load a stale board that would interfere with that flow.
@@ -2443,6 +2446,7 @@ window.addEventListener('load',()=>{
     }
     if (e.data.type === 'importProject' && e.data.projectId) {
       _currentProjectId = e.data.projectId; // track the owning schematic
+      loadBoardTabs(_currentProjectId);     // scope tabs to this project only
       const opts = e.data.boardOpts || {};
       const src = e.source || (window.parent !== window ? window.parent : null);
       (async () => {
@@ -2788,7 +2792,7 @@ async function saveBoard(){
     _activeBoardId=board.id;
     const btn=document.querySelector('.tbtn[onclick="saveBoard()"]');
     if(btn){const t=btn.textContent;btn.textContent='✓ Saved';setTimeout(()=>btn.textContent=t,1500);}
-    await loadBoardTabs();
+    await loadBoardTabs(_currentProjectId);
   }catch(e){alert('Save failed: '+e.message);}
 }
 
@@ -2811,7 +2815,7 @@ async function deleteCurrentBoard(){
   document.getElementById('board-info').textContent='No board';
   document.getElementById('comp-list').innerHTML='<div style="padding:8px;color:var(--text-muted);font-size:11px;">No board loaded</div>';
   updateInfoPanel();renderAreasPanel();
-  await loadBoardTabs();
+  await loadBoardTabs(_currentProjectId);
 }
 
 // ── Open Boards Modal ─────────────────────────────────────────
