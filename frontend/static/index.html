@@ -452,6 +452,9 @@
   .pa-modal-tool-btn:hover { border-color:#6c63ff; color:#818cf8; }
   .pa-model-select { font-size:10px; background:#0d0f17; border:1px solid #2a2d3a; color:#6b7280; border-radius:4px; padding:2px 6px; cursor:pointer; transition:border-color .12s, color .12s; font-family:monospace; }
   .pa-model-select:hover, .pa-model-select:focus { border-color:#6c63ff; color:#818cf8; outline:none; }
+  .pa-think-toggle { font-size:10px; background:none; border:1px solid #2a2d3a; color:#6b7280; border-radius:4px; padding:2px 8px; cursor:pointer; transition:all .12s; font-family:monospace; user-select:none; }
+  .pa-think-toggle:hover { border-color:#6c63ff; color:#818cf8; }
+  .pa-think-toggle.on { border-color:#818cf8; color:#818cf8; background:rgba(108,99,255,0.12); }
   .pa-chat-area { flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:10px; scroll-behavior:smooth; }
   .pa-chat-area::-webkit-scrollbar { width:5px; }
   .pa-chat-area::-webkit-scrollbar-track { background:#0d0f17; }
@@ -684,6 +687,7 @@
         <option value="claude-opus-4-6">opus-4-6</option>
         <option value="claude-haiku-4-5">haiku-4-5</option>
       </select>
+      <button class="pa-think-toggle" id="pa-think-toggle" title="Extended thinking (slower but better for complex tasks)" onclick="_paToggleThink()">💭 think</button>
       <button class="pa-modal-tool-btn" onclick="paChatClear()">🗑 Clear</button>
       <button class="pa-modal-tool-btn" onclick="paChatStop()">■ Stop</button>
     </div>
@@ -8064,6 +8068,7 @@ function _paStopPoll() {
 let _activePaAgent = null; // currently open agent name
 let _paTempMsgEl = null;  // optimistically-shown user msg element, cleared once SSE confirms it
 const _paModelPref = {}; // agent name → model string
+const _paThinkPref = {}; // agent name → bool
 const _PA_DEFAULT_MODEL = 'claude-sonnet-4-6';
 
 function _paSetModel(model) {
@@ -8072,6 +8077,17 @@ function _paSetModel(model) {
 
 function _paGetModel() {
   return (_activePaAgent && _paModelPref[_activePaAgent]) || _PA_DEFAULT_MODEL;
+}
+
+function _paToggleThink() {
+  if (!_activePaAgent) return;
+  _paThinkPref[_activePaAgent] = !_paThinkPref[_activePaAgent];
+  const btn = document.getElementById('pa-think-toggle');
+  if (btn) btn.classList.toggle('on', !!_paThinkPref[_activePaAgent]);
+}
+
+function _paGetThink() {
+  return !!(_activePaAgent && _paThinkPref[_activePaAgent]);
 }
 
 // ── Design Assistant ──────────────────────────────────────────────────────────
@@ -8171,6 +8187,8 @@ async function paOpenChat(name) {
   document.getElementById('pa-modal-agent-name').textContent = `agents/${name}`;
   const sel = document.getElementById('pa-model-select');
   if (sel) sel.value = _paModelPref[name] || _PA_DEFAULT_MODEL;
+  const thinkBtn = document.getElementById('pa-think-toggle');
+  if (thinkBtn) thinkBtn.classList.toggle('on', !!_paThinkPref[name]);
 
   // Show inline pane
   document.getElementById('pa-chat-pane').classList.add('open');
@@ -8298,7 +8316,7 @@ async function paChatSend() {
   const res = await fetch(`/api/pipeline/agents/${agentName}/chat`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({message: msg, model: _paGetModel()}),
+    body: JSON.stringify({message: msg, model: _paGetModel(), think: _paGetThink()}),
   }).then(r=>r.json()).catch(e=>({error: String(e)}));
 
   if (res.error) {

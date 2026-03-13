@@ -1805,6 +1805,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
     if not user_msg:
         raise HTTPException(400, "message required")
     model_id = body.get("model") or "claude-sonnet-4-6"
+    use_thinking = bool(body.get("think", False))
 
     # If the requested name is already running, find/spawn a free instance
     # Use the base agent's name for routing so clones share the same pool
@@ -1885,7 +1886,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                     resume=session_id,
                     env={"IS_SANDBOX": "1", "CLAUDECODE": ""},
                     stderr=_capture_stderr,
-                    thinking=ThinkingConfigAdaptive(type="adaptive"),
+                    thinking=ThinkingConfigAdaptive(type="adaptive") if use_thinking else None,
                     model=model_id,
                 )
 
@@ -2751,22 +2752,44 @@ def _load_schematic_hints(
     return hints
 
 
+def _positions_are_spread(components: list[dict]) -> bool:
+    """Return True if components have meaningfully different positions
+    (i.e. the board has already been laid out, not just default-stacked)."""
+    if len(components) < 2:
+        return True
+    xs = [c.get("x", 0) for c in components]
+    ys = [c.get("y", 0) for c in components]
+    spread = max(max(xs) - min(xs), max(ys) - min(ys))
+    # If all components are within 2 mm of each other they're stacked/unplaced
+    return spread > 2.0
+
+
 def run_autoplace(board: dict) -> dict:
     """Force-directed net-proximity autoplacer.
 
-    1. Loads schematic positions from the linked project (if projectId present)
+    1. Filters out pure power/GND symbols (no footprint = no physical placement).
+    2. Loads schematic positions from the linked project (if projectId present)
        and normalises them to board-mm space as initial-position hints.
-    2. Runs the Fruchterman-Reingold force-directed algorithm:
-         - Net-attraction pulls connected components together.
-         - IC centre-bias keeps main ICs near the board centre.
-         - Global radial repulsion spreads components in 2D.
-         - Courtyard hard constraint enforces the 0.25 mm package-to-package gap.
+    3. Falls back to existing board positions as hints only when they are already
+       spread out (i.e. the board has been laid out before).  Stacked/unplaced
+       boards get the full net-proximity algorithm from scratch.
+    4. Runs the Fruchterman-Reingold force-directed algorithm.
     """
     from agents.autoplace.placement_optimizer import compute_net_proximity_placement  # noqa: PLC0415
 
     bw = float(board.get("board", {}).get("width", 100))
     bh = float(board.get("board", {}).get("height", 100))
-    components = [dict(c) for c in board.get("components", [])]
+
+    # ── Filter: skip pure power/GND symbols that have no physical footprint ──
+    _SKIP_REFS  = {"GND", "VDD", "VCC", "PWR", "AGND", "DGND", "PGND"}
+    _SKIP_VALS  = {"GND", "VDD", "VCC", "PWR_FLAG"}
+    all_components = [dict(c) for c in board.get("components", [])]
+    components = [
+        c for c in all_components
+        if c.get("footprint", "").strip()                       # must have a footprint
+        and c.get("ref", "").upper() not in _SKIP_REFS          # skip pure GND/VDD refs
+        and c.get("value", "").upper() not in _SKIP_VALS        # skip pure power values
+    ]
     if not components:
         return {**board}
 
@@ -2782,7 +2805,6 @@ def run_autoplace(board: dict) -> dict:
             if ref in comp_nets and net_name not in comp_nets[ref]:
                 comp_nets[ref].append(net_name)
 
-    # Also pull nets from per-component pad definitions
     for comp in components:
         ref = comp.get("ref", "")
         for pad in comp.get("pads", []):
@@ -2796,14 +2818,12 @@ def run_autoplace(board: dict) -> dict:
     if project_id:
         schematic_hints = _load_schematic_hints(project_id, bw, bh)
 
-    # ── Fallback: use existing board positions as hints ───────────────────
-    # If no project linked or _load_schematic_hints returned nothing, use
-    # the current component x/y as hints.  This means autoplace *refines*
-    # the existing layout (e.g. one created from a layout_example) instead
-    # of replacing it from scratch.  hint_weight is set high (0.85) so the
-    # algorithm preserves the existing positions closely.
+    # ── Fallback: use existing board positions ONLY when already spread out ──
+    # If components are all stacked at the same point (unplaced board),
+    # existing positions are useless as hints — run net-proximity from scratch.
+    # Only use board positions as hints when the board has real prior placement.
     using_board_positions = False
-    if not schematic_hints:
+    if not schematic_hints and _positions_are_spread(components):
         for comp in components:
             ref = comp.get("ref", comp.get("id", ""))
             cx = comp.get("x")
@@ -2812,9 +2832,9 @@ def run_autoplace(board: dict) -> dict:
                 schematic_hints[ref] = (float(cx), float(cy))
         using_board_positions = bool(schematic_hints)
 
-    # ── Save original rotations (autoplace preserves existing rotations) ──
+    # ── Save original rotations from ALL components (preserve on write-back) ─
     orig_rotations: dict[str, int] = {}
-    for comp in components:
+    for comp in all_components:
         ref = comp.get("ref", comp.get("id", ""))
         orig_rotations[ref] = comp.get("rotation", 0)
 
@@ -2867,8 +2887,16 @@ def run_autoplace(board: dict) -> dict:
             comp["y"] = placement_by_ref[ref]["y"]
             comp["rotation"] = orig_rotations.get(ref, comp.get("rotation", 0))
 
+    # Merge: keep all original components (including skipped power symbols),
+    # updating only the ones that were actually placed.
+    placed_map = {c["ref"]: c for c in components}
+    merged = []
+    for orig_comp in all_components:
+        ref = orig_comp.get("ref", "")
+        merged.append(placed_map.get(ref, orig_comp))
+
     result = dict(board)
-    result["components"] = components
+    result["components"] = merged
     return result
 
 
