@@ -209,7 +209,7 @@ function editDesignator(el, slug) {
 const _genSelected = new Set();
 
 // Map tab name → default toggle key
-const _TAB_TO_GEN = { 'datasheet': 'symbol', 'schematic': 'schematic', 'footprint': 'footprint', 'layout-example': 'layout' };
+const _TAB_TO_GEN = { 'datasheet': 'symbol', 'schematic': 'example', 'footprint': 'footprint', 'layout-example': 'layout' };
 
 function genToggle(type) {
   if (_genSelected.has(type)) _genSelected.delete(type);
