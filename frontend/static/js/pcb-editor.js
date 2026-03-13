@@ -1040,22 +1040,143 @@ class PCBEditor {
     if(!this.board?.groups)return;
     const selIds=new Set(this.selectedComps.map(c=>c.id));
     if(!selIds.size)return;
-    // Collect group IDs that contain any selected component
     const affectedGrpIds=new Set(
       this.selectedComps.filter(c=>c.groupId).map(c=>c.groupId)
     );
     if(!affectedGrpIds.size)return;
     this._snapshot();
-    // Remove groupId from selected components
     for(const c of(this.board.components||[]))
       if(affectedGrpIds.has(c.groupId)&&selIds.has(c.id)) delete c.groupId;
-    // Clean up groups: remove members that were ungrouped, delete empty/single-member groups
     this.board.groups=this.board.groups.filter(g=>{
       if(!affectedGrpIds.has(g.id))return true;
       g.members=g.members.filter(id=>!selIds.has(id));
       return g.members.length>=2;
     });
     this.render();
+  }
+
+  groupSelected(name){
+    if(!this.board)return;
+    const comps=this.selectedComps.length>=2?this.selectedComps:(this.selectedComp?[this.selectedComp]:[]);
+    if(comps.length<2){alert('Select at least 2 components to group.');return;}
+    this._snapshot();
+    const gid='grp_'+Math.random().toString(36).slice(2,9);
+    const gname=name||('Group '+(((this.board.groups||[]).length)+1));
+    this.board.groups=this.board.groups||[];
+    // Remove comps from any previous group first
+    const memberIds=comps.map(c=>c.id);
+    for(const c of comps) delete c.groupId;
+    this.board.groups=this.board.groups.filter(g=>{
+      g.members=g.members.filter(id=>!memberIds.includes(id));
+      return g.members.length>=2;
+    });
+    for(const c of comps) c.groupId=gid;
+    this.board.groups.push({id:gid,name:gname,members:memberIds});
+    this.render();
+  }
+
+  _showCtxMenu(e){
+    this._hideCtxMenu();
+    const{mx,my}=this._cp(e);
+    const hitComps=this.getCompsAt(mx,my);
+    const clickedComp=hitComps[0]||null;
+
+    // If clicking empty space with nothing useful selected — do nothing
+    if(!clickedComp&&!this.selectedComps.length&&!this.selectedComp) return;
+
+    // Determine context: what is currently selected / hovered
+    let selComps=this.selectedComps.length>=2
+      ? this.selectedComps
+      : (this.selectedComp?[this.selectedComp]:[]);
+    if(clickedComp&&!selComps.includes(clickedComp)){
+      // Right-clicked a different comp — select it
+      this.selectedComp=clickedComp;
+      const grp=clickedComp.groupId&&this.board?.groups?.find(g=>g.id===clickedComp.groupId);
+      selComps=grp
+        ?(this.board.components||[]).filter(c=>grp.members.includes(c.id))
+        :[clickedComp];
+      this.selectedComps=selComps;
+      this.render();
+    }
+
+    const items=[];
+    const groupIds=new Set(selComps.filter(c=>c.groupId).map(c=>c.groupId));
+
+    if(groupIds.size===1){
+      const grp=this.board.groups.find(g=>g.id===[...groupIds][0]);
+      if(grp){
+        items.push({header:grp.name});
+        items.push({label:'Rename Group\u2026',action:()=>{
+          const n=prompt('Group name:',grp.name);
+          if(n){grp.name=n;this.render();}
+        }});
+        items.push({sep:true});
+        items.push({label:'Ungroup',kbd:'Ctrl+\u21e7+G',action:()=>this.ungroupSelected()});
+        items.push({sep:true});
+        items.push({label:'Delete Group',danger:true,action:()=>{
+          this._snapshot();
+          const ids=new Set(grp.members);
+          this.board.components=(this.board.components||[]).filter(c=>!ids.has(c.id));
+          this.board.groups=this.board.groups.filter(g=>g.id!==grp.id);
+          this.selectedComp=null;this.selectedComps=[];
+          this.render();
+        }});
+      }
+    } else {
+      if(selComps.length>=2){
+        items.push({label:`Group ${selComps.length} components`,kbd:'Ctrl+G',action:()=>this.groupSelected()});
+      }
+      if(groupIds.size>0){
+        items.push({label:'Ungroup',kbd:'Ctrl+\u21e7+G',action:()=>this.ungroupSelected()});
+      }
+      if(selComps.length>=1){
+        items.push({sep:true});
+        items.push({label:'Delete',danger:true,action:()=>{
+          this._snapshot();
+          const ids=new Set(selComps.map(c=>c.id));
+          this.board.components=(this.board.components||[]).filter(c=>!ids.has(c.id));
+          if(this.board.groups) this.board.groups.forEach(g=>g.members=g.members.filter(id=>!ids.has(id)));
+          if(this.board.groups) this.board.groups=this.board.groups.filter(g=>g.members.length>=2);
+          this.selectedComp=null;this.selectedComps=[];
+          this.render();
+        }});
+      }
+    }
+
+    if(!items.length)return;
+    const menu=document.createElement('div');
+    menu.className='sch-ctx-menu';
+    menu.style.position='fixed';
+    menu.style.left=e.clientX+'px';
+    menu.style.top=e.clientY+'px';
+    for(const item of items){
+      if(item.sep){const d=document.createElement('div');d.className='sch-ctx-sep';menu.appendChild(d);}
+      else if(item.header){const d=document.createElement('div');d.style.cssText='padding:4px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);';d.textContent=item.header;menu.appendChild(d);}
+      else{
+        const d=document.createElement('div');
+        d.className='sch-ctx-item'+(item.danger?' danger':'');
+        d.innerHTML=`<span>${item.label}</span>${item.kbd?`<span class="sch-ctx-kbd">${item.kbd}</span>`:''}`;
+        d.addEventListener('click',()=>{this._hideCtxMenu();item.action();});
+        menu.appendChild(d);
+      }
+    }
+    document.body.appendChild(menu);
+    this._ctxMenuEl=menu;
+    requestAnimationFrame(()=>{
+      const r=menu.getBoundingClientRect();
+      const vw=window.innerWidth,vh=window.innerHeight;
+      if(r.right>vw) menu.style.left=(e.clientX-r.width)+'px';
+      if(r.bottom>vh) menu.style.top=(e.clientY-r.height)+'px';
+    });
+    setTimeout(()=>{
+      this._ctxDismiss=ev=>{if(!menu.contains(ev.target))this._hideCtxMenu();};
+      document.addEventListener('mousedown',this._ctxDismiss);
+    },0);
+  }
+
+  _hideCtxMenu(){
+    if(this._ctxMenuEl){this._ctxMenuEl.remove();this._ctxMenuEl=null;}
+    if(this._ctxDismiss){document.removeEventListener('mousedown',this._ctxDismiss);this._ctxDismiss=null;}
   }
 
   _drawGroups(){
@@ -1629,7 +1750,7 @@ class PCBEditor {
         this.render();
       }
     });
-    cv.addEventListener('contextmenu',e=>e.preventDefault());
+    cv.addEventListener('contextmenu',e=>{e.preventDefault();this._showCtxMenu(e);});
 
     cv.addEventListener('wheel',e=>{
       e.preventDefault();
@@ -1724,6 +1845,9 @@ class PCBEditor {
       }
       else if(k==='g'&&(e.ctrlKey||e.metaKey)&&e.shiftKey){
         e.preventDefault(); editor.ungroupSelected();
+      }
+      else if(k==='g'&&(e.ctrlKey||e.metaKey)&&!e.shiftKey){
+        e.preventDefault(); editor.groupSelected();
       }
     });
   }
