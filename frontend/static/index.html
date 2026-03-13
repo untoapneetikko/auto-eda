@@ -632,56 +632,31 @@
       </div>
     </div>
 
-    <!-- ── Generate Tickets ──────────────────────────────────────────── -->
+    <!-- ── Agent History ──────────────────────────────────────────────── -->
     <div style="border-top:2px solid var(--border);">
-      <div class="adr-section-hdr" id="adr-tickets-hdr" onclick="toggleAdrSection('tickets')">
-        🎫 Generate Tickets
-        <span id="gt-header-count" style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
+      <div class="adr-section-hdr" id="adr-history-hdr" onclick="toggleAdrSection('history')">
+        📋 Agent History
+        <span id="ah-header-count" style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;"></span>
         <i class="adr-chevron">▾</i>
       </div>
-      <div id="adr-tickets-body">
-        <!-- Filter pills -->
-        <div id="gt-tickets-filters" style="display:flex;flex-wrap:wrap;gap:4px;padding:8px 12px 6px;border-bottom:1px solid var(--border);">
-          <button class="imp-filter-btn active" id="gt-filter-all" onclick="gtSetFilter('all',this)">🎫 All <span class="imp-filter-count" id="gt-count-all">0</span></button>
-          <button class="imp-filter-btn" id="gt-filter-footprint" onclick="gtSetFilter('footprint',this)">🔲 FP <span class="imp-filter-count" id="gt-count-footprint">0</span></button>
-          <button class="imp-filter-btn" id="gt-filter-example" onclick="gtSetFilter('example',this)">📐 Ex <span class="imp-filter-count" id="gt-count-example">0</span></button>
-          <button class="imp-filter-btn" id="gt-filter-layout" onclick="gtSetFilter('layout',this)">🗺 Lay <span class="imp-filter-count" id="gt-count-layout">0</span></button>
-          <button class="imp-filter-btn" id="gt-filter-datasheet" onclick="gtSetFilter('datasheet',this)">🔷 Prof <span class="imp-filter-count" id="gt-count-datasheet">0</span></button>
-          <button class="imp-filter-btn" id="gt-filter-pending" onclick="gtSetFilter('pending',this)"><span class="imp-filter-dot" style="background:#d97706;display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;"></span>Pending <span class="imp-filter-count" id="gt-count-pending">0</span></button>
-          <button class="imp-filter-btn" id="gt-filter-done" onclick="gtSetFilter('done',this)"><span class="imp-filter-dot" style="background:#16a34a;display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px;"></span>Done <span class="imp-filter-count" id="gt-count-done">0</span></button>
-        </div>
-        <!-- Ticket list -->
-        <div style="max-height:220px;overflow-y:auto;" id="gt-list">
-          <div style="padding:28px 16px;text-align:center;color:var(--text-muted);">
-            <div style="font-size:22px;opacity:.2;margin-bottom:8px;">🎫</div>
-            <div style="font-size:12px;font-weight:600;">No tickets yet</div>
-            <div style="font-size:10px;margin-top:4px;line-height:1.5;">Created automatically when auto-generation fails.</div>
+      <div id="adr-history-body">
+        <div id="ah-tree" style="padding:4px 4px 8px;">
+          <div style="padding:20px 16px;text-align:center;color:var(--text-muted);">
+            <div style="font-size:20px;opacity:.2;margin-bottom:6px;">📋</div>
+            <div style="font-size:11px;">No history yet</div>
+            <div style="font-size:10px;margin-top:3px;opacity:.7;">Agents write summaries here after completing work.</div>
           </div>
         </div>
-        <!-- Ticket detail inline -->
-        <div id="gt-detail" style="border-top:1px solid var(--border);">
-          <div style="padding:16px;text-align:center;color:var(--text-muted);font-size:11px;" id="gt-detail-empty">
-            <div style="font-size:18px;opacity:.2;margin-bottom:6px;">📋</div>Select a ticket
+        <!-- Entry detail -->
+        <div id="ah-detail" style="display:none;border-top:1px solid var(--border);padding:10px 14px 12px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <span id="ah-detail-agent" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);"></span>
+            <span id="ah-detail-ts" style="font-size:9px;color:var(--text-muted);font-family:monospace;flex:1;"></span>
+            <button onclick="ahCloseDetail()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0;">✕</button>
           </div>
-          <div style="display:none;flex-direction:column;" id="gt-detail-content">
-            <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-              <div style="font-size:11px;font-weight:700;flex:1;min-width:0;" id="gt-detail-title"></div>
-              <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">
-                <span id="gt-detail-status-badge" style="font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;"></span>
-                <button onclick="gtMarkDone()" id="gt-done-btn" style="background:var(--accent);border:none;border-radius:4px;color:#fff;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">✓ Done</button>
-                <button onclick="gtRetract()" id="gt-retract-btn" style="display:none;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);border-radius:4px;color:#f59e0b;padding:2px 6px;font-size:10px;font-weight:700;cursor:pointer;" title="Retract">↩</button>
-                <button onclick="gtDelete()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:4px;color:#ef4444;padding:2px 6px;font-size:10px;cursor:pointer;">✕</button>
-              </div>
-            </div>
-            <div style="padding:5px 12px;font-size:10px;color:var(--text-muted);" id="gt-detail-meta"></div>
-            <div style="padding:0 12px 12px;">
-              <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Prompt — click to copy</div>
-              <div id="gt-prompt-text" class="copy-prompt" onclick="copyText(this)" title="Click to copy" style="font-size:10px;white-space:pre-wrap;min-height:50px;max-height:180px;overflow-y:auto;"></div>
-              <div class="copy-hint" style="font-size:9px;">Click to copy · Paste into Claude Code · Mark Done when finished.</div>
-            </div>
-          </div>
+          <div id="ah-detail-body" style="font-size:11px;color:var(--text);white-space:pre-wrap;line-height:1.6;max-height:280px;overflow-y:auto;"></div>
         </div>
-      </div><!-- /adr-tickets-body -->
+      </div>
     </div>
 
   <!-- ── Inline Agent Chat Pane (slides over drawer content) ── -->
@@ -2077,122 +2052,91 @@ async function fpGenerate(btn) {
   }
 }
 
-// ── Generate Tickets ──────────────────────────────────────────────────────
-let gtTickets = [];
-let gtFilter = 'all';
-let gtSelectedId = null;
+// ── Agent History ──────────────────────────────────────────────────────────
+let _ahData = {};
+let _ahSelectedEntry = null;
+let _ahGroupCollapsed = {};
 
-async function gtLoad() {
-  const data = await fetch('/api/gen-tickets').then(r => r.json()).catch(() => ({ tickets: [] }));
-  gtTickets = data.tickets || [];
-  gtRender();
+async function ahLoad() {
+  const data = await fetch('/api/pipeline/agents/summaries').then(r => r.json()).catch(() => ({}));
+  _ahData = data;
+  _ahRenderTree();
 }
 
-function gtSetFilter(f, btn) {
-  gtFilter = f;
-  document.querySelectorAll('#gt-tickets-filters .imp-filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  gtRender();
+function _ahFmtTs(ts) {
+  try {
+    // stem format: 2026-03-13T00-27-21-650937+00-00
+    const iso = ts.replace(/^(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2}).*$/, '$1T$2:$3:$4Z');
+    const d = new Date(iso);
+    if (!isNaN(d)) return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  } catch(e) {}
+  return ts.slice(0, 16);
 }
 
-function gtRender() {
-  const counts = { all: gtTickets.length, footprint: 0, example: 0, layout: 0, datasheet: 0, pending: 0, done: 0 };
-  gtTickets.forEach(t => {
-    if (counts[t.type] !== undefined) counts[t.type]++;
-    if (counts[t.status] !== undefined) counts[t.status]++;
-  });
-  Object.entries(counts).forEach(([k, v]) => {
-    const el = document.getElementById('gt-count-' + k);
-    if (el) el.textContent = v;
-  });
-
-  const filtered = gtFilter === 'all' ? gtTickets :
-    gtTickets.filter(t => t.type === gtFilter || t.status === gtFilter);
-
-  document.getElementById('gt-header-count').textContent = filtered.length + ' ticket' + (filtered.length !== 1 ? 's' : '');
-
-  const list = document.getElementById('gt-list');
-  if (!filtered.length) {
-    list.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-muted);"><div style="font-size:28px;opacity:.2;margin-bottom:10px;">🎫</div><div style="font-size:13px;font-weight:600;">No tickets</div></div>`;
+function _ahRenderTree() {
+  const tree = document.getElementById('ah-tree');
+  if (!tree) return;
+  const agents = Object.keys(_ahData);
+  if (!agents.length) {
+    tree.innerHTML = `<div style="padding:20px 16px;text-align:center;color:var(--text-muted);">
+      <div style="font-size:20px;opacity:.2;margin-bottom:6px;">📋</div>
+      <div style="font-size:11px;">No history yet</div>
+      <div style="font-size:10px;margin-top:4px;">Agents write summaries here after completing tasks.</div>
+    </div>`;
     return;
   }
-
-  const typeIcon = { footprint: '🔲', example: '📐', layout: '🗺', datasheet: '🔷' };
-  const statusColor = { pending: '#d97706', done: '#16a34a', retracted: '#6b7280' };
-  list.innerHTML = filtered.map(t => `
-    <div onclick="gtSelect(${t.id})" style="padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;gap:8px;${gtSelectedId===t.id?'background:var(--surface2);':''}" class="gt-row" data-id="${t.id}">
-      <span style="font-size:13px;">${typeIcon[t.type]||'🎫'}</span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span style="color:var(--text-muted);margin-right:3px;">${t.id}:</span>${escapeHtml(t.title)}</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${t.slug || ''} · ${new Date(t.created_at).toLocaleDateString()}</div>
+  tree.innerHTML = agents.map(agentName => {
+    const entries = _ahData[agentName] || [];
+    const collapsed = _ahGroupCollapsed[agentName] ? 'collapsed' : '';
+    const agentState = _paState[agentName] || {};
+    const icon = agentState.icon || '🤖';
+    const label = agentState.label || agentName;
+    const rows = entries.map(e => {
+      const active = _ahSelectedEntry && _ahSelectedEntry.agent === agentName && _ahSelectedEntry.id === e.id;
+      return `<div onclick="ahOpenDetail('${agentName}','${esc(e.id)}')"
+        style="padding:4px 14px 4px 24px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:4px;${active?'background:var(--surface2);':''}"
+        class="ah-entry" id="ah-entry-${esc(e.id)}">
+        <span style="font-size:10px;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(e.title)}</span>
+        <span style="font-size:9px;color:var(--text-muted);font-family:monospace;flex-shrink:0;">${_ahFmtTs(e.ts)}</span>
+      </div>`;
+    }).join('');
+    return `<div class="pa-group ${collapsed}" id="ah-group-${agentName}">
+      <div class="pa-group-hdr" onclick="_ahToggleGroup('${agentName}')">
+        <span class="pa-group-chevron">▾</span>
+        <span style="font-size:12px;">${icon}</span>
+        <span class="pa-group-label">${esc(label)}</span>
+        <span class="pa-group-count">${entries.length}</span>
       </div>
-      <span style="font-size:10px;font-weight:700;color:${statusColor[t.status]||'var(--text-muted)'};">${t.status}</span>
-    </div>`).join('');
+      <div class="pa-group-body" style="padding:2px 0;">${rows}</div>
+    </div>`;
+  }).join('');
 }
 
-function gtSelect(id) {
-  gtSelectedId = id;
-  // highlight selected row
-  document.querySelectorAll('.gt-row').forEach(r => r.style.background = r.dataset.id == id ? 'var(--surface2)' : '');
-  const t = gtTickets.find(t => t.id === id);
-  if (!t) return;
-  document.getElementById('gt-detail-empty').style.display = 'none';
-  const content = document.getElementById('gt-detail-content');
-  content.style.display = 'flex';
-  document.getElementById('gt-detail-title').textContent = t.title;
-  document.getElementById('gt-prompt-text').textContent = t.prompt;
-  document.getElementById('gt-detail-meta').textContent = `${t.type} · ${t.slug} · created ${new Date(t.created_at).toLocaleString()}`;
-  const badge = document.getElementById('gt-detail-status-badge');
-  badge.textContent = t.status;
-  badge.style.background = t.status === 'done' ? 'rgba(22,163,74,0.15)' : t.status === 'retracted' ? 'rgba(107,114,128,0.15)' : 'rgba(217,119,6,0.15)';
-  badge.style.color = t.status === 'done' ? '#16a34a' : t.status === 'retracted' ? '#6b7280' : '#d97706';
-  document.getElementById('gt-done-btn').style.display = (t.status === 'done' || t.status === 'retracted') ? 'none' : '';
-  document.getElementById('gt-retract-btn').style.display = t.status === 'done' ? '' : 'none';
+function _ahToggleGroup(name) {
+  _ahGroupCollapsed[name] = !_ahGroupCollapsed[name];
+  const el = document.getElementById('ah-group-' + name);
+  if (el) el.classList.toggle('collapsed', !!_ahGroupCollapsed[name]);
 }
 
-async function gtMarkDone() {
-  if (!gtSelectedId) return;
-  await fetch(`/api/gen-tickets/${gtSelectedId}`, {
-    method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ status: 'done' })
-  });
-  await gtLoad();
-  gtSelect(gtSelectedId);
+function ahOpenDetail(agentName, entryId) {
+  const entries = _ahData[agentName] || [];
+  const entry = entries.find(e => e.id === entryId);
+  if (!entry) return;
+  _ahSelectedEntry = { agent: agentName, ...entry };
+  document.querySelectorAll('.ah-entry').forEach(el => el.style.background = '');
+  const el = document.getElementById('ah-entry-' + entryId);
+  if (el) el.style.background = 'var(--surface2)';
+  const agentState = _paState[agentName] || {};
+  document.getElementById('ah-detail-agent').textContent = agentState.label || agentName;
+  document.getElementById('ah-detail-ts').textContent = _ahFmtTs(entry.ts);
+  document.getElementById('ah-detail-body').textContent = entry.body;
+  document.getElementById('ah-detail').style.display = '';
 }
 
-async function gtDelete() {
-  if (!gtSelectedId) return;
-  await fetch(`/api/gen-tickets/${gtSelectedId}`, { method: 'DELETE' });
-  gtSelectedId = null;
-  document.getElementById('gt-detail-empty').style.display = '';
-  document.getElementById('gt-detail-content').style.display = 'none';
-  await gtLoad();
-}
-
-async function gtRetract() {
-  if (!gtSelectedId) return;
-  const t = gtTickets.find(t => t.id === gtSelectedId);
-  if (!t) return;
-  if (!confirm(`Retract "${t.title}"?\n\nThis will restore ${t.slug} to the state it was in before this ticket ran.\nThe current state will be saved to history first so you can re-activate it.`)) return;
-  const btn = document.getElementById('gt-retract-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Reverting…'; }
-  try {
-    const res = await fetch(`/api/gen-tickets/${gtSelectedId}/retract`, { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Retract failed');
-    await gtLoad();
-    gtSelect(gtSelectedId);
-    // Refresh the library panel if this component is currently selected
-    if (selectedSlug === t.slug) {
-      const profile = await fetch(`/api/library/${t.slug}`).then(r => r.json());
-      profileCache[t.slug] = profile;
-      showProfile(t.slug);
-    }
-    showGenToast(`↩ Retracted — restored ${t.slug} to ${new Date(data.restored_from).toLocaleString()}`);
-  } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '↩ Retract'; }
-    alert('Retract failed: ' + e.message);
-  }
+function ahCloseDetail() {
+  _ahSelectedEntry = null;
+  document.getElementById('ah-detail').style.display = 'none';
+  document.querySelectorAll('.ah-entry').forEach(el => el.style.background = '');
 }
 
 // ── Library Version History panel ────────────────────────────────────────────
@@ -2450,10 +2394,9 @@ async function gtCreateTicket(type, slug, profile, rawText = null, extraNotes = 
     body: JSON.stringify({ prompt: fullPrompt })
   });
   showGenToast(`🎫 GT-${String(ticket.id).padStart(3,'0')} — ${title}`);
-  // Refresh Generate tab if it's currently open
+  // Refresh Agent History tab if it's currently open
   if (document.getElementById('agents-drawer')?.classList.contains('open')) {
-    await gtLoad();
-    gtSelect(ticket.id);
+    await ahLoad();
   }
 }
 
@@ -7465,7 +7408,7 @@ async function importLibraryBundle(input) {
     ? `Installed ${d.installed.length} new component(s): ${d.installed.join(', ')}.${d.skipped.length ? `\n${d.skipped.length} already present — skipped.` : ''}${ticketNote}`
     : `All ${d.skipped.length} component(s) already in your library — nothing to install.${ticketNote}`;
   alert(msg);
-  if (d.ticketsImported) await gtLoad();
+  if (d.ticketsImported) await ahLoad();
 }
 
 // ── Design Bundle Export / Import (sharing) ───────────────────────────────────
@@ -8008,7 +7951,7 @@ function toggleAgentsDrawer(forceOpen) {
   if (navBtn) navBtn.classList.toggle('active', _drawerOpen);
   if (_drawerOpen) {
     agentsLoad();
-    gtLoad();
+    ahLoad();
   } else {
     clearTimeout(_agentsTimer);
   }

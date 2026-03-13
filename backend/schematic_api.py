@@ -1578,13 +1578,16 @@ def _pa_next_id() -> int:
 
 
 def _pa_save(name: str) -> None:
-    """Persist chat history and session ID for an agent to disk."""
+    """Persist chat history, session ID, and status for an agent to disk."""
     try:
+        state = _pipeline_state.get(name, {})
         (_PA_STATE_DIR / f"{name}.json").write_text(
             json.dumps({
                 "session_id": _pipeline_sessions[name],
                 "messages": _pipeline_chat[name],
                 "msg_counter": _pa_msg_counter[0],
+                "status": state.get("status", "idle"),
+                "last_run": state.get("last_run"),
             }, ensure_ascii=False),
             encoding="utf-8",
         )
@@ -1606,6 +1609,11 @@ def _pa_load_all() -> None:
             saved_counter = data.get("msg_counter", 0)
             if saved_counter > _pa_msg_counter[0]:
                 _pa_msg_counter[0] = saved_counter
+            # Restore status and last_run so unread indicator survives restarts
+            saved_status = data.get("status", "idle")
+            if saved_status in ("done", "error"):
+                _pipeline_state[name]["status"] = saved_status
+                _pipeline_state[name]["last_run"] = data.get("last_run")
         except Exception:
             pass
 
@@ -1667,6 +1675,36 @@ def api_pipeline_agents_list():
             "is_clone": meta.get("is_clone", False),
             "base": meta.get("base", name),
         })
+    return result
+
+
+_PA_SUMMARIES_DIR = PROJECT_ROOT_SA / "data" / "agents" / "summaries"
+
+@router.get("/pipeline/agents/summaries")
+def api_pipeline_agent_summaries():
+    """Return all agent summaries grouped by agent name, newest first."""
+    result: dict[str, list] = {}
+    if not _PA_SUMMARIES_DIR.exists():
+        return result
+    for agent_dir in sorted(_PA_SUMMARIES_DIR.iterdir()):
+        if not agent_dir.is_dir():
+            continue
+        entries = []
+        for f in sorted(agent_dir.glob("*.md"), reverse=True):
+            try:
+                body = f.read_text(encoding="utf-8").strip()
+                lines = body.splitlines()
+                title = lines[0].lstrip("#").strip() if lines else f.stem
+                entries.append({
+                    "id": f.stem,
+                    "ts": f.stem,
+                    "title": title,
+                    "body": body,
+                })
+            except Exception:
+                pass
+        if entries:
+            result[agent_dir.name] = entries
     return result
 
 
