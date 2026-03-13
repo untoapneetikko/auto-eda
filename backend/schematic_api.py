@@ -2598,14 +2598,79 @@ async def autoroute_direct(request: Request):
 
 # ── Autoplace ─────────────────────────────────────────────────────────────────
 
+def _load_schematic_hints(
+    project_id: str,
+    board_width_mm: float,
+    board_height_mm: float,
+) -> dict[str, tuple[float, float]]:
+    """
+    Load schematic component positions from the linked project file and
+    normalise them into board-mm space, centred on the board centre.
+
+    Returns a dict mapping designator → (x_mm, y_mm), or {} on failure.
+    """
+    proj_path = PROJECTS_DIR / f"{project_id}.json"
+    if not proj_path.exists():
+        return {}
+    try:
+        proj = json.loads(proj_path.read_text("utf-8"))
+    except Exception:
+        return {}
+
+    # Collect real components only (skip pure power/gnd symbols)
+    SKIP_TYPES = {"vcc", "gnd", "pwr", "power"}
+    raw: list[tuple[str, float, float]] = []
+    for c in proj.get("components", []):
+        sym_type = c.get("symType", "").lower()
+        if sym_type in SKIP_TYPES:
+            continue
+        designator = c.get("designator", "")
+        sx = c.get("x")
+        sy = c.get("y")
+        if designator and sx is not None and sy is not None:
+            raw.append((designator, float(sx), float(sy)))
+
+    if not raw:
+        return {}
+
+    # Find schematic centroid and max extent
+    xs = [r[1] for r in raw]
+    ys = [r[2] for r in raw]
+    cx = sum(xs) / len(xs)
+    cy = sum(ys) / len(ys)
+
+    max_extent = max(
+        max(abs(x - cx) for x in xs) or 1.0,
+        max(abs(y - cy) for y in ys) or 1.0,
+    )
+
+    # Scale to fit within 70 % of the usable board half-size
+    usable_half_x = (board_width_mm  / 2.0) * 0.70
+    usable_half_y = (board_height_mm / 2.0) * 0.70
+    scale = min(usable_half_x, usable_half_y) / max_extent
+
+    bx_center = board_width_mm  / 2.0
+    by_center = board_height_mm / 2.0
+
+    hints: dict[str, tuple[float, float]] = {}
+    for designator, sx, sy in raw:
+        hx = bx_center + (sx - cx) * scale
+        hy = by_center + (sy - cy) * scale
+        hints[designator] = (hx, hy)
+
+    return hints
+
+
 def run_autoplace(board: dict) -> dict:
     """Force-directed net-proximity autoplacer.
 
-    Converts the PCB board JSON into the format expected by
-    compute_net_proximity_placement(), runs the Fruchterman-Reingold
-    force-directed algorithm (net-attraction + global radial repulsion +
-    courtyard clearance enforcement), then writes the resulting x/y
-    positions back into the board component list.
+    1. Loads schematic positions from the linked project (if projectId present)
+       and normalises them to board-mm space as initial-position hints.
+    2. Runs the Fruchterman-Reingold force-directed algorithm:
+         - Net-attraction pulls connected components together.
+         - IC centre-bias keeps main ICs near the board centre.
+         - Global radial repulsion spreads components in 2D.
+         - Courtyard hard constraint enforces the 0.25 mm package-to-package gap.
     """
     from agents.autoplace.placement_optimizer import compute_net_proximity_placement  # noqa: PLC0415
 
@@ -2615,8 +2680,7 @@ def run_autoplace(board: dict) -> dict:
     if not components:
         return {**board}
 
-    # Build comp_ref → list[net_name] from the board nets list.
-    # Each net entry looks like: {"name": "VDD", "pads": ["U1.1", "C1.2", ...]}
+    # ── Build comp_ref → list[net_name] ─────────────────────────────────
     nets = board.get("nets", [])
     comp_nets: dict[str, list[str]] = {c["ref"]: [] for c in components}
     for net in nets:
@@ -2628,8 +2692,7 @@ def run_autoplace(board: dict) -> dict:
             if ref in comp_nets and net_name not in comp_nets[ref]:
                 comp_nets[ref].append(net_name)
 
-    # Also pull nets directly from component pad definitions if present
-    # (pads list on each component: [{..., "net": "VDD"}, ...])
+    # Also pull nets from per-component pad definitions
     for comp in components:
         ref = comp.get("ref", "")
         for pad in comp.get("pads", []):
@@ -2637,7 +2700,13 @@ def run_autoplace(board: dict) -> dict:
             if net_name and ref in comp_nets and net_name not in comp_nets[ref]:
                 comp_nets[ref].append(net_name)
 
-    # Build the optimizer-format component list
+    # ── Load schematic hints from linked project ─────────────────────────
+    schematic_hints: dict[str, tuple[float, float]] = {}
+    project_id = board.get("projectId", "")
+    if project_id:
+        schematic_hints = _load_schematic_hints(project_id, bw, bh)
+
+    # ── Build optimizer-format component list ────────────────────────────
     opt_components = [
         {
             "reference": c.get("ref", c.get("id", "?")),
@@ -2648,14 +2717,33 @@ def run_autoplace(board: dict) -> dict:
         for c in components
     ]
 
-    # Run the force-directed placement
+    # Fuzzy fallback: for refs like "U1_g2", "C1_g3" that have no hint,
+    # strip the group suffix and reuse the base component's hint with a
+    # small offset so duplicated chains start near their originals.
+    if schematic_hints:
+        import re as _re
+        suffix_pat = _re.compile(r'_g\d+$|_inst\d+$|_ch\d+$')
+        for comp in opt_components:
+            ref = comp["reference"]
+            if ref in schematic_hints:
+                continue
+            base = suffix_pat.sub("", ref)
+            if base != ref and base in schematic_hints:
+                bx, by = schematic_hints[base]
+                n_dup = sum(1 for k in schematic_hints
+                            if suffix_pat.sub("", k) == base)
+                schematic_hints[ref] = (bx + (n_dup % 3) * 4.0,
+                                        by + (n_dup // 3) * 4.0)
+
+    # ── Run placement ────────────────────────────────────────────────────
     placements = compute_net_proximity_placement(
         components=opt_components,
         board_width_mm=bw,
         board_height_mm=bh,
+        schematic_hints=schematic_hints if schematic_hints else None,
     )
 
-    # Write x/y back into the original component dicts (preserve all other fields)
+    # ── Write x/y/rotation back into board component dicts ──────────────
     placement_by_ref = {p["reference"]: p for p in placements}
     for comp in components:
         ref = comp.get("ref", comp.get("id", ""))

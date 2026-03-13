@@ -245,9 +245,22 @@ _POWER_KEYWORDS = ("PWR", "VCC", "VDD", "GND", "POWER", "REGUL", "AMS1117", "AP2
 _BYPASS_CAP_REFS = ("C",)  # reference prefixes that are likely decoupling caps
 
 
+_IC_FP_KEYWORDS = ("QFN", "QFP", "TQFP", "SOIC", "SOP", "SSOP", "DIP", "BGA", "LGA", "WLCSP", "TO-220", "TO-263", "D2PAK")
+_IC_REF_PREFIXES = ("U", "IC", "MCU", "DSP", "FPGA")
+
+
 def _is_connector(comp: dict[str, Any]) -> bool:
     fp = comp.get("footprint", "").upper()
     return any(k in fp for k in _CONNECTOR_KEYWORDS)
+
+
+def _is_ic(comp: dict[str, Any]) -> bool:
+    ref = comp.get("reference", "").upper()
+    fp  = comp.get("footprint", "").upper()
+    return (
+        any(ref.startswith(p) for p in _IC_REF_PREFIXES)
+        or any(k in fp for k in _IC_FP_KEYWORDS)
+    )
 
 
 def _is_power(comp: dict[str, Any]) -> bool:
@@ -264,6 +277,7 @@ def compute_net_proximity_placement(
     min_clearance_mm: float = MIN_CLEARANCE_MM,
     iterations: int = 250,
     seed: int = 42,
+    schematic_hints: dict[str, tuple[float, float]] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Compute PCB component placements optimised for net-proximity.
@@ -300,6 +314,12 @@ def compute_net_proximity_placement(
         packing but longer runtime.
     seed:
         RNG seed for reproducible jitter in the initial grid.
+    schematic_hints:
+        Optional dict mapping reference → (x_mm, y_mm) of pre-normalised
+        schematic positions in board-mm space.  When provided these are used
+        as initial positions (instead of a uniform grid), so the final layout
+        mirrors the schematic topology.  Connectors are still pinned to the
+        board edge regardless of their hint.
 
     Returns
     -------
@@ -331,24 +351,42 @@ def compute_net_proximity_placement(
     # ------------------------------------------------------------------ #
     # 3. Classify components                                               #
     # ------------------------------------------------------------------ #
-    is_conn   = [_is_connector(c) for c in components]
-    is_pwr    = [_is_power(c) for c in components]
+    is_conn = [_is_connector(c) for c in components]
+    is_ic   = [_is_ic(c) for c in components]
+    is_pwr  = [_is_power(c) for c in components]
 
     # ------------------------------------------------------------------ #
-    # 4. Initial positions: uniform grid + small random jitter             #
+    # 4. Initial positions                                                  #
+    #    If schematic_hints supplied: use normalised schematic coords.     #
+    #    Otherwise fall back to a uniform grid with small random jitter.   #
     # ------------------------------------------------------------------ #
-    cols = max(1, int(math.ceil(math.sqrt(n))))
-    rows = max(1, math.ceil(n / cols))
-    step_x = board_width_mm  / (cols + 1)
-    step_y = board_height_mm / (rows + 1)
+    bx_center = board_width_mm  / 2.0
+    by_center = board_height_mm / 2.0
 
     pos: list[list[float]] = []
-    for i in range(n):
-        col = i % cols
-        row = i // cols
-        x = step_x * (col + 1) + rng.uniform(-0.5, 0.5)
-        y = step_y * (row + 1) + rng.uniform(-0.5, 0.5)
-        pos.append([x, y])
+
+    if schematic_hints:
+        # Place each component at its hint, clamped to board bounds.
+        for comp in components:
+            ref = comp.get("reference", "?")
+            if ref in schematic_hints:
+                hx, hy = schematic_hints[ref]
+            else:
+                # No hint: place at board centre with small jitter
+                hx = bx_center + rng.uniform(-2, 2)
+                hy = by_center + rng.uniform(-2, 2)
+            pos.append([float(hx), float(hy)])
+    else:
+        cols = max(1, int(math.ceil(math.sqrt(n))))
+        rows = max(1, math.ceil(n / cols))
+        step_x = board_width_mm  / (cols + 1)
+        step_y = board_height_mm / (rows + 1)
+        for i in range(n):
+            col = i % cols
+            row = i // cols
+            x = step_x * (col + 1) + rng.uniform(-0.5, 0.5)
+            y = step_y * (row + 1) + rng.uniform(-0.5, 0.5)
+            pos.append([x, y])
 
     # ------------------------------------------------------------------ #
     # 5. Pin connectors to the top board edge                              #
@@ -420,6 +458,44 @@ def compute_net_proximity_placement(
                 pull = min(dist, max_step)
                 forces[i][0] += (dx / dist) * pull
                 forces[i][1] += (dy / dist) * pull
+
+        # ---- Force A2: IC centre-bias --------------------------------- #
+        # ICs are pulled toward the board centre so they sit in the middle
+        # surrounded by their passives.  Strength is fixed (not just a fraction
+        # of the cooling max_step) so it stays effective as the algorithm cools.
+        ic_pull_strength = min(board_width_mm, board_height_mm) * 0.08
+        for i in range(n):
+            if is_conn[i] or not is_ic[i]:
+                continue
+            dx = bx_center - pos[i][0]
+            dy = by_center - pos[i][1]
+            dist = math.hypot(dx, dy)
+            if dist > 1e-6:
+                pull = min(dist, ic_pull_strength)
+                forces[i][0] += (dx / dist) * pull
+                forces[i][1] += (dy / dist) * pull
+
+        # ---- Force A3: schematic hint gravity ------------------------- #
+        # Each component that has a schematic hint gets a continuous pull
+        # toward that hint position throughout the algorithm.  This biases
+        # the final layout to mirror the schematic topology.  Strength
+        # decreases with cooling so hard constraints win at convergence.
+        if schematic_hints:
+            hint_strength = max_step * 0.4
+            for i, comp in enumerate(components):
+                if is_conn[i]:
+                    continue
+                ref = comp.get("reference", "")
+                if ref not in schematic_hints:
+                    continue
+                hx, hy = schematic_hints[ref]
+                dx = hx - pos[i][0]
+                dy = hy - pos[i][1]
+                dist = math.hypot(dx, dy)
+                if dist > 1e-6:
+                    pull = min(dist, hint_strength)
+                    forces[i][0] += (dx / dist) * pull
+                    forces[i][1] += (dy / dist) * pull
 
         # ---- Force B: global radial repulsion ------------------------- #
         for i in range(n):
