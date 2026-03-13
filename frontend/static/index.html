@@ -428,6 +428,7 @@
   .pa-last-run { font-size:10px; color:var(--text-muted); flex:1; }
   .pa-msg-preview { font-size:10px; color:#a5b4fc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
   .pa-badge { font-size:10px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:1px 6px; color:var(--text-muted); flex-shrink:0; }
+  .pa-clone-badge { font-size:9px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:1px 5px; color:#f59e0b; flex-shrink:0; }
   .pa-chat-btn { font-size:11px; font-weight:700; border-radius:5px; padding:3px 10px; cursor:pointer; border:1px solid; transition:all .15s; flex-shrink:0; background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
   .pa-chat-btn:hover { background:var(--accent); color:#fff; }
   .pa-chat-btn.running { background:rgba(239,68,68,0.1); border-color:#ef4444; color:#ef4444; }
@@ -8006,10 +8007,12 @@ function paCard(agent) {
   const preview = agent.last_msg ? `<div class="pa-msg-preview">${esc(agent.last_msg)}</div>` : '';
   const btnLabel = st === 'running' ? '● Live' : (agent.msg_count ? '💬 Open' : '⚡ Awake');
   const btnCls = st === 'running' ? 'running' : '';
+  const cloneBadge = agent.is_clone ? `<span class="pa-clone-badge" title="Parallel instance of ${esc(agent.base)}">↳ clone</span>` : '';
   return `<div class="pa-card ${cardCls}" id="pa-card-${agent.name}" onclick="paOpenChat('${agent.name}')">
     <div class="pa-card-top">
       <span class="pa-icon">${agent.icon}</span>
       <span class="pa-name">${esc(agent.label)}</span>
+      ${cloneBadge}
       <span class="pa-status-dot ${dotCls}" title="${statusLabel}"></span>
     </div>
     <div class="pa-desc">${esc(agent.desc)}</div>
@@ -8184,7 +8187,19 @@ async function paChatSend() {
     const tmpEl = document.getElementById('pa-msg-' + tempId);
     if (tmpEl && res.msg_id) tmpEl.id = 'pa-msg-' + res.msg_id;
     _paShowThinking('Waiting for agent…');
-    _paStartPoll(agentName); // use captured name, not _activePaAgent (may be null if chat closed)
+
+    // If the backend routed to a different (cloned) instance, switch the chat pane to it
+    const actualName = res.actual_name || agentName;
+    if (actualName !== agentName) {
+      // Show notification banner
+      const area = document.getElementById('pa-chat-area');
+      if (area) area.insertAdjacentHTML('beforeend',
+        `<div class="pa-system-line" style="color:#f59e0b;">↳ Routed to <b>${esc(actualName)}</b> (parallel instance)</div>`);
+      // Move temp message to the cloned agent's chat pane
+      _paStopPoll();
+      await paOpenChat(actualName);
+    }
+    _paStartPoll(actualName);
   }
 }
 

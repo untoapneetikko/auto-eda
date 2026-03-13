@@ -1479,6 +1479,10 @@ PROJECT_ROOT_SA = Path(__file__).parent.parent
 _PA_STATE_DIR = PROJECT_ROOT_SA / "data" / "agents"
 _PA_STATE_DIR.mkdir(parents=True, exist_ok=True)
 
+# _agent_instances: starts as copy of _PIPELINE_AGENTS, grows with spawned clones.
+# Clone names are "{base}-2", "{base}-3", etc.
+_agent_instances: dict[str, dict] = dict(_PIPELINE_AGENTS)
+
 # per-agent state
 _pipeline_state: dict[str, dict] = {
     name: {"status": "idle", "last_run": None, "run_id": None}
@@ -1490,6 +1494,64 @@ _pipeline_chat: dict[str, list] = {name: [] for name in _PIPELINE_AGENTS}
 _pipeline_sessions: dict[str, str | None] = {name: None for name in _PIPELINE_AGENTS}
 _pipeline_tasks: dict[str, asyncio.Task] = {}
 _pa_msg_counter: list[int] = [0]
+
+
+def _pa_base_name(name: str) -> str:
+    """Strip trailing '-N' clone suffix to get the template name."""
+    m = re.match(r'^(.+)-(\d+)$', name)
+    if m and m.group(1) in _PIPELINE_AGENTS:
+        return m.group(1)
+    return name
+
+
+def _spawn_instance(base_name: str) -> str:
+    """Create a numbered clone of base_name and return the new instance name."""
+    n = 2
+    while f"{base_name}-{n}" in _agent_instances:
+        n += 1
+    new_name = f"{base_name}-{n}"
+    tmpl = _PIPELINE_AGENTS[base_name]
+    _agent_instances[new_name] = {
+        "label": f"{tmpl['label']} #{n}",
+        "icon": tmpl["icon"],
+        "desc": tmpl["desc"],
+        "base": base_name,
+        "is_clone": True,
+    }
+    _pipeline_state[new_name] = {"status": "idle", "last_run": None, "run_id": None}
+    _pipeline_chat[new_name] = []
+    _pipeline_sessions[new_name] = None
+    return new_name
+
+
+def _get_free_instance(base_name: str) -> str:
+    """
+    Return a free (non-running) instance for base_name.
+    Checks base first, then existing clones, spawns a new one if all are busy.
+    """
+    candidates = [base_name] + [
+        n for n in _agent_instances if _agent_instances[n].get("base") == base_name
+    ]
+    for c in candidates:
+        if _pipeline_state.get(c, {}).get("status") != "running":
+            return c
+    # All busy — spawn a new clone
+    return _spawn_instance(base_name)
+
+
+def _prune_idle_clones() -> None:
+    """Remove clones that are idle and have no chat history."""
+    to_remove = [
+        n for n, meta in list(_agent_instances.items())
+        if meta.get("is_clone")
+        and _pipeline_state.get(n, {}).get("status") != "running"
+        and not _pipeline_chat.get(n)
+    ]
+    for n in to_remove:
+        _agent_instances.pop(n, None)
+        _pipeline_state.pop(n, None)
+        _pipeline_chat.pop(n, None)
+        _pipeline_sessions.pop(n, None)
 
 
 def _pa_next_id() -> int:
@@ -1567,11 +1629,12 @@ def _pa_cwd(name: str) -> str:
 
 @router.get("/pipeline/agents")
 def api_pipeline_agents_list():
-    """Return all pipeline agents with current state."""
+    """Return all pipeline agents (including active clones) with current state."""
+    _prune_idle_clones()
     result = []
-    for name, meta in _PIPELINE_AGENTS.items():
-        state = _pipeline_state[name]
-        msgs = _pipeline_chat[name]
+    for name, meta in _agent_instances.items():
+        state = _pipeline_state.get(name, {"status": "idle", "last_run": None})
+        msgs = _pipeline_chat.get(name, [])
         last_msg = msgs[-1]["content"][:120] if msgs else ""
         result.append({
             "name": name,
@@ -1582,7 +1645,9 @@ def api_pipeline_agents_list():
             "last_run": state["last_run"],
             "msg_count": len(msgs),
             "last_msg": last_msg,
-            "has_session": bool(_pipeline_sessions[name]),
+            "has_session": bool(_pipeline_sessions.get(name)),
+            "is_clone": meta.get("is_clone", False),
+            "base": meta.get("base", name),
         })
     return result
 
@@ -1590,7 +1655,7 @@ def api_pipeline_agents_list():
 @router.get("/pipeline/agents/{name}/history")
 def api_pipeline_agent_history(name: str):
     """Return full chat history for an agent."""
-    if name not in _PIPELINE_AGENTS:
+    if name not in _agent_instances:
         raise HTTPException(404, f"Unknown agent: {name}")
     return {
         "name": name,
@@ -1603,7 +1668,7 @@ def api_pipeline_agent_history(name: str):
 @router.delete("/pipeline/agents/{name}/history")
 def api_pipeline_agent_clear(name: str):
     """Clear chat history and session for an agent."""
-    if name not in _PIPELINE_AGENTS:
+    if name not in _agent_instances:
         raise HTTPException(404, f"Unknown agent: {name}")
     task = _pipeline_tasks.get(name)
     if task and not task.done():
@@ -1618,11 +1683,11 @@ def api_pipeline_agent_clear(name: str):
 
 @router.post("/pipeline/agents/{name}/chat")
 async def api_pipeline_agent_chat(name: str, request: Request):
-    """Send a message to a pipeline agent — spawns / resumes a Claude Code session."""
-    if name not in _PIPELINE_AGENTS:
+    """Send a message to a pipeline agent — auto-routes to a free instance if busy."""
+    # Accept both base names and clone names
+    base = _pa_base_name(name)
+    if base not in _PIPELINE_AGENTS and name not in _agent_instances:
         raise HTTPException(404, f"Unknown agent: {name}")
-    if _pipeline_state[name]["status"] == "running":
-        raise HTTPException(409, "Agent is already running")
 
     body = {}
     try:
@@ -1632,6 +1697,14 @@ async def api_pipeline_agent_chat(name: str, request: Request):
     user_msg = (body.get("message") or body.get("input") or "").strip()
     if not user_msg:
         raise HTTPException(400, "message required")
+
+    # If the requested name is already running, find/spawn a free instance
+    # Use the base agent's name for routing so clones share the same pool
+    routing_base = base if base in _PIPELINE_AGENTS else name
+    if _pipeline_state.get(name, {}).get("status") == "running":
+        name = _get_free_instance(routing_base)
+    elif name not in _agent_instances:
+        name = routing_base  # fall back to base
 
     # Save user message
     msg_id = _pa_next_id()
@@ -1643,7 +1716,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
     _pipeline_state[name].update({"status": "running", "last_run": now, "run_id": run_id})
     _broadcast("pipeline_agent_started", {
         "name": name, "run_id": run_id,
-        "label": _PIPELINE_AGENTS[name]["label"],
+        "label": _agent_instances[name]["label"],
         "msg": {"id": msg_id, "role": "user", "content": user_msg, "ts": now},
     })
 
@@ -1663,10 +1736,12 @@ async def api_pipeline_agent_chat(name: str, request: Request):
             from claude_agent_sdk.types import ThinkingConfigAdaptive  # type: ignore
 
             # First message: prepend system context; subsequent: just the user message
+            # For clones, use base agent name for cwd/system prompt resolution
+            _agent_base = _pa_base_name(name)
             if existing_session:
                 prompt = user_msg
             else:
-                prompt = f"{_pa_system_prompt(name)}\n\n---\nUser: {user_msg}"
+                prompt = f"{_pa_system_prompt(_agent_base)}\n\n---\nUser: {user_msg}"
 
             stderr_lines: list[str] = []
 
@@ -1695,7 +1770,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
 
             def _make_opts(session_id):
                 return ClaudeAgentOptions(
-                    cwd=_pa_cwd(name),
+                    cwd=_pa_cwd(_agent_base),
                     allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"],
                     permission_mode="bypassPermissions",
                     max_turns=40,
@@ -1816,13 +1891,13 @@ async def api_pipeline_agent_chat(name: str, request: Request):
 
     task = asyncio.create_task(_run())
     _pipeline_tasks[name] = task
-    return {"ok": True, "run_id": run_id, "msg_id": msg_id}
+    return {"ok": True, "run_id": run_id, "msg_id": msg_id, "actual_name": name}
 
 
 @router.post("/pipeline/agents/{name}/stop")
 async def api_pipeline_agent_stop(name: str):
     """Cancel a running pipeline agent task."""
-    if name not in _PIPELINE_AGENTS:
+    if name not in _agent_instances:
         raise HTTPException(404, f"Unknown agent: {name}")
     task = _pipeline_tasks.get(name)
     if task and not task.done():
