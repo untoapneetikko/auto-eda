@@ -2446,6 +2446,7 @@ window.addEventListener('load',()=>{
     }
     if (e.data.type === 'importProject' && e.data.projectId) {
       _currentProjectId = e.data.projectId; // track the owning schematic
+      _currentNetlist   = e.data.netlist || {};
       loadBoardTabs(_currentProjectId);     // scope tabs to this project only
       const opts = e.data.boardOpts || {};
       const src = e.source || (window.parent !== window ? window.parent : null);
@@ -2503,6 +2504,22 @@ window.addEventListener('load',()=>{
       const { projectId, isDirty } = e.data;
       _updateStaleBanner(projectId, isDirty);
     }
+    if (e.data.type === 'projectClosed' && e.data.projectId === _currentProjectId) {
+      // Parent schematic tab closed — clear all child boards
+      _currentProjectId = null;
+      _currentNetlist   = {};
+      _pcbBoardsList    = [];
+      _activeBoardId    = null;
+      if (editor) { editor.board = null; editor.render(); }
+      renderBoardTabs();
+      const bi = document.getElementById('board-info');
+      if (bi) bi.innerHTML = 'No board';
+      const cl = document.getElementById('comp-list');
+      if (cl) cl.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:11px;">No board loaded</div>';
+      rebuildCompList && rebuildCompList();
+      updateBoardInfo && updateBoardInfo();
+      updateInfoPanel && updateInfoPanel();
+    }
     if (e.data.type === 'addComponent' && e.data.component && editor.board) {
       const c = e.data.component;
       // Place at centre of current viewport
@@ -2559,6 +2576,7 @@ function switchPcbSection(name){
 let _pcbBoardsList = [];   // [{id, title, updated_at, component_count}]
 let _activeBoardId = null; // currently loaded board id
 let _currentProjectId = null; // project (schematic) that owns the current board
+let _currentNetlist   = {};   // latest netlist received from parent (importProject)
 
 async function loadBoardTabs(projectId){
   // Only show boards that belong to the current schematic (parent).
@@ -2657,9 +2675,8 @@ function closeBoardTab(boardId){
 }
 
 async function newBoardVersion(){
-  // Determine next version number from existing tabs for this project
+  // Determine next version number
   const existing = _pcbBoardsList.filter(b => !_currentProjectId || b.projectId === _currentProjectId);
-  // Parse highest Vn from titles like "My Project - V2"
   let maxV = existing.length;
   existing.forEach(b => {
     const m = (b.title || '').match(/-\s*V(\d+)$/i);
@@ -2667,7 +2684,7 @@ async function newBoardVersion(){
   });
   const nextV = maxV + 1;
 
-  // Derive base name from current board title or project id
+  // Derive base name from existing tab titles
   let baseName = 'Design';
   if (_pcbBoardsList.length) {
     const m = (_pcbBoardsList[0].title || '').match(/^(.*?)\s*-\s*V\d+$/i);
@@ -2675,26 +2692,59 @@ async function newBoardVersion(){
   }
   const title = `${baseName} - V${nextV}`;
 
-  // Create a blank board with the right title and project link
-  const blank = {
-    title,
-    projectId: _currentProjectId || undefined,
-    board: { width: 100, height: 80, units: 'mm' },
-    components: [], nets: [], traces: [], vias: [], areas: [],
-  };
+  const btn = document.getElementById('btn-autoplace');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Creating…'; }
+  switchPcbSection('layout');
+
   try {
-    const res = await fetch('/api/pcb-boards', {
+    let board;
+
+    if (_currentProjectId) {
+      // Import schematic components fresh (same as importProject but new board)
+      const bw = 100, bh = 80;
+      const projRes = await fetch(`/api/projects/${_currentProjectId}`);
+      if (!projRes.ok) throw new Error('Could not load project');
+      const proj = await projRes.json();
+      board = await importSchematic(proj, _currentNetlist, bw, bh);
+      if (!board) throw new Error('No physical components in schematic');
+      board.title     = title;
+      board.projectId = _currentProjectId;
+    } else {
+      board = {
+        title,
+        board: { width: 100, height: 80, units: 'mm' },
+        components: [], nets: [], traces: [], vias: [], areas: [],
+      };
+    }
+
+    // Save to get an ID, then load
+    const saveRes = await fetch('/api/pcb-boards', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(blank),
+      body: JSON.stringify(board),
     });
-    const saved = await res.json();
-    blank.id = saved.id;
-    editor.load(blank);
-    _activeBoardId = saved.id;
+    const saved = await saveRes.json();
+    board.id = saved.id;
+    await animateBoardLoad(board);
+    _activeBoardId = board.id;
     afterLoad();
     await loadBoardTabs(_currentProjectId);
-    switchPcbSection('layout');
-  } catch(e) { alert('Could not create board: ' + e.message); }
+
+    // Auto-place components
+    if (board.components && board.components.length) {
+      if (btn) btn.textContent = '⏳ Placing…';
+      const apRes = await fetch(`/api/pcb/${board.id}/autoplace`, { method: 'POST' });
+      const apData = await apRes.json();
+      if (apRes.ok && apData.components && editor?.board) {
+        editor.board.components = apData.components;
+        editor.render(); rebuildCompList && rebuildCompList(); updateBoardInfo && updateBoardInfo();
+        await saveBoard();
+      }
+    }
+  } catch(e) {
+    alert('Could not create board version: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🎯 Auto Place'; }
+  }
 }
 
 async function renderBoardsSection(){
@@ -2841,7 +2891,7 @@ async function saveBoard(){
     board.id=d.id;
     _activeBoardId=board.id;
     const btn=document.querySelector('.tbtn[onclick="saveBoard()"]');
-    if(btn){const t=btn.textContent;btn.textContent='✓ Saved';setTimeout(()=>btn.textContent=t,1500);}
+    if(btn){btn.textContent='✓ Saved';setTimeout(()=>btn.textContent='💾 Save',1500);}
     await loadBoardTabs(_currentProjectId);
   }catch(e){alert('Save failed: '+e.message);}
 }

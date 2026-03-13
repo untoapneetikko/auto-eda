@@ -5241,6 +5241,7 @@ function closeTab(tabId) {
   const tab = openTabs.find(t => t.tabId === tabId);
   if (!tab) return;
   if (tab.dirty && !confirm(`Close "${tab.name || 'Untitled'}" without saving?`)) return;
+  const closedProjectId = tab.projectId;
   const idx = openTabs.indexOf(tab);
   openTabs.splice(idx, 1);
   if (activeTabId === tabId) {
@@ -5249,6 +5250,14 @@ function closeTab(tabId) {
     if (next) { activeTabId = next.tabId; editor.loadProject(JSON.parse(JSON.stringify(next.projectData))); editor.dirty = next.dirty; editor._status(); _eagerLoadProfiles(next.projectData); }
     else { activeTabId = null; editor.newProject('Untitled'); _addTab(editor.project, false); }
   } else { renderTabs(); }
+  // Notify PCB iframe to close all child boards for this project
+  if (closedProjectId) {
+    const frame = document.getElementById('pcb-frame');
+    if (frame?.contentWindow) {
+      frame.contentWindow.postMessage({ type: 'projectClosed', projectId: closedProjectId }, '*');
+    }
+    if (_pcbLoadedProjectId === closedProjectId) _pcbLoadedProjectId = null;
+  }
 }
 
 function _addTab(projectData, dirty) {
