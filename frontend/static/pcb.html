@@ -2609,12 +2609,16 @@ function renderBoardTabs(){
     const nm=_escT(rawTitle)+suffix;
     const tooltip=titleCounts[rawTitle]>1?`${rawTitle}  (ID: …${colorId.slice(-6)})`:rawTitle;
 
+    // Hide ✕ when scoped to a project — boards stay open as long as schematic is open
+    const closeBtn = _currentProjectId
+      ? ''
+      : `<span class="pcb-board-tab-close" onclick="event.stopPropagation();closeBoardTab('${b.id}')" title="Close tab (board stays saved)">✕</span>`;
     return `<div class="pcb-board-tab${isActive?' active':''}" onclick="switchBoardTab('${b.id}')" title="${_escT(tooltip)}" style="border-left:3px solid ${color};padding-left:9px;">
       <span class="pcb-board-tab-name">${nm}</span>
-      <span class="pcb-board-tab-close" onclick="event.stopPropagation();closeBoardTab('${b.id}')" title="Close tab (board stays saved)">✕</span>
+      ${closeBtn}
     </div>`;
   }).join('')
-  +`<button class="pcb-board-tab-new" onclick="switchPcbSection('layout');openImportModal()" title="Import schematic / new board">+</button>`;
+  +`<button class="pcb-board-tab-new" onclick="newBoardVersion()" title="New layout version for this project">+</button>`;
 }
 
 async function switchBoardTab(boardId){
@@ -2636,6 +2640,8 @@ async function switchBoardTab(boardId){
 }
 
 function closeBoardTab(boardId){
+  // Blocked while a parent schematic is open — boards must stay visible
+  if(_currentProjectId) return;
   // Remove from the tab bar only — board stays saved on the server
   _pcbBoardsList=_pcbBoardsList.filter(b=>b.id!==boardId);
   if(_activeBoardId===boardId){
@@ -2648,6 +2654,47 @@ function closeBoardTab(boardId){
     rebuildCompList&&rebuildCompList();updateBoardInfo&&updateBoardInfo();updateInfoPanel&&updateInfoPanel();
   }
   renderBoardTabs();
+}
+
+async function newBoardVersion(){
+  // Determine next version number from existing tabs for this project
+  const existing = _pcbBoardsList.filter(b => !_currentProjectId || b.projectId === _currentProjectId);
+  // Parse highest Vn from titles like "My Project - V2"
+  let maxV = existing.length;
+  existing.forEach(b => {
+    const m = (b.title || '').match(/-\s*V(\d+)$/i);
+    if (m) maxV = Math.max(maxV, parseInt(m[1]));
+  });
+  const nextV = maxV + 1;
+
+  // Derive base name from current board title or project id
+  let baseName = 'Design';
+  if (_pcbBoardsList.length) {
+    const m = (_pcbBoardsList[0].title || '').match(/^(.*?)\s*-\s*V\d+$/i);
+    baseName = m ? m[1].trim() : (_pcbBoardsList[0].title || 'Design');
+  }
+  const title = `${baseName} - V${nextV}`;
+
+  // Create a blank board with the right title and project link
+  const blank = {
+    title,
+    projectId: _currentProjectId || undefined,
+    board: { width: 100, height: 80, units: 'mm' },
+    components: [], nets: [], traces: [], vias: [], areas: [],
+  };
+  try {
+    const res = await fetch('/api/pcb-boards', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(blank),
+    });
+    const saved = await res.json();
+    blank.id = saved.id;
+    editor.load(blank);
+    _activeBoardId = saved.id;
+    afterLoad();
+    await loadBoardTabs(_currentProjectId);
+    switchPcbSection('layout');
+  } catch(e) { alert('Could not create board: ' + e.message); }
 }
 
 async function renderBoardsSection(){
