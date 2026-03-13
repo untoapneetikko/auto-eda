@@ -2443,6 +2443,7 @@ window.addEventListener('load',()=>{
       if (src) src.postMessage({ type: 'boardData', board: editor.board }, '*');
     }
     if (e.data.type === 'importProject' && e.data.projectId) {
+      _currentProjectId = e.data.projectId; // track the owning schematic
       const opts = e.data.boardOpts || {};
       const src = e.source || (window.parent !== window ? window.parent : null);
       (async () => {
@@ -2551,10 +2552,16 @@ function switchPcbSection(name){
 // ── PCB Board Tabs (tied to saved boards, named after schematic projects) ──
 let _pcbBoardsList = [];   // [{id, title, updated_at, component_count}]
 let _activeBoardId = null; // currently loaded board id
+let _currentProjectId = null; // project (schematic) that owns the current board
 
-async function loadBoardTabs(){
+async function loadBoardTabs(projectId){
+  // Only show boards that belong to the current schematic (parent).
+  // A layout cannot exist without its parent schematic, so we never show
+  // boards from other projects.
+  const pid = projectId ?? _currentProjectId;
   try{
-    const r=await fetch('/api/pcb-boards');
+    const url = pid ? `/api/pcb-boards?projectId=${encodeURIComponent(pid)}` : '/api/pcb-boards';
+    const r=await fetch(url);
     _pcbBoardsList=await r.json();
     _pcbBoardsList.sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
   }catch(_){ _pcbBoardsList=[]; }
@@ -2613,6 +2620,8 @@ async function switchBoardTab(boardId){
     const res=editor.load(board);
     if(res.ok){
       _activeBoardId=boardId;
+      // Keep project filter in sync with the board we just switched to
+      if(board.projectId) _currentProjectId=board.projectId;
       afterLoad();
       switchPcbSection('layout');
       renderBoardTabs();
@@ -2771,6 +2780,8 @@ async function saveBoard(){
   if(!editor.board){alert('No board loaded');return;}
   const board=editor.board;
   if(!board.id)board.id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  // Keep _currentProjectId in sync with the board being saved
+  if(board.projectId) _currentProjectId=board.projectId;
   try{
     const r=await fetch('/api/pcb-boards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(board)});
     const d=await r.json();
