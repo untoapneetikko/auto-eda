@@ -426,7 +426,8 @@
   .pa-group-body { display:flex; flex-direction:column; gap:1px; padding:0 4px 4px 4px; }
   .pa-group.collapsed .pa-group-body { display:none; }
 
-  .pa-card { background:transparent; border:1px solid transparent; border-radius:6px; padding:5px 8px; display:flex; align-items:center; gap:7px; transition:border-color .12s,background .12s; cursor:pointer; }
+  .pa-card { background:transparent; border:1px solid transparent; border-radius:6px; padding:5px 8px; display:flex; flex-direction:column; gap:3px; transition:border-color .12s,background .12s; cursor:pointer; }
+  .pa-card-main { display:flex; align-items:center; gap:7px; }
   .pa-card:hover { border-color:rgba(148,163,184,0.25); background:rgba(255,255,255,0.03); }
   .pa-card.pa-running { border-color:rgba(245,158,11,0.5); background:rgba(245,158,11,0.06); }
   .pa-card.pa-unread  { border-color:rgba(34,197,94,0.4); background:rgba(34,197,94,0.05); }
@@ -443,6 +444,13 @@
   .pa-footer { display:none; }
   .pa-last-run { font-size:10px; color:var(--text-muted); flex:1; }
   .pa-msg-preview { font-size:10px; color:#a5b4fc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
+  /* Activity row (visible only when running) */
+  .pa-card-act { display:none; align-items:center; gap:5px; padding-left:22px; }
+  .pa-card.pa-running .pa-card-act { display:flex; }
+  .pa-act-label { font-size:10px; color:#f59e0b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
+  .pa-act-label.stale { color:#ef4444; animation:none; }
+  .pa-act-elapsed { font-size:10px; color:#6b7280; font-family:monospace; flex-shrink:0; }
+  .pa-act-stale { font-size:10px; color:#ef4444; flex-shrink:0; }
   .pa-badge { font-size:10px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:1px 6px; color:var(--text-muted); flex-shrink:0; }
   .pa-clone-badge { font-size:9px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:1px 5px; color:#f59e0b; flex-shrink:0; }
   .pa-chat-btn { font-size:11px; font-weight:700; border-radius:5px; padding:3px 10px; cursor:pointer; border:1px solid; transition:all .15s; flex-shrink:0; background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
@@ -7941,10 +7949,13 @@ async function agentsLoad() {
   const tsEl = document.getElementById('agents-last-refresh');
   if (tsEl) tsEl.textContent = new Date().toLocaleTimeString();
 
-  // Auto-refresh every 3s while drawer is open
+  // Auto-refresh every 3s while drawer is open; every 8s when agents are running (even with drawer closed)
   const drawer = document.getElementById('agents-drawer');
+  const anyRunning = Object.values(_paState).some(a => a.status === 'running');
   if (drawer && drawer.classList.contains('open')) {
     _agentsTimer = setTimeout(agentsLoad, 3000);
+  } else if (anyRunning) {
+    _agentsTimer = setTimeout(agentsLoad, 8000);
   }
 }
 
@@ -8036,6 +8047,49 @@ function _onDrawerUp() {
 // ── Pipeline Agents ──────────────────────────────────────────────────────────
 let _paState = {};        // name → agent summary object
 let _paPollTimer = null;  // fallback poll when SSE events are missed
+
+// Agent activity tracking for card feedback
+const _paRunStart   = {};  // name → timestamp when agent started
+const _paLastChunk  = {};  // name → timestamp of last received chunk
+const _paActText    = {};  // name → current activity label text
+let   _paTickTimer  = null;
+
+function _paStartTick() {
+  if (_paTickTimer) return;
+  _paTickTimer = setInterval(() => {
+    const now = Date.now();
+    Object.keys(_paRunStart).forEach(name => {
+      const elapsed = Math.round((now - _paRunStart[name]) / 1000);
+      const sinceChunk = now - (_paLastChunk[name] || _paRunStart[name]);
+      const stale = sinceChunk > 30000;
+      const elEl = document.getElementById('pa-act-elapsed-' + name);
+      const lblEl = document.getElementById('pa-act-lbl-' + name);
+      if (elEl) {
+        const mins = Math.floor(elapsed / 60);
+        elEl.textContent = mins > 0 ? `${mins}m ${elapsed % 60}s` : `${elapsed}s`;
+      }
+      if (lblEl) {
+        if (stale) {
+          lblEl.textContent = '⚠ No response for ' + Math.round(sinceChunk/1000) + 's — may be stuck';
+          lblEl.classList.add('stale');
+        } else {
+          lblEl.textContent = _paActText[name] || 'Working…';
+          lblEl.classList.remove('stale');
+        }
+      }
+    });
+  }, 1000);
+}
+
+function _paStopTickFor(name) {
+  delete _paRunStart[name];
+  delete _paLastChunk[name];
+  delete _paActText[name];
+  if (!Object.keys(_paRunStart).length && _paTickTimer) {
+    clearInterval(_paTickTimer);
+    _paTickTimer = null;
+  }
+}
 
 function _paStartPoll(name) {
   _paStopPoll();
@@ -8142,15 +8196,19 @@ function paCard(agent) {
   const statusTitle = st === 'running' ? 'Running' : st === 'done' ? 'Done' : st === 'error' ? 'Error' : 'Idle';
   const msgBadge = agent.msg_count ? `<span class="pa-badge" style="font-size:9px;">${agent.msg_count}</span>` : '';
   const cloneBadge = agent.is_clone ? `<span class="pa-clone-badge">↳</span>` : '';
-  const lastMsg = agent.last_msg ? `<span class="pa-msg-preview">${esc(agent.last_msg)}</span>` : '';
+  const lastMsg = agent.last_msg ? `<span class="pa-msg-preview" id="pa-preview-${agent.name}">${esc(agent.last_msg)}</span>` : `<span class="pa-msg-preview" id="pa-preview-${agent.name}"></span>`;
   return `<div class="pa-card ${cardCls}" id="pa-card-${agent.name}" onclick="paOpenChat('${agent.name}')" title="${esc(agent.desc)}">
-    <div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1;">
+    <div class="pa-card-main">
       <span class="pa-icon">${agent.icon}</span>
       <span class="pa-name">${esc(agent.label)}</span>
       ${cloneBadge}${msgBadge}
+      ${lastMsg}
+      <span class="pa-status-dot ${dotCls}" title="${statusTitle}"></span>
     </div>
-    ${lastMsg}
-    <span class="pa-status-dot ${dotCls}" title="${statusTitle}"></span>
+    <div class="pa-card-act" id="pa-act-${agent.name}">
+      <span class="pa-act-label" id="pa-act-lbl-${agent.name}">Starting…</span>
+      <span class="pa-act-elapsed" id="pa-act-elapsed-${agent.name}">0s</span>
+    </div>
   </div>`;
 }
 
@@ -8183,7 +8241,18 @@ function _paToggleGroup(key) {
 async function pipelineAgentsLoad() {
   const agents = await fetch('/api/pipeline/agents').then(r=>r.json()).catch(()=>[]);
   _paState = {};
-  agents.forEach(a => _paState[a.name] = a);
+  agents.forEach(a => {
+    _paState[a.name] = a;
+    // If agent is running and we don't have a run-start time, seed it so the tick works
+    if (a.status === 'running' && !_paRunStart[a.name]) {
+      _paRunStart[a.name] = Date.now();
+      _paLastChunk[a.name] = Date.now();
+      _paActText[a.name] = 'Working…';
+      _paStartTick();
+    } else if (a.status !== 'running' && _paRunStart[a.name]) {
+      _paStopTickFor(a.name);
+    }
+  });
   const grid = document.getElementById('pipeline-agents-grid');
   if (!grid) return;
   if (!agents.length) { grid.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 6px;">No agents found.</div>'; return; }
@@ -8396,8 +8465,33 @@ function _handlePipelineSSE(evt, data) {
 
   // Update card in grid
   if (_paState[name]) {
-    if (evt === 'pipeline_agent_started') _paState[name].status = 'running';
-    else if (evt === 'pipeline_agent_done')  _paState[name].status = data.status === 'done' ? 'done' : data.status === 'error' ? 'error' : 'idle';
+    if (evt === 'pipeline_agent_started') {
+      _paState[name].status = 'running';
+      _paRunStart[name] = Date.now();
+      _paLastChunk[name] = Date.now();
+      _paActText[name] = 'Starting…';
+      _paStartTick();
+    } else if (evt === 'pipeline_agent_chunk') {
+      _paLastChunk[name] = Date.now();
+      // Derive activity label from chunk type
+      if (data.is_tool) {
+        _paActText[name] = (data.chunk || '').replace(/^\n[▶◀] /, '').split('\n')[0].trim() || 'Running tool…';
+      } else if (data.is_thinking) {
+        _paActText[name] = 'Reasoning…';
+      } else if (data.is_result) {
+        _paActText[name] = 'Reading result…';
+      } else {
+        _paActText[name] = 'Writing response…';
+      }
+      // Update preview element live
+      const previewEl = document.getElementById('pa-preview-' + name);
+      if (previewEl && !data.is_tool && !data.is_thinking && !data.is_result) {
+        previewEl.textContent = (data.chunk || '').slice(-80).replace(/\n/g, ' ').trim();
+      }
+    } else if (evt === 'pipeline_agent_done') {
+      _paState[name].status = data.status === 'done' ? 'done' : data.status === 'error' ? 'error' : 'idle';
+      _paStopTickFor(name);
+    }
     const card = document.getElementById('pa-card-' + name);
     if (card) {
       const cls = _paCardCls(_paState[name]);
