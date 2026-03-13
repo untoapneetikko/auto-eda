@@ -1407,6 +1407,9 @@ async def api_library_put(slug: str, request: Request):
         _clear_active_version(slug)
     current = json.loads(pp.read_text(encoding="utf-8"))
     new_profile = {**body, "human_corrections": current.get("human_corrections", [])}
+    # Preserve layout_example — user-placed component positions must survive a Generate/rebuild
+    if "layout_example" not in new_profile and current.get("layout_example"):
+        new_profile["layout_example"] = current["layout_example"]
     new_profile.pop("_label", None)
     _write_profile(slug, new_profile)
     return {"ok": True}

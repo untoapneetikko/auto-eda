@@ -1004,7 +1004,7 @@ async function selectPart(slug) {
 
 async function loadProfile(slug) {
   if (!slug || slug === 'undefined' || slug === 'null') return;
-  const res = await fetch(`/api/library/${slug}`);
+  const res = await fetch(`/api/library/${slug}`, { cache: 'no-store' });
   const profile = await res.json();
   renderProfile(profile);
   loadActiveVersionBadge(slug);
@@ -2294,6 +2294,7 @@ async function historyActivate(id, vNum) {
   if (!res.ok) { alert('Failed to restore version'); return; }
   const data = await res.json();
   document.getElementById('history-popover').style.display = 'none';
+  _leLoadedSlug = null; // force layout-example iframe to reload with activated profile's layout
   const profile = await fetch(`/api/library/${selectedSlug}`).then(r => r.json());
   profileCache[selectedSlug] = profile;
   renderProfile(profile);
