@@ -2445,6 +2445,11 @@ window.addEventListener('load',()=>{
       if (src) src.postMessage({ type: 'boardData', board: editor.board }, '*');
     }
     if (e.data.type === 'importProject' && e.data.projectId) {
+      // Guard: if the same project is already mid-import, ignore this retry message.
+      // Without this, the 400ms retry from _doPCBImport fires a second concurrent
+      // handler before the first finishes saving — causing two boards both named V1.
+      if (_importingProjectId === e.data.projectId) return;
+      _importingProjectId = e.data.projectId;
       _currentProjectId = e.data.projectId; // track the owning schematic
       _currentNetlist   = e.data.netlist || {};
       loadBoardTabs(_currentProjectId);     // scope tabs to this project only
@@ -2498,6 +2503,7 @@ window.addEventListener('load',()=>{
             }
           }
         } catch(err) { console.error('importProject error', err); }
+        finally { _importingProjectId = null; } // release guard so future imports work
       })();
     }
     if (e.data.type === 'schematicDirty') {
@@ -2577,6 +2583,7 @@ let _pcbBoardsList = [];   // [{id, title, updated_at, component_count}]
 let _activeBoardId = null; // currently loaded board id
 let _currentProjectId = null; // project (schematic) that owns the current board
 let _currentNetlist   = {};   // latest netlist received from parent (importProject)
+let _importingProjectId = null; // guard: prevents concurrent importProject handlers creating duplicate boards
 
 async function loadBoardTabs(projectId){
   // Only show boards that belong to the current schematic (parent).
