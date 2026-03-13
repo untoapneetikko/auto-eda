@@ -1665,6 +1665,13 @@ def _pa_system_prompt(name: str) -> str:
         f"```\n"
         f"\n**For simple conversational messages** (greetings, quick questions, clarifications) — just reply naturally, no plan needed.\n"
         f"\n**If the user sends a message while you are mid-task** — finish the current step first, then address the user's message before continuing. Never abandon a task silently.\n"
+        f"\n## MANDATORY completion rule\n"
+        f"After every task — no matter how many tool calls you made — you MUST write a final human-readable reply that:\n"
+        f"1. States what was done (files written, endpoints called, values changed)\n"
+        f"2. Shows the result or key output (a snippet, a count, a diff summary)\n"
+        f"3. Mentions any caveats or follow-up actions needed\n"
+        f"\nDo NOT end silently on a tool call. Your last output must always be a text message to the user.\n"
+        f"If you have nothing to say, write: 'Done — no changes were needed.'\n"
         f"{ctx}"
     )
 
