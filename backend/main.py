@@ -236,6 +236,17 @@ def retry_job(job_id: str):
     return {"status": "requeued", "job_id": job_id}
 
 
+# ── Ticket dispatcher startup ─────────────────────────────────────────────────
+@app.on_event("startup")
+async def _start_ticket_dispatcher():
+    try:
+        from schematic_api import _ticket_dispatcher  # noqa: PLC0415
+        asyncio.create_task(_ticket_dispatcher())
+        print("[startup] ticket dispatcher started", flush=True)
+    except Exception as e:
+        print(f"[startup] ticket dispatcher failed to start: {e}", flush=True)
+
+
 # ── Static frontend ───────────────────────────────────────────────────────────
 # We must NOT use StaticFiles at "/" because it shadows all /api/* routes.
 # Instead mount under "/static" for assets and serve HTML pages explicitly.

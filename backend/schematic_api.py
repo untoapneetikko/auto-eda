@@ -1802,38 +1802,38 @@ async def _agent_query(prompt: str, opts):
         raise errors[0]
 
 
-@router.post("/pipeline/agents/{name}/chat")
-async def api_pipeline_agent_chat(name: str, request: Request):
-    """Send a message to a pipeline agent — auto-routes to a free instance if busy."""
-    # Accept both base names and clone names
+# ── Ticket type → agent that handles it ──────────────────────────────────────
+_TICKET_AGENT_MAP: dict[str, str] = {
+    "datasheet":     "datasheet-parser",
+    "example":       "example-schematic",
+    "footprint":     "footprint",
+    "layout":        "layout-example",
+    "build-project": "orchestrator",
+}
+
+
+async def _agent_send(
+    name: str,
+    user_msg: str,
+    model_id: str = "claude-sonnet-4-6",
+    use_thinking: bool = False,
+) -> dict:
+    """Internal helper: route a message to a pipeline agent and start the background task.
+
+    Used by both the HTTP chat endpoint and the ticket dispatcher so the logic
+    lives in exactly one place.
+    """
     base = _pa_base_name(name)
-    if base not in _PIPELINE_AGENTS and name not in _agent_instances:
-        raise HTTPException(404, f"Unknown agent: {name}")
-
-    body = {}
-    try:
-        body = await request.json()
-    except Exception:
-        pass
-    user_msg = (body.get("message") or body.get("input") or "").strip()
-    if not user_msg:
-        raise HTTPException(400, "message required")
-    model_id = body.get("model") or "claude-sonnet-4-6"
-    use_thinking = bool(body.get("think", False))
-
-    # If the requested name is already running, find/spawn a free instance
-    # Use the base agent's name for routing so clones share the same pool
     routing_base = base if base in _PIPELINE_AGENTS else name
     if _pipeline_state.get(name, {}).get("status") == "running":
         name = _get_free_instance(routing_base)
     elif name not in _agent_instances:
-        name = routing_base  # fall back to base
+        name = routing_base
 
-    # Save user message
     msg_id = _pa_next_id()
     now = datetime.now(timezone.utc).isoformat()
     _pipeline_chat[name].append({"id": msg_id, "role": "user", "content": user_msg, "ts": now})
-    _pa_save(name)  # persist user message before agent starts
+    _pa_save(name)
 
     run_id = f"{name}-{int(time.time())}"
     _pipeline_state[name].update({"status": "running", "last_run": now, "run_id": run_id})
@@ -2066,6 +2066,66 @@ async def api_pipeline_agent_chat(name: str, request: Request):
     task = asyncio.create_task(_run())
     _pipeline_tasks[name] = task
     return {"ok": True, "run_id": run_id, "msg_id": msg_id, "actual_name": name}
+
+
+@router.post("/pipeline/agents/{name}/chat")
+async def api_pipeline_agent_chat(name: str, request: Request):
+    """Send a message to a pipeline agent — auto-routes to a free instance if busy."""
+    base = _pa_base_name(name)
+    if base not in _PIPELINE_AGENTS and name not in _agent_instances:
+        raise HTTPException(404, f"Unknown agent: {name}")
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+    user_msg = (body.get("message") or body.get("input") or "").strip()
+    if not user_msg:
+        raise HTTPException(400, "message required")
+    return await _agent_send(
+        name,
+        user_msg,
+        model_id=body.get("model") or "claude-sonnet-4-6",
+        use_thinking=bool(body.get("think", False)),
+    )
+
+
+# ── Background ticket dispatcher ──────────────────────────────────────────────
+async def _ticket_dispatcher():
+    """Poll gen_tickets.json every 3 s, claim pending tickets, and send them
+    as prompt messages to the appropriate pipeline agent."""
+    await asyncio.sleep(6)  # let the app finish starting before first poll
+    while True:
+        await asyncio.sleep(3)
+        try:
+            data = _read_gen_tickets()
+            pending = [t for t in data["tickets"] if t.get("status") == "pending"]
+            for ticket in pending:
+                agent_name = _TICKET_AGENT_MAP.get(ticket.get("type", ""))
+                if not agent_name or agent_name not in _PIPELINE_AGENTS:
+                    continue
+                # Claim atomically before dispatching so a second poll cycle
+                # doesn't pick up the same ticket again
+                idx = next((i for i, t in enumerate(data["tickets"]) if t["id"] == ticket["id"]), -1)
+                if idx == -1:
+                    continue
+                data["tickets"][idx]["status"] = "running"
+                data["tickets"][idx]["started_at"] = datetime.now(timezone.utc).isoformat()
+                data["tickets"][idx]["agent"] = agent_name
+                _save_gen_tickets(data)
+                print(f"[ticket-dispatcher] GT-{ticket['id']:03d} ({ticket.get('type')}) → {agent_name}", flush=True)
+                try:
+                    await _agent_send(agent_name, ticket["prompt"])
+                except Exception as dispatch_err:
+                    print(f"[ticket-dispatcher] GT-{ticket['id']:03d} dispatch failed: {dispatch_err}", flush=True)
+                    data = _read_gen_tickets()
+                    idx2 = next((i for i, t in enumerate(data["tickets"]) if t["id"] == ticket["id"]), -1)
+                    if idx2 != -1:
+                        data["tickets"][idx2]["status"] = "error"
+                        data["tickets"][idx2]["error"] = str(dispatch_err)
+                        _save_gen_tickets(data)
+        except Exception as e:
+            print(f"[ticket-dispatcher] poll error: {e}", flush=True)
 
 
 @router.post("/pipeline/agents/{name}/stop")
