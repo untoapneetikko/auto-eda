@@ -211,22 +211,27 @@ class PCB3DViewer {
 
   _buildTraces(board) {
     if (!board.traces || !board.traces.length) return;
-    const { CU_T } = this;
-    // Traces sit above the copper fill plane — use a brighter copper colour so
-    // they contrast against the base fill layer beneath the solder mask.
-    const matTop = new THREE.MeshLambertMaterial({ color: 0xd4681a });
-    const matBot = new THREE.MeshLambertMaterial({ color: 0x4477ee });
+    const { CU_T, SM_T } = this;
+    // Traces sit ON TOP of the solder mask so they are always visible.
+    // Height is exaggerated beyond the mask thickness for clear readability.
+    const TR_H  = 0.30;   // visual trace height above solder mask surface
+    const topSurface = CU_T + SM_T; // top of solder mask
+    const botSurface = -(this.PCB_T + CU_T + SM_T); // bottom of solder mask
+    const ty_top =  topSurface + TR_H / 2;
+    const ty_bot =  botSurface - TR_H / 2;
+    const matTop = new THREE.MeshLambertMaterial({ color: 0xd4881a }); // warm copper
+    const matBot = new THREE.MeshLambertMaterial({ color: 0x4488ff }); // blue for bottom
     for (const trace of board.traces) {
       const isBot = trace.layer === 'B.Cu';
-      const mat  = isBot ? matBot : matTop;
-      const ty   = isBot ? this.Y_CU_BOT : this.Y_CU_TOP;
+      const mat = isBot ? matBot : matTop;
+      const ty  = isBot ? ty_bot : ty_top;
       for (const seg of (trace.segments || [])) {
         if (!seg || !seg.start || !seg.end) continue;
         const dx = seg.end.x - seg.start.x, dz = seg.end.y - seg.start.y;
         const len = Math.sqrt(dx * dx + dz * dz);
         if (len < 0.001) continue;
-        const w = trace.width || 0.25;
-        const geo = new THREE.BoxGeometry(len, CU_T, w);
+        const w = Math.max(trace.width || 0.25, 0.15); // minimum visual width
+        const geo = new THREE.BoxGeometry(len, TR_H, w);
         const m = new THREE.Mesh(geo, mat);
         m.position.set(
           this._px((seg.start.x + seg.end.x) / 2),
