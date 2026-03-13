@@ -5,31 +5,49 @@ echo.
 echo  auto-eda — local dev mode
 echo  =========================
 echo  App:    http://localhost:8000
-echo  No tunnel, no Docker needed.
+echo  Tunnel: starting...
 echo.
 
 cd /d "%~dp0"
 
-:: Check Redis
+:: ── Redis ────────────────────────────────────────────────────────────────────
 redis-cli ping >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Redis is not running.
     echo         Start it with:  redis-server
-    echo         Or via Scoop:   scoop install redis ^& redis-server
     pause
     exit /b 1
 )
-echo  [ok] Redis is running.
+echo  [ok] Redis
 
-:: Start the worker in a new window
+:: ── cloudflared ──────────────────────────────────────────────────────────────
+where cloudflared >nul 2>&1
+if errorlevel 1 (
+    echo  [..] cloudflared not found — installing via Scoop...
+    scoop install cloudflare-tunnel
+)
+where cloudflared >nul 2>&1
+if errorlevel 1 (
+    echo  [WARN] cloudflared still not found — tunnel will be skipped.
+    echo         Install manually: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+    set TUNNEL=0
+) else (
+    set TUNNEL=1
+)
+
+:: ── Worker ───────────────────────────────────────────────────────────────────
 echo  [1] Starting worker...
 start "auto-eda worker" cmd /k "cd /d "%~dp0" && python backend/worker.py"
 
-:: Small delay so worker window is visible before app starts
-timeout /t 1 /nobreak >nul
+:: ── Tunnel ───────────────────────────────────────────────────────────────────
+if "%TUNNEL%"=="1" (
+    echo  [2] Starting Cloudflare tunnel...
+    start "auto-eda tunnel" cmd /k "cloudflared tunnel --no-autoupdate --url http://localhost:8000"
+    echo      ^> Tunnel URL will appear in the "auto-eda tunnel" window.
+)
 
-:: Start the app with auto-reload
-echo  [2] Starting app (auto-reload on)...
+:: ── App ──────────────────────────────────────────────────────────────────────
+echo  [3] Starting app ^(auto-reload on^)...
 echo.
 python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir backend --reload-dir agents
 
