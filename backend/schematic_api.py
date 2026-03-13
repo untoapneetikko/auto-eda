@@ -1333,12 +1333,6 @@ def api_history_activate(slug: str, hid: str):
     snap = json.loads(snap_path.read_text(encoding="utf-8"))
     if not snap.get("profile"):
         raise HTTPException(400, "Invalid snapshot")
-    # Auto-save current state before switching versions so no work is lost
-    pp = _profile_path(slug)
-    if pp.exists():
-        current = json.loads(pp.read_text(encoding="utf-8"))
-        if not _profile_already_saved(slug, current):
-            _snapshot_profile(slug, "pre-activate")
     h = _history_dir(slug)
     files = sorted(h.glob("*.json"))
     v_num = next((i + 1 for i, f in enumerate(files) if f.stem == hid), 0)

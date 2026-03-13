@@ -2289,7 +2289,6 @@ async function historySave() {
 }
 
 async function historyActivate(id, vNum) {
-  if (!confirm(`Activate version v${vNum}?`)) return;
   const res = await fetch(`/api/library/${selectedSlug}/history/${id}/activate`, { method: 'POST' });
   if (!res.ok) { alert('Failed to restore version'); return; }
   const data = await res.json();
