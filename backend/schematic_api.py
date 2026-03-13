@@ -1989,6 +1989,10 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                         resp_parts.append(f"\n{sdk_msg.result}")
                         _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id, "chunk": f"\n{sdk_msg.result}"})
 
+                # Periodically flush to disk every 5 messages so progress survives restarts
+                if len(resp_parts) % 5 == 0:
+                    _pa_save(name)
+
             final = "".join(resp_parts)
             for m in _pipeline_chat[name]:
                 if m["id"] == resp_id:
@@ -3331,6 +3335,93 @@ async def api_pcb_import_schematic(request: Request):
         ax = round(max(5.0, min(bw - 5.0, ax)), 2)
         ay = round(max(5.0, min(bh - 5.0, ay)), 2)
         anchor_pcb_pos[eg_id] = (ax, ay)
+
+    # ── Build net mappings for each example group ──────────────────────────
+    # We need to translate layout_example net names (which may be internal
+    # "Nx" identifiers or LE-canonical names like "RF_IN") to the actual
+    # schematic net names produced by buildNetlist() (e.g. "RFIN", "GND").
+    #
+    # Chain:
+    #   le_pad_key → internal LE net   (from LE component pads)
+    #   le_pad_key → LE canonical net  (from le.nets[] list)
+    #   internal LE net → LE canonical (cross-ref)
+    #   LE pad ref → SC pad ref        (via le_ref_to_sc_ref)
+    #   SC pad ref → SC net name       (via pad_net lookup)
+    #
+    # Results stored back into le_groups[eg_id]:
+    #   "le_ref_to_sc_ref":   {le_ref: sc_ref}
+    #   "le_int_net_to_sc":   {internal_net: sc_net_name}
+    #   "le_canonical_to_sc": {le_canonical: sc_net_name}
+    for eg_id, eg_info in le_groups.items():
+        # 1. Build le_ref → sc_ref from schematic components
+        le_ref_to_sc_ref: dict[str, str] = {}
+        for sc in schematic_comps:
+            if sc.get("_exampleGroupId") != eg_id:
+                continue
+            ex_x = sc.get("_exampleX")
+            ex_y = sc.get("_exampleY")
+            sc_ref = str(sc.get("ref", sc.get("designator", "")))
+            if ex_x is not None and ex_y is not None and sc_ref:
+                le_ref = eg_info["ec_pos_to_ref"].get(
+                    (round(float(ex_x)), round(float(ex_y))))
+                if le_ref:
+                    le_ref_to_sc_ref[le_ref] = sc_ref
+        eg_info["le_ref_to_sc_ref"] = le_ref_to_sc_ref
+
+        # 2. Build le_pad_key → internal LE net  (from component pad fields)
+        le_pad_to_int_net: dict[str, str] = {}
+        le_comps_raw = (
+            (eg_info.get("layout_example") or {}).get("components")
+            or _load_le_comps(LIBRARY_DIR, eg_info["eg_slug"])
+        )
+        # Retrieve the raw component list from the library profile directly
+        try:
+            _le_profile = json.loads(
+                (LIBRARY_DIR / eg_info["eg_slug"] / "profile.json").read_text("utf-8"))
+            le_comps_raw = (_le_profile.get("layout_example") or {}).get("components") or []
+            le_nets_raw  = (_le_profile.get("layout_example") or {}).get("nets") or []
+        except Exception:
+            le_comps_raw = []
+            le_nets_raw  = []
+
+        for lc in le_comps_raw:
+            lc_ref = str(lc.get("ref", lc.get("id", "")))
+            for p in lc.get("pads", []):
+                key = f'{lc_ref}.{p.get("number", "")}'
+                le_pad_to_int_net[key] = str(p.get("net", ""))
+
+        # 3. Build le_canonical → internal nets  and  le_canonical → sc_net
+        le_canonical_to_sc_net: dict[str, str] = {}
+        le_int_net_to_canonical: dict[str, str] = {}
+        for le_net in le_nets_raw:
+            canonical = str(le_net.get("name", ""))
+            for le_pad_ref in le_net.get("pads", []):
+                # internal net name for this pad
+                int_net = le_pad_to_int_net.get(le_pad_ref, "")
+                if int_net and canonical:
+                    le_int_net_to_canonical.setdefault(int_net, canonical)
+
+                # sc net name: translate LE pad ref → SC pad ref → pad_net
+                parts = le_pad_ref.split(".", 1)
+                if len(parts) == 2:
+                    sc_ref = le_ref_to_sc_ref.get(parts[0])
+                    if sc_ref:
+                        sc_net = pad_net.get(f"{sc_ref}.{parts[1]}", "")
+                        if sc_net and canonical not in le_canonical_to_sc_net:
+                            le_canonical_to_sc_net[canonical] = sc_net
+
+        # 4. Build internal → sc_net  (the final lookup used on traces)
+        le_int_net_to_sc: dict[str, str] = {}
+        for int_net, canonical in le_int_net_to_canonical.items():
+            sc_net = le_canonical_to_sc_net.get(canonical, canonical)
+            le_int_net_to_sc[int_net] = sc_net
+        # Also map canonical names themselves (pads that already use readable names)
+        for canonical, sc_net in le_canonical_to_sc_net.items():
+            le_int_net_to_sc[canonical] = sc_net
+
+        eg_info["le_int_net_to_sc"]   = le_int_net_to_sc
+        eg_info["le_canonical_to_sc"] = le_canonical_to_sc_net
+        eg_info["le_nets_raw"]        = le_nets_raw
 
     # ── Build PCB components ───────────────────────────────────────────────
     pcb_comps: list[dict] = []

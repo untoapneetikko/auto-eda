@@ -8250,9 +8250,11 @@ function _paToggleGroup(key) {
 
 async function pipelineAgentsLoad() {
   const agents = await fetch('/api/pipeline/agents').then(r=>r.json()).catch(()=>[]);
+  const prevState = {..._paState};
   _paState = {};
   agents.forEach(a => {
     _paState[a.name] = a;
+    const prev = prevState[a.name];
     // If agent is running and we don't have a run-start time, seed it so the tick works
     if (a.status === 'running' && !_paRunStart[a.name]) {
       _paRunStart[a.name] = Date.now();
@@ -8261,6 +8263,22 @@ async function pipelineAgentsLoad() {
       _paStartTick();
     } else if (a.status !== 'running' && _paRunStart[a.name]) {
       _paStopTickFor(a.name);
+    }
+    // Poll detected agent finished (SSE was missed) — reload chat pane with full history
+    if (prev?.status === 'running' && a.status !== 'running') {
+      _paStopPoll();
+      if (_activePaAgent === a.name) {
+        fetch(`/api/pipeline/agents/${a.name}/history`)
+          .then(r => r.json())
+          .then(hist => {
+            if (_activePaAgent !== a.name) return;
+            _paRenderHistory(hist);
+            _paHideThinking();
+            _paUpdateModalStatus(a.status === 'done' ? 'done' : a.status === 'error' ? 'error' : 'idle');
+            const btn = document.getElementById('pa-send-btn');
+            if (btn) btn.disabled = false;
+          }).catch(() => {});
+      }
     }
   });
   const grid = document.getElementById('pipeline-agents-grid');
