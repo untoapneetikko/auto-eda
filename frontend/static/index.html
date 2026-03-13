@@ -2228,18 +2228,40 @@ async function _loadHistoryList() {
   }).join('');
 }
 
-// Save button — appends a new snapshot under the same label (never overwrites history), or creates new if none active
+// Save button — appends a new snapshot under the same label (never overwrites history), or auto-saves as "checkpoint" if none active
 async function historySaveActive() {
   if (!selectedSlug) return;
   const av = await fetch(`/api/library/${selectedSlug}/active_version`).then(r => r.json()).catch(() => null);
   if (av) {
     const res = await fetch(`/api/library/${selectedSlug}/history/${av.id}`, { method: 'PUT' });
-    if (!res.ok) { alert('Failed to save'); return; }
-    showGenToast(`💾 Saved to ${av.label || 'v' + av.vNum}`);
+    if (res.ok) {
+      showGenToast(`💾 Saved to ${av.label || 'v' + av.vNum}`);
+    } else if (res.status === 404) {
+      // Stale active version ID — snapshot was deleted or pruned; recreate under same label
+      const label = av.label || 'checkpoint';
+      const r2 = await fetch(`/api/library/${selectedSlug}/history/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label })
+      });
+      if (!r2.ok) { alert('Failed to save'); return; }
+      const d2 = await r2.json();
+      await fetch(`/api/library/${selectedSlug}/history/${d2.id}/activate`, { method: 'POST' });
+      showGenToast(`💾 Saved as "${label}"`);
+    } else {
+      alert('Failed to save'); return;
+    }
   } else {
-    // No active version — behave like New Version
-    historyNewVersion();
-    return;
+    // No active version — auto-save as "checkpoint" without requiring user input
+    const r = await fetch(`/api/library/${selectedSlug}/history/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: 'checkpoint' })
+    });
+    if (!r.ok) { alert('Failed to save'); return; }
+    const d = await r.json();
+    await fetch(`/api/library/${selectedSlug}/history/${d.id}/activate`, { method: 'POST' });
+    showGenToast('💾 Saved as "checkpoint"');
   }
   await _loadHistoryList();
   loadActiveVersionBadge(selectedSlug);
@@ -2273,9 +2295,8 @@ async function historyActivate(id, vNum) {
   const profile = await fetch(`/api/library/${selectedSlug}`).then(r => r.json());
   profileCache[selectedSlug] = profile;
   renderProfile(profile);
+  loadActiveVersionBadge(selectedSlug);
   const name = data.label || `v${data.vNum}`;
-  const badge = document.getElementById('active-version-badge');
-  if (badge) { badge.textContent = `Active: ${name}`; badge.style.display = ''; }
   showGenToast(`🕐 ${name} restored for ${selectedSlug}`);
 }
 
