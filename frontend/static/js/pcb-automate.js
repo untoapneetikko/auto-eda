@@ -90,6 +90,7 @@ async function runAutoRoute() {
     const traces = data.traces ?? data.board?.traces;
     if (traces && editor?.board) {
       editor.board.traces = traces;
+      editor._snapshot();
       editor.render(); rebuildCompList(); updateBoardInfo();
     }
     const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets`;
@@ -122,6 +123,7 @@ async function runAutoPlace() {
     if (!res.ok) throw new Error(data.detail || data.error || 'Auto-place failed');
     if (data.components && editor?.board) {
       editor.board.components = data.components;
+      editor._snapshot();
       editor.render(); rebuildCompList(); updateBoardInfo();
     }
   } catch(e) {
