@@ -36,7 +36,7 @@ let DR = {
   clearance: 0.2,         // Min copper-to-copper clearance (mm)
   edgeClearance: 0.5,     // Min clearance from board edge (mm)
   drillClearance: 0.25,   // Min drill-to-drill clearance (mm)
-  courtyardClearance: 0.0, // Min courtyard-to-courtyard clearance (mm); 0 = no overlap
+  packageGap: 0.0, // Min package-to-package gap (mm); 0 = no overlap
   // Vias
   viaSize: 1.0,           // Via outer diameter (mm)
   viaDrill: 0.6,          // Via drill diameter (mm)

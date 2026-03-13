@@ -32,7 +32,7 @@ from typing import Any
 # Import from sibling module — works whether run as a module or as a script.
 try:
     from agents.autoplace.placement_optimizer import (
-        check_courtyard_clearances,
+        check_package_gaps,
         compute_net_proximity_placement,
         summarize_violations,
     )
@@ -40,7 +40,7 @@ except ModuleNotFoundError:
     # Allow running directly from the agents/autoplace/ directory.
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
     from agents.autoplace.placement_optimizer import (
-        check_courtyard_clearances,
+        check_package_gaps,
         compute_net_proximity_placement,
         summarize_violations,
     )
@@ -218,7 +218,7 @@ def apply_placement(
 
     # --- Courtyard check via Polars optimizer ---
     # Footprints may or may not be in the placement dict; pass what we have.
-    opt_result = check_courtyard_clearances(placements)
+    opt_result = check_package_gaps(placements)
     violations = opt_result.get("violations", [])
 
     if not opt_result["is_valid"]:

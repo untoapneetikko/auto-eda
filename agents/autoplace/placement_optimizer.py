@@ -3,9 +3,9 @@ Placement Optimizer — courtyard overlap checker + net-proximity placer using P
 
 Two main capabilities:
 
-1. check_courtyard_clearances(placements)
+1. check_package_gaps(placements)
    Post-placement DRC: verifies every pair of components satisfies the minimum
-   package-to-package gap (courtyard clearance).
+   package-to-package gap (package gap).
 
 2. compute_net_proximity_placement(components, ...)
    Pre-placement algorithm: force-directed, net-proximity optimised placement.
@@ -13,11 +13,11 @@ Two main capabilities:
 
 Usage:
     from agents.autoplace.placement_optimizer import (
-        check_courtyard_clearances,
+        check_package_gaps,
         compute_net_proximity_placement,
     )
     placements = compute_net_proximity_placement(components, board_width_mm=100, board_height_mm=80)
-    result = check_courtyard_clearances(placements)
+    result = check_package_gaps(placements)
     # result = {"violations": [...], "is_valid": bool}
 """
 from __future__ import annotations
@@ -131,7 +131,7 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
 
 
 # ---------------------------------------------------------------------------
-# Courtyard clearance check (minimum 0.25 mm between courtyards)
+# Package gap check (minimum 0.25 mm between courtyards)
 # ---------------------------------------------------------------------------
 
 MIN_CLEARANCE_MM = 0.25
@@ -177,12 +177,12 @@ def _aabb_overlap(
     return effective_gap < clearance
 
 
-def check_courtyard_clearances(
+def check_package_gaps(
     placements: list[dict[str, Any]],
     min_clearance_mm: float = MIN_CLEARANCE_MM,
 ) -> dict[str, Any]:
     """
-    Check courtyard clearances for a list of placement dicts.
+    Check package gaps for a list of placement dicts.
 
     Each placement dict must contain:
         reference (str), x (float), y (float), footprint (str)
@@ -244,7 +244,7 @@ def check_courtyard_clearances(
 def summarize_violations(result: dict[str, Any]) -> str:
     """Return a human-readable summary suitable for feeding back to the LLM."""
     if result["is_valid"]:
-        return "All courtyard clearances OK."
+        return "All package gaps OK."
     lines = [f"Found {len(result['violations'])} courtyard violation(s):"]
     for v in result["violations"]:
         lines.append(f"  - {v['message']}")
@@ -290,7 +290,7 @@ def compute_net_proximity_placement(
     board_width_mm: float = 100.0,
     board_height_mm: float = 80.0,
     min_clearance_mm: float = MIN_CLEARANCE_MM,
-    iterations: int = 250,
+    iterations: int = 400,
     seed: int = 42,
     schematic_hints: dict[str, tuple[float, float]] | None = None,
     hint_weight: float = 0.4,
@@ -324,7 +324,7 @@ def compute_net_proximity_placement(
     board_width_mm, board_height_mm:
         PCB board dimensions in mm.
     min_clearance_mm:
-        Package-to-package minimum gap (courtyard clearance).  Default 0.25 mm.
+        Package-to-package minimum gap (package gap).  Default 0.25 mm.
     iterations:
         Number of attraction+repulsion cycles.  More iterations → tighter
         packing but longer runtime.
@@ -442,11 +442,13 @@ def compute_net_proximity_placement(
     for iteration in range(iterations):
         alpha = 1.0 - (iteration / iterations)        # 1 → 0 as we cool
         max_step  = 5.0 * alpha + 0.2                 # attraction cap (mm)
-        # Repulsion constant: tuned so global spread force is weaker than
-        # net-attraction at typical cluster distances, but strong enough to
-        # break degeneracy (prevents all components collapsing onto one line).
-        # Formula: k²/d where k = sqrt(area/n)*0.15 → gentle at d > ~2 mm.
-        _k = math.sqrt(board_width_mm * board_height_mm / max(n, 1)) * 0.15
+        # Repulsion constant: kept very small — its only job is to break
+        # exact symmetry/degeneracy (prevent two components landing on the
+        # same point).  Package gap enforcement (the hard constraint
+        # below) handles all actual spacing; a large repulsion constant is
+        # the primary cause of components ending up far apart.
+        # Formula: k²/d where k = sqrt(area/n)*0.03 → negligible at d > ~2 mm.
+        _k = math.sqrt(board_width_mm * board_height_mm / max(n, 1)) * 0.03
         k_repulse = _k * _k * alpha
 
         forces = [[0.0, 0.0] for _ in range(n)]
@@ -558,7 +560,7 @@ def compute_net_proximity_placement(
             pos[i][0] += fx
             pos[i][1] += fy
 
-        # ---- Hard constraint: courtyard clearance --------------------- #
+        # ---- Hard constraint: package gap --------------------- #
         for _ in range(COURTYARD_PASSES):
             for i in range(n):
                 for j in range(i + 1, n):
@@ -696,7 +698,7 @@ def compute_net_proximity_placement(
                 f"'{dominant_net}' ({best_count} shared connection"
                 f"{'s' if best_count != 1 else ''}). "
                 f"Final position ({pos[i][0]:.2f}, {pos[i][1]:.2f}) mm satisfies "
-                f"{min_clearance_mm} mm courtyard clearance."
+                f"{min_clearance_mm} mm package gap."
             )
         else:
             rationale = (

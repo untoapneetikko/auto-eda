@@ -134,7 +134,7 @@ async function runAutoPlace() {
 // ── Place from Schematic ──────────────────────────────────────
 // Iterative legalization: push overlapping components apart while
 // keeping them as close to their current (schematic-derived) positions
-// as possible. Uses DR.courtyardClearance and DR.edgeClearance.
+// as possible. Uses DR.packageGap and DR.edgeClearance.
 function _cyHalfExtents(comp, fpData) {
   const fp = fpData && fpData[comp.footprint];
   let hw, hh;
@@ -153,7 +153,7 @@ async function legalize(comps, fpData, W, H) {
   const grid = editor.gridSize || 0.5;
   const snapV = v => Math.round(v / grid) * grid;
   const edge = DR.edgeClearance ?? 0.5;
-  const cl = DR.courtyardClearance ?? 0;
+  const cl = DR.packageGap ?? 0;
   const MAX_ITER = 120;
   for (let iter = 0; iter < MAX_ITER; iter++) {
     let moved = false;

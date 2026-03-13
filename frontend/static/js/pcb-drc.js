@@ -9,7 +9,7 @@ function populateDRTab(){
   m('drt-clear',DR.clearance);
   m('drt-edge',DR.edgeClearance);
   m('drt-drill-clear',DR.drillClearance??0.25);
-  m('drt-courtyard-clear',DR.courtyardClearance??0.0);
+  m('drt-courtyard-clear',DR.packageGap??0.0);
   m('drt-via-size',DR.viaSize);
   m('drt-via-drill',DR.viaDrill);
   m('drt-annular',DR.minAnnularRing??0.15);
@@ -60,7 +60,7 @@ function saveDRTab(){
   DR.clearance=g('drt-clear',0.2);
   DR.edgeClearance=g('drt-edge',0.5);
   DR.drillClearance=g('drt-drill-clear',0.25);
-  DR.courtyardClearance=g('drt-courtyard-clear',0.0);
+  DR.packageGap=g('drt-courtyard-clear',0.0);
   DR.viaSize=g('drt-via-size',1.0);
   DR.viaDrill=g('drt-via-drill',0.6);
   DR.minAnnularRing=g('drt-annular',0.15);
@@ -191,7 +191,7 @@ function renderDRCTabResults(){
   // Group results by category
   const groups={};
   const catLabels={clearance:'Clearances',unconnected:'Unconnected Nets',trace:'Trace Width / Geometry',
-    via:'Via Geometry',bounds:'Board Bounds',refs:'Component References',holes:'Drill / Holes',net:'Net Integrity',courtyard:'Courtyard Clearance'};
+    via:'Via Geometry',bounds:'Board Bounds',refs:'Component References',holes:'Drill / Holes',net:'Net Integrity',courtyard:'Package Gap'};
   for(const e of visible){
     const c=e.cat||'other';
     (groups[c]||(groups[c]=[])).push(e);

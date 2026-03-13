@@ -2,7 +2,7 @@
 Test suite for the Auto-Place agent.
 
 Tests:
-    1. placement_optimizer — courtyard clearance checks (Polars logic, no LLM).
+    1. placement_optimizer — package gap checks (Polars logic, no LLM).
     2. get_placement_context — schematic parsing and context structure.
     3. apply_placement — end-to-end validation + DRC + file write.
     4. FastAPI endpoints — context and apply routes.
@@ -26,7 +26,7 @@ _REPO_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(_REPO_ROOT))
 
 from agents.autoplace.placement_optimizer import (
-    check_courtyard_clearances,
+    check_package_gaps,
     summarize_violations,
 )
 
@@ -213,7 +213,7 @@ class TestPlacementOptimizer(unittest.TestCase):
 
     def test_valid_placements_pass(self) -> None:
         """Well-spaced placements should produce no violations."""
-        result = check_courtyard_clearances(VALID_PLACEMENTS)
+        result = check_package_gaps(VALID_PLACEMENTS)
         self.assertTrue(result["is_valid"], summarize_violations(result))
         self.assertEqual(len(result["violations"]), 0)
 
@@ -229,7 +229,7 @@ class TestPlacementOptimizer(unittest.TestCase):
                 "footprint": "Capacitor_SMD:C_0402_1005Metric",
             },
         ]
-        result = check_courtyard_clearances(bad)
+        result = check_package_gaps(bad)
         self.assertFalse(result["is_valid"])
         self.assertGreater(len(result["violations"]), 0)
         msg = result["violations"][0]["message"]
@@ -248,12 +248,12 @@ class TestPlacementOptimizer(unittest.TestCase):
                 "footprint": "Resistor_SMD:R_0402_1005Metric",
             },
         ]
-        result = check_courtyard_clearances(ok)
+        result = check_package_gaps(ok)
         self.assertTrue(result["is_valid"], summarize_violations(result))
 
     def test_empty_placements(self) -> None:
         """Empty list should return valid."""
-        result = check_courtyard_clearances([])
+        result = check_package_gaps([])
         self.assertTrue(result["is_valid"])
 
     def test_violation_gap_is_negative_for_overlap(self) -> None:
@@ -268,7 +268,7 @@ class TestPlacementOptimizer(unittest.TestCase):
                 "footprint": "Package_DIP:DIP-28_W7.62mm",
             },
         ]
-        result = check_courtyard_clearances(bad)
+        result = check_package_gaps(bad)
         self.assertFalse(result["is_valid"])
         self.assertLess(result["violations"][0]["gap_mm"], 0.25)
 
