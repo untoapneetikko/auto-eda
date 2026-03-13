@@ -507,9 +507,9 @@ async function renderLayoutExample(slug) {
   const profile = await fetch(`/api/library/${slug}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
   if (!profile) return;
 
-  const frame = document.getElementById('le-frame');
+  // Quick guard — bail before doing expensive BOM work if the tab isn't even rendered.
+  if (!document.getElementById('le-frame')) return;
   const notesEl = document.getElementById('le-notes');
-  if (!frame) return;
 
   const fpName = profile.footprint || '';
   const partNum = profile.part_number || slug;
@@ -560,14 +560,35 @@ async function renderLayoutExample(slug) {
   // Validate nets: layout example must match example schematic
   leShowNetWarning(leValidateNets(board, _leBomData));
 
+  // Re-fetch the current frame reference AFTER all awaits — if renderProfile() ran
+  // during the async fetch it will have replaced the le-frame with a new element, so
+  // the frame captured above is now a detached orphan.  Also abort if the user
+  // navigated to a different component while we were fetching.
+  if (slug !== selectedSlug) return;
+  const liveFrame = document.getElementById('le-frame');
+  if (!liveFrame) return;
+
   const send = () => {
-    frame.contentWindow?.postMessage({ type: 'loadBoard', board, hideBoardOutline: true }, '*');
+    liveFrame.contentWindow?.postMessage({ type: 'loadBoard', board, hideBoardOutline: true }, '*');
     // Set these AFTER posting so leSaveLayout can't capture a stale board
     // from a previous component while the new loadBoard message is in flight.
     _leBoard = board;
     _leLoadedSlug = slug;
   };
-  if (frame.contentDocument?.readyState === 'complete') send(); else frame.onload = send;
+
+  // Guard against the about:blank race: a freshly created iframe has readyState
+  // 'complete' for its initial about:blank document BEFORE pcb.html has loaded.
+  // Only call send() immediately when the frame is actually serving pcb.html.
+  const isActuallyLoaded = liveFrame.contentDocument?.readyState === 'complete' &&
+    liveFrame.contentWindow?.location?.href?.includes('/pcb');
+  if (isActuallyLoaded) {
+    send();
+  } else {
+    // Use addEventListener so we don't clobber any existing onload assignment and
+    // the handler auto-removes itself after firing once.
+    const onLoad = () => { liveFrame.removeEventListener('load', onLoad); send(); };
+    liveFrame.addEventListener('load', onLoad);
+  }
 }
 
 // ── Application Circuit Renderer ───────────────────────────────────────────
