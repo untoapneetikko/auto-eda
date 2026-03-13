@@ -307,15 +307,38 @@ class PCBEditor {
       const segs=tr.segments||[];
       // Draw path helper (optionally skip one segment)
       const drawPath=(skipIdx=-1)=>{
-        ctx.beginPath(); let first=true;
+        const cAngle=DR?.cornerAngle??90;
+        const r0=cAngle<90?(90-cAngle)/90*w*2:0;
+        ctx.lineJoin='miter';
+        ctx.beginPath();
+        let prevEndX=null,prevEndY=null;
         for(let si=0;si<segs.length;si++){
-          if(si===skipIdx){first=true;continue;}
+          if(si===skipIdx){prevEndX=prevEndY=null;continue;}
           const seg=segs[si];
-          if(first){ctx.moveTo(this.mmX(seg.start.x),this.mmY(seg.start.y));first=false;}
-          ctx.lineTo(this.mmX(seg.end.x),this.mmY(seg.end.y));
-          ctx.moveTo(this.mmX(seg.end.x),this.mmY(seg.end.y));
+          const sx=this.mmX(seg.start.x),sy=this.mmY(seg.start.y);
+          const ex=this.mmX(seg.end.x),ey=this.mmY(seg.end.y);
+          const gapped=prevEndX===null
+            ||Math.abs(sx-prevEndX)>0.5||Math.abs(sy-prevEndY)>0.5;
+          if(gapped)ctx.moveTo(sx,sy);
+          // Find next valid segment to use with arcTo
+          let nsi=-1;
+          for(let j=si+1;j<segs.length;j++){if(j!==skipIdx){nsi=j;break;}}
+          if(r0>0.5&&nsi>=0){
+            const ns=segs[nsi];
+            const nsx=this.mmX(ns.start.x),nsy=this.mmY(ns.start.y);
+            if(Math.abs(ex-nsx)<0.5&&Math.abs(ey-nsy)<0.5){
+              const nx2=this.mmX(ns.end.x),ny2=this.mmY(ns.end.y);
+              const segPx=Math.hypot(ex-sx,ey-sy);
+              const nxtPx=Math.hypot(nx2-nsx,ny2-nsy);
+              const r=Math.min(r0,segPx*0.45,nxtPx*0.45);
+              if(r>0.5){ctx.arcTo(ex,ey,nx2,ny2,r);prevEndX=ex;prevEndY=ey;continue;}
+            }
+          }
+          ctx.lineTo(ex,ey);
+          prevEndX=ex;prevEndY=ey;
         }
         ctx.stroke();
+        ctx.lineJoin='round';
       };
       const drawSeg=(si)=>{
         const seg=segs[si];

@@ -458,6 +458,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
           <tbody>
             <tr><td>Min Trace Width</td><td><input class="dr-input" id="drt-min-trace" type="number" step="0.01" min="0.05" max="10" oninput="updateDRTComputed()"></td><td style="color:var(--text-muted);font-size:11px;">Minimum allowed copper trace width</td></tr>
             <tr><td>Default Trace Width</td><td><input class="dr-input" id="drt-trace" type="number" step="0.05" min="0.05" max="10"></td><td style="color:var(--text-muted);font-size:11px;">Width used when auto-routing</td></tr>
+            <tr><td>Corner Angle</td><td><input class="dr-input" id="drt-corner-angle" type="number" step="5" min="0" max="90"> °</td><td style="color:var(--text-muted);font-size:11px;">Trace bend — 0° = fully rounded, 90° = sharp corners</td></tr>
             <tr><td>Copper Clearance</td><td><input class="dr-input" id="drt-clear" type="number" step="0.01" min="0.05" max="5"></td><td style="color:var(--text-muted);font-size:11px;">Min space between different-net copper</td></tr>
             <tr><td>Edge Clearance</td><td><input class="dr-input" id="drt-edge" type="number" step="0.1" min="0.1" max="20"></td><td style="color:var(--text-muted);font-size:11px;">Min distance from any copper to board edge</td></tr>
             <tr><td>Drill Clearance</td><td><input class="dr-input" id="drt-drill-clear" type="number" step="0.05" min="0.1" max="5"></td><td style="color:var(--text-muted);font-size:11px;">Min hole-to-hole center spacing</td></tr>

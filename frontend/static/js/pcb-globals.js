@@ -49,6 +49,8 @@ let DR = {
   copperWeight: 1.0,      // Copper weight oz/ft² — affects current capacity
   // Silkscreen
   silkscreenWidth: 0.12,  // Min silkscreen line width (mm)
+  // Routing aesthetics
+  cornerAngle: 90,        // Trace corner angle: 90 = sharp, 0 = fully rounded (degrees)
 };
 // Persist DR to localStorage
 function _saveDRStorage(){try{localStorage.setItem('pcb_DR',JSON.stringify(DR));}catch(_){}}
