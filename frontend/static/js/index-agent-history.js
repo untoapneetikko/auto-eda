@@ -323,9 +323,9 @@ async function gtCreateTicket(type, slug, profile, rawText = null, extraNotes = 
   const tabLabel = GT_TAB_LABEL[type] || type;
   const title = `Library → Component → ${partNum} → ${tabLabel}`;
   let basePrompt = type === 'footprint' ? buildFootprintPrompt(slug, profile)
-                 : type === 'example'   ? buildExampleRebuildPrompt(slug, profile, rawText)
+                 : type === 'example'   ? await buildExampleRebuildPrompt(slug, profile, rawText)
                  : type === 'layout'    ? await buildLayoutPrompt(slug, profile)
-                 : type === 'datasheet' ? buildRebuildPrompt(slug, profile, rawText)
+                 : type === 'datasheet' ? await buildRebuildPrompt(slug, profile, rawText)
                  : '';
   if (extraNotes) basePrompt += `\n\nADDITIONAL INSTRUCTIONS FROM USER:\n${extraNotes}`;
   // Create ticket first to get the ID
@@ -335,7 +335,7 @@ async function gtCreateTicket(type, slug, profile, rawText = null, extraNotes = 
   });
   const ticket = await res.json();
   // Patch prompt to include ticket close instruction
-  const fullPrompt = basePrompt + `\n\nWHEN DONE — mark this ticket complete:\nPUT http://localhost:3030/api/gen-tickets/${ticket.id}\nBody: { "status": "done" }`;
+  const fullPrompt = basePrompt + `\n\nWHEN DONE — mark this ticket complete:\nPUT http://localhost:8000/api/gen-tickets/${ticket.id}\nBody: { "status": "done" }`;
   await fetch(`/api/gen-tickets/${ticket.id}`, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ prompt: fullPrompt })

@@ -4140,53 +4140,173 @@ async def build_gen_ticket_prompt(request: Request):
     ticket_type = body.get("type", "")
     slug        = body.get("slug", "")
     profile     = body.get("profile", {})
-    raw_text    = body.get("rawText", "")
+    raw_text    = body.get("rawText", "") or ""
 
-    part = profile.get("part_number", slug)
-    pkg  = (profile.get("package_types") or ["unknown"])[0]
-    desc = profile.get("description", "")
-    pins = profile.get("pins", [])
-    pin_summary = ", ".join(
-        f"{p.get('number','?')}:{p.get('name','?')}" for p in pins[:12]
-    )
-    if len(pins) > 12:
-        pin_summary += f" …+{len(pins) - 12} more"
+    part  = profile.get("part_number", slug)
+    pkgs  = profile.get("package_types") or ["unknown"]
+    pkg   = pkgs[0]
+    desc  = profile.get("description", "")
+    pins  = profile.get("pins", [])
+
+    # Full profile as compact JSON (gives the agent everything in the profile)
+    profile_json = json.dumps(profile, indent=2)
+
+    # All pins as a readable table
+    def _pin_table(pins):
+        lines = []
+        for p in pins:
+            num  = p.get("number", "?")
+            name = p.get("name", "?")
+            typ  = p.get("type", "")
+            desc2 = p.get("description", "")
+            lines.append(f"  {num:>4}  {name:<20} {typ:<12} {desc2}")
+        return "\n".join(lines) if lines else "  (none)"
+
+    pin_table = _pin_table(pins)
+
+    # Load existing sub-data from disk for context
+    def _existing(key):
+        v = profile.get(key)
+        return json.dumps(v, indent=2) if v else "(not yet generated)"
+
+    existing_footprint      = _existing("footprint")
+    existing_example        = _existing("example_circuit")
+    existing_layout         = _existing("layout_example")
+
+    # Raw text — give as much as reasonably fits
+    raw_snippet = raw_text[:12000] if raw_text else "(no raw datasheet text available)"
+    raw_truncated = len(raw_text) > 12000
 
     if ticket_type == "footprint":
-        prompt = (
-            f"Generate a PCB footprint for {part}.\n"
-            f"Package: {pkg}\n"
-            f"Description: {desc}\n"
-            f"Pins ({len(pins)}): {pin_summary}\n"
-            f"Output: PUT /api/library/{slug}/footprint with a footprint JSON matching the pcb footprint schema."
-        )
+        prompt = f"""Generate a PCB footprint for **{part}**.
+
+## Component profile
+{profile_json}
+
+## All pins ({len(pins)})
+  NUM   NAME                 TYPE         DESCRIPTION
+{pin_table}
+
+## Existing footprint (for reference / improvement)
+{existing_footprint}
+
+## Task
+Produce a complete, accurate footprint JSON for the {pkg} package.
+The footprint must include:
+- `name`: "{part}"
+- `description`: one-line description
+- `pads[]`: one entry per pin — each with `number`, `name`, `x`, `y`,
+  `type` (smd|thru_hole), `shape` (circle|rect|oval), `size_x`, `size_y`,
+  `drill` (thru_hole only), `layers[]`
+- `courtyard`: {{x, y, w, h}} bounding box in mm
+- `fab`: {{x, y, w, h}} fab outline
+
+Use real datasheet dimensions for the {pkg} package.
+
+## Output
+PUT /api/library/{slug}/footprint
+Body: the footprint JSON object above.
+"""
+
     elif ticket_type == "example":
-        prompt = (
-            f"Build an example application circuit for {part}.\n"
-            f"Description: {desc}\n"
-            f"Pins ({len(pins)}): {pin_summary}\n"
-            f"Output: PUT /api/library/{slug}/example_circuit with the schematic JSON "
-            f"(components[], wires[], labels[])."
-        )
+        prompt = f"""Build an example application circuit for **{part}**.
+
+## Component profile
+{profile_json}
+
+## All pins ({len(pins)})
+  NUM   NAME                 TYPE         DESCRIPTION
+{pin_table}
+
+## Existing example circuit (for reference / improvement)
+{existing_example}
+
+## Raw datasheet excerpt{' (truncated at 12000 chars)' if raw_truncated else ''}
+{raw_snippet}
+
+## Task
+Produce a realistic, working example schematic that shows {part} in a
+typical application. Include decoupling capacitors, pull-ups/pull-downs,
+and any required passives. Refer to the datasheet typical application section.
+
+The schematic JSON must include:
+- `components[]`: each with `id`, `ref`, `slug`, `value`, `x`, `y`, `rotation`
+- `wires[]`: each with `x1`,`y1`,`x2`,`y2`
+- `labels[]` (optional): net labels with `x`,`y`,`text`
+- Use standard slugs: RESISTOR, CAPACITOR, VCC, GND, plus the component slug "{slug}"
+
+## Output
+PUT /api/library/{slug}/example_circuit
+Body: {{components, wires, labels}}
+"""
+
     elif ticket_type == "layout":
-        prompt = (
-            f"Build a PCB layout example for {part}.\n"
-            f"Package: {pkg}\n"
-            f"Description: {desc}\n"
-            f"Output: PUT /api/library/{slug}/layout_example with a board JSON "
-            f"(components[], traces[], nets[])."
-        )
+        prompt = f"""Build a PCB layout example for **{part}**.
+
+## Component profile
+{profile_json}
+
+## All pins ({len(pins)})
+  NUM   NAME                 TYPE         DESCRIPTION
+{pin_table}
+
+## Existing footprint
+{existing_footprint}
+
+## Existing example circuit
+{existing_example}
+
+## Existing layout example (for reference / improvement)
+{existing_layout}
+
+## Task
+Produce a compact, routable PCB layout that matches the example circuit above.
+Place components sensibly (decoupling caps close to power pins, etc.) and
+pre-route as many traces as possible.
+
+The layout JSON must include:
+- `components[]`: each with `id`, `ref`, `x`, `y`, `rotation`, `layer` (F|B), `pads[]`
+- `traces[]`: each with `net`, `layer` (F.Cu|B.Cu), `width`, `segments[]`
+  where each segment has `start{{x,y}}`, `end{{x,y}}`
+- `nets[]`: each with `name`, `pads[]` (list of "REF.padnum" strings)
+- `board`: {{width, height, units:"mm"}}
+- `vias[]` (optional): each with `x`,`y`,`net`,`drill`,`size`
+
+## Output
+PUT /api/library/{slug}/layout_example
+Body: the layout JSON object above.
+"""
+
     elif ticket_type == "datasheet":
-        raw_snippet = raw_text[:3000] if raw_text else "(no raw text provided)"
-        prompt = (
-            f"Rebuild the datasheet profile for {part}.\n"
-            f"Description: {desc}\n"
-            f"Raw datasheet excerpt:\n{raw_snippet}\n\n"
-            f"Output: PUT /api/library/{slug} with a complete profile.json "
-            f"following the datasheet schema (symbol_type, pins[], package_types, etc.)."
-        )
+        prompt = f"""Rebuild the component profile for **{part}** from its datasheet.
+
+## Current profile (what is already stored — improve / complete it)
+{profile_json}
+
+## Raw datasheet text{' (truncated at 12000 chars)' if raw_truncated else ''}
+{raw_snippet}
+
+## Task
+Produce a complete, accurate profile JSON. Fix any wrong or missing fields.
+Required fields:
+- `part_number`: exact part number string
+- `description`: one-line description
+- `symbol_type`: one of ic|npn|pnp|nmos|pmos|resistor|capacitor|inductor|diode|led|opamp|amplifier
+- `package_types[]`: list of package strings (e.g. ["DIP-8", "SOIC-8"])
+- `pins[]`: every pin — `number`, `name`, `type` (input|output|power|gnd|io|passive|nc), `description`
+- `supply_voltage_range`: e.g. "3.0V – 5.5V"
+- `max_current_ma`: number
+- `required_passives[]`: {{type, value, placement}} for caps/resistors always needed
+- `datasheet_url`: if known
+- Any other fields already present should be preserved or corrected.
+
+## Output
+PUT /api/library/{slug}
+Body: the complete profile JSON object.
+"""
+
     else:
-        prompt = f"Generate {ticket_type} for {slug}."
+        prompt = f"Generate {ticket_type} for {slug}.\n\nProfile:\n{profile_json}"
 
     return {"prompt": prompt}
 
