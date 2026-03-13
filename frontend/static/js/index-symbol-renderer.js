@@ -5,6 +5,16 @@ let _leProfileMap = {}; // slug -> profile, kept so leGetPadNet can look up IC p
 let _leBoard = null; // current board sent to the LE iframe — used for net auto-correct
 let _leLoadedSlug = null; // which slug is currently loaded in the LE iframe
 
+// Cache the board from the LE iframe's leBoardChanged notifications (fired after each drag).
+// This is more reliable than cross-frame property access because it's sent through the
+// browser's structured-clone message queue at the exact moment the board is mutated.
+window.addEventListener('message', e => {
+  if (!e.data || e.data.type !== 'leBoardChanged' || !e.data.board) return;
+  const frame = document.getElementById('le-frame');
+  if (!frame || e.source !== frame.contentWindow) return;
+  _leBoard = e.data.board; // update with the live-cloned board after each component move
+});
+
 // Component → PCB footprint name.  Accepts either a slug string (legacy) or a component object.
 // Resolution order: slug-based builtins → symType-based builtins → profile.footprint field
 function leFootprintFor(compOrSlug, profileMap) {
@@ -460,17 +470,18 @@ async function leSaveLayout() {
   const origText = btn ? btn.textContent : '💾 Save';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
   try {
-    // Read board directly from the same-origin iframe's editor instance.
-    // This avoids the async postMessage getBoard/boardData round-trip which can
-    // fail if the message handler isn't registered or e.source checks mismatch.
+    // Prefer _leBoard which is kept up-to-date by leBoardChanged messages fired from
+    // the iframe after every drag/edit — this is a structured clone captured at the
+    // moment of the mutation, so it always reflects the latest positions.
+    // Fall back to direct cross-frame property access if no leBoardChanged has fired yet.
     const pcbInst = frame.contentWindow?.pcbEditorInstance;
-    const board = pcbInst?.board ?? null;
-    console.log('[LE-SAVE] pcbEditorInstance:', pcbInst, '  board:', board);
+    const liveBoard = pcbInst?.board ?? null;
+    const board = _leBoard || liveBoard;
     if (!board) throw new Error('PCB editor board not available — try switching away and back to the Layout Example tab');
-    // Log positions BEFORE save so we can verify what's being sent
-    const posBefore = (board.components || []).map(c => `${c.ref}:(${c.x?.toFixed(2)},${c.y?.toFixed(2)})`).join(' | ');
-    console.log('[LE-SAVE] positions being saved:', posBefore);
     const bodyStr = JSON.stringify(board);
+    // Show positions being saved in the button so user can verify without DevTools
+    const posSummary = (board.components || []).map(c => `${c.ref}:(${(+c.x).toFixed(1)},${(+c.y).toFixed(1)})`).join(' ');
+    if (btn) { btn.textContent = `Saving ${posSummary}`; }
     const res = await fetch(`/api/library/${encodeURIComponent(slug)}/layout_example`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -480,17 +491,12 @@ async function leSaveLayout() {
       const errText = await res.text().catch(() => res.status);
       throw new Error(`Server error ${res.status}: ${errText}`);
     }
-    // Verify what the server actually stored
-    const verify = await fetch(`/api/library/${encodeURIComponent(slug)}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
-    const posAfter = (verify?.layout_example?.components || []).map(c => `${c.ref}:(${c.x?.toFixed(2)},${c.y?.toFixed(2)})`).join(' | ');
-    console.log('[LE-SAVE] positions confirmed on server:', posAfter || '(none)');
-    if (posBefore !== posAfter) console.warn('[LE-SAVE] ⚠ MISMATCH — saved positions differ from server!', {posBefore, posAfter});
     // Keep the in-memory cache in sync so the early-return in renderLayoutExample
     // serves the freshly-saved board rather than the stale pre-edit snapshot.
     _leBoard = board;
     _leLoadedSlug = slug; // ensure guard stays valid (slug is stable)
     await _syncActiveSnapshot(); // keep active version snapshot in sync
-    if (btn) { btn.textContent = '✓ Saved'; }
+    if (btn) { btn.textContent = `✓ ${posSummary}`; }
     const notes = document.getElementById('le-notes');
     if (notes && !notes.textContent.includes('✓')) notes.textContent += ' · ✓ saved';
     setTimeout(() => {

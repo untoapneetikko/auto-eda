@@ -62,6 +62,15 @@ window.addEventListener('load',()=>{
   _loadDRStorage(); // restore persisted design rules before anything renders
   editor=new PCBEditor(cv);
   resize();
+  // In embedded (LE) mode, notify the parent page whenever the board changes
+  // (after each drag, rotation, etc.) so it can cache the live positions for saving.
+  if(isEmbedded && !isAppFrame && window.parent!==window){
+    const _origSnap=editor._snapshot.bind(editor);
+    editor._snapshot=function(){
+      _origSnap();
+      if(this.board)window.parent.postMessage({type:'leBoardChanged',board:this.board},'*');
+    };
+  }
   // Auto-save DR whenever any field in the Design Rules tab changes (debounced)
   let _drSaveTimer=null;
   function _debouncedSaveDR(){clearTimeout(_drSaveTimer);_drSaveTimer=setTimeout(saveDRTab,400);}
