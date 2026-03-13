@@ -2230,31 +2230,16 @@ async function _loadHistoryList() {
   }).join('');
 }
 
-// Save button — appends a new snapshot under the same label (never overwrites history), or auto-saves as "checkpoint" if none active
+// Save button — overwrites the active version's snapshot in place, or creates "checkpoint" if none exists
 async function historySaveActive() {
   if (!selectedSlug) return;
   const av = await fetch(`/api/library/${selectedSlug}/active_version`).then(r => r.json()).catch(() => null);
   if (av) {
     const res = await fetch(`/api/library/${selectedSlug}/history/${av.id}`, { method: 'PUT' });
-    if (res.ok) {
-      showGenToast(`💾 Saved to ${av.label || 'v' + av.vNum}`);
-    } else if (res.status === 404) {
-      // Stale active version ID — snapshot was deleted or pruned; recreate under same label
-      const label = av.label || 'checkpoint';
-      const r2 = await fetch(`/api/library/${selectedSlug}/history/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label })
-      });
-      if (!r2.ok) { alert('Failed to save'); return; }
-      const d2 = await r2.json();
-      await fetch(`/api/library/${selectedSlug}/history/${d2.id}/activate`, { method: 'POST' });
-      showGenToast(`💾 Saved as "${label}"`);
-    } else {
-      alert('Failed to save'); return;
-    }
+    if (!res.ok) { alert('Failed to save'); return; }
+    showGenToast(`💾 Saved to "${av.label || 'v' + av.vNum}"`);
   } else {
-    // No active version — auto-save as "checkpoint" without requiring user input
+    // No active version — auto-create "checkpoint"
     const r = await fetch(`/api/library/${selectedSlug}/history/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2303,11 +2288,10 @@ async function historyActivate(id, vNum) {
 }
 
 async function historyDelete(id, label) {
-  const name = label ? `"${label}"` : 'this version';
-  if (!confirm(`Delete ${name}?\n\nThis cannot be undone.`)) return;
   const res = await fetch(`/api/library/${selectedSlug}/history/${id}`, { method: 'DELETE' });
   if (!res.ok) { alert('Failed to delete version'); return; }
   await _loadHistoryList();
+  loadActiveVersionBadge(selectedSlug);
 }
 
 const GT_TAB_LABEL = {

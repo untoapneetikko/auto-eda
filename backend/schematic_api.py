@@ -1354,31 +1354,38 @@ def api_active_version(slug: str):
 
 @router.put("/library/{slug}/history/{hid}")
 def api_history_update(slug: str, hid: str):
-    """Save current profile as a NEW snapshot (preserves hid unchanged).
-    Updates active_version to point at the new snapshot."""
+    """Overwrite an existing snapshot in place with the current profile.json.
+    active_version continues pointing at the same hid."""
     snap_path = _history_dir(slug) / (hid + ".json")
     if not snap_path.exists():
         raise HTTPException(404, "Not found")
+    pp = _profile_path(slug)
+    if not pp.exists():
+        raise HTTPException(404, "Profile not found")
     old_snap = json.loads(snap_path.read_text(encoding="utf-8"))
     old_label = old_snap.get("label", "")
-    # Create a fresh snapshot instead of overwriting — history is append-only
-    new_ts = _snapshot_profile(slug, old_label)
-    if not new_ts:
-        raise HTTPException(500, "Failed to create snapshot")
-    # Advance active_version to the new snapshot
-    h = _history_dir(slug)
-    files = sorted(h.glob("*.json"))
-    v_num = next((i + 1 for i, f in enumerate(files) if f.stem == new_ts), 0)
-    _active_version_path(slug).write_text(
-        json.dumps({"id": new_ts, "label": old_label, "vNum": v_num}, indent=2),
-        encoding="utf-8")
-    return {"ok": True, "new_id": new_ts}
+    now = datetime.now(timezone.utc)
+    snap_path.write_text(json.dumps({
+        "saved_at": now.isoformat(),
+        "label": old_label,
+        "profile": json.loads(pp.read_text(encoding="utf-8")),
+    }, indent=2), encoding="utf-8")
+    return {"ok": True, "id": hid}
 
 @router.delete("/library/{slug}/history/{hid}")
 def api_history_delete(slug: str, hid: str):
     snap_path = _history_dir(slug) / (hid + ".json")
     if snap_path.exists():
         snap_path.unlink()
+    # If this was the active version, clear the pointer so Save creates a fresh one
+    avp = _active_version_path(slug)
+    if avp.exists():
+        try:
+            av = json.loads(avp.read_text(encoding="utf-8"))
+            if av.get("id") == hid:
+                avp.unlink()
+        except Exception:
+            pass
     return {"ok": True}
 
 # ── PUT /api/library/:slug — full profile write ───────────────────────────────
@@ -1388,17 +1395,8 @@ async def api_library_put(slug: str, request: Request):
     pp = _profile_path(slug)
     if not pp.exists():
         raise HTTPException(404, "Not found")
-    new_ts = _snapshot_profile(slug, body.get("_label", "profile-rebuild"))
-    # Point active_version at the auto-saved snapshot so Save still works after Generate
-    if new_ts:
-        h = _history_dir(slug)
-        files = sorted(h.glob("*.json"))
-        v_num = next((i + 1 for i, f in enumerate(files) if f.stem == new_ts), 0)
-        _active_version_path(slug).write_text(
-            json.dumps({"id": new_ts, "label": body.get("_label", "profile-rebuild"), "vNum": v_num}, indent=2),
-            encoding="utf-8")
-    else:
-        _clear_active_version(slug)
+    # Never auto-create ghost versions on Generate — active_version stays as-is so
+    # the user can click Save afterward to update their current named version.
     current = json.loads(pp.read_text(encoding="utf-8"))
     new_profile = {**body, "human_corrections": current.get("human_corrections", [])}
     # Preserve layout_example — user-placed component positions must survive a Generate/rebuild
