@@ -1,0 +1,1582 @@
+// ═══════════════════════════════════════════════════════════════
+// PCBEditor
+// ═══════════════════════════════════════════════════════════════
+class PCBEditor {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.board = null;
+    this.scale = 8; this.offsetX = 60; this.offsetY = 60;
+    this.panX = 0; this.panY = 0;
+    this.gridSize = 0.5;
+    this.tool = 'select';
+    this.selectedComp = null;
+    this.selectedTrace = null;
+    this.selectedVia = null;
+    this.selectedPad = null; // {comp, pad}
+    this.selectedComps = []; // multi-select (Ctrl+click)
+    this._hoverTrace = null;
+    this._hoverComp = null;
+    // Click-cycle: remember last click pos + last picked object for cycling
+    this._lastClickMx = null; this._lastClickMy = null; this._lastClickObj = null;
+    this.routePoints = []; this.routeNet = null; this.routeLayer = 'F.Cu';
+    this.zonePoints = []; this.zoneNet = null;
+    this.measureStart = null;
+    this.areaStart = null; this.areaNet = 'GND'; this.areaLayer = 'F.Cu';
+    this.selectedArea = null;
+    this._isAreaDrag = false;
+    this.drawPoints = []; this.drawLayer = 'Edge.Cuts'; this.drawWidth = 0.05;
+    this.selectedDrawing = null;
+    this._routeError = null;
+    this._mx = 0; this._my = 0; this._mxPx = 0; this._myPx = 0;
+    this._isDragVia = false;
+    // Undo/redo history
+    this._history = []; this._historyIdx = -1;
+    this.workLayer = 'F.Cu'; // active work layer — rendered on top
+    this.layers = {
+      'F.Cu':      { color:'#cc6633', visible:true, active:true,  displayName:'Top Copper' },
+      'B.Cu':      { color:'#4466ee', visible:true, active:false, displayName:'Bottom Copper' },
+      'F.SilkS':   { color:'#cccccc', visible:true, active:false, displayName:'Top Silk' },
+      'B.SilkS':   { color:'#777777', visible:true, active:false, displayName:'Bottom Silk' },
+      'Edge.Cuts': { color:'#ffee00', visible:true, active:false, displayName:'Board Outline' },
+      'Ratsnest':  { color:'#337733', visible:true, active:false, displayName:'Ratsnest' },
+    };
+    this._isPan=false; this._panS=null;
+    this._isBoxSel=false;this._boxSelStart=null;this._boxSelEnd=null;
+    this._isDrag=false; this._dragC=null; this._dragOff={x:0,y:0};
+    this._isDragTrace=false; this._dragTrace=null; this._dragTraceSegIdx=-1;
+    this._dragTraceOrigSeg=null; this._dragTraceOrigAll=null; this._dragTraceOff={x:0,y:0};
+    this._traceDragViolations=[];
+    this._init();
+  }
+
+  mmX(mm){return mm*this.scale+this.offsetX+this.panX;}
+  mmY(mm){return mm*this.scale+this.offsetY+this.panY;}
+  cX(px){return(px-this.offsetX-this.panX)/this.scale;}
+  cY(py){return(py-this.offsetY-this.panY)/this.scale;}
+  snap(v){return Math.round(v/this.gridSize)*this.gridSize;}
+
+  load(json){
+    try{
+      const d=typeof json==='string'?JSON.parse(json):json;
+      if(!d.board||!d.components)throw new Error('Missing board or components');
+      this.board=d; this.selectedComp=null; this.routePoints=[];
+      this.zonePoints=[]; this.fitBoard();
+      return{ok:true};
+    }catch(e){return{ok:false,error:e.message};}
+  }
+
+  _snapshot(){
+    if(!this.board)return;
+    const snap=JSON.stringify(this.board);
+    // Truncate forward history on new action
+    this._history=this._history.slice(0,this._historyIdx+1);
+    this._history.push(snap);
+    if(this._history.length>80)this._history.shift();
+    this._historyIdx=this._history.length-1;
+    // Debounced auto-persist: save to localStorage (standalone) and auto-save to
+    // server (embedded/saved boards) so edits survive a page refresh without
+    // requiring an explicit Save click.
+    clearTimeout(this._lsPersistTimer);
+    this._lsPersistTimer=setTimeout(()=>{
+      try{localStorage.setItem('pcb_last_board',snap);}catch(_){}
+      // Auto-save to server if this board was already saved (has an id).
+      // Uses the global saveBoard() defined in the page scripts.
+      if(this.board?.id && typeof saveBoard==='function') saveBoard();
+    },3000);
+  }
+
+  undo(){
+    if(this._historyIdx<=0)return;
+    this._historyIdx--;
+    this.board=JSON.parse(this._history[this._historyIdx]);
+    this.selectedComp=null;this.selectedTrace=null;this.selectedVia=null;this.selectedPad=null;this.selectedComps=[];
+    this.render();if(typeof rebuildCompList==='function')rebuildCompList();if(typeof updateInfoPanel==='function')updateInfoPanel();
+  }
+
+  redo(){
+    if(this._historyIdx>=this._history.length-1)return;
+    this._historyIdx++;
+    this.board=JSON.parse(this._history[this._historyIdx]);
+    this.selectedComp=null;this.selectedTrace=null;this.selectedVia=null;this.selectedPad=null;this.selectedComps=[];
+    this.render();if(typeof rebuildCompList==='function')rebuildCompList();if(typeof updateInfoPanel==='function')updateInfoPanel();
+  }
+
+  render(){
+    const ctx=this.ctx,W=this.canvas.width,H=this.canvas.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#080808'; ctx.fillRect(0,0,W,H);
+    if(!this.board){
+      ctx.fillStyle='rgba(255,255,255,0.1)'; ctx.font='14px system-ui';
+      ctx.textAlign='center';
+      ctx.fillText('Import a schematic project or load PCB JSON to begin',W/2,H/2-8);
+      ctx.font='12px system-ui'; ctx.fillStyle='rgba(255,255,255,0.05)';
+      ctx.fillText('Click "Import Schematic" or "💡 Example" in the toolbar',W/2,H/2+14);
+      ctx.textAlign='left'; return;
+    }
+    if(this.layers['Edge.Cuts'].visible && !this.hideBoardOutline) this._drawBoard();
+    this._drawGrid();
+    // Work layer: active layer is rendered on top at full alpha; others dimmed
+    const wl=this.workLayer||'F.Cu';
+    const wIsCu=wl==='F.Cu'||wl==='B.Cu';
+    const wSide=(wl==='B.Cu')?'B':'F'; // copper side for work layer (default F)
+    const otherCu=wSide==='F'?'B.Cu':'F.Cu';
+    const otherSide=wSide==='F'?'B':'F';
+    const otherSilk=wSide==='F'?'B.SilkS':'F.SilkS';
+    const workSilk=wSide==='F'?'F.SilkS':'B.SilkS';
+    if(wIsCu){
+      // Draw non-work copper + pads + silk at reduced alpha
+      this.ctx.globalAlpha=0.45;
+      if(this.layers[otherCu].visible) this._drawTraces(otherCu);
+      if(this.layers[otherSilk].visible) this._drawSilk(otherSide);
+      this._drawPads(otherSide);
+      this.ctx.globalAlpha=1.0;
+      // Zones & areas (board-wide)
+      this._drawZones();
+      this._drawAreas();
+      // Vias always fully visible
+      this._drawVias();
+      // Work layer copper + pads + silk on top at full alpha
+      if(this.layers[wl].visible) this._drawTraces(wl);
+      this._drawPads(wSide);
+      if(this.layers[workSilk].visible) this._drawSilk(wSide);
+    } else {
+      // Non-copper work layer: draw everything normally, work layer content is on top by draw order
+      if(this.layers['B.Cu'].visible) this._drawTraces('B.Cu');
+      if(this.layers['F.Cu'].visible) this._drawTraces('F.Cu');
+      this._drawZones(); this._drawAreas(); this._drawVias();
+      this._drawPads();
+      if(this.layers['B.SilkS'].visible) this._drawSilk('B');
+      if(this.layers['F.SilkS'].visible) this._drawSilk('F');
+    }
+    if(this.layers['Ratsnest'].visible) this._drawRatsnest();
+    this._drawDrawings();
+    if(this.tool==='route'&&this.routePoints.length>0) this._drawActiveRoute();
+    if(this.tool==='zone'&&this.zonePoints.length>0) this._drawActiveZone();
+    if(this.tool==='measure'&&this.measureStart) this._drawMeasure();
+    if(this.tool==='area'&&this.areaStart) this._drawActiveArea();
+    if(this.tool==='draw'&&this.drawPoints.length>0) this._drawActiveDrawing();
+    if(this._hoverComp&&!this.selectedComps.includes(this._hoverComp)) this._drawHoverComp(this._hoverComp);
+    for(const sc of this.selectedComps) this._drawSel(sc);
+    if(this.selectedComp&&!this.selectedComps.includes(this.selectedComp)) this._drawSel(this.selectedComp);
+    if(this.selectedPad) this._drawSelPad(this.selectedPad);
+    if(this._routeError){
+      ctx.fillStyle='rgba(239,68,68,0.92)';ctx.font='bold 12px monospace';
+      ctx.textAlign='center';
+      ctx.fillText('⊘ '+this._routeError,W/2,H-20);
+      ctx.textAlign='left';
+    }
+    // Net conflict markers (NET_CONFLICT, NET_MISMATCH, TRACE_CROSSING) from last DRC run
+    const _CONFLICT_TYPES=new Set(['NET_CONFLICT','NET_MISMATCH','TRACE_CROSSING']);
+    if(_drcResults?.length){
+      ctx.setLineDash([]);
+      for(const e of _drcResults){
+        if(!_CONFLICT_TYPES.has(e.type)||e.x==null)continue;
+        const cx=this.mmX(e.x),cy=this.mmY(e.y),s=6;
+        // Filled circle background
+        ctx.fillStyle='rgba(239,68,68,0.18)';
+        ctx.beginPath();ctx.arc(cx,cy,s+3,0,Math.PI*2);ctx.fill();
+        // Ring
+        ctx.strokeStyle='rgba(239,68,68,0.5)';ctx.lineWidth=1;
+        ctx.beginPath();ctx.arc(cx,cy,s+3,0,Math.PI*2);ctx.stroke();
+        // X cross
+        ctx.strokeStyle='rgba(239,68,68,0.95)';ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(cx-s,cy-s);ctx.lineTo(cx+s,cy+s);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(cx+s,cy-s);ctx.lineTo(cx-s,cy+s);ctx.stroke();
+      }
+    }
+    // Draw real-time clearance violations during trace drag
+    if(this._isDragTrace&&this._traceDragViolations.length>0){
+      ctx.save(); ctx.setLineDash([]);
+      for(const v of this._traceDragViolations){
+        if(v.isPad){
+          const cx=this.mmX(v.px),cy=this.mmY(v.py),r=Math.max(6,v.padR*this.scale+3);
+          ctx.strokeStyle='rgba(239,68,68,0.8)'; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+          ctx.fillStyle='rgba(239,68,68,0.15)';
+          ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+        } else {
+          ctx.strokeStyle='rgba(239,68,68,0.8)'; ctx.lineWidth=Math.max(2,(v.w||0.25)*this.scale)+4;
+          ctx.beginPath();
+          ctx.moveTo(this.mmX(v.ax),this.mmY(v.ay));
+          ctx.lineTo(this.mmX(v.bx),this.mmY(v.by));
+          ctx.stroke();
+        }
+      }
+      // Violation label
+      ctx.fillStyle='rgba(239,68,68,0.92)'; ctx.font='bold 11px monospace';
+      ctx.textAlign='center';
+      ctx.fillText(`⚠ Clearance violation (${this._traceDragViolations.length})`,W/2,H-20);
+      ctx.textAlign='left';
+      ctx.restore();
+    }
+    if(this._isBoxSel&&this._boxSelStart&&this._boxSelEnd){
+      const bx1=Math.min(this._boxSelStart.mx,this._boxSelEnd.mx);
+      const by1=Math.min(this._boxSelStart.my,this._boxSelEnd.my);
+      const bx2=Math.max(this._boxSelStart.mx,this._boxSelEnd.mx);
+      const by2=Math.max(this._boxSelStart.my,this._boxSelEnd.my);
+      ctx.strokeStyle='rgba(99,102,241,0.9)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+      ctx.strokeRect(bx1,by1,bx2-bx1,by2-by1);
+      ctx.fillStyle='rgba(99,102,241,0.08)';ctx.fillRect(bx1,by1,bx2-bx1,by2-by1);
+      ctx.setLineDash([]);
+    }
+  }
+
+  _drawBoard(){
+    const ctx=this.ctx,b=this.board.board;
+    const x=this.mmX(0),y=this.mmY(0),w=b.width*this.scale,h=b.height*this.scale;
+    ctx.fillStyle='#0d1f0d'; ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle=this.layers['Edge.Cuts'].color;
+    ctx.lineWidth=1.5; ctx.setLineDash([]); ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle='rgba(255,255,0,0.4)'; ctx.font='10px monospace'; ctx.textAlign='left';
+    ctx.fillText(`${b.width}×${b.height}mm`,x+3,y+12);
+  }
+
+  _drawDrawings(){
+    const ctx=this.ctx;
+    for(const d of(this.board?.drawings||[])){
+      if(!d.points||d.points.length<2)continue;
+      const lyr=d.layer||'Edge.Cuts';
+      if(!this.layers[lyr]?.visible)continue;
+      const col=this.layers[lyr]?.color||'#ffee00';
+      const isSel=d===this.selectedDrawing;
+      ctx.strokeStyle=isSel?'#ffffff':col;
+      ctx.lineWidth=Math.max(1,((d.width||0.05)*this.scale));
+      ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(this.mmX(d.points[0].x),this.mmY(d.points[0].y));
+      for(let i=1;i<d.points.length;i++)
+        ctx.lineTo(this.mmX(d.points[i].x),this.mmY(d.points[i].y));
+      if(d.closed)ctx.closePath();
+      ctx.stroke();
+      // Draw endpoint dots
+      ctx.fillStyle=isSel?'rgba(255,255,255,0.6)':col+'80';
+      for(const p of d.points){
+        ctx.beginPath();ctx.arc(this.mmX(p.x),this.mmY(p.y),3,0,Math.PI*2);ctx.fill();
+      }
+    }
+    ctx.lineCap='butt'; ctx.lineJoin='miter';
+  }
+
+  _drawActiveDrawing(){
+    const ctx=this.ctx,pts=this.drawPoints;
+    if(!pts.length)return;
+    const lyr=this.drawLayer||'Edge.Cuts';
+    const col=this.layers[lyr]?.color||'#ffee00';
+    ctx.strokeStyle=col;
+    ctx.lineWidth=Math.max(1,(this.drawWidth||0.05)*this.scale);
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([3,2]);
+    ctx.beginPath();
+    ctx.moveTo(this.mmX(pts[0].x),this.mmY(pts[0].y));
+    for(let i=1;i<pts.length;i++) ctx.lineTo(this.mmX(pts[i].x),this.mmY(pts[i].y));
+    // Live cursor segment
+    ctx.lineTo(this.mmX(this._mx),this.mmY(this._my));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Dots for placed points
+    ctx.fillStyle=col;
+    for(const p of pts){
+      ctx.beginPath();ctx.arc(this.mmX(p.x),this.mmY(p.y),3,0,Math.PI*2);ctx.fill();
+    }
+    // Snap indicator at cursor
+    ctx.strokeStyle=col+'bb'; ctx.lineWidth=1;
+    ctx.strokeRect(this.mmX(this._mx)-4,this.mmY(this._my)-4,8,8);
+    ctx.lineCap='butt'; ctx.lineJoin='miter';
+  }
+
+  _drawGrid(){
+    const ctx=this.ctx,b=this.board.board,s=this.gridSize;
+    const ds=this.scale>=10?1:0.5;
+    ctx.fillStyle='rgba(255,255,255,0.07)';
+    for(let gx=0;gx<=b.width+s;gx+=s)
+      for(let gy=0;gy<=b.height+s;gy+=s)
+        ctx.fillRect(this.mmX(gx)-ds,this.mmY(gy)-ds,ds*2,ds*2);
+  }
+
+  _drawTraces(layer){
+    const ctx=this.ctx;
+    ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
+    for(const tr of(this.board.traces||[])){
+      if(tr.layer!==layer)continue;
+      const sel=this.selectedTrace===tr;
+      const hov=this._hoverTrace===tr&&!sel;
+      const isDragging=this._isDragTrace&&this._dragTrace===tr;
+      const dragSegIdx=isDragging?this._dragTraceSegIdx:-1;
+      const w=Math.max(1,(tr.width||0.25)*this.scale);
+      const segs=tr.segments||[];
+      // Draw path helper (optionally skip one segment)
+      const drawPath=(skipIdx=-1)=>{
+        ctx.beginPath(); let first=true;
+        for(let si=0;si<segs.length;si++){
+          if(si===skipIdx){first=true;continue;}
+          const seg=segs[si];
+          if(first){ctx.moveTo(this.mmX(seg.start.x),this.mmY(seg.start.y));first=false;}
+          ctx.lineTo(this.mmX(seg.end.x),this.mmY(seg.end.y));
+          ctx.moveTo(this.mmX(seg.end.x),this.mmY(seg.end.y));
+        }
+        ctx.stroke();
+      };
+      const drawSeg=(si)=>{
+        const seg=segs[si];
+        ctx.beginPath();
+        ctx.moveTo(this.mmX(seg.start.x),this.mmY(seg.start.y));
+        ctx.lineTo(this.mmX(seg.end.x),this.mmY(seg.end.y));
+        ctx.stroke();
+      };
+      if(sel||isDragging){
+        ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=w+10; drawPath();
+        ctx.strokeStyle='#ffffff'; ctx.lineWidth=w; drawPath();
+        // Extra highlight on the dragged segment
+        if(isDragging&&dragSegIdx>=0&&dragSegIdx<segs.length){
+          const hasViolations=this._traceDragViolations.length>0;
+          ctx.strokeStyle=hasViolations?'rgba(239,68,68,0.5)':'rgba(108,255,108,0.4)';
+          ctx.lineWidth=w+14; drawSeg(dragSegIdx);
+          ctx.strokeStyle=hasViolations?'#ef4444':'#6fff6f';
+          ctx.lineWidth=w; drawSeg(dragSegIdx);
+        }
+      } else if(hov){
+        ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=w+6; drawPath();
+        ctx.strokeStyle=this.layers[layer].color+'cc'; ctx.lineWidth=w; drawPath();
+      } else {
+        ctx.strokeStyle=this.layers[layer].color; ctx.lineWidth=w; drawPath();
+      }
+      // Draw net label at midpoint when zoomed in or trace is selected/hovered
+      if(tr.net && (sel || hov || this.scale >= 12)){
+        const segs=tr.segments||[];
+        if(segs.length>0){
+          // Find midpoint segment
+          const mid=segs[Math.floor(segs.length/2)];
+          const mx=this.mmX((mid.start.x+mid.end.x)/2);
+          const my=this.mmY((mid.start.y+mid.end.y)/2);
+          const fs=Math.max(8,Math.min(11,w*0.7+7));
+          ctx.save();
+          ctx.font=`bold ${fs}px monospace`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillStyle='rgba(0,0,0,0.65)';
+          const tw=ctx.measureText(tr.net).width;
+          ctx.fillRect(mx-tw/2-2,my-fs/2-1,tw+4,fs+2);
+          ctx.fillStyle= sel?'#ffffff': this.layers[layer].color;
+          ctx.fillText(tr.net,mx,my);
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  _drawZones(){
+    const ctx=this.ctx;
+    const cl=DR.clearance||0.2;
+    for(const z of(this.board.zones||[])){
+      if(!z.points||z.points.length<3)continue;
+      const lyr=z.layer||'F.Cu';
+      if(!this.layers[lyr]?.visible)continue;
+      const col=this.layers[lyr].color;
+      // Polygon bounding box for early rejection tests
+      let zx1=Infinity,zy1=Infinity,zx2=-Infinity,zy2=-Infinity;
+      for(const pt of z.points){
+        zx1=Math.min(zx1,pt.x);zy1=Math.min(zy1,pt.y);
+        zx2=Math.max(zx2,pt.x);zy2=Math.max(zy2,pt.y);
+      }
+      ctx.save();
+      // Build clip path: zone polygon + clearance cutouts (evenodd)
+      ctx.beginPath();
+      ctx.moveTo(this.mmX(z.points[0].x),this.mmY(z.points[0].y));
+      for(let i=1;i<z.points.length;i++)
+        ctx.lineTo(this.mmX(z.points[i].x),this.mmY(z.points[i].y));
+      ctx.closePath();
+      // Pad clearance cutouts
+      for(const c of(this.board?.components||[])){
+        for(const p of(c.pads||[])){
+          if(!p.net||p.net===z.net)continue;
+          const{px,py}=this._padWorld(c,p);
+          const hp=Math.max(p.size_x||1.6,p.size_y||1.6)/2;
+          if(px<zx1-hp-cl||px>zx2+hp+cl||py<zy1-hp-cl||py>zy2+hp+cl)continue;
+          const r=(hp+cl)*this.scale;
+          const psx=this.mmX(px),psy=this.mmY(py);
+          ctx.moveTo(psx+r,psy);
+          ctx.arc(psx,psy,r,0,-Math.PI*2,true);
+        }
+      }
+      // Via clearance cutouts
+      for(const v of(this.board?.vias||[])){
+        if(v.net===z.net)continue;
+        if(v.x<zx1-cl||v.x>zx2+cl||v.y<zy1-cl||v.y>zy2+cl)continue;
+        const r=((v.size||DR.viaSize||1.0)/2+cl)*this.scale;
+        const vsx=this.mmX(v.x),vsy=this.mmY(v.y);
+        ctx.moveTo(vsx+r,vsy);
+        ctx.arc(vsx,vsy,r,0,-Math.PI*2,true);
+      }
+      // Trace clearance cutouts (capsule per segment)
+      for(const tr of(this.board?.traces||[])){
+        if(tr.net===z.net)continue;
+        const pts=tr.path||[];
+        const hw=(tr.width_mm||DR.traceWidth||0.25)/2+cl;
+        for(let i=0;i<pts.length-1;i++){
+          const ax=pts[i].x,ay=pts[i].y,bx=pts[i+1].x,by=pts[i+1].y;
+          if(Math.max(ax,bx)+hw<zx1||Math.min(ax,bx)-hw>zx2||Math.max(ay,by)+hw<zy1||Math.min(ay,by)-hw>zy2)continue;
+          const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
+          if(len<0.001)continue;
+          const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
+          const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
+          const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
+          ctx.moveTo(asx-nx,asy-ny);
+          ctx.lineTo(bsx-nx,bsy-ny);
+          ctx.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
+          ctx.lineTo(asx+nx,asy+ny);
+          ctx.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
+          ctx.closePath();
+        }
+      }
+      ctx.clip('evenodd');
+      ctx.fillStyle=col+'33';
+      ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+      ctx.restore();
+      // Border (drawn outside clip so the outline is always complete)
+      ctx.strokeStyle=col+'99';
+      ctx.lineWidth=1; ctx.setLineDash([4,2]);
+      ctx.beginPath();
+      ctx.moveTo(this.mmX(z.points[0].x),this.mmY(z.points[0].y));
+      for(let i=1;i<z.points.length;i++)
+        ctx.lineTo(this.mmX(z.points[i].x),this.mmY(z.points[i].y));
+      ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+
+  _drawVias(){
+    const ctx=this.ctx;
+    for(const v of(this.board.vias||[])){
+      const cx=this.mmX(v.x),cy=this.mmY(v.y);
+      const or=Math.max(2,(v.size||1.0)/2*this.scale);
+      const ir=Math.max(0.5,(v.drill||0.6)/2*this.scale);
+      const sel=this.selectedVia===v;
+      if(sel){ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,or+3,0,Math.PI*2);ctx.stroke();}
+      ctx.fillStyle=sel?'#aabbcc':'#778899'; ctx.beginPath();
+      ctx.arc(cx,cy,or,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#0a0a0a'; ctx.beginPath();
+      ctx.arc(cx,cy,ir,0,Math.PI*2); ctx.fill();
+      if(sel&&v.net&&this.scale>=10){
+        ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font=`${Math.min(11,this.scale*0.6)}px monospace`;
+        ctx.textAlign='center';ctx.fillText(v.net,cx,cy-or-3);ctx.textAlign='left';
+      }
+    }
+  }
+
+  _drawPads(sideFilter){
+    const ctx=this.ctx;
+    for(const comp of(this.board.components||[])){
+      const side=comp.layer==='B'?'B':'F';
+      if(sideFilter&&side!==sideFilter)continue;
+      const rot=(comp.rotation||0)*Math.PI/180;
+      for(const pad of(comp.pads||[])){
+        const{px,py}=this._padWorld(comp,pad);
+        const sx=this.mmX(px),sy=this.mmY(py);
+        const pw=Math.max(3,(pad.size_x||1.6)*this.scale);
+        const ph=Math.max(3,(pad.size_y||1.6)*this.scale);
+        const back=comp.layer==='B';
+        const col=pad.net?this._netCol(pad.net):(back?this.layers['B.Cu'].color:this.layers['F.Cu'].color);
+        ctx.save(); ctx.translate(sx,sy); ctx.rotate(rot);
+        ctx.fillStyle=col; ctx.strokeStyle='rgba(0,0,0,0.5)'; ctx.lineWidth=0.5;
+        if(pad.shape==='rect'){ctx.fillRect(-pw/2,-ph/2,pw,ph);ctx.strokeRect(-pw/2,-ph/2,pw,ph);}
+        else{ctx.beginPath();ctx.ellipse(0,0,pw/2,ph/2,0,0,Math.PI*2);ctx.fill();ctx.stroke();}
+        if(pad.type==='thru_hole'&&pad.drill){
+          const dr=Math.max(1,pad.drill/2*this.scale);
+          ctx.fillStyle='#0a0a0a'; ctx.beginPath();
+          ctx.arc(0,0,dr,0,Math.PI*2); ctx.fill();
+        }
+        ctx.restore();
+        if(this.scale>=14){
+          ctx.fillStyle='rgba(255,255,255,0.65)';
+          ctx.font=`${Math.max(6,this.scale*0.75)}px monospace`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText(pad.number,sx,sy); ctx.textBaseline='alphabetic';
+        }
+      }
+    }
+    ctx.textAlign='left';
+  }
+
+  _padWorld(comp,pad){
+    const r=(comp.rotation||0)*Math.PI/180;
+    return{px:pad.x*Math.cos(r)-pad.y*Math.sin(r)+comp.x,
+           py:pad.x*Math.sin(r)+pad.y*Math.cos(r)+comp.y};
+  }
+
+  _compBBox(comp){
+    if(!comp.pads||!comp.pads.length)return null;
+    let mn=[Infinity,Infinity],mx=[-Infinity,-Infinity];
+    for(const p of comp.pads){
+      const r=(comp.rotation||0)*Math.PI/180;
+      const px=p.x*Math.cos(r)-p.y*Math.sin(r),py=p.x*Math.sin(r)+p.y*Math.cos(r);
+      const hw=(p.size_x||1.6)/2,hh=(p.size_y||1.6)/2;
+      mn[0]=Math.min(mn[0],px-hw);mn[1]=Math.min(mn[1],py-hh);
+      mx[0]=Math.max(mx[0],px+hw);mx[1]=Math.max(mx[1],py+hh);
+    }
+    return isFinite(mn[0])?{x1:mn[0],y1:mn[1],x2:mx[0],y2:mx[1]}:null;
+  }
+
+  _drawSilk(side){
+    const ctx=this.ctx,lyr=side==='F'?'F.SilkS':'B.SilkS';
+    ctx.strokeStyle=this.layers[lyr].color;
+    ctx.fillStyle=this.layers[lyr].color;
+    ctx.lineWidth=Math.max(0.5,0.12*this.scale); ctx.setLineDash([]);
+    for(const c of(this.board.components||[])){
+      if((c.layer||'F')!==side)continue;
+      const bb=this._compBBox(c); if(!bb)continue;
+      const m=0.4;
+      const bx=this.mmX(c.x+bb.x1-m),by=this.mmY(c.y+bb.y1-m);
+      const bw=(bb.x2-bb.x1+m*2)*this.scale,bh=(bb.y2-bb.y1+m*2)*this.scale;
+      ctx.strokeRect(bx,by,bw,bh);
+      const fs=Math.max(7,Math.min(11,0.9*this.scale));
+      ctx.font=`bold ${fs}px monospace`; ctx.textAlign='center';
+      ctx.fillText(c.ref||c.id,bx+bw/2,by-3);
+      if(this.scale>=10){
+        ctx.globalAlpha=0.5; ctx.font=`${fs-1}px monospace`;
+        ctx.fillText(c.value||'',bx+bw/2,by+bh+fs+1); ctx.globalAlpha=1;
+      }
+      ctx.textAlign='left';
+    }
+  }
+
+  // Union-Find helpers
+  _ufFind(par,i){while(par[i]!==i)par[i]=par[par[i]],i=par[i];return i;}
+  _ufUnion(par,a,b){par[this._ufFind(par,a)]=this._ufFind(par,b);}
+
+  // Compute ratsnest: returns [{net,x1,y1,x2,y2}] for all unrouted connections
+  computeRatsnest(){
+    if(!this.board)return[];
+    const netPads=this._collectNetPads();
+    const result=[];
+    const EPS=0.05; // mm tolerance for matching endpoints to pads
+
+    for(const[net,pads]of Object.entries(netPads)){
+      if(pads.length<2)continue;
+      const n=pads.length;
+
+      // Build trace connectivity: collect all trace node positions for this net,
+      // union them by shared segment endpoints, then map pads onto trace node clusters.
+      const traceNodes=[]; // [{x,y}]
+      const tpar=[];       // union-find for trace nodes
+
+      const tFind=i=>{while(tpar[i]!==i)tpar[i]=tpar[tpar[i]],i=tpar[i];return i;};
+      const tUnion=(a,b)=>{tpar[tFind(a)]=tFind(b);};
+      const tIdx={}; // key → index in traceNodes
+
+      const getOrAdd=(x,y)=>{
+        const k=`${x.toFixed(4)},${y.toFixed(4)}`;
+        if(tIdx[k]===undefined){tIdx[k]=traceNodes.length;traceNodes.push({x,y});tpar.push(traceNodes.length-1);}
+        return tIdx[k];
+      };
+
+      for(const tr of(this.board.traces||[])){
+        if(tr.net!==net)continue;
+        for(const seg of(tr.segments||[])){
+          const a=getOrAdd(seg.start.x,seg.start.y);
+          const b=getOrAdd(seg.end.x,seg.end.y);
+          tUnion(a,b);
+        }
+      }
+      // Also add vias on this net as connectors
+      for(const v of(this.board.vias||[])){
+        if(v.net!==net)continue;
+        getOrAdd(v.x,v.y); // just register; vias connect F.Cu to B.Cu, treated as single point
+      }
+
+      // Now union pad indices: for each pad, find any trace node within EPS and union them
+      // We map pads to a combined union-find (pads 0..n-1, trace nodes n..n+traceNodes.length-1)
+      const total=n+traceNodes.length;
+      const allPar=Array.from({length:total},(_,i)=>i);
+      const aFind=i=>{while(allPar[i]!==i)allPar[i]=allPar[allPar[i]],i=allPar[i];return i;};
+      const aUnion=(a,b)=>{allPar[aFind(a)]=aFind(b);};
+
+      // Merge trace node clusters into allPar
+      for(let i=0;i<traceNodes.length;i++){
+        const root=tFind(i);
+        if(root!==i)aUnion(n+i,n+root);
+      }
+
+      // Map each pad to trace nodes within EPS
+      for(let pi=0;pi<n;pi++){
+        for(let ti=0;ti<traceNodes.length;ti++){
+          if(Math.hypot(pads[pi].x-traceNodes[ti].x,pads[pi].y-traceNodes[ti].y)<=EPS)
+            aUnion(pi,n+ti);
+        }
+      }
+
+      // Group pad indices by their cluster root (only care about pads 0..n-1)
+      const clusters={};
+      for(let i=0;i<n;i++){
+        const r=aFind(i);
+        (clusters[r]||(clusters[r]=[])).push(i);
+      }
+      const clusterList=Object.values(clusters);
+      if(clusterList.length<=1)continue; // all pads already connected
+
+      // Prim's MST over clusters: for each MST edge, pick closest actual pad pair
+      const nc=clusterList.length;
+      const inMST=new Array(nc).fill(false);
+      inMST[0]=true;
+      for(let step=0;step<nc-1;step++){
+        let bestDist=Infinity,bestA=-1,bestB=-1,bestBCluster=-1;
+        for(let a=0;a<nc;a++){
+          if(!inMST[a])continue;
+          for(let b=0;b<nc;b++){
+            if(inMST[b])continue;
+            for(const ia of clusterList[a]){
+              for(const ib of clusterList[b]){
+                const d=Math.hypot(pads[ia].x-pads[ib].x,pads[ia].y-pads[ib].y);
+                if(d<bestDist){bestDist=d;bestA=ia;bestB=ib;bestBCluster=b;}
+              }
+            }
+          }
+        }
+        if(bestBCluster!==-1)inMST[bestBCluster]=true;
+        if(bestA!==-1&&bestB!==-1)
+          result.push({net,x1:pads[bestA].x,y1:pads[bestA].y,x2:pads[bestB].x,y2:pads[bestB].y});
+      }
+    }
+    return result;
+  }
+
+  _drawRatsnest(){
+    const ctx=this.ctx;
+    const lines=this.computeRatsnest();
+    if(!lines.length)return;
+    ctx.lineWidth=0.8; ctx.setLineDash([4,3]); ctx.lineCap='round';
+    ctx.globalAlpha=0.75;
+    for(const ln of lines){
+      ctx.strokeStyle=this._ratsnestNetCol(ln.net);
+      ctx.beginPath();
+      ctx.moveTo(this.mmX(ln.x1),this.mmY(ln.y1));
+      ctx.lineTo(this.mmX(ln.x2),this.mmY(ln.y2));
+      ctx.stroke();
+    }
+    ctx.setLineDash([]); ctx.globalAlpha=1; ctx.lineCap='butt';
+  }
+
+  // Per-net color for ratsnest (brighter/more saturated than pad colors)
+  _ratsnestNetCol(net){
+    if(/^(GND|AGND|DGND|PGND)$/.test(net))return'#44ee77';
+    if(/^(VCC|VDD|VIN|VBAT|VBUS|3V3|5V|12V|24V|AVCC|DVCC)/.test(net))return'#ff6666';
+    let h=0;for(const c of net)h=(h*31+c.charCodeAt(0))&0xffff;
+    return['#4fc3f7','#f9a825','#ce93d8','#80cbc4','#ff8a65','#aed581','#ffb74d'][h%7];
+  }
+
+  _drawActiveRoute(){
+    const ctx=this.ctx,pts=this.routePoints;
+    const layerCol=this.layers[this.routeLayer]?.color||'#cc6633';
+    const w=Math.max(1,parseFloat(document.getElementById('route-width')?.value||0.25)*this.scale);
+
+    // Check what's under the cursor right now
+    const mx=this._mxPx,my=this._myPx;
+    const hitPad=this.getPadAt(mx,my);
+    const hitVia=hitPad?null:this.getViaAt(mx,my);
+    const hitArea=(hitPad||hitVia)?null:this.getAreaAt(mx,my);
+    const destNet=(hitPad?.pad?.net)||(hitVia?.net)||(hitArea?.net)||null;
+    const netConflict=destNet&&this.routeNet&&destNet!==this.routeNet;
+    const netMatch=destNet&&(!this.routeNet||destNet===this.routeNet);
+
+    // Snap endpoint to pad/via if net matches
+    let ex=this._mx,ey=this._my;
+    if(hitPad&&netMatch){ex=hitPad.x;ey=hitPad.y;}
+
+    const endPxX=this.mmX(ex),endPxY=this.mmY(ey);
+    const col=netConflict?'#ef4444':netMatch?'#22c55e':layerCol;
+
+    // Draw the trace preview
+    ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.setLineDash([3,2]);
+    ctx.beginPath();
+    ctx.moveTo(this.mmX(pts[0].x),this.mmY(pts[0].y));
+    for(let i=1;i<pts.length;i++)ctx.lineTo(this.mmX(pts[i].x),this.mmY(pts[i].y));
+    ctx.lineTo(endPxX,endPxY);
+    ctx.stroke(); ctx.setLineDash([]);
+
+    // Endpoint indicator
+    ctx.beginPath();
+    ctx.arc(endPxX,endPxY,netMatch?6:4,0,Math.PI*2);
+    ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+    if(netMatch){ctx.fillStyle=col+'44';ctx.fill();}
+
+    // Net label near cursor
+    if(this.routeNet){
+      ctx.fillStyle=col; ctx.font='bold 10px monospace';
+      ctx.textAlign='left';
+      ctx.fillText(this.routeNet,endPxX+8,endPxY-4);
+    }
+    if(netConflict){
+      ctx.fillStyle='#ef4444'; ctx.font='bold 10px monospace';
+      ctx.textAlign='left';
+      ctx.fillText('✕ '+destNet,endPxX+8,endPxY+10);
+    }
+  }
+
+  _drawActiveZone(){
+    const ctx=this.ctx,pts=this.zonePoints;
+    ctx.strokeStyle='#aaaaaa'; ctx.lineWidth=1; ctx.setLineDash([3,2]);
+    ctx.beginPath();
+    ctx.moveTo(this.mmX(pts[0].x),this.mmY(pts[0].y));
+    for(let i=1;i<pts.length;i++)ctx.lineTo(this.mmX(pts[i].x),this.mmY(pts[i].y));
+    ctx.lineTo(this.mmX(this._mx),this.mmY(this._my));
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  _drawAreas(){
+    const ctx=this.ctx;
+    const cl=DR.clearance||0.2;
+    for(const a of(this.board?.areas||[])){
+      const lyr=a.layer||'F.Cu';
+      if(!this.layers[lyr]?.visible)continue;
+      const col=this.layers[lyr].color;
+      const x1=Math.min(a.x1,a.x2),y1=Math.min(a.y1,a.y2);
+      const x2=Math.max(a.x1,a.x2),y2=Math.max(a.y1,a.y2);
+      const sx=this.mmX(x1),sy=this.mmY(y1),ex=this.mmX(x2),ey=this.mmY(y2);
+      const w=ex-sx,h=ey-sy;
+      const sel=this.selectedArea===a;
+      ctx.save();
+      // Build clip path: area rectangle + clearance cutouts (evenodd)
+      ctx.beginPath();
+      ctx.rect(sx,sy,w,h);
+      // Pad clearance cutouts — extend boundary test by halfPad+cl so edge pads aren't missed
+      for(const c of(this.board?.components||[])){
+        for(const p of(c.pads||[])){
+          if(!p.net||p.net===a.net)continue;
+          const{px,py}=this._padWorld(c,p);
+          const hp=Math.max(p.size_x||1.6,p.size_y||1.6)/2;
+          if(px<x1-hp-cl||px>x2+hp+cl||py<y1-hp-cl||py>y2+hp+cl)continue;
+          const r=(hp+cl)*this.scale;
+          const psx=this.mmX(px),psy=this.mmY(py);
+          ctx.moveTo(psx+r,psy);
+          ctx.arc(psx,psy,r,0,-Math.PI*2,true);
+        }
+      }
+      // Via clearance cutouts
+      for(const v of(this.board?.vias||[])){
+        if(v.net===a.net)continue;
+        if(v.x<x1-cl||v.x>x2+cl||v.y<y1-cl||v.y>y2+cl)continue;
+        const r=((v.size||DR.viaSize||1.0)/2+cl)*this.scale;
+        const vsx=this.mmX(v.x),vsy=this.mmY(v.y);
+        ctx.moveTo(vsx+r,vsy);
+        ctx.arc(vsx,vsy,r,0,-Math.PI*2,true);
+      }
+      // Trace clearance cutouts (capsule per segment)
+      for(const tr of(this.board?.traces||[])){
+        if(tr.net===a.net)continue;
+        const pts=tr.path||[];
+        const hw=(tr.width_mm||DR.traceWidth||0.25)/2+cl;
+        for(let i=0;i<pts.length-1;i++){
+          const ax=pts[i].x,ay=pts[i].y,bx=pts[i+1].x,by=pts[i+1].y;
+          if(Math.max(ax,bx)+hw<x1||Math.min(ax,bx)-hw>x2||Math.max(ay,by)+hw<y1||Math.min(ay,by)-hw>y2)continue;
+          const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
+          if(len<0.001)continue;
+          const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
+          const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
+          const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
+          ctx.moveTo(asx-nx,asy-ny);
+          ctx.lineTo(bsx-nx,bsy-ny);
+          ctx.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
+          ctx.lineTo(asx+nx,asy+ny);
+          ctx.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
+          ctx.closePath();
+        }
+      }
+      ctx.clip('evenodd');
+      ctx.fillStyle=col+(sel?'50':'28');
+      ctx.fillRect(sx,sy,w,h);
+      ctx.restore();
+      // Border
+      ctx.strokeStyle=col+(sel?'ff':'99');
+      ctx.lineWidth=sel?2:1;
+      ctx.setLineDash(sel?[]:[4,2]);
+      ctx.strokeRect(sx,sy,w,h);
+      ctx.setLineDash([]);
+      // Net label
+      if(this.scale>=5&&w>20&&h>12){
+        ctx.fillStyle=col+'cc';ctx.font=`bold ${Math.max(9,Math.min(12,w/6))}px monospace`;
+        ctx.textAlign='center';
+        ctx.fillText(a.net||'?',sx+w/2,sy+h/2+4);
+        ctx.textAlign='left';
+      }
+    }
+  }
+
+  _drawActiveArea(){
+    if(!this.areaStart)return;
+    const ctx=this.ctx;
+    const lyr=this.areaLayer||'F.Cu';
+    const col=this.layers[lyr]?.color||'#cc6633';
+    const sx=this.mmX(this.areaStart.x),sy=this.mmY(this.areaStart.y);
+    const ex=this.mmX(this._mx),ey=this.mmY(this._my);
+    const rx=Math.min(sx,ex),ry=Math.min(sy,ey),rw=Math.abs(ex-sx),rh=Math.abs(ey-sy);
+    ctx.fillStyle=col+'22';ctx.strokeStyle=col+'bb';
+    ctx.lineWidth=1;ctx.setLineDash([4,2]);
+    ctx.fillRect(rx,ry,rw,rh);
+    ctx.strokeRect(rx,ry,rw,rh);
+    ctx.setLineDash([]);
+  }
+
+  _traceHitsWrongNet(pts,net){
+    for(let i=0;i<pts.length-1;i++){
+      const sx=pts[i].x,sy=pts[i].y,ex=pts[i+1].x,ey=pts[i+1].y;
+      const dx=ex-sx,dy=ey-sy,len2=dx*dx+dy*dy;
+      for(const c of(this.board?.components||[])){
+        for(const p of(c.pads||[])){
+          if(!p.net||p.net===net)continue;
+          const{px,py}=this._padWorld(c,p);
+          const tol=(Math.max(p.size_x||1.6,p.size_y||1.6)/2)+(DR.clearance||0.2)*0.5;
+          let t=len2>0?Math.max(0,Math.min(1,((px-sx)*dx+(py-sy)*dy)/len2)):0;
+          const cx=sx+t*dx,cy=sy+t*dy;
+          if(Math.hypot(px-cx,py-cy)<tol)return p;
+        }
+      }
+    }
+    return null;
+  }
+
+  _drawMeasure(){
+    const ctx=this.ctx,s=this.measureStart;
+    const ex=this._mx,ey=this._my;
+    const d=Math.hypot(ex-s.x,ey-s.y);
+    ctx.strokeStyle='#ffff00'; ctx.lineWidth=1; ctx.setLineDash([4,2]);
+    ctx.beginPath();
+    ctx.moveTo(this.mmX(s.x),this.mmY(s.y));
+    ctx.lineTo(this.mmX(ex),this.mmY(ey));
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#ffff00'; ctx.font='12px monospace';
+    ctx.fillText(`${d.toFixed(3)}mm`,this.mmX((s.x+ex)/2)+4,this.mmY((s.y+ey)/2)-4);
+  }
+
+  _startTraceDrag(trace,segIdx,mx,my){
+    const seg=trace.segments[segIdx];
+    this._isDragTrace=true;
+    this._dragTrace=trace;
+    this._dragTraceSegIdx=segIdx;
+    this._dragTraceOrigSeg={start:{x:seg.start.x,y:seg.start.y},end:{x:seg.end.x,y:seg.end.y}};
+    this._dragTraceOrigAll=trace.segments.map(s=>({start:{x:s.start.x,y:s.start.y},end:{x:s.end.x,y:s.end.y}}));
+    const midX=(seg.start.x+seg.end.x)/2,midY=(seg.start.y+seg.end.y)/2;
+    this._dragTraceOff={x:this.cX(mx)-midX,y:this.cY(my)-midY};
+    this._traceDragViolations=[];
+  }
+
+  _checkTraceClearance(tr,segIdx){
+    const violations=[];
+    const seg=tr.segments[segIdx];
+    const hw=(tr.width||0.25)/2;
+    const cl=DR.clearance;
+    function ptSeg(px,py,ax,ay,bx,by){
+      const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+      if(l2<1e-10)return Math.hypot(px-ax,py-ay);
+      const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/l2));
+      return Math.hypot(px-(ax+t*dx),py-(ay+t*dy));
+    }
+    for(const other of(this.board.traces||[])){
+      if(other===tr||other.net===tr.net)continue;
+      const ohw=(other.width||0.25)/2;
+      for(const oseg of(other.segments||[])){
+        const d=Math.min(
+          ptSeg(oseg.start.x,oseg.start.y,seg.start.x,seg.start.y,seg.end.x,seg.end.y),
+          ptSeg(oseg.end.x,oseg.end.y,seg.start.x,seg.start.y,seg.end.x,seg.end.y),
+          ptSeg(seg.start.x,seg.start.y,oseg.start.x,oseg.start.y,oseg.end.x,oseg.end.y),
+          ptSeg(seg.end.x,seg.end.y,oseg.start.x,oseg.start.y,oseg.end.x,oseg.end.y)
+        )-hw-ohw;
+        if(d<cl) violations.push({ax:oseg.start.x,ay:oseg.start.y,bx:oseg.end.x,by:oseg.end.y,w:(ohw*2),isPad:false});
+      }
+    }
+    for(const comp of(this.board.components||[])){
+      for(const pad of(comp.pads||[])){
+        if(pad.net===tr.net)continue;
+        const{px,py}=this._padWorld(comp,pad);
+        const padR=Math.max(pad.size_x||1.6,pad.size_y||1.6)/2;
+        const d=ptSeg(px,py,seg.start.x,seg.start.y,seg.end.x,seg.end.y)-hw-padR;
+        if(d<cl) violations.push({px,py,padR,isPad:true});
+      }
+    }
+    return violations;
+  }
+
+  // Returns true if placing the dragged segment at (nsx,nsy)→(nex,ney) keeps
+  // all junction angles with rubber-banded neighbours ≥ 45°.
+  _checkTraceAngles(tr,si,nsx,nsy,nex,ney){
+    const EPS=0.001,MIN_RAD=Math.PI/4; // 45°
+    const orig=this._dragTraceOrigSeg,origAll=this._dragTraceOrigAll;
+    // Returns true if the opening angle between two "away" vectors is >= 45°
+    const ok=(ax,ay,bx,by)=>{
+      const la=Math.hypot(ax,ay),lb=Math.hypot(bx,by);
+      if(la<EPS*10||lb<EPS*10)return true;
+      return Math.acos(Math.max(-1,Math.min(1,(ax*bx+ay*by)/(la*lb))))>=MIN_RAD;
+    };
+    for(let i=0;i<tr.segments.length;i++){
+      if(i===si)continue;
+      const o=origAll[i];
+      // Compute rubber-banded position of this adjacent segment
+      let sx=o.start.x,sy=o.start.y,ex=o.end.x,ey=o.end.y;
+      if(Math.abs(o.end.x-orig.start.x)<EPS&&Math.abs(o.end.y-orig.start.y)<EPS){ex=nsx;ey=nsy;}
+      if(Math.abs(o.start.x-orig.start.x)<EPS&&Math.abs(o.start.y-orig.start.y)<EPS){sx=nsx;sy=nsy;}
+      if(Math.abs(o.end.x-orig.end.x)<EPS&&Math.abs(o.end.y-orig.end.y)<EPS){ex=nex;ey=ney;}
+      if(Math.abs(o.start.x-orig.end.x)<EPS&&Math.abs(o.start.y-orig.end.y)<EPS){sx=nex;sy=ney;}
+      // adj.end → junction(nsx,nsy) → drag→nex,ney
+      // away vectors: (sx-nsx,sy-nsy) and (nex-nsx,ney-nsy)
+      if(Math.abs(o.end.x-orig.start.x)<EPS&&Math.abs(o.end.y-orig.start.y)<EPS)
+        if(!ok(sx-nsx,sy-nsy,nex-nsx,ney-nsy))return false;
+      // drag(nsx→nex) → junction(nex,ney) ← adj.start: (nsx-nex,nsy-ney) and (ex-nex,ey-ney)
+      if(Math.abs(o.start.x-orig.end.x)<EPS&&Math.abs(o.start.y-orig.end.y)<EPS)
+        if(!ok(nsx-nex,nsy-ney,ex-nex,ey-ney))return false;
+      // Both adj.start and drag.start at same junction: away = (nex-nsx,ney-nsy) and (ex-nsx,ey-nsy)
+      if(Math.abs(o.start.x-orig.start.x)<EPS&&Math.abs(o.start.y-orig.start.y)<EPS)
+        if(!ok(nex-nsx,ney-nsy,ex-nsx,ey-nsy))return false;
+      // Both adj.end and drag.end at same junction: away = (sx-nex,sy-ney) and (nsx-nex,nsy-ney)
+      if(Math.abs(o.end.x-orig.end.x)<EPS&&Math.abs(o.end.y-orig.end.y)<EPS)
+        if(!ok(sx-nex,sy-ney,nsx-nex,nsy-ney))return false;
+    }
+    return true;
+  }
+
+  _startDrag(primaryComp,mx,my){
+    this._isDrag=true; this._dragC=primaryComp;
+    this._dragOff={x:this.cX(mx)-primaryComp.x,y:this.cY(my)-primaryComp.y};
+    // Snapshot offsets for all selected comps relative to primary
+    this._dragCompOffsets=(this.selectedComps.length>1?this.selectedComps:[primaryComp]).map(c=>({
+      comp:c, ox:c.x-primaryComp.x, oy:c.y-primaryComp.y
+    }));
+    // Snapshot pad world positions (all selected comps)
+    this._dragPadSnap=[];
+    for(const{comp}of this._dragCompOffsets)
+      for(const p of(comp.pads||[])){
+        const{px,py}=this._padWorld(comp,p);
+        this._dragPadSnap.push({comp,px,py,number:p.number});
+      }
+  }
+
+  _drawSel(comp){
+    const bb=this._compBBox(comp); if(!bb)return;
+    const m=1,ctx=this.ctx;
+    ctx.strokeStyle='#6c63ff'; ctx.lineWidth=2; ctx.setLineDash([4,2]);
+    ctx.strokeRect(this.mmX(comp.x+bb.x1-m),this.mmY(comp.y+bb.y1-m),(bb.x2-bb.x1+m*2)*this.scale,(bb.y2-bb.y1+m*2)*this.scale);
+    ctx.setLineDash([]);
+  }
+
+  _drawHoverComp(comp){
+    const bb=this._compBBox(comp); if(!bb)return;
+    const m=1.2,ctx=this.ctx;
+    ctx.strokeStyle='rgba(180,180,255,0.5)'; ctx.lineWidth=1.5; ctx.setLineDash([]);
+    ctx.strokeRect(this.mmX(comp.x+bb.x1-m),this.mmY(comp.y+bb.y1-m),(bb.x2-bb.x1+m*2)*this.scale,(bb.y2-bb.y1+m*2)*this.scale);
+    ctx.fillStyle='rgba(108,99,255,0.06)';
+    ctx.fillRect(this.mmX(comp.x+bb.x1-m),this.mmY(comp.y+bb.y1-m),(bb.x2-bb.x1+m*2)*this.scale,(bb.y2-bb.y1+m*2)*this.scale);
+  }
+
+  _drawSelPad({comp,pad}){
+    const{px,py}=this._padWorld(comp,pad);
+    const sx=this.mmX(px),sy=this.mmY(py);
+    const r=Math.max(5,Math.max(pad.size_x||1.6,pad.size_y||1.6)/2*this.scale+2);
+    const ctx=this.ctx;
+    ctx.strokeStyle='#ffffff'; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(108,99,255,0.8)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(sx,sy,r+3,0,Math.PI*2); ctx.stroke();
+    // Pin label
+    if(pad.name||pad.number){
+      ctx.fillStyle='#ffffff'; ctx.font='bold 10px monospace';
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText((pad.name||'')||(pad.number||''),sx,sy-r-2);
+      ctx.textBaseline='alphabetic';
+    }
+  }
+
+  _netCol(net){
+    if(/^(GND|AGND|DGND|PGND)$/.test(net))return'#33bb55';
+    if(/^(VCC|VDD|VIN|VBAT|VBUS|3V3|5V|12V|24V|AVCC|DVCC)/.test(net))return'#dd4444';
+    let h=0;for(const c of net)h=(h*31+c.charCodeAt(0))&0xffff;
+    return['#c87533','#b87333','#d4a56a','#cd7f32','#c68642'][h%5];
+  }
+
+  _collectNetPads(){
+    const m={};
+    for(const c of(this.board?.components||[]))
+      for(const p of(c.pads||[])){
+        if(!p.net)continue;
+        const{px,py}=this._padWorld(c,p);
+        (m[p.net]||(m[p.net]=[])).push({x:px,y:py,comp:c.id,pad:p.number});
+      }
+    return m;
+  }
+
+  getCompAt(mx,my){
+    // Returns the smallest (most specific) component at this pixel position
+    const hits=this.getCompsAt(mx,my);
+    return hits.length?hits[0]:null;
+  }
+
+  getCompsAt(mx,my){
+    // Returns ALL components at pixel position, sorted smallest bbox area first
+    const m=0.1;
+    const hits=[];
+    for(const c of(this.board?.components||[])){
+      const bb=this._compBBox(c); if(!bb)continue;
+      if(mx>=this.mmX(c.x+bb.x1-m)&&mx<=this.mmX(c.x+bb.x2+m)&&
+         my>=this.mmY(c.y+bb.y1-m)&&my<=this.mmY(c.y+bb.y2+m)){
+        const area=(bb.x2-bb.x1)*(bb.y2-bb.y1);
+        hits.push({c,area});
+      }
+    }
+    hits.sort((a,b)=>a.area-b.area);
+    return hits.map(h=>h.c);
+  }
+
+  getAreaAt(mx,my){
+    const cx=this.cX(mx),cy=this.cY(my);
+    for(const a of(this.board?.areas||[])){
+      const x1=Math.min(a.x1,a.x2),y1=Math.min(a.y1,a.y2);
+      const x2=Math.max(a.x1,a.x2),y2=Math.max(a.y1,a.y2);
+      if(cx>=x1&&cx<=x2&&cy>=y1&&cy<=y2)return a;
+    }
+    return null;
+  }
+
+  getDrawingAt(mx,my){
+    // Returns drawing whose polyline passes within ~5px of click position
+    const THRESH=5/this.scale; // mm threshold
+    const cx=this.cX(mx),cy=this.cY(my);
+    for(const d of(this.board?.drawings||[])){
+      const pts=d.points||[];
+      const n=pts.length+(d.closed?1:0);
+      for(let i=0;i<n-1;i++){
+        const a=pts[i],b=pts[(i+1)%pts.length];
+        const dx=b.x-a.x,dy=b.y-a.y;
+        const len2=dx*dx+dy*dy;
+        if(len2===0)continue;
+        const t=Math.max(0,Math.min(1,((cx-a.x)*dx+(cy-a.y)*dy)/len2));
+        const px=a.x+t*dx,py=a.y+t*dy;
+        if(Math.hypot(cx-px,cy-py)<THRESH)return d;
+      }
+    }
+    return null;
+  }
+
+  getPadAt(mx,my){
+    const hits=this.getPadsAt(mx,my);
+    return hits.length?hits[0]:null;
+  }
+
+  getPadsAt(mx,my){
+    // All pads at pixel position, sorted closest-centre first
+    const thr=6;
+    const hits=[];
+    for(const c of(this.board?.components||[]))
+      for(const p of(c.pads||[])){
+        const{px,py}=this._padWorld(c,p);
+        const dist=Math.hypot(mx-this.mmX(px),my-this.mmY(py));
+        if(dist<=Math.max(thr,(p.size_x||1.6)/2*this.scale))
+          hits.push({comp:c,pad:p,x:px,y:py,dist});
+      }
+    hits.sort((a,b)=>a.dist-b.dist);
+    return hits;
+  }
+
+  getViaAt(mx,my){
+    for(const v of(this.board?.vias||[])){
+      const r=Math.max(5,(v.size||1.0)/2*this.scale);
+      if(Math.hypot(mx-this.mmX(v.x),my-this.mmY(v.y))<=r)return v;
+    }
+    return null;
+  }
+
+  getTraceAt(mx,my){
+    // Returns first hit (for hover); use getTracesAt for all hits
+    const hits=this.getTracesAt(mx,my);
+    return hits.length?hits[0]:null;
+  }
+
+  getTracesAt(mx,my){
+    const minW=6;
+    const results=[];
+    for(let i=0;i<(this.board?.traces||[]).length;i++){
+      const tr=this.board.traces[i];
+      const thr=Math.max(minW,(tr.width||0.25)/2*this.scale+2);
+      for(let j=0;j<(tr.segments||[]).length;j++){
+        const seg=tr.segments[j];
+        const x1=this.mmX(seg.start.x),y1=this.mmY(seg.start.y);
+        const x2=this.mmX(seg.end.x),  y2=this.mmY(seg.end.y);
+        const dx=x2-x1,dy=y2-y1,len2=dx*dx+dy*dy;
+        if(len2<0.001)continue;
+        const t=Math.max(0,Math.min(1,((mx-x1)*dx+(my-y1)*dy)/len2));
+        if(Math.hypot(mx-(x1+t*dx),my-(y1+t*dy))<=thr){
+          // Only add each trace once
+          if(!results.find(r=>r.trace===tr))
+            results.push({trace:tr,traceIdx:i,segIdx:j});
+          break;
+        }
+      }
+    }
+    return results;
+  }
+
+  fitBoard(){
+    if(!this.board)return;
+    // Canvas may be 0×0 if it was sized while the parent section was hidden — resize first
+    if(!this.canvas.width || !this.canvas.height) resize();
+    const W=this.canvas.width,H=this.canvas.height,b=this.board.board,mg=60;
+    if(!W||!H)return; // still 0 (e.g. display:none parent), bail
+    this.scale=Math.max(2,Math.min(60,Math.min((W-mg*2)/b.width,(H-mg*2)/b.height)));
+    this.panX=0;this.panY=0;
+    this.offsetX=(W-b.width*this.scale)/2;
+    this.offsetY=(H-b.height*this.scale)/2;
+    this.render();
+  }
+
+  exportJSON(){return JSON.stringify(this.board,null,2);}
+
+  _cp(e){
+    const r=this.canvas.getBoundingClientRect();
+    return{mx:(e.clientX-r.left)*this.canvas.width/r.width,
+           my:(e.clientY-r.top)*this.canvas.height/r.height};
+  }
+
+  _commitTrace(){
+    if(this.routePoints.length<2){this.routePoints=[];return;}
+    const badPad=this._traceHitsWrongNet(this.routePoints,this.routeNet||'');
+    if(badPad){
+      this._routeError=`Blocked: passes through ${badPad.name}(${badPad.net})`;
+      this.render();
+      setTimeout(()=>{this._routeError=null;this.render();},2500);
+      return;
+    }
+    const segs=[];
+    for(let i=0;i<this.routePoints.length-1;i++)
+      segs.push({start:{x:this.routePoints[i].x,y:this.routePoints[i].y},
+                 end:{x:this.routePoints[i+1].x,y:this.routePoints[i+1].y}});
+    (this.board.traces||(this.board.traces=[])).push({
+      net:this.routeNet||'',layer:this.routeLayer,
+      width:parseFloat(document.getElementById('route-width').value)||DR.traceWidth,
+      segments:segs
+    });
+    this.routePoints=[];this.routeNet=null;
+    this._snapshot(); this.render();
+  }
+
+  _init(){
+    const cv=this.canvas;
+    cv.addEventListener('mousedown',e=>{
+      if(e.button===1){e.preventDefault();this._isPan=true;this._panS={x:this._cp(e).mx-this.panX,y:this._cp(e).my-this.panY};return;}
+      const{mx,my}=this._cp(e);
+      const xmm=this.snap(this.cX(mx)),ymm=this.snap(this.cY(my));
+      if(e.button===2){
+        if(this.tool==='route'){this.routePoints=[];this.routeNet=null;this.render();}
+        if(this.tool==='zone'){this.zonePoints=[];this.render();}
+        if(this.tool==='area'){this.areaStart=null;this._isAreaDrag=false;this.render();}
+        if(this.tool==='draw'){this.drawPoints=[];this.render();}
+        return;
+      }
+      if(this.tool==='select'){
+        // Gather ALL hittable elements at this position
+        const hitComps=this.getCompsAt(mx,my);   // all comps, smallest first
+        const hitPads=this.getPadsAt(mx,my);     // all pads, closest first
+        const hitV=this.getViaAt(mx,my);
+        const hitThs=this.getTracesAt(mx,my);    // all overlapping traces
+        const hitA=this.getAreaAt(mx,my);
+        const hitD=this.getDrawingAt(mx,my);
+        // Build cycle list: comps first, then pads (only if parent comp is already selected), via, traces, area, drawing
+        const candidates=[];
+        for(const c of hitComps) candidates.push({type:'comp',obj:c});
+        // Pads only available after their component is selected
+        for(const h of hitPads)
+          if(this.selectedComp===h.comp||this.selectedComps.includes(h.comp))
+            candidates.push({type:'pad',obj:h});
+        if(hitV) candidates.push({type:'via',obj:hitV});
+        for(const th of hitThs) candidates.push({type:'trace',obj:th.trace,segIdx:th.segIdx});
+        if(hitA) candidates.push({type:'area',obj:hitA});
+        if(hitD) candidates.push({type:'drawing',obj:hitD});
+
+        let picked=null;
+        if(candidates.length===0){
+          // Nothing here — start box selection
+          this.selectedComp=null;this.selectedTrace=null;this.selectedArea=null;this.selectedVia=null;this.selectedDrawing=null;this.selectedComps=[];
+          this._isBoxSel=true;this._boxSelStart={mx,my};this._boxSelEnd={mx,my};
+          this._lastClickObj=null;
+        } else {
+          // Click-cycle: if clicking same spot again, advance to next candidate
+          const CYCLE_DIST=8;
+          const samePx=this._lastClickMx!==null&&Math.hypot(mx-this._lastClickMx,my-this._lastClickMy)<CYCLE_DIST;
+          let nextIdx=0;
+          if(samePx&&this._lastClickObj){
+            const curIdx=candidates.findIndex(c=>c.obj===this._lastClickObj);
+            nextIdx=(curIdx+1)%candidates.length;
+          }
+          picked=candidates[nextIdx];
+          this._lastClickMx=mx;this._lastClickMy=my;this._lastClickObj=picked.obj;
+
+          this.selectedTrace=null;this.selectedArea=null;this.selectedVia=null;this.selectedPad=null;this.selectedDrawing=null;
+
+          if(e.ctrlKey||e.metaKey){
+            // Ctrl+click: toggle component in multi-select
+            if(picked.type==='comp'){
+              const ci=this.selectedComps.indexOf(picked.obj);
+              if(ci===-1)this.selectedComps.push(picked.obj);
+              else this.selectedComps.splice(ci,1);
+              this.selectedComp=this.selectedComps[this.selectedComps.length-1]||null;
+              if(this.selectedComps.length>0) this._startDrag(this.selectedComps[0],mx,my);
+            }
+          } else {
+            if(picked.type==='comp'&&this.selectedComps.length>1&&this.selectedComps.includes(picked.obj)){
+              // Clicked a component that's already part of a multi-selection — drag all together
+              this._startDrag(picked.obj,mx,my);
+            } else {
+            this.selectedComps=[];
+            this.selectedComp=null;
+            if(picked.type==='pad'){
+              this.selectedPad={comp:picked.obj.comp,pad:picked.obj.pad};
+            } else if(picked.type==='comp'){
+              const c=picked.obj;
+              this.selectedComp=c; this.selectedComps=[c];
+              this._startDrag(c,mx,my);
+            } else if(picked.type==='via'){
+              this.selectedVia=picked.obj;
+              this._isDragVia=true;
+              this._dragViaOff={x:this.cX(mx)-picked.obj.x,y:this.cY(my)-picked.obj.y};
+            } else if(picked.type==='trace'){
+              this.selectedTrace=picked.obj;
+              this._startTraceDrag(picked.obj,picked.segIdx??0,mx,my);
+              // Sync route net input to selected trace net
+              const rni=document.getElementById('route-net-input');
+              if(rni)rni.value=picked.obj.net||'';
+            } else if(picked.type==='area'){
+              this.selectedArea=picked.obj;
+            } else if(picked.type==='drawing'){
+              this.selectedDrawing=picked.obj;
+              this._isDragDrawing=true;
+              this._dragDrawingStart={x:this.cX(mx),y:this.cY(my)};
+              this._dragDrawingPts=picked.obj.points.map(p=>({x:p.x,y:p.y}));
+            }
+            } // end else (not multi-drag)
+          }
+        }
+        this.render();updateInfoPanel();renderAreasPanel();
+      } else if(this.tool==='route'){
+        if(!this.board)return;
+        if(this.routePoints.length===0){
+          // Start: snap to pad/via, inherit net
+          const hit=this.getPadAt(mx,my);
+          const hv=hit?null:this.getViaAt(mx,my);
+          const sx=hit?hit.x:xmm, sy=hit?hit.y:ymm;
+          this.routeNet=(hit?.pad?.net)||(hv?.net)||null;
+          this.routePoints=[{x:sx,y:sy}];
+        } else {
+          // Adding a point: check destination net
+          const hit=this.getPadAt(mx,my);
+          const hv=hit?null:this.getViaAt(mx,my);
+          const ha=(hit||hv)?null:this.getAreaAt(mx,my);
+          const destNet=(hit?.pad?.net)||(hv?.net)||(ha?.net)||null;
+
+          // Block if destination has a conflicting net
+          if(destNet&&this.routeNet&&destNet!==this.routeNet){
+            this._routeError=`Net mismatch: ${destNet} ≠ ${this.routeNet}`;
+            this.render();
+            setTimeout(()=>{this._routeError=null;this.render();},2000);
+            return;
+          }
+
+          // Snap to pad position if hitting a pad
+          const ex=hit?hit.x:xmm, ey=hit?hit.y:ymm;
+
+          // Assign net from destination if not yet set
+          if(!this.routeNet&&destNet) this.routeNet=destNet;
+
+          this.routePoints.push({x:ex,y:ey});
+
+          // Auto-commit when landing on same-net pad/via/area, or double-click
+          const sameNet=destNet&&(!this.routeNet||destNet===this.routeNet);
+          if(sameNet||e.detail===2) this._commitTrace(); else this.render();
+        }
+      } else if(this.tool==='via'){
+        if(!this.board)return;
+        const hit=this.getPadAt(mx,my);
+        (this.board.vias||(this.board.vias=[])).push({
+          x:xmm,y:ymm,size:DR.viaSize,drill:DR.viaDrill,net:hit?.pad?.net||null});
+        this._snapshot(); this.render();
+      } else if(this.tool==='zone'){
+        if(!this.board)return;
+        if(e.detail===2){
+          if(this.zonePoints.length>=3){
+            const lyr=Object.keys(this.layers).find(k=>this.layers[k].active&&k!=='Ratsnest'&&k!=='Edge.Cuts')||'F.Cu';
+            (this.board.zones||(this.board.zones=[])).push({
+              layer:lyr,net:this.zoneNet||'GND',
+              points:[...this.zonePoints]});
+          }
+          this.zonePoints=[];this.zoneNet=null;this._snapshot();this.render();
+        } else {
+          this.zonePoints.push({x:xmm,y:ymm}); this.render();
+        }
+      } else if(this.tool==='area'){
+        if(!this.board)return;
+        const inp=document.getElementById('area-net-input');
+        if(inp)this.areaNet=inp.value.trim()||'GND';
+        this.areaLayer=Object.keys(this.layers).find(k=>this.layers[k].active&&k!=='Ratsnest'&&k!=='Edge.Cuts')||'F.Cu';
+        this.areaStart={x:xmm,y:ymm};
+        this._isAreaDrag=true;
+      } else if(this.tool==='measure'){
+        if(!this.measureStart){this.measureStart={x:xmm,y:ymm};}
+        else{this.measureStart=null; this.render();}
+      } else if(this.tool==='draw'){
+        if(!this.board)return;
+        const lyrSel=document.getElementById('draw-layer-sel');
+        const wSel=document.getElementById('draw-width-input');
+        this.drawLayer=lyrSel?lyrSel.value:'Edge.Cuts';
+        this.drawWidth=wSel?Math.max(0.01,parseFloat(wSel.value)||0.05):0.05;
+        if(e.detail===2){
+          // Double-click — finalize shape
+          if(this.drawPoints.length>=2){
+            const closeSel=document.getElementById('draw-close-chk');
+            const closed=closeSel?closeSel.checked:false;
+            (this.board.drawings||(this.board.drawings=[])).push({
+              id:'d'+Date.now(),layer:this.drawLayer,width:this.drawWidth,
+              points:[...this.drawPoints],closed});
+            this._snapshot();
+          }
+          this.drawPoints=[];this.render();
+        } else {
+          this.drawPoints.push({x:xmm,y:ymm});this.render();
+        }
+      }
+    });
+
+    cv.addEventListener('mousemove',e=>{
+      const{mx,my}=this._cp(e);
+      this._mx=this.snap(this.cX(mx)); this._my=this.snap(this.cY(my));
+      this._mxPx=mx; this._myPx=my;
+      document.getElementById('status-bar').textContent=
+        `x:${this.cX(mx).toFixed(2).padStart(7)}  y:${this.cY(my).toFixed(2).padStart(7)} mm`;
+      if(this._isDrag&&this._dragC){
+        const newPX=this.snap(this.cX(mx)-this._dragOff.x);
+        const newPY=this.snap(this.cY(my)-this._dragOff.y);
+        const dx=newPX-this._dragC.x, dy=newPY-this._dragC.y;
+        if(dx||dy){
+          // Move all selected comps
+          const compsToMove=this._dragCompOffsets||[{comp:this._dragC,ox:0,oy:0}];
+          for(const{comp,ox,oy}of compsToMove){
+            comp.x=newPX+ox; comp.y=newPY+oy;
+          }
+          // Move trace endpoints connected to dragged pads
+          if(this._dragPadSnap){
+            const EPS=0.15;
+            for(const snap of this._dragPadSnap){
+              const oldX=snap.px, oldY=snap.py;
+              const newX=oldX+dx, newY=oldY+dy;
+              snap.px=newX; snap.py=newY;
+              for(const tr of(this.board.traces||[])){
+                for(const seg of(tr.segments||[])){
+                  if(Math.abs(seg.start.x-oldX)<EPS&&Math.abs(seg.start.y-oldY)<EPS){seg.start.x=newX;seg.start.y=newY;}
+                  if(Math.abs(seg.end.x-oldX)<EPS&&Math.abs(seg.end.y-oldY)<EPS){seg.end.x=newX;seg.end.y=newY;}
+                }
+              }
+            }
+          }
+        }
+        this.render();
+        const xi=document.getElementById('info-x'),yi=document.getElementById('info-y');
+        if(xi)xi.value=this._dragC.x.toFixed(2);
+        if(yi)yi.value=this._dragC.y.toFixed(2);
+      } else if(this._isDragVia&&this.selectedVia){
+        this.selectedVia.x=this.snap(this.cX(mx)-this._dragViaOff.x);
+        this.selectedVia.y=this.snap(this.cY(my)-this._dragViaOff.y);
+        this.render();
+      } else if(this._isDragDrawing&&this.selectedDrawing){
+        const dx=this.snap(this.cX(mx))-this.snap(this._dragDrawingStart.x);
+        const dy=this.snap(this.cY(my))-this.snap(this._dragDrawingStart.y);
+        const pts=this._dragDrawingPts;
+        this.selectedDrawing.points=pts.map(p=>({x:p.x+dx,y:p.y+dy}));
+        this.render();
+      } else if(this._isDragTrace&&this._dragTrace){
+        const tr=this._dragTrace,si=this._dragTraceSegIdx;
+        const orig=this._dragTraceOrigSeg,origAll=this._dragTraceOrigAll;
+        const curX=this.snap(this.cX(mx)),curY=this.snap(this.cY(my));
+        const origMidX=(orig.start.x+orig.end.x)/2,origMidY=(orig.start.y+orig.end.y)/2;
+        let dx=curX-this._dragTraceOff.x-origMidX;
+        let dy=curY-this._dragTraceOff.y-origMidY;
+        // Constrain to perpendicular for orthogonal segments (KiCad-style)
+        const sdx=Math.abs(orig.end.x-orig.start.x),sdy=Math.abs(orig.end.y-orig.start.y);
+        if(sdx>sdy*2)dx=0;       // mostly horizontal → only allow Y movement
+        else if(sdy>sdx*2)dy=0;  // mostly vertical → only allow X movement
+        const nsx=orig.start.x+dx,nsy=orig.start.y+dy;
+        const nex=orig.end.x+dx,ney=orig.end.y+dy;
+        const EPS=0.001;
+        for(let i=0;i<tr.segments.length;i++){
+          const s=tr.segments[i],o=origAll[i];
+          if(i===si){
+            s.start.x=nsx;s.start.y=nsy;s.end.x=nex;s.end.y=ney;
+          } else {
+            s.start.x=o.start.x;s.start.y=o.start.y;s.end.x=o.end.x;s.end.y=o.end.y;
+            if(Math.abs(o.end.x-orig.start.x)<EPS&&Math.abs(o.end.y-orig.start.y)<EPS){s.end.x=nsx;s.end.y=nsy;}
+            if(Math.abs(o.start.x-orig.start.x)<EPS&&Math.abs(o.start.y-orig.start.y)<EPS){s.start.x=nsx;s.start.y=nsy;}
+            if(Math.abs(o.end.x-orig.end.x)<EPS&&Math.abs(o.end.y-orig.end.y)<EPS){s.end.x=nex;s.end.y=ney;}
+            if(Math.abs(o.start.x-orig.end.x)<EPS&&Math.abs(o.start.y-orig.end.y)<EPS){s.start.x=nex;s.start.y=ney;}
+          }
+        }
+        // Enforce 45° minimum angle rule — reject move if it would create a sharp angle
+        if(!this._checkTraceAngles(tr,si,nsx,nsy,nex,ney)){
+          // Restore segments from origAll (undo the tentative update above)
+          for(let i=0;i<tr.segments.length;i++){
+            tr.segments[i].start.x=origAll[i].start.x;tr.segments[i].start.y=origAll[i].start.y;
+            tr.segments[i].end.x=origAll[i].end.x;tr.segments[i].end.y=origAll[i].end.y;
+          }
+          this.render();
+          return;
+        }
+        this._traceDragViolations=this._checkTraceClearance(tr,si);
+        this.render();
+      } else if(this._isPan){
+        this.panX=mx-this._panS.x; this.panY=my-this._panS.y; this.render();
+      } else if(this._isBoxSel&&this._boxSelStart){
+        this._boxSelEnd={mx,my};this.render();
+      } else if((this.tool==='route'&&this.routePoints.length>0)||
+                (this.tool==='zone'&&this.zonePoints.length>0)||
+                (this.tool==='measure'&&this.measureStart)||
+                (this.tool==='area'&&this.areaStart)||
+                (this.tool==='draw')){
+        this.render();
+      } else if(this.tool==='select'){
+        const th=this.getTraceAt(mx,my);
+        const newHovTr=th?th.trace:null;
+        const newHovC=this.getCompAt(mx,my)||null; // already returns smallest
+        let needRender=false;
+        if(newHovTr!==this._hoverTrace){this._hoverTrace=newHovTr;needRender=true;}
+        if(newHovC!==this._hoverComp){this._hoverComp=newHovC;needRender=true;}
+        if(needRender)this.render();
+        const wrap=document.getElementById('canvas-wrap');
+        if(wrap) wrap.style.cursor=this._isDragTrace?'grabbing':(newHovTr||newHovC)?'pointer':'default';
+      }
+    });
+
+    cv.addEventListener('mouseup',e=>{
+      const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace;
+      this._isDrag=false; this._dragC=null; this._isPan=false; this._isDragVia=false;
+      this._isDragDrawing=false; this._dragDrawingStart=null; this._dragDrawingPts=null;
+      this._isDragTrace=false; this._dragTrace=null; this._traceDragViolations=[];
+      if(wasDragging) this._snapshot(); // snapshot after move
+      if(this._isBoxSel&&this._boxSelStart&&this._boxSelEnd){
+        const bx1=Math.min(this._boxSelStart.mx,this._boxSelEnd.mx);
+        const by1=Math.min(this._boxSelStart.my,this._boxSelEnd.my);
+        const bx2=Math.max(this._boxSelStart.mx,this._boxSelEnd.mx);
+        const by2=Math.max(this._boxSelStart.my,this._boxSelEnd.my);
+        // Only treat as box select if dragged more than 4px
+        if(bx2-bx1>4||by2-by1>4){
+          this.selectedComps=[];this.selectedComp=null;
+          for(const c of(this.board?.components||[])){
+            const cx=this.mmX(c.x),cy=this.mmY(c.y);
+            if(cx>=bx1&&cx<=bx2&&cy>=by1&&cy<=by2) this.selectedComps.push(c);
+          }
+        }
+        this._isBoxSel=false;this._boxSelStart=null;this._boxSelEnd=null;
+        this.render();
+        if(typeof updateInfoPanel==='function')updateInfoPanel();
+        return;
+      }
+      if(this._isAreaDrag&&this.areaStart&&this.board){
+        const{mx,my}=this._cp(e);
+        const ex=this.snap(this.cX(mx)),ey=this.snap(this.cY(my));
+        if(Math.abs(ex-this.areaStart.x)>this.gridSize||Math.abs(ey-this.areaStart.y)>this.gridSize){
+          (this.board.areas||(this.board.areas=[])).push({
+            id:'area_'+Date.now().toString(36),
+            net:this.areaNet||'GND',
+            layer:this.areaLayer||'F.Cu',
+            x1:this.areaStart.x,y1:this.areaStart.y,x2:ex,y2:ey
+          });
+          this._snapshot();
+          setTimeout(renderAreasPanel,0);
+        }
+        this.areaStart=null;this._isAreaDrag=false;
+        this.render();
+      }
+    });
+    cv.addEventListener('contextmenu',e=>e.preventDefault());
+
+    cv.addEventListener('wheel',e=>{
+      e.preventDefault();
+      const{mx,my}=this._cp(e);
+      const f=e.deltaY>0?0.88:1.13;
+      const old=this.scale;
+      this.scale=Math.max(1,Math.min(400,this.scale*f));
+      const r=this.scale/old;
+      // Pivot at mouse: keep world point under cursor fixed after zoom
+      // panX_new = (mx - offsetX)*(1 - r) + r*panX
+      this.panX=(mx-this.offsetX)*(1-r)+r*this.panX;
+      this.panY=(my-this.offsetY)*(1-r)+r*this.panY;
+      this.render();
+    },{passive:false});
+
+    window.addEventListener('keydown',e=>{
+      if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT')return;
+      const k=e.key.toLowerCase();
+      if(k==='s')setTool('select');
+      else if(k==='w')setTool('route');   // W = trace
+      else if(k==='r'&&(editor.selectedComp||editor.selectedVia)){  // R = rotate selected
+        if(editor.selectedComp){editor.selectedComp.rotation=((editor.selectedComp.rotation||0)+90)%360;editor.render();updateInfoPanel();}
+      }
+      else if(k==='v')setTool('via');
+      else if(k==='z'&&!e.ctrlKey&&!e.metaKey)setTool('zone');
+      else if(k==='a')setTool('area');
+      else if(k==='d'&&!e.ctrlKey&&!e.metaKey)setTool('draw');
+      else if(k==='m')setTool('measure');
+      else if(k==='f')editor.fitBoard();
+      else if(k==='enter'&&editor.tool==='draw'&&editor.drawPoints.length>=2){
+        // Enter key finishes a drawing (like double-click)
+        e.preventDefault();
+        const closeSel=document.getElementById('draw-close-chk');
+        const closed=closeSel?closeSel.checked:false;
+        if(editor.board){
+          (editor.board.drawings||(editor.board.drawings=[])).push({
+            id:'d'+Date.now(),layer:editor.drawLayer||'Edge.Cuts',
+            width:editor.drawWidth||0.05,points:[...editor.drawPoints],closed});
+          editor._snapshot();
+        }
+        editor.drawPoints=[];editor.render();
+      }
+      else if(k==='escape'){
+        editor.routePoints=[];editor.routeNet=null;
+        editor.zonePoints=[];editor.measureStart=null;
+        editor.areaStart=null;editor._isAreaDrag=false;
+        editor.drawPoints=[];
+        if(editor.tool!=='select'){
+          // Any non-select tool: Esc returns to select
+          setTool('select');
+        } else {
+          // In select mode: Esc clears selection
+          editor.selectedComp=null;editor.selectedTrace=null;editor.selectedVia=null;
+          editor.selectedPad=null;editor.selectedComps=[];editor.selectedDrawing=null;
+          editor._hoverTrace=null;editor._hoverComp=null;editor._lastClickObj=null;
+          editor.render();updateInfoPanel();
+        }
+      }
+      else if(k==='g'&&editor.selectedComp){
+        editor.selectedComp.rotation=((editor.selectedComp.rotation||0)+90)%360;
+        editor._snapshot(); editor.render();updateInfoPanel();
+      }
+      else if((k==='delete'||k==='backspace')&&(editor.selectedComp||editor.selectedTrace||editor.selectedArea||editor.selectedVia||editor.selectedDrawing)){
+        if(editor.selectedComp){
+          const idx=editor.board.components.indexOf(editor.selectedComp);
+          if(idx!==-1)editor.board.components.splice(idx,1);
+          editor.selectedComp=null; rebuildCompList(); _notifyParentRefs();
+        } else if(editor.selectedTrace){
+          const idx=(editor.board.traces||[]).indexOf(editor.selectedTrace);
+          if(idx!==-1)editor.board.traces.splice(idx,1);
+          editor.selectedTrace=null;
+        } else if(editor.selectedVia){
+          const idx=(editor.board.vias||[]).indexOf(editor.selectedVia);
+          if(idx!==-1)editor.board.vias.splice(idx,1);
+          editor.selectedVia=null;
+        } else if(editor.selectedArea){
+          const idx=(editor.board.areas||[]).indexOf(editor.selectedArea);
+          if(idx!==-1)editor.board.areas.splice(idx,1);
+          editor.selectedArea=null; renderAreasPanel();
+        } else if(editor.selectedDrawing){
+          const idx=(editor.board.drawings||[]).indexOf(editor.selectedDrawing);
+          if(idx!==-1)editor.board.drawings.splice(idx,1);
+          editor.selectedDrawing=null;
+        }
+        editor._snapshot(); editor.render();updateInfoPanel();
+      }
+      else if((k==='z'&&(e.ctrlKey||e.metaKey))&&!e.shiftKey){
+        e.preventDefault(); editor.undo();
+      }
+      else if((k==='z'&&(e.ctrlKey||e.metaKey)&&e.shiftKey)||(k==='y'&&(e.ctrlKey||e.metaKey))){
+        e.preventDefault(); editor.redo();
+      }
+    });
+  }
+}
