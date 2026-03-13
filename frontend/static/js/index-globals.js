@@ -49,7 +49,20 @@ function _scheduleLibReload() {
   clearTimeout(_libReloadTimer);
   _libReloadTimer = setTimeout(() => loadLibrary(), 600);
 }
-evtSource.addEventListener('library_updated', () => _scheduleLibReload());
+evtSource.addEventListener('library_updated', e => {
+  _scheduleLibReload();
+  // If this event is from a ticket completion, also refresh the version badge
+  // for the currently selected component so the new "AI — GT-xxx" label shows immediately.
+  try {
+    const d = e.data ? JSON.parse(e.data) : null;
+    if (d && d.reason === 'ticket_completed' && d.slug && d.slug === selectedSlug) {
+      if (typeof loadActiveVersionBadge === 'function') loadActiveVersionBadge(d.slug);
+      // If the history popover is open, reload it too
+      const pop = document.getElementById('history-popover');
+      if (pop && pop.style.display !== 'none' && typeof _loadHistoryList === 'function') _loadHistoryList();
+    }
+  } catch(_) {}
+});
 let _profileReloadTimer = null;
 evtSource.addEventListener('profile_updated', e => {
   const { slug } = JSON.parse(e.data);

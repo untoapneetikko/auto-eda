@@ -674,6 +674,9 @@ async def api_gen_tickets_update(tid: int, request: Request):
                 encoding="utf-8")
             _broadcast("library_updated", {"slug": slug, "reason": "ticket_completed",
                                            "ticketId": tid, "label": label, "vNum": v_num})
+            # Also fire profile_updated so the profile panel reloads if this slug is open
+            _broadcast("profile_updated", {"slug": slug, "reason": "ticket_completed",
+                                           "label": label, "vNum": v_num})
 
     return ticket
 
