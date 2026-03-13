@@ -560,96 +560,6 @@ def api_pcb_boards_delete(bid: str):
         f.unlink()
     return {"ok": True}
 
-@router.post("/pcb/import-schematic")
-async def api_pcb_import_schematic(request: Request):
-    """Convert a schematic project into an initial PCB board structure.
-
-    Body: { project: <project JSON>, boardW?: 80, boardH?: 60 }
-    Returns a board object compatible with PCBEditor.load():
-      { id, title, projectId, board:{width,height}, components:[...], traces:[], vias:[], nets:[], areas:[] }
-    """
-    import secrets as _sec
-    body = await request.json()
-    project  = body.get("project", {})
-    board_w  = float(body.get("boardW", 80))
-    board_h  = float(body.get("boardH", 60))
-
-    project_id  = project.get("id", "")
-    schem_comps = project.get("components", [])
-
-    if not schem_comps:
-        raise HTTPException(400, "No components in project")
-
-    # ── Load library profiles for all slugs ──────────────────────────────
-    profiles: dict[str, dict] = {}
-    for c in schem_comps:
-        slug = c.get("slug", "")
-        if slug and slug not in profiles:
-            pp = _profile_path(slug)
-            if pp.exists():
-                try:
-                    profiles[slug] = json.loads(pp.read_text(encoding="utf-8"))
-                except Exception:
-                    pass
-
-    # ── Convert schematic components → PCB components with pads ──────────
-    pcb_components: list[dict] = []
-    for comp in schem_comps:
-        slug    = comp.get("slug", "")
-        ref     = comp.get("ref") or comp.get("designator") or comp.get("id", "?")
-        value   = comp.get("value") or slug or ref
-        profile = profiles.get(slug, {})
-        pins    = profile.get("pins", [])
-
-        # Pick the first listed package, fall back to pin-count heuristics
-        pkg_types = profile.get("package_types") or []
-        if pkg_types:
-            pkg = pkg_types[0]
-        elif len(pins) > 4:
-            pkg = f"DIP-{max(len(pins), 8)}"
-        else:
-            pkg = "0402"
-
-        fp = _generate_footprint_rules(pkg, pins, ref)
-        if fp:
-            pads    = [dict(p) for p in fp.get("pads", [])]
-            fp_name = fp.get("name", pkg)
-        else:
-            # Generic 2-pad SMD fallback
-            pads = [
-                {"number": "1", "x": -0.5, "y": 0.0, "type": "smd",
-                 "shape": "rect", "size_x": 0.6, "size_y": 0.6},
-                {"number": "2", "x":  0.5, "y": 0.0, "type": "smd",
-                 "shape": "rect", "size_x": 0.6, "size_y": 0.6},
-            ]
-            fp_name = pkg or "Generic"
-
-        pcb_components.append({
-            "id":        f"{ref}_{_sec.token_hex(3)}",
-            "ref":       ref,
-            "value":     value,
-            "footprint": fp_name,
-            "x":         round(board_w / 2, 2),
-            "y":         round(board_h / 2, 2),
-            "rotation":  0,
-            "layer":     "F",
-            "pads":      pads,
-        })
-
-    board_data = {
-        "id":        _sec.token_hex(6),
-        "title":     project.get("name", "PCB Layout"),
-        "projectId": project_id,
-        "board":     {"width": board_w, "height": board_h},
-        "components": pcb_components,
-        "traces":    [],
-        "vias":      [],
-        "nets":      [],
-        "areas":     [],
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }
-    return board_data
-
 # ── Issues ────────────────────────────────────────────────────────────────────
 @router.get("/issues")
 def api_issues_list():
@@ -1986,7 +1896,10 @@ async def api_pipeline_agent_chat(name: str, request: Request):
             _pa_save(name)
             _broadcast("pipeline_agent_done", {"name": name, "run_id": run_id, "status": "cancelled", "msg_id": resp_id})
         except Exception as exc:
-            err = f"\n[error] {exc}"
+            import traceback as _tb
+            _full = _tb.format_exc()
+            print(f"[agent-error] {type(exc).__name__}: {exc}\n{_full}", flush=True)
+            err = f"\n[error] {type(exc).__name__}: {exc}\n{_full}"
             for m in _pipeline_chat[name]:
                 if m["id"] == resp_id:
                     m["content"] += err
@@ -2761,7 +2674,16 @@ def _positions_are_spread(components: list[dict]) -> bool:
     ys = [c.get("y", 0) for c in components]
     spread = max(max(xs) - min(xs), max(ys) - min(ys))
     # If all components are within 2 mm of each other they're stacked/unplaced
-    return spread > 2.0
+    if spread <= 2.0:
+        return False
+    # Also reject if the majority of components share the same position
+    # (e.g. 8 of 11 stacked at the same point with only 3 outliers spread)
+    from collections import Counter as _Counter
+    positions = [(round(c.get("x", 0), 1), round(c.get("y", 0), 1)) for c in components]
+    most_common_count = _Counter(positions).most_common(1)[0][1]
+    if most_common_count / len(components) > 0.4:
+        return False  # majority are stacked — treat as unplaced
+    return True
 
 
 def run_autoplace(board: dict) -> dict:
@@ -2781,13 +2703,13 @@ def run_autoplace(board: dict) -> dict:
     bh = float(board.get("board", {}).get("height", 100))
 
     # ── Filter: skip pure power/GND symbols that have no physical footprint ──
-    _SKIP_REFS  = {"GND", "VDD", "VCC", "PWR", "AGND", "DGND", "PGND"}
+    _SKIP_REF_PREFIXES = ("GND", "VDD", "VCC", "PWR", "AGND", "DGND", "PGND")
     _SKIP_VALS  = {"GND", "VDD", "VCC", "PWR_FLAG"}
     all_components = [dict(c) for c in board.get("components", [])]
     components = [
         c for c in all_components
         if c.get("footprint", "").strip()                       # must have a footprint
-        and c.get("ref", "").upper() not in _SKIP_REFS          # skip pure GND/VDD refs
+        and not any(c.get("ref", "").upper().startswith(p) for p in _SKIP_REF_PREFIXES)  # skip GND/GND1/GND2 etc.
         and c.get("value", "").upper() not in _SKIP_VALS        # skip pure power values
     ]
     if not components:
@@ -2867,6 +2789,20 @@ def run_autoplace(board: dict) -> dict:
                 schematic_hints[ref] = (bx_base + (n_dup % 3) * 4.0,
                                         by_base + (n_dup // 3) * 4.0)
 
+    # ── Determine hint_weight ─────────────────────────────────────────────
+    has_nets = any(net.get("name") for net in nets)
+    if using_board_positions:
+        # Strong: preserve prior manual placement
+        hw = 0.85
+    elif not has_nets and schematic_hints:
+        # No net connectivity → net-attraction does nothing; rely on hints
+        hw = 0.75
+    elif schematic_hints:
+        # Normal: balance net-attraction with schematic-position hints
+        hw = 0.4
+    else:
+        hw = 0.0
+
     # ── Run placement ────────────────────────────────────────────────────
     placements = compute_net_proximity_placement(
         components=opt_components,
@@ -2875,7 +2811,7 @@ def run_autoplace(board: dict) -> dict:
         schematic_hints=schematic_hints if schematic_hints else None,
         # When preserving existing board positions, use strong hint gravity
         # so the algorithm refines rather than rearranges.
-        hint_weight=0.85 if using_board_positions else 0.4,
+        hint_weight=hw,
     )
 
     # ── Write x/y back; preserve original rotations ──────────────────────
