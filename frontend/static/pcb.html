@@ -2462,32 +2462,33 @@ window.addEventListener('load',()=>{
           const existingBoards = await existingRes.json();
           let bw = opts.boardW || 80;
           let bh = opts.boardH || 60;
-          let prevBoardData = null;
-          // If an existing board is found, preserve its dimensions and LE data
+          // If an existing board is found for this project, load it directly —
+          // do NOT re-run importSchematic or we'll overwrite saved component positions.
           if (existingBoards && existingBoards.length > 0) {
             const eb = existingBoards[0];
-            // Load the full board to get its dimensions, then update
             const ebFull = await fetch(`/api/pcb-boards/${eb.id}`).then(r=>r.json());
-            if (ebFull?.board) { bw = ebFull.board.width || bw; bh = ebFull.board.height || bh; }
-            prevBoardData = ebFull; // pass to convert() so LE data is preserved
-            // Load the existing board first so we keep its ID
             const loadRes = editor.load(ebFull);
-            if (loadRes.ok) afterLoad();
+            if (loadRes.ok) {
+              _activeBoardId = eb.id;
+              switchPcbSection('layout');
+              afterLoad();
+              await loadBoardTabs(_currentProjectId);
+              _staleProjId = null;
+              const _sb = document.getElementById('pcb-stale-banner');
+              if (_sb) _sb.style.display = 'none';
+              if (src) src.postMessage({ type: 'importProjectDone' }, '*');
+              setTimeout(()=>{if(typeof runDRCTab==='function')runDRCTab();},200);
+              return; // positions preserved — skip fresh import
+            }
           }
+          // No saved board exists yet — do a fresh import from the schematic
           const r = await fetch(`/api/projects/${e.data.projectId}`);
           const proj = await r.json();
           const pcb = await importSchematic(proj, e.data.netlist, bw, bh);
           if (pcb) {
-            // Only reuse the board ID if we explicitly loaded an existing board for THIS project.
-            // Do NOT grab editor.board.id here — it may belong to a different (or deleted) project.
-            const existingBoardId = existingBoards?.length > 0 ? existingBoards[0].id : null;
-            const existingTitle   = existingBoards?.length > 0 ? existingBoards[0].title : null;
             switchPcbSection('layout');
             await animateBoardLoad(pcb);
-            if (existingBoardId) editor.board.id = existingBoardId;
-            // Keep the existing title on re-import so V1 doesn't become V2
-            if (existingTitle) editor.board.title = existingTitle;
-            // Always stamp the current project id so there's no cross-project contamination
+            // Stamp the project id so there's no cross-project contamination
             editor.board.projectId = e.data.projectId;
             const res = {ok: !!editor.board};
             if (res.ok) {
