@@ -49,6 +49,6 @@ if "%TUNNEL%"=="1" (
 :: ── App ──────────────────────────────────────────────────────────────────────
 echo  [3] Starting app ^(auto-reload on^)...
 echo.
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir backend --reload-dir agents
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir backend --reload-dir agents --timeout-graceful-shutdown 1
 
 endlocal
