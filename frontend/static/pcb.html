@@ -2475,9 +2475,12 @@ window.addEventListener('load',()=>{
             // Only reuse the board ID if we explicitly loaded an existing board for THIS project.
             // Do NOT grab editor.board.id here — it may belong to a different (or deleted) project.
             const existingBoardId = existingBoards?.length > 0 ? existingBoards[0].id : null;
+            const existingTitle   = existingBoards?.length > 0 ? existingBoards[0].title : null;
             switchPcbSection('layout');
             await animateBoardLoad(pcb);
             if (existingBoardId) editor.board.id = existingBoardId;
+            // Keep the existing title on re-import so V1 doesn't become V2
+            if (existingTitle) editor.board.title = existingTitle;
             // Always stamp the current project id so there's no cross-project contamination
             editor.board.projectId = e.data.projectId;
             const res = {ok: !!editor.board};

@@ -2940,43 +2940,97 @@ async def autoplace_direct(request: Request):
 
 # ── Schematic → PCB importer ───────────────────────────────────────────────────
 
-def _pick_footprint(slug: str, sym_type: str, pin_count: int) -> dict | None:
-    """Return footprint JSON dict for a schematic component, or None for power symbols."""
+# Cache of available footprint file stems, built lazily from FOOTPRINTS_DIR.
+# Maps lowercase stem → original-case stem (e.g. "sot-23" → "SOT-23").
+_FOOTPRINT_STEMS: dict[str, str] = {}
+
+def _build_footprint_stems() -> None:
+    """Populate _FOOTPRINT_STEMS from the footprints directory (once)."""
+    global _FOOTPRINT_STEMS
+    if not _FOOTPRINT_STEMS:
+        _FOOTPRINT_STEMS = {p.stem.lower(): p.stem for p in FOOTPRINTS_DIR.glob("*.json")}
+
+
+def _match_package_to_footprint(package_types: list[str]) -> str | None:
+    """Try to resolve a library profile's package_types list to an available footprint stem.
+
+    Normalisation cascade (tried in order for each entry):
+      1. Exact case-insensitive match          "SOT-23"         → SOT-23
+      2. Strip parenthetical suffix            "D2PAK (SMD)"    → D2PAK
+      3. First whitespace token                "0402 SMD"       → 0402
+      4. Strip trailing alpha suffix           "TO-220AB"       → TO-220
+    The first entry that resolves wins; later entries act as fall-backs.
+    """
+    _build_footprint_stems()
+    for pkg in package_types:
+        pkg = pkg.strip()
+        candidates = [
+            pkg,                                          # 1. exact
+            re.sub(r'\s*\(.*?\)', '', pkg).strip(),      # 2. drop parens
+            pkg.split()[0] if pkg.split() else '',       # 3. first token
+            re.sub(r'[A-Za-z]+$', '', re.sub(r'\s*\(.*?\)', '', pkg).strip()),  # 4. strip trailing alpha
+        ]
+        for c in candidates:
+            if c and c.lower() in _FOOTPRINT_STEMS:
+                return _FOOTPRINT_STEMS[c.lower()]
+    return None
+
+
+def _pick_footprint(slug: str, sym_type: str, pin_count: int,
+                    package_types: list[str] | None = None,
+                    profile_footprint: str | None = None) -> dict | None:
+    """Return footprint JSON dict for a schematic component, or None for power symbols.
+
+    Priority:
+      0. profile.footprint explicit field        — set by footprint agent (most accurate)
+      1. package_types from the library profile  — parsed from real datasheet
+      2. SLUG_FP hardcoded overrides             — reliable common-component defaults
+      3. SYMTYPE_FP symType-level fallback        — generic category defaults
+      4. DIP-N / LQFP-64 by pin count            — last resort for unknown ICs
+    """
     slug_up = slug.upper()
 
     # Skip power symbols — they have no physical footprint
     if sym_type in ("vcc", "gnd", "pwr", "power") or slug_up in ("GND", "VCC", "PWR", "POWER"):
         return None
 
-    # Direct slug → footprint name map (common library slugs)
+    # 0. Explicit footprint field saved by the footprint agent (highest priority)
+    fp_name: str | None = None
+    if profile_footprint:
+        _build_footprint_stems()
+        fp_name = _FOOTPRINT_STEMS.get(profile_footprint.lower())
+
+    # 1. Use package_types from the library profile (authoritative source)
+    if fp_name is None:
+        fp_name = _match_package_to_footprint(package_types or [])
+
+    # 2. Direct slug → footprint name map (reliable overrides for generic symbols
+    #    that have many package variants, e.g. RESISTOR always defaults to 0402)
     SLUG_FP: dict[str, str] = {
         "RESISTOR":      "0402",
         "CAPACITOR":     "0402",
         "CAPACITOR_POL": "CAP-POL-5mm",
         "INDUCTOR":      "0603",
-        "DIODE":         "0402",
+        "DIODE":         "DO-41",
         "LED":           "LED-5mm",
-        "BC547":         "SOT-23",
-        "BC557":         "SOT-23",
-        "AMS1117-3.3":   "SOT-223",
-        "AP2112":        "SOT-23",
-        "DRV8833":       "TSSOP-16",
     }
+    if fp_name is None:
+        fp_name = SLUG_FP.get(slug_up)
 
-    # symType-level fallback
+    # 3. symType-level fallback
     SYMTYPE_FP: dict[str, str] = {
         "resistor":   "0402",
         "capacitor":  "0402",
         "inductor":   "0603",
-        "diode":      "0402",
+        "diode":      "DO-41",
         "led":        "LED-5mm",
         "transistor": "SOT-23",
         "mosfet":     "SOT-23",
         "jfet":       "SOT-23",
-        "zener":      "0402",
-        "schottky":   "0402",
-        "tvs":        "0402",
-        "ferrite":    "0402",
+        "zener":      "SOD-123",
+        "schottky":   "SOD-123",
+        "tvs":        "SOD-123",
+        "ferrite":    "0603",
         "crystal":    "0805",
         "oscillator": "DIP-8",
         "switch":     "0402",
@@ -2985,14 +3039,11 @@ def _pick_footprint(slug: str, sym_type: str, pin_count: int) -> dict | None:
         "fuse":       "0603",
         "testpoint":  "0402",
     }
-
-    fp_name: str | None = SLUG_FP.get(slug_up)
-
     if fp_name is None:
         fp_name = SYMTYPE_FP.get((sym_type or "").lower())
 
+    # 4. IC pin-count → package fallback
     if fp_name is None:
-        # IC: choose DIP by pin count
         if pin_count <= 8:
             fp_name = "DIP-8"
         elif pin_count <= 16:
@@ -3030,6 +3081,20 @@ async def api_pcb_import_schematic(request: Request):
     schematic_comps: list[dict] = project.get("components", [])
     bw = float(body.get("boardW", 100.0))
     bh = float(body.get("boardH", 80.0))
+
+    # ── Board title: "{project name} - V{n}" ──────────────────────────────
+    project_name = project.get("name") or "Design"
+    project_id   = project.get("id", "")
+    existing_count = 0
+    if project_id:
+        try:
+            existing_count = sum(
+                1 for f in PCB_BOARDS_DIR.glob("*.json")
+                if json.loads(f.read_text("utf-8")).get("projectId") == project_id
+            )
+        except Exception:
+            pass
+    board_title = f"{project_name} - V{existing_count + 1}"
 
     # ── Scale schematic positions → board mm ──────────────────────────────
     xs = [float(c["x"]) for c in schematic_comps if isinstance(c.get("x"), (int, float))]
@@ -3082,11 +3147,13 @@ async def api_pcb_import_schematic(request: Request):
 
         pins: list[dict] = profile.get("pins", [])
         pin_count = len(pins)
+        package_types: list[str] = profile.get("package_types", [])
+        profile_footprint: str | None = profile.get("footprint") or None
         pin_by_num: dict[str, str] = {
             str(p.get("number", "")): str(p.get("name", "")) for p in pins
         }
 
-        fp_data = _pick_footprint(slug, sym_type, pin_count)
+        fp_data = _pick_footprint(slug, sym_type, pin_count, package_types, profile_footprint)
 
         # ── Build pads ────────────────────────────────────────────────────
         pads: list[dict] = []
@@ -3171,6 +3238,7 @@ async def api_pcb_import_schematic(request: Request):
     ]
 
     return {
+        "title":      board_title,
         "board":      {"width": bw, "height": bh, "units": "mm"},
         "components": pcb_comps,
         "nets":       pcb_nets,
