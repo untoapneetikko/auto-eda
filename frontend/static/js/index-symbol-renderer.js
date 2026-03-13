@@ -465,16 +465,26 @@ async function leSaveLayout() {
     // fail if the message handler isn't registered or e.source checks mismatch.
     const pcbInst = frame.contentWindow?.pcbEditorInstance;
     const board = pcbInst?.board ?? null;
+    console.log('[LE-SAVE] pcbEditorInstance:', pcbInst, '  board:', board);
     if (!board) throw new Error('PCB editor board not available — try switching away and back to the Layout Example tab');
+    // Log positions BEFORE save so we can verify what's being sent
+    const posBefore = (board.components || []).map(c => `${c.ref}:(${c.x?.toFixed(2)},${c.y?.toFixed(2)})`).join(' | ');
+    console.log('[LE-SAVE] positions being saved:', posBefore);
+    const bodyStr = JSON.stringify(board);
     const res = await fetch(`/api/library/${encodeURIComponent(slug)}/layout_example`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(board)
+      body: bodyStr
     });
     if (!res.ok) {
       const errText = await res.text().catch(() => res.status);
       throw new Error(`Server error ${res.status}: ${errText}`);
     }
+    // Verify what the server actually stored
+    const verify = await fetch(`/api/library/${encodeURIComponent(slug)}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
+    const posAfter = (verify?.layout_example?.components || []).map(c => `${c.ref}:(${c.x?.toFixed(2)},${c.y?.toFixed(2)})`).join(' | ');
+    console.log('[LE-SAVE] positions confirmed on server:', posAfter || '(none)');
+    if (posBefore !== posAfter) console.warn('[LE-SAVE] ⚠ MISMATCH — saved positions differ from server!', {posBefore, posAfter});
     // Keep the in-memory cache in sync so the early-return in renderLayoutExample
     // serves the freshly-saved board rather than the stale pre-edit snapshot.
     _leBoard = board;
