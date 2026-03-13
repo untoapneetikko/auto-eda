@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import heapq
+import threading
 import io
 import json
 import math
@@ -1698,6 +1699,50 @@ def api_pipeline_agent_clear(name: str):
     return {"ok": True}
 
 
+async def _agent_query(prompt: str, opts):
+    """Run claude-agent-sdk in a dedicated thread with ProactorEventLoop.
+
+    On Windows, uvicorn forces SelectorEventLoop which cannot spawn subprocesses.
+    We work around this by running the SDK inside a fresh thread that owns a
+    ProactorEventLoop, bridging results back to the uvicorn loop via a queue.
+    """
+    result_q: asyncio.Queue = asyncio.Queue()
+    main_loop = asyncio.get_running_loop()
+    errors: list = []
+
+    def _thread():
+        async def _inner():
+            try:
+                from claude_agent_sdk import query  # type: ignore
+                async for msg in query(prompt=prompt, options=opts):
+                    main_loop.call_soon_threadsafe(result_q.put_nowait, msg)
+            except Exception as exc:
+                errors.append(exc)
+            finally:
+                main_loop.call_soon_threadsafe(result_q.put_nowait, None)  # sentinel
+
+        if sys.platform == "win32":
+            loop = asyncio.ProactorEventLoop()
+        else:
+            loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(_inner())
+        finally:
+            loop.close()
+
+    threading.Thread(target=_thread, daemon=True).start()
+
+    while True:
+        msg = await result_q.get()
+        if msg is None:
+            break
+        yield msg
+
+    if errors:
+        raise errors[0]
+
+
 @router.post("/pipeline/agents/{name}/chat")
 async def api_pipeline_agent_chat(name: str, request: Request):
     """Send a message to a pipeline agent — auto-routes to a free instance if busy."""
@@ -1751,7 +1796,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
         _broadcast("pipeline_agent_msg_start", {"name": name, "msg": {"id": resp_id, "role": "assistant", "content": "", "ts": resp_ts, "streaming": True}})
 
         try:
-            from claude_agent_sdk import query, ClaudeAgentOptions, ResultMessage, SystemMessage, AssistantMessage  # type: ignore
+            from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, SystemMessage, AssistantMessage  # type: ignore
             from claude_agent_sdk.types import ThinkingConfigAdaptive  # type: ignore
 
             # First message: prepend system context; subsequent: just the user message
@@ -1802,7 +1847,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
 
             async def _stream(session_id, retry=True):
                 try:
-                    async for msg in query(prompt=prompt, options=_make_opts(session_id)):
+                    async for msg in _agent_query(prompt=prompt, opts=_make_opts(session_id)):
                         yield msg
                 except Exception as e:
                     if retry and session_id:
