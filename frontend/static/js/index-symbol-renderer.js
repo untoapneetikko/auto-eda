@@ -444,11 +444,13 @@ async function leSaveLayout() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
   try {
     if (!frame.contentWindow) throw new Error('PCB editor not loaded — reload the page and try again');
+    console.log('[LE-SAVE] requesting board from le-frame, slug=', selectedSlug);
     const board = await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('PCB editor did not respond (timeout) — try clicking away and back to this tab')), 5000);
       const handler = e => {
         if (e.data?.type !== 'boardData') return;
-        if (e.source !== frame.contentWindow) return; // ignore boardData from other iframes (e.g. pcb-frame)
+        console.log('[LE-SAVE] boardData received, e.source===frame.contentWindow:', e.source === frame.contentWindow, e.source, frame.contentWindow);
+        if (e.source !== frame.contentWindow) { console.warn('[LE-SAVE] boardData from unexpected source, ignoring'); return; }
         clearTimeout(timer);
         window.removeEventListener('message', handler);
         resolve(e.data.board);
@@ -457,19 +459,26 @@ async function leSaveLayout() {
       frame.contentWindow.postMessage({ type: 'getBoard' }, '*');
     });
     if (!board) throw new Error('No board data returned from PCB editor');
+    // Log component positions to verify we have the moved state
+    const positions = (board.components || []).map(c => `${c.ref}:(${c.x},${c.y})`).join(', ');
+    console.log('[LE-SAVE] board components positions:', positions);
     const res = await fetch(`/api/library/${encodeURIComponent(selectedSlug)}/layout_example`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(board)
     });
+    console.log('[LE-SAVE] PUT response status:', res.status);
     if (!res.ok) {
       const errText = await res.text().catch(() => res.status);
       throw new Error(`Server error ${res.status}: ${errText}`);
     }
+    const resJson = await res.json().catch(() => null);
+    console.log('[LE-SAVE] PUT response body:', resJson);
     // Keep the in-memory cache in sync so the early-return in renderLayoutExample
     // serves the freshly-saved board rather than the stale pre-edit snapshot.
     _leBoard = board;
     await _syncActiveSnapshot(); // keep active version snapshot in sync (must complete before user can Activate)
+    console.log('[LE-SAVE] save complete ✓');
     if (btn) { btn.textContent = '✓ Saved'; }
     const notes = document.getElementById('le-notes');
     if (notes && !notes.textContent.includes('✓')) notes.textContent += ' · ✓ saved';
@@ -477,6 +486,7 @@ async function leSaveLayout() {
       if (btn) { btn.disabled = false; btn.textContent = origText; }
     }, 2000);
   } catch(e) {
+    console.error('[LE-SAVE] failed:', e);
     if (btn) { btn.disabled = false; btn.textContent = origText; }
     alert('Save failed: ' + e.message);
   }
@@ -521,6 +531,7 @@ async function renderLayoutExample(slug) {
 
   // Decide what board to show
   let board;
+  console.log('[LE-RENDER] slug=', slug, 'has layout_example:', !!(profile.layout_example?.components?.length), 'components:', (profile.layout_example?.components || []).map(c => `${c.ref}:(${c.x},${c.y})`).join(', '));
   if (profile.layout_example && profile.layout_example.components?.length) {
     // Saved layout takes priority
     board = profile.layout_example;
