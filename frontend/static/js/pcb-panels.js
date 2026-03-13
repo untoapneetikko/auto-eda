@@ -93,8 +93,9 @@ function rebuildCompList(){
   const rows=[];
   if(schRefs&&schRefs.length){
     for(const sr of schRefs){
-      const live=activeByRef.get(sr.ref);
-      rows.push({comp:live||null,ref:sr.ref,value:sr.value,footprint:sr.footprint,missing:!live});
+      const ref=sr.ref||sr.id;
+      const live=activeByRef.get(ref);
+      rows.push({comp:live||null,ref,value:sr.value||'',footprint:sr.footprint||'',schRef:sr,missing:!live});
     }
     // Also add any components present on board but not in schematicRefs (manually added)
     const schRefSet=new Set(schRefs.map(s=>s.ref));
@@ -119,7 +120,31 @@ function rebuildCompList(){
     d.innerHTML=row.missing
       ? `<span class="ci-ref ci-ref-missing">${esc(row.ref)}</span><div style="flex:1;overflow:hidden"><div class="ci-val" style="color:var(--text-muted);text-decoration:line-through">${esc(row.value)}</div><div class="ci-fp" style="color:var(--text-muted)">${esc(row.footprint)}</div></div><span class="ci-missing-badge">missing</span>`
       : `<span class="ci-ref">${esc(row.ref)}</span><div style="flex:1;overflow:hidden"><div class="ci-val">${esc(row.value)}</div><div class="ci-fp">${esc(row.footprint)}</div></div>`;
-    if(row.comp){
+    if(row.missing){
+      d.title='Click to restore this component';
+      d.onclick=()=>{
+        // Restore: clone the original schRef component data, place it in staging area
+        const restored=JSON.parse(JSON.stringify(row.schRef));
+        const b=editor.board.board||{};
+        const boardW=b.width||80, boardH=b.height||60;
+        // Find a free staging Y slot to the right of the board
+        const stageX=boardW+10;
+        const usedY=new Set((editor.board.components||[]).filter(c=>c.x>boardW).map(c=>Math.round(c.y)));
+        let sy=5;
+        while(usedY.has(sy))sy+=12;
+        restored.x=stageX; restored.y=sy;
+        editor._snapshot();
+        editor.board.components.push(restored);
+        editor.selectedComp=restored; editor.selectedComps=[restored];
+        // Pan to show the restored component
+        editor.panX=editor.canvas.width/2-restored.x*editor.scale-editor.offsetX;
+        editor.panY=editor.canvas.height/2-restored.y*editor.scale-editor.offsetY;
+        editor.render();
+        rebuildCompList();
+        updateInfoPanel();
+        if(typeof _notifyParentRefs==='function') _notifyParentRefs();
+      };
+    } else {
       const c=row.comp;
       d.onclick=()=>{
         if(_lastSelCiEl) _lastSelCiEl.classList.remove('sel');

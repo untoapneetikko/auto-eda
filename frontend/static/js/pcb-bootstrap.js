@@ -114,8 +114,8 @@ window.addEventListener('load',()=>{
                 const freshBoard = await importSchematic(proj, e.data.netlist, boardW, boardH);
 
                 if (freshBoard && freshBoard.components) {
-                  // Always update schematicRefs to the current schematic state
-                  editor.board.schematicRefs = freshBoard.components.map(c=>({ref:c.ref||c.id,value:c.value||'',footprint:c.footprint||''}));
+                  // Always update schematicRefs to the current schematic state (full objects)
+                  editor.board.schematicRefs = freshBoard.components.map(c=>JSON.parse(JSON.stringify(c)));
                   const existingRefs = new Set((editor.board.components || []).map(c => c.ref || c.id));
                   const newComps = freshBoard.components.filter(c => !existingRefs.has(c.ref || c.id));
 
@@ -165,8 +165,8 @@ window.addEventListener('load',()=>{
           const proj = await r.json();
           const pcb = await importSchematic(proj, e.data.netlist, bw, bh);
           if (pcb) {
-            // Store canonical component list so the UI can mark deleted ones as "missing"
-            pcb.schematicRefs = (pcb.components||[]).map(c=>({ref:c.ref||c.id,value:c.value||'',footprint:c.footprint||''}));
+            // Store canonical component list (full objects) so missing ones can be restored
+            pcb.schematicRefs = (pcb.components||[]).map(c=>JSON.parse(JSON.stringify(c)));
             switchPcbSection('layout');
             await animateBoardLoad(pcb);
             // Stamp the project id so there's no cross-project contamination

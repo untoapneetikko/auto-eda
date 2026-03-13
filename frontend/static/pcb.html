@@ -54,10 +54,11 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .ci-ref{font-family:monospace;font-size:12px;font-weight:700;color:var(--accent);min-width:32px;}
 .ci-val{font-size:11px;color:var(--text-dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ci-fp{font-size:10px;color:var(--text-muted);}
-.ci-missing{opacity:0.55;cursor:default;}
-.ci-missing:hover{background:transparent;}
+.ci-missing{opacity:0.6;cursor:pointer;}
+.ci-missing:hover{background:rgba(248,113,113,0.08);}
 .ci-ref-missing{color:var(--text-muted);text-decoration:line-through;}
 .ci-missing-badge{font-size:9px;font-weight:700;color:#f87171;background:#3f1515;border:1px solid #7f2020;border-radius:3px;padding:1px 4px;white-space:nowrap;margin-left:auto;}
+.ci-missing:hover .ci-missing-badge{background:#5a1a1a;color:#fca5a5;content:'restore';}
 
 /* Canvas */
 .canvas-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;background:#0a0a0a;}
