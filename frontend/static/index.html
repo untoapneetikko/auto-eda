@@ -8062,6 +8062,7 @@ function _paStopPoll() {
   if (_paPollTimer) { clearInterval(_paPollTimer); _paPollTimer = null; }
 }
 let _activePaAgent = null; // currently open agent name
+let _paTempMsgEl = null;  // optimistically-shown user msg element, cleared once SSE confirms it
 const _paModelPref = {}; // agent name → model string
 const _PA_DEFAULT_MODEL = 'claude-sonnet-4-6';
 
@@ -8291,6 +8292,7 @@ async function paChatSend() {
   const now = new Date().toISOString();
   const tempId = 'tmp-' + Date.now();
   _paAppendMsg({ id: tempId, role: 'user', content: msg, ts: now });
+  _paTempMsgEl = document.getElementById('pa-msg-' + tempId); // hold ref for SSE dedup
   _paShowThinking('Sending…');
 
   const res = await fetch(`/api/pipeline/agents/${agentName}/chat`, {
@@ -8305,9 +8307,6 @@ async function paChatSend() {
     if (area) area.insertAdjacentHTML('beforeend', `<div class="pa-system-line" style="color:#ef4444;">Error: ${esc(res.error)}</div>`);
     if (btn) btn.disabled = false;
   } else {
-    // Replace temp message id so SSE dedup works
-    const tmpEl = document.getElementById('pa-msg-' + tempId);
-    if (tmpEl && res.msg_id) tmpEl.id = 'pa-msg-' + res.msg_id;
     _paShowThinking('Waiting for agent…');
 
     // If the backend routed to a different (cloned) instance, switch the chat pane to it
@@ -8376,8 +8375,16 @@ function _handlePipelineSSE(evt, data) {
 
   if (evt === 'pipeline_agent_started') {
     _paUpdateModalStatus('running');
-    // Only append user msg if not already shown (paChatSend shows it immediately)
-    if (data.msg && !document.getElementById('pa-msg-' + data.msg.id)) _paAppendMsg(data.msg);
+    if (data.msg) {
+      if (_paTempMsgEl) {
+        // Optimistic message already shown — just stamp it with the real id
+        _paTempMsgEl.id = 'pa-msg-' + data.msg.id;
+        _paTempMsgEl = null;
+      } else if (!document.getElementById('pa-msg-' + data.msg.id)) {
+        // Another tab / SSE reconnect: show it fresh
+        _paAppendMsg(data.msg);
+      }
+    }
     _paShowThinking('Agent starting…');
     document.getElementById('pa-send-btn') && (document.getElementById('pa-send-btn').disabled = true);
   }
