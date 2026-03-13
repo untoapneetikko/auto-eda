@@ -209,6 +209,14 @@
   [data-acc-tool].active { background:var(--accent-dim) !important; border-color:var(--accent) !important; color:var(--accent) !important; }
   .toolbar-sep { width:1px; height:22px; background:var(--border); margin:0 4px; flex-shrink:0; }
   .toolbar-spacer { flex:1; }
+  /* ── Context menu ── */
+  .sch-ctx-menu { position:fixed; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:4px 0; min-width:190px; z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.55); }
+  .sch-ctx-item { padding:7px 14px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--text-dim); transition:background .1s; }
+  .sch-ctx-item:hover { background:var(--surface2); color:var(--text); }
+  .sch-ctx-item.danger { color:var(--red); }
+  .sch-ctx-item.danger:hover { background:rgba(239,68,68,0.1); }
+  .sch-ctx-kbd { font-size:10px; opacity:0.45; font-family:monospace; }
+  .sch-ctx-sep { height:1px; background:var(--border); margin:3px 0; }
   .toolbar-project-name { font-size:12px; color:var(--text-dim); font-family:monospace; margin-right:8px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .btn-save { background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.4); color:var(--green); border-radius:5px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; transition:all .15s; }
   .btn-save:hover { background:rgba(34,197,94,0.25); }
@@ -818,6 +826,9 @@
       <button class="tool-btn" id="btn-redo" onclick="editor._redo()" title="Redo — Ctrl+Y / Ctrl+Shift+Z" disabled style="opacity:0.35;cursor:default;">&#8631; Redo</button>
       <button class="tool-btn" data-tool="label" onclick="editor.setTool('label')" title="Net Label — L">&#9657; Label</button>
       <input id="label-name-input" type="text" placeholder="Net name…" title="Net label name" style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:11px;font-family:monospace;" onkeydown="if(event.key==='Enter'){event.target.blur();editor.setTool('label');}" />
+      <div class="toolbar-sep"></div>
+      <button class="tool-btn" id="btn-group" onclick="editor.groupSelected()" title="Group selection — Ctrl+G">&#9681; Group</button>
+      <button class="tool-btn" id="btn-ungroup" onclick="editor.ungroupSelected()" title="Ungroup — Ctrl+Shift+G">&#9682; Ungroup</button>
       <div class="toolbar-sep"></div>
       <button class="tool-btn" onclick="exportSVG()" title="Export schematic as SVG">&#8615; SVG</button>
       <button class="tool-btn" onclick="exportPNG()" title="Export schematic as PNG">&#8615; PNG</button>

@@ -63,18 +63,19 @@ class SchematicEditor {
     });
     this.svg.addEventListener('dblclick',  e => this._dbl(e));
     this.svg.addEventListener('wheel', e => { e.preventDefault(); this._wheel(e); }, { passive: false });
-    this.svg.addEventListener('contextmenu', e => { e.preventDefault(); this._cancel(); });
+    this.svg.addEventListener('contextmenu', e => { e.preventDefault(); this._showContextMenu(e); });
     this._boundKey = e => this._key(e);
     document.addEventListener('keydown', this._boundKey);
   }
 
   destroy() {
     if (this._boundKey) document.removeEventListener('keydown', this._boundKey);
+    this._hideContextMenu();
   }
 
   // ── Project ───────────────────────────────────────────────────────────────
   newProject(name) {
-    this.project = { id: null, name: name || 'Untitled', components: [], wires: [], labels: [] };
+    this.project = { id: null, name: name || 'Untitled', components: [], wires: [], labels: [], groups: [] };
     this.dirty = false; this.selected = null;
     this._saveHist(); this._resetView(); this._render(); this._status();
   }
@@ -82,6 +83,7 @@ class SchematicEditor {
   loadProject(data) {
     this.project = data;
     if (!this.project.labels) this.project.labels = [];
+    if (!this.project.groups) this.project.groups = [];
     this.dirty = false; this.selected = null;
     this._autoConnectAll();
     this._saveHist(); this._fit(); this._render(); this._status();
@@ -341,6 +343,26 @@ class SchematicEditor {
         if (this.multiSelected.has(wireHit.id)) this.multiSelected.delete(wireHit.id);
         else this.multiSelected.add(wireHit.id);
         this.selected = null; this._render(); return;
+      }
+    }
+
+    // Named group: clicking any member auto-selects all group members
+    if (!e.shiftKey) {
+      const wireForGrp = !hitId ? this._hitWire(sx, sy) : null;
+      const anyHitId = hitId || wireForGrp?.id;
+      if (anyHitId) {
+        const namedGrp = this._getGroupByMember(anyHitId);
+        if (namedGrp) {
+          const allInMulti = namedGrp.members.every(mid => this.multiSelected.has(mid));
+          if (!allInMulti) {
+            this.multiSelected.clear();
+            for (const mid of namedGrp.members) this.multiSelected.add(mid);
+            this.selected = null;
+            this.dragState = { type: 'group', sx, sy, items: this._buildGroupDragItems() };
+            this._render(); return;
+          }
+          // group already fully selected — fall through to existing drag code
+        }
       }
     }
 
@@ -664,6 +686,8 @@ class SchematicEditor {
     else if ((k === 'z' || k === 'Z') && (e.ctrlKey || e.metaKey) && e.shiftKey) { e.preventDefault(); this._redo(); }
     else if (k === 'z' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this._undo(); }
     else if (k === 'y' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this._redo(); }
+    else if ((k === 'g' || k === 'G') && (e.ctrlKey || e.metaKey) && e.shiftKey) { e.preventDefault(); this.ungroupSelected(); }
+    else if ((k === 'g' || k === 'G') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.groupSelected(); }
   }
 
   // ── Tools ─────────────────────────────────────────────────────────────────
@@ -707,6 +731,7 @@ class SchematicEditor {
     this.labelCursor = null;
     this.multiSelected.clear(); this.rubberState = null;
     this.selected = null;
+    this._hideContextMenu();
     if (this.tool !== 'select') this.setTool('select');
     this._render();
   }
@@ -879,6 +904,17 @@ class SchematicEditor {
       this.project.labels = (this.project.labels || []).filter(l => !this.multiSelected.has(l.id));
       this.project.wires = this.project.wires.filter(w => !this.multiSelected.has(w.id));
       this.multiSelected.clear(); this.selected = null;
+      // Clean up groups whose members were deleted
+      if (this.project.groups) {
+        for (const grp of this.project.groups) {
+          grp.members = grp.members.filter(mid =>
+            this.project.components.some(c => c.id === mid) ||
+            this.project.wires.some(w => w.id === mid) ||
+            (this.project.labels || []).some(l => l.id === mid)
+          );
+        }
+        this.project.groups = this.project.groups.filter(g => g.members.length > 0);
+      }
       this.dirty = true; this._render(); this._status(); return;
     }
     if (!this.selected) return;
@@ -1044,7 +1080,7 @@ class SchematicEditor {
   // ── Undo/redo ─────────────────────────────────────────────────────────────
   _saveHist() {
     this._refreshNetOverlay();
-    const s = JSON.stringify({ c: this.project.components, w: this.project.wires, l: this.project.labels || [] });
+    const s = JSON.stringify({ c: this.project.components, w: this.project.wires, l: this.project.labels || [], g: this.project.groups || [] });
     this.history = this.history.slice(0, this.historyIdx + 1);
     this.history.push(s);
     if (this.history.length > 60) this.history.shift();
@@ -1075,7 +1111,7 @@ class SchematicEditor {
     if (this.historyIdx <= 0) return;
     this.historyIdx--;
     const s = JSON.parse(this.history[this.historyIdx]);
-    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || [];
+    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || []; this.project.groups = s.g || [];
     this.selected = null; this.multiSelected?.clear();
     this._autoConnectAll();
     this._render(); this._status(); this._updateUndoRedo();
@@ -1086,7 +1122,7 @@ class SchematicEditor {
     if (this.historyIdx >= this.history.length - 1) return;
     this.historyIdx++;
     const s = JSON.parse(this.history[this.historyIdx]);
-    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || [];
+    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || []; this.project.groups = s.g || [];
     this.selected = null; this.multiSelected?.clear();
     this._autoConnectAll();
     this._render(); this._status(); this._updateUndoRedo();
@@ -1170,6 +1206,7 @@ class SchematicEditor {
     if (dot) { dot.setAttribute('cx', gs); dot.setAttribute('cy', gs); }
     this._vg.setAttribute('transform', `translate(${this.panX},${this.panY}) scale(${this.zoom})`);
     let h = '';
+    for (const grp of (this.project.groups || [])) h += this._groupH(grp);
     for (const w of this.project.wires) h += this._wH(w);
     if (this.wirePoints.length > 0) h += this._wpH();
     for (const c of this.project.components) h += this._cH(c);
@@ -1178,6 +1215,7 @@ class SchematicEditor {
     if (this.tool === 'placeGroup' && this.placeGroupData?.cursor) h += this._groupGhostH();
     if (this.tool === 'label' && this.labelCursor) h += this._lblGhostH();
     h += this._jH();
+    h += this._drcH();
     if (this.rubberState) h += this._rubberH();
     this._vg.innerHTML = h;
   }
@@ -1471,6 +1509,240 @@ class SchematicEditor {
       h += `<text x="${xBox-4}" y="${y+3}" text-anchor="end" font-family="monospace" font-size="7" font-weight="bold" fill="${tc}">${esc((pin.name||'').slice(0,9))}</text>`;
     });
     return h;
+  }
+
+  // ── Groups ────────────────────────────────────────────────────────────────
+  _getGroupByMember(id) {
+    return (this.project.groups || []).find(g => g.members.includes(id)) || null;
+  }
+
+  _groupBBox(group) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, found = false;
+    for (const mid of group.members) {
+      const comp = this.project.components.find(c => c.id === mid);
+      if (comp) {
+        const b = this._bbox(comp);
+        minX = Math.min(minX, b.x); minY = Math.min(minY, b.y);
+        maxX = Math.max(maxX, b.x + b.w); maxY = Math.max(maxY, b.y + b.h);
+        found = true; continue;
+      }
+      const wire = this.project.wires.find(w => w.id === mid);
+      if (wire) {
+        for (const p of wire.points) {
+          minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+          maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+          found = true;
+        }
+        continue;
+      }
+      const lbl = (this.project.labels || []).find(l => l.id === mid);
+      if (lbl) {
+        minX = Math.min(minX, lbl.x - 4); minY = Math.min(minY, lbl.y - 8);
+        maxX = Math.max(maxX, lbl.x + 80); maxY = Math.max(maxY, lbl.y + 8);
+        found = true;
+      }
+    }
+    if (!found) return null;
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+  }
+
+  _groupH(group) {
+    const bbox = this._groupBBox(group);
+    if (!bbox) return '';
+    const isSelected = group.members.some(mid => this.multiSelected.has(mid));
+    const c = isSelected ? '#6c63ff' : '#3d4268';
+    const pad = 14;
+    const sw = 1.2 / this.zoom;
+    const da = `${6/this.zoom},${3/this.zoom}`;
+    const fs = Math.max(7, Math.min(11, 9 / this.zoom));
+    return `<rect x="${bbox.x-pad}" y="${bbox.y-pad}" width="${bbox.w+pad*2}" height="${bbox.h+pad*2}" fill="${isSelected?'rgba(108,99,255,0.07)':'rgba(61,66,104,0.04)'}" stroke="${c}" stroke-width="${sw}" stroke-dasharray="${da}" rx="6" pointer-events="none"/>` +
+      `<text x="${bbox.x-pad+3}" y="${bbox.y-pad-3}" font-family="monospace" font-size="${fs}" fill="${c}" opacity="0.75" pointer-events="none">${esc(group.name || 'Group')}</text>`;
+  }
+
+  // DRC: highlight unconnected pins with a small orange marker
+  _drcH() {
+    const TOL = this.SNAP * 1.5;
+    let h = '';
+    for (const comp of this.project.components) {
+      if (comp.symType === 'vcc' || comp.symType === 'gnd') continue;
+      for (const port of this._ports(comp)) {
+        // Check if any wire endpoint lands on this port
+        const connected = this.project.wires.some(w => {
+          if (!w.points?.length) return false;
+          const a = w.points[0], b = w.points[w.points.length - 1];
+          return Math.hypot(a.x - port.x, a.y - port.y) < TOL ||
+                 Math.hypot(b.x - port.x, b.y - port.y) < TOL;
+        }) || this.project.components.some(other => {
+          if (other.id === comp.id) return false;
+          return this._ports(other).some(op => Math.hypot(op.x - port.x, op.y - port.y) < TOL);
+        });
+        if (!connected) {
+          const r = 3.5 / this.zoom;
+          h += `<circle cx="${port.x}" cy="${port.y}" r="${r}" fill="none" stroke="#f59e0b" stroke-width="${1.2/this.zoom}" opacity="0.7" pointer-events="none"/>`;
+        }
+      }
+    }
+    return h;
+  }
+
+  groupSelected() {
+    if (this.multiSelected.size < 2) {
+      this._showFlash('Select 2+ elements to group');
+      return;
+    }
+    this._saveHist();
+    if (!this.project.groups) this.project.groups = [];
+    const members = [...this.multiSelected];
+    // Remove these items from any existing groups
+    for (const grp of this.project.groups) {
+      grp.members = grp.members.filter(mid => !members.includes(mid));
+    }
+    this.project.groups = this.project.groups.filter(g => g.members.length > 0);
+    const grpNum = this.project.groups.length + 1;
+    const grpId = 'grp_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 4);
+    this.project.groups.push({ id: grpId, name: 'Group ' + grpNum, members });
+    this.dirty = true;
+    this._render();
+    this._showFlash('Grouped ' + members.length + ' elements');
+  }
+
+  ungroupSelected() {
+    if (!this.project.groups?.length) return;
+    const toRemove = new Set();
+    for (const grp of this.project.groups) {
+      if (grp.members.some(mid => this.multiSelected.has(mid))) toRemove.add(grp.id);
+    }
+    if (this.selected?.id) {
+      const grp = this._getGroupByMember(this.selected.id);
+      if (grp) toRemove.add(grp.id);
+    }
+    if (!toRemove.size) { this._showFlash('Nothing to ungroup'); return; }
+    this._saveHist();
+    this.project.groups = this.project.groups.filter(g => !toRemove.has(g.id));
+    this.dirty = true;
+    this._render();
+    this._showFlash('Ungrouped');
+  }
+
+  _renameGroup(grp) {
+    const newName = prompt('Group name:', grp.name || 'Group');
+    if (newName !== null && newName.trim()) {
+      this._saveHist();
+      grp.name = newName.trim();
+      this.dirty = true;
+      this._render();
+    }
+  }
+
+  _showFlash(msg) {
+    if (this._isEmbedded) return;
+    const el = document.getElementById('editor-status-hist');
+    if (!el) return;
+    el.textContent = msg;
+    el.style.color = '#34d399';
+    clearTimeout(this._histFlashTimer);
+    this._histFlashTimer = setTimeout(() => { el.style.color = '#6c63ff'; this._updateUndoRedo(); }, 1400);
+  }
+
+  // ── Context menu ──────────────────────────────────────────────────────────
+  _showContextMenu(e) {
+    this._hideContextMenu();
+    const { sx, sy } = this._evPos(e);
+    const labelHit = this._hitLabel(sx, sy);
+    const compHit = !labelHit ? this._hitComp(sx, sy) : null;
+    const wireHit = !compHit && !labelHit ? this._hitWire(sx, sy) : null;
+    const hitId = labelHit?.id || compHit?.id;
+    let items = [];
+
+    if (this.multiSelected.size > 1) {
+      const grps = [...this.multiSelected].map(mid => this._getGroupByMember(mid)).filter(Boolean);
+      const uniqueGrps = [...new Map(grps.map(g => [g.id, g])).values()];
+      if (uniqueGrps.length === 1 && grps.length === this.multiSelected.size) {
+        const grp = uniqueGrps[0];
+        items.push({ header: `"${grp.name}"` });
+        items.push({ label: 'Rename Group\u2026', action: () => this._renameGroup(grp) });
+        items.push({ sep: true });
+        items.push({ label: 'Ungroup', kbd: 'Ctrl+\u21e7+G', action: () => this.ungroupSelected() });
+        items.push({ sep: true });
+        items.push({ label: 'Delete Group', danger: true, action: () => this._delSelected() });
+      } else {
+        items.push({ label: `Group ${this.multiSelected.size} elements`, kbd: 'Ctrl+G', action: () => this.groupSelected() });
+        if (uniqueGrps.length > 0) items.push({ label: 'Ungroup', kbd: 'Ctrl+\u21e7+G', action: () => this.ungroupSelected() });
+        items.push({ sep: true });
+        items.push({ label: 'Delete Selection', danger: true, action: () => this._delSelected() });
+      }
+    } else if (hitId || wireHit) {
+      const anyId = hitId || wireHit?.id;
+      const grp = anyId ? this._getGroupByMember(anyId) : null;
+      if (grp) {
+        this.multiSelected.clear();
+        for (const mid of grp.members) this.multiSelected.add(mid);
+        this.selected = null;
+        this._render();
+        items.push({ header: `"${grp.name}"` });
+        items.push({ label: 'Rename Group\u2026', action: () => this._renameGroup(grp) });
+        items.push({ sep: true });
+        items.push({ label: 'Ungroup', kbd: 'Ctrl+\u21e7+G', action: () => this.ungroupSelected() });
+        items.push({ sep: true });
+        items.push({ label: 'Delete Group', danger: true, action: () => this._delSelected() });
+      } else if (compHit) {
+        this.multiSelected.clear(); this.selected = { type: 'comp', id: compHit.id }; this._render();
+        items.push({ label: 'Edit Component\u2026', action: () => this._editComp(compHit) });
+        items.push({ label: 'Rotate', action: () => this._rotateSelected() });
+        items.push({ sep: true });
+        items.push({ label: 'Delete', danger: true, action: () => this._delComp(compHit.id) });
+      } else if (labelHit) {
+        this.multiSelected.clear(); this.selected = { type: 'label', id: labelHit.id }; this._render();
+        items.push({ label: 'Edit Label\u2026', action: () => this._editLabel(labelHit) });
+        items.push({ sep: true });
+        items.push({ label: 'Delete', danger: true, action: () => this._delLabel(labelHit.id) });
+      } else if (wireHit) {
+        this.multiSelected.clear(); this.selected = { type: 'wire', id: wireHit.id }; this._render();
+        items.push({ label: 'Delete Wire', danger: true, action: () => this._delWire(wireHit.id) });
+      }
+    } else {
+      this._cancel(); return;
+    }
+
+    if (!items.length) return;
+    const menu = document.createElement('div');
+    menu.className = 'sch-ctx-menu';
+    // Keep menu inside viewport
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let mx = e.clientX, my = e.clientY;
+    menu.style.left = mx + 'px'; menu.style.top = my + 'px';
+    for (const item of items) {
+      if (item.sep) {
+        const d = document.createElement('div'); d.className = 'sch-ctx-sep'; menu.appendChild(d);
+      } else if (item.header) {
+        const d = document.createElement('div');
+        d.style.cssText = 'padding:4px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);';
+        d.textContent = item.header; menu.appendChild(d);
+      } else {
+        const d = document.createElement('div');
+        d.className = 'sch-ctx-item' + (item.danger ? ' danger' : '');
+        d.innerHTML = `<span>${esc(item.label)}</span>${item.kbd ? `<span class="sch-ctx-kbd">${esc(item.kbd)}</span>` : ''}`;
+        d.addEventListener('click', () => { this._hideContextMenu(); item.action(); });
+        menu.appendChild(d);
+      }
+    }
+    document.body.appendChild(menu);
+    this._ctxMenu = menu;
+    // Adjust if off-screen
+    requestAnimationFrame(() => {
+      const r = menu.getBoundingClientRect();
+      if (r.right > vw) menu.style.left = (mx - r.width) + 'px';
+      if (r.bottom > vh) menu.style.top = (my - r.height) + 'px';
+    });
+    setTimeout(() => {
+      this._ctxMenuDismiss = ev => { if (!menu.contains(ev.target)) this._hideContextMenu(); };
+      document.addEventListener('mousedown', this._ctxMenuDismiss);
+    }, 0);
+  }
+
+  _hideContextMenu() {
+    if (this._ctxMenu) { this._ctxMenu.remove(); this._ctxMenu = null; }
+    if (this._ctxMenuDismiss) { document.removeEventListener('mousedown', this._ctxMenuDismiss); this._ctxMenuDismiss = null; }
   }
 
   _contentBBox(pad = 50) {
