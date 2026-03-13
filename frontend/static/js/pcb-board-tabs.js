@@ -10,6 +10,10 @@ function switchPcbSection(name){
   if(name==='nets')renderNetsSection();
   if(name==='layout'&&editor)editor.render();
   if(name==='drc'){populateDRTab();runDRCTab();}
+  // Pause 3D render loop when leaving the 3D tab, resume when entering
+  if(typeof viewer3d!=='undefined'&&viewer3d){
+    if(name==='3d') viewer3d.resume(); else viewer3d.pause();
+  }
 }
 
 // ── PCB Board Tabs (tied to saved boards, named after schematic projects) ──

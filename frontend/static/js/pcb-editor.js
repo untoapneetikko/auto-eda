@@ -51,6 +51,7 @@ class PCBEditor {
     this._isDragTrace=false; this._dragTrace=null; this._dragTraceSegIdx=-1;
     this._dragTraceOrigSeg=null; this._dragTraceOrigAll=null; this._dragTraceOff={x:0,y:0};
     this._traceDragViolations=[];
+    this._lastMoveMs=0; // mousemove throttle timestamp
     this._init();
   }
 
@@ -1811,6 +1812,10 @@ class PCBEditor {
     this._statusRafPending = false;
 
     cv.addEventListener('mousemove',e=>{
+      // Throttle to ~60fps — rAF guard batches renders but JS hit-testing still ran at 1000+fps
+      const _t=performance.now();
+      if(_t-this._lastMoveMs<14)return;
+      this._lastMoveMs=_t;
       const{mx,my}=this._cp(e);
       this._mx=this.snap(this.cX(mx)); this._my=this.snap(this.cY(my));
       this._mxPx=mx; this._myPx=my;

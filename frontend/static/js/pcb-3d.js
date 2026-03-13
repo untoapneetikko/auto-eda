@@ -427,8 +427,15 @@ class PCB3DViewer {
 
   _loop() {
     this.animId = requestAnimationFrame(() => this._loop());
+    // Skip rendering when the 3D section is hidden — avoids burning GPU at 60fps in background
+    if (this._paused) return;
+    const container = document.getElementById(this.cid);
+    if (container && !container.offsetParent) return; // display:none parent
     if (this.renderer) this.renderer.render(this.scene, this.camera);
   }
+
+  pause()  { this._paused = true;  }
+  resume() { this._paused = false; if (this.renderer) this.renderer.render(this.scene, this.camera); }
 
   _onResize() {
     const container = document.getElementById(this.cid);
