@@ -2907,6 +2907,13 @@ async function leSaveLayout() {
     alert('No component selected — open a component from the library first.');
     return;
   }
+  // Guard: iframe must have finished loading THIS component's board.
+  // _leLoadedSlug is set inside send() only after postMessage({loadBoard}) fires,
+  // so if it doesn't match we'd be saving a stale board from a previous component.
+  if (_leLoadedSlug !== selectedSlug) {
+    alert('Layout not ready yet — please wait a moment and try again.');
+    return;
+  }
   const frame = document.getElementById('le-frame');
   const btn = document.getElementById('le-save-btn-vis') || document.getElementById('le-save-btn');
   if (!frame) { alert('PCB frame not found — try switching away and back to the Layout Example tab.'); return; }
@@ -2935,6 +2942,9 @@ async function leSaveLayout() {
       const errText = await res.text().catch(() => res.status);
       throw new Error(`Server error ${res.status}: ${errText}`);
     }
+    // Keep the in-memory cache in sync so the early-return in renderLayoutExample
+    // serves the freshly-saved board rather than the stale pre-edit snapshot.
+    _leBoard = board;
     await _syncActiveSnapshot(); // keep active version snapshot in sync (must complete before user can Activate)
     if (btn) { btn.textContent = '✓ Saved'; }
     const notes = document.getElementById('le-notes');
@@ -3012,15 +3022,15 @@ async function renderLayoutExample(slug) {
   // Render BOM panel now that _leAdded flags are set
   leRenderBomPanel(_leBomData);
 
-  // Keep global reference so auto-correct can patch it
-  _leBoard = board;
-  _leLoadedSlug = slug;
-
   // Validate nets: layout example must match example schematic
   leShowNetWarning(leValidateNets(board, _leBomData));
 
   const send = () => {
     frame.contentWindow?.postMessage({ type: 'loadBoard', board, hideBoardOutline: true }, '*');
+    // Set these AFTER posting so leSaveLayout can't capture a stale board
+    // from a previous component while the new loadBoard message is in flight.
+    _leBoard = board;
+    _leLoadedSlug = slug;
   };
   if (frame.contentDocument?.readyState === 'complete') send(); else frame.onload = send;
 }
