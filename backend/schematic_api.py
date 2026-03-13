@@ -1895,7 +1895,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                 return ClaudeAgentOptions(
                     cwd=_pa_cwd(_agent_base),
                     allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"],
-                    permission_mode="bypassPermissions",
+                    permission_mode="default",
                     max_turns=40,
                     resume=session_id,
                     env={"IS_SANDBOX": "1", "CLAUDECODE": ""},
