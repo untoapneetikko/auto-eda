@@ -7259,14 +7259,16 @@ async function openPCBLayout() {
       // Linked board exists — switch to PCB and update
       _doPCBImport(id);
     } else {
-      // No linked board — show create dialog
-      document.getElementById('create-pcb-modal').style.display = 'flex';
-      document.getElementById('create-pcb-status').textContent = '';
+      // No linked board — auto-create one immediately, inheriting all components
+      // from the schematic. Board size is estimated from component count.
+      const n = components.filter(c => !['vcc','gnd','pwr'].includes(c.symType)).length;
+      const boardW = n <= 5 ? 60 : n <= 15 ? 80 : n <= 30 ? 120 : 160;
+      const boardH = n <= 5 ? 40 : n <= 15 ? 60 : n <= 30 ? 80 : 100;
+      _doPCBImport(id, { boardW, boardH });
     }
   } catch(e) {
     console.error('openPCBLayout:', e);
-    // Fallback: open create dialog
-    document.getElementById('create-pcb-modal').style.display = 'flex';
+    _doPCBImport(id, { boardW: 80, boardH: 60 });
   }
 }
 
