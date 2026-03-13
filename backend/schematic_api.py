@@ -655,9 +655,27 @@ async def api_gen_tickets_update(tid: int, request: Request):
     idx = next((i for i, t in enumerate(data["tickets"]) if t["id"] == tid), -1)
     if idx == -1:
         raise HTTPException(404, "Not found")
+    old_status = data["tickets"][idx].get("status")
     data["tickets"][idx] = {**data["tickets"][idx], **body, "id": tid}
     _save_gen_tickets(data)
-    return data["tickets"][idx]
+    ticket = data["tickets"][idx]
+
+    # Auto-snapshot when a ticket transitions to "done"
+    if body.get("status") == "done" and old_status != "done" and ticket.get("slug"):
+        slug = ticket["slug"]
+        label = f"AI — GT-{tid:03d}"
+        ts = _snapshot_profile(slug, label)
+        if ts:
+            h = _history_dir(slug)
+            files = sorted(h.glob("*.json"))
+            v_num = next((i + 1 for i, f in enumerate(files) if f.stem == ts), len(files))
+            _active_version_path(slug).write_text(
+                json.dumps({"id": ts, "label": label, "vNum": v_num}, indent=2),
+                encoding="utf-8")
+            _broadcast("library_updated", {"slug": slug, "reason": "ticket_completed",
+                                           "ticketId": tid, "label": label, "vNum": v_num})
+
+    return ticket
 
 @router.delete("/gen-tickets/{tid}")
 def api_gen_tickets_delete(tid: int):
