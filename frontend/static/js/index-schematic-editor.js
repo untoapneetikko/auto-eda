@@ -401,8 +401,9 @@ class SchematicEditor {
           const p0 = w.points[0], pN = w.points[w.points.length - 1];
           const d1 = Math.hypot(p0.x - port.x, p0.y - port.y);
           const d2 = Math.hypot(pN.x - port.x, pN.y - port.y);
-          if (d1 < TOL) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y });
-          if (d2 < TOL) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y });
+          // Skip dot-wires that sit on the interior of another wire (T-junction markers)
+          if (d1 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y });
+          if (d2 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y });
         }
       }
       this.dragState = { id: comp.id, sx, sy, origX: comp.x, origY: comp.y, connectedWires };
@@ -558,8 +559,9 @@ class SchematicEditor {
             const p0 = w.points[0], pN = w.points[w.points.length - 1];
             const d1 = Math.hypot(p0.x - port.x, p0.y - port.y);
             const d2 = Math.hypot(pN.x - port.x, pN.y - port.y);
-            if (d1 < TOL) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y });
-            if (d2 < TOL) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y });
+            // Skip dot-wires that sit on the interior of another wire (T-junction markers)
+            if (d1 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y });
+            if (d2 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y });
           }
         }
         items.push({ type: 'comp', id, origX: comp.x, origY: comp.y, connectedWires });
@@ -822,6 +824,38 @@ class SchematicEditor {
   // Run _autoConnectPorts for every component — call after loading a full circuit
   _autoConnectAll() {
     for (const comp of this.project.components) this._autoConnectPorts(comp);
+  }
+
+  // Returns true when `wire` is a zero-length dot-wire whose position lies on the
+  // interior of another (non-dot) wire segment — i.e. it is a T-junction marker,
+  // NOT a real endpoint-to-endpoint connection.  Such wires must not be dragged
+  // with a component because the component is connected to the wire body, not
+  // to an endpoint, and the real wire should stay in place.
+  _isDotAtInterior(wire) {
+    const pts = wire.points;
+    if (!pts || pts.length < 2) return false;
+    const p0 = pts[0], pN = pts[pts.length - 1];
+    // Must be a dot-wire (both ends at same position)
+    if (p0.x !== pN.x || p0.y !== pN.y) return false;
+    const x = p0.x, y = p0.y;
+    const TOL = this.SNAP * 1.2;
+    for (const w of this.project.wires) {
+      if (w === wire) continue;
+      const wpts = w.points;
+      if (!wpts || wpts.length < 2) continue;
+      // Skip other dot-wires
+      if (wpts[0].x === wpts[wpts.length - 1].x && wpts[0].y === wpts[wpts.length - 1].y) continue;
+      for (let j = 0; j < wpts.length - 1; j++) {
+        const a = wpts[j], b = wpts[j + 1];
+        if (a.x === b.x && a.y === b.y) continue;
+        const onH = a.y === b.y && Math.abs(y - a.y) < TOL &&
+                    x > Math.min(a.x, b.x) + TOL && x < Math.max(a.x, b.x) - TOL;
+        const onV = a.x === b.x && Math.abs(x - a.x) < TOL &&
+                    y > Math.min(a.y, b.y) + TOL && y < Math.max(a.y, b.y) - TOL;
+        if (onH || onV) return true;
+      }
+    }
+    return false;
   }
 
   // Auto-create a dot-wire when this component's port lands on another port OR on a wire segment body
