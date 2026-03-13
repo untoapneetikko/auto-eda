@@ -1233,6 +1233,17 @@ class SchematicEditor {
 
   // ── Render ────────────────────────────────────────────────────────────────
   _render() {
+    // Schedule at most one DOM update per animation frame — prevents rebuilding
+    // the entire SVG innerHTML multiple times per frame during mousemove drags.
+    if (this._renderPending) return;
+    this._renderPending = true;
+    requestAnimationFrame(() => {
+      this._renderPending = false;
+      this._renderNow();
+    });
+  }
+
+  _renderNow() {
     if (!this._gp || !this._vg) { this._initSVG(); return; }
     const gs = this.GRID * this.zoom;
     const ox = ((this.panX % gs) + gs) % gs;

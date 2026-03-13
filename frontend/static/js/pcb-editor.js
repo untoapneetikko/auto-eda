@@ -72,7 +72,7 @@ class PCBEditor {
 
   _snapshot(){
     if(!this.board)return;
-    const snap=JSON.stringify(this.board);
+    const snap=JSON.stringify(this.board); // keep as string — structuredClone can fail on circular refs
     // Truncate forward history on new action
     this._history=this._history.slice(0,this._historyIdx+1);
     this._history.push(snap);
@@ -1791,12 +1791,25 @@ class PCBEditor {
       }
     });
 
+    // Cache frequently-accessed DOM elements once at init time
+    this._elStatusBar = document.getElementById('status-bar');
+    this._elInfoX     = document.getElementById('info-x');
+    this._elInfoY     = document.getElementById('info-y');
+    this._statusRafPending = false;
+
     cv.addEventListener('mousemove',e=>{
       const{mx,my}=this._cp(e);
       this._mx=this.snap(this.cX(mx)); this._my=this.snap(this.cY(my));
       this._mxPx=mx; this._myPx=my;
-      document.getElementById('status-bar').textContent=
-        `x:${this.cX(mx).toFixed(2).padStart(7)}  y:${this.cY(my).toFixed(2).padStart(7)} mm`;
+      // Throttle status-bar text update to one rAF per frame — avoids DOM write at 1000fps
+      if(!this._statusRafPending){
+        this._statusRafPending=true;
+        const xStr=this.cX(mx).toFixed(2).padStart(7), yStr=this.cY(my).toFixed(2).padStart(7);
+        requestAnimationFrame(()=>{
+          this._statusRafPending=false;
+          if(this._elStatusBar) this._elStatusBar.textContent=`x:${xStr}  y:${yStr} mm`;
+        });
+      }
       if(this._isDrag&&this._dragC){
         const newPX=this.snap(this.cX(mx)-this._dragOff.x);
         const newPY=this.snap(this.cY(my)-this._dragOff.y);
@@ -1842,9 +1855,8 @@ class PCBEditor {
           }
         }
         this.render();
-        const xi=document.getElementById('info-x'),yi=document.getElementById('info-y');
-        if(xi)xi.value=this._dragC.x.toFixed(2);
-        if(yi)yi.value=this._dragC.y.toFixed(2);
+        if(this._elInfoX) this._elInfoX.value=this._dragC.x.toFixed(2);
+        if(this._elInfoY) this._elInfoY.value=this._dragC.y.toFixed(2);
       } else if(this._isDragVia&&this.selectedVia){
         this.selectedVia.x=this.snap(this.cX(mx)-this._dragViaOff.x);
         this.selectedVia.y=this.snap(this.cY(my)-this._dragViaOff.y);

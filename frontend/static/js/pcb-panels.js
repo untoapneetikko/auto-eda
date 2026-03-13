@@ -78,8 +78,10 @@ function updateWorkLayerBadge(){
 }
 
 // ── Comp List ────────────────────────────────────────────────
+let _lastSelCiEl=null; // track last .ci highlight — avoids querySelectorAll on every click
 function rebuildCompList(){
   const ul=document.getElementById('comp-list');ul.innerHTML='';
+  _lastSelCiEl=null;
   const comps=editor.board?.components||[];
   document.getElementById('comp-count').textContent=comps.length?`(${comps.length})`:'';
   if(!comps.length){ul.innerHTML='<div style="padding:8px;color:var(--text-muted);font-size:11px;">No components</div>';return;}
@@ -87,12 +89,13 @@ function rebuildCompList(){
     const d=document.createElement('div');d.className='ci';d.id='ci-'+c.id;
     d.innerHTML=`<span class="ci-ref">${c.ref||c.id}</span><div style="flex:1;overflow:hidden"><div class="ci-val">${c.value||''}</div><div class="ci-fp">${c.footprint||''}</div></div>`;
     d.onclick=()=>{
-      editor.selectedComp=c;editor.render();
-      document.querySelectorAll('.ci').forEach(i=>i.classList.remove('sel'));
-      d.classList.add('sel');updateInfoPanel();
+      if(_lastSelCiEl) _lastSelCiEl.classList.remove('sel');
+      d.classList.add('sel'); _lastSelCiEl=d;
+      editor.selectedComp=c;
       editor.panX=editor.canvas.width/2-c.x*editor.scale-editor.offsetX;
       editor.panY=editor.canvas.height/2-c.y*editor.scale-editor.offsetY;
-      editor.render();
+      editor.render(); // single render, not two
+      updateInfoPanel();
     };
     ul.appendChild(d);
   }

@@ -40,12 +40,19 @@ async function _pingServer() {
 }
 evtSource.onopen  = () => { _setLive('live'); _pingServer(); };
 evtSource.onerror = () => _setLive(evtSource.readyState === 0 ? 'reconnecting' : 'dead');
-setInterval(_pingServer, 5000);
+setInterval(_pingServer, 15000); // 5s was unnecessarily frequent; 15s is plenty
 
-evtSource.addEventListener('library_updated', () => loadLibrary());
+// Debounce library reloads triggered by SSE so rapid successive updates
+// (e.g. bulk profile saves) don't fire one fetch per event.
+let _libReloadTimer = null;
+function _scheduleLibReload() {
+  clearTimeout(_libReloadTimer);
+  _libReloadTimer = setTimeout(() => loadLibrary(), 600);
+}
+evtSource.addEventListener('library_updated', () => _scheduleLibReload());
 evtSource.addEventListener('profile_updated', e => {
   const { slug } = JSON.parse(e.data);
-  loadLibrary();
+  _scheduleLibReload();
   if (selectedSlug === slug) loadProfile(slug);
 });
 evtSource.addEventListener('pipeline_agent_started',   e => _handlePipelineSSE('pipeline_agent_started',   JSON.parse(e.data)));
