@@ -249,6 +249,9 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 </div>
 
 <div class="toolbar">
+  <button class="tbtn save" onclick="saveBoard()">💾 Save</button>
+  <button class="tbtn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
+  <div class="tsep"></div>
   <button class="tbtn active" id="tool-select" onclick="setTool('select')" title="S — Select · R rotate · Del delete · Esc deselect">↖ Select</button>
   <button class="tbtn" id="tool-route"  onclick="setTool('route')"  title="W — Draw trace">〰 Trace</button>
   <button class="tbtn" id="tool-via"    onclick="setTool('via')"    title="V — Place via">⊙ Via</button>
@@ -285,16 +288,12 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <input id="area-net-input" type="text" value="GND" style="width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);padding:3px 5px;font-size:11px;" title="Net name for copper pour" onchange="if(editor)editor.areaNet=this.value.trim()">
     <div class="tsep"></div>
   </div>
-  <div class="tsep"></div>
   <button class="tbtn" onclick="fitBoard()" title="F">⊡ Fit</button>
   <button class="tbtn" onclick="zoomIn()">＋</button>
   <button class="tbtn" onclick="zoomOut()">－</button>
   <div class="tsep"></div>
   <button class="tbtn" onclick="editor.undo()" title="Ctrl+Z">↩ Undo</button>
   <button class="tbtn" onclick="editor.redo()" title="Ctrl+Y">↪ Redo</button>
-  <div class="tsep"></div>
-  <button class="tbtn save" onclick="saveBoard()">💾 Save</button>
-  <button class="tbtn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
   <div class="tsep"></div>
   <button class="tbtn primary" id="btn-autoroute" onclick="runAutoRoute()">⚡ Auto-Route</button>
   <button class="tbtn" id="btn-autoplace" onclick="runAutoPlace()" title="Automatically place components to minimise net wire length — tries 8 arrangements and keeps the best (experimental)">🎯 Auto Place</button>
