@@ -356,7 +356,8 @@ async def api_library_layout_example(slug: str, request: Request):
     profile = _read_profile(slug)
     profile["layout_example"] = body
     _write_profile(slug, profile)
-    return {"ok": True}
+    snapshot_id = _snapshot_profile(slug, "layout_example")
+    return {"ok": True, "snapshot_id": snapshot_id}
 
 @router.put("/library/{slug}/footprint")
 async def api_library_footprint(slug: str, request: Request):
@@ -2613,63 +2614,111 @@ async def drc_board_direct(request: Request):
 
 # ── Autoroute helper ──────────────────────────────────────────────────────────
 
+def _autoroute_skip_net(net_name: str) -> bool:
+    """
+    Return True for nets that must NOT be routed as individual traces.
+    - GND and all variants (AGND, PGND, DGND, GND_*) → handled by copper pour
+    - NC / no-connect nets → intentionally floating
+    - Empty net name
+    """
+    if not net_name:
+        return True
+    upper = net_name.upper().lstrip("/\\~ ")
+    for prefix in ("NC", "PWR_FLAG"):
+        if upper == prefix or upper.startswith(prefix + "_") or upper.startswith(prefix + "-"):
+            return True
+    for sub in ("GND", "UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
+        if sub in upper:
+            return True
+    return False
+
+
+def _autoroute_trace_width(net_name: str, dr: dict) -> float:
+    """Return trace width in mm for a given net (power nets get wider traces)."""
+    default_w = float(dr.get("traceWidth", dr.get("minTraceWidth", 0.25)))
+    upper = net_name.upper()
+    # Power rails get at minimum 0.4 mm (IPC-2221 ~1 A)
+    power_keywords = ("VCC", "VDD", "VIN", "VBAT", "VBUS", "3V3", "5V", "12V",
+                      "24V", "AVCC", "DVCC", "VPW", "VMOT", "VPWR", "PWR")
+    if any(kw in upper for kw in power_keywords):
+        return max(default_w, 0.4)
+    return default_w
+
+
 def run_autoroute(board: dict) -> dict:
-    GRID = 0.25  # mm
+    GRID = 0.25  # mm routing grid
     bw   = float(board.get("board", {}).get("width",  board.get("width",  200)))
     bh   = float(board.get("board", {}).get("height", board.get("height", 200)))
     dr   = board.get("designRules", {})
-    trace_w = float(dr.get("traceWidth", dr.get("minTraceWidth", 0.25)))
 
-    # Build occupancy grid (already-routed traces block cells)
-    grid_w = int(bw / GRID) + 1
-    grid_h = int(bh / GRID) + 1
-
+    # ── Occupancy grid: mark cells covered by existing traces ────────────────
+    grid_w = int(bw / GRID) + 2
+    grid_h = int(bh / GRID) + 2
     occupied: set[tuple[int, int]] = set()
+
+    def _mark_segment(x0: float, y0: float, x1: float, y1: float) -> None:
+        steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
+        for s in range(steps + 1):
+            t = s / max(steps, 1)
+            gx = int(round((x0 + t * (x1 - x0)) / GRID))
+            gy = int(round((y0 + t * (y1 - y0)) / GRID))
+            occupied.add((gx, gy))
+
     for trace in board.get("traces", []):
         for seg in trace.get("segments", []):
-            x0 = seg.get("start", {}).get("x", 0)
-            y0 = seg.get("start", {}).get("y", 0)
-            x1 = seg.get("end",   {}).get("x", 0)
-            y1 = seg.get("end",   {}).get("y", 0)
-            # Mark cells along segment
-            steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
-            for s in range(steps + 1):
-                t = s / max(steps, 1)
-                gx = int(round((x0 + t * (x1 - x0)) / GRID))
-                gy = int(round((y0 + t * (y1 - y0)) / GRID))
-                occupied.add((gx, gy))
+            _mark_segment(
+                seg.get("start", {}).get("x", 0), seg.get("start", {}).get("y", 0),
+                seg.get("end",   {}).get("x", 0), seg.get("end",   {}).get("y", 0),
+            )
 
-    # Build pad position lookup: "REF.padNum" -> (x, y)
-    pad_pos: dict[str, tuple[float, float]] = {}
+    # ── Build net → [(x, y)] map from board.components[].pads[].net ──────────
+    # This is the ONLY authoritative source of net connectivity in the board JSON.
+    # (There is no top-level board.nets[] array.)
+    # Pad world position accounts for component rotation.
+    net_pads: dict[str, list[tuple[float, float]]] = {}
     for comp in board.get("components", []):
-        ref = comp.get("ref", comp.get("id", ""))
-        cx, cy = float(comp.get("x", 0)), float(comp.get("y", 0))
+        cx  = float(comp.get("x", 0))
+        cy  = float(comp.get("y", 0))
+        rot = float(comp.get("rotation", 0)) * math.pi / 180
+        cos_r, sin_r = math.cos(rot), math.sin(rot)
         for pad in comp.get("pads", []):
-            key = f"{ref}.{pad.get('number', pad.get('name', '?'))}"
-            px  = cx + float(pad.get("x", 0))
-            py  = cy + float(pad.get("y", 0))
-            pad_pos[key] = (px, py)
+            net = pad.get("net", "") or ""
+            if not net:
+                continue
+            # Rotate local pad offset into world space
+            lx = float(pad.get("x", 0))
+            ly = float(pad.get("y", 0))
+            px = cx + lx * cos_r - ly * sin_r
+            py = cy + lx * sin_r + ly * cos_r
+            net_pads.setdefault(net, []).append((px, py))
 
+    # ── BFS shortest path on the grid ────────────────────────────────────────
     DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
     def _bfs(sx: float, sy: float, ex: float, ey: float) -> list[tuple[float, float]] | None:
         sg = (int(round(sx / GRID)), int(round(sy / GRID)))
         eg = (int(round(ex / GRID)), int(round(ey / GRID)))
         if sg == eg:
-            return [(sx, sy)]
-        dist = {sg: 0}
+            return [(sx, sy), (ex, ey)]
+        dist: dict[tuple, int] = {sg: 0}
         prev: dict[tuple, tuple] = {}
         pq: list = [(0, sg)]
         while pq:
             d, cur = heapq.heappop(pq)
+            if d > dist.get(cur, 10**9):
+                continue
             if cur == eg:
-                path = []
-                while cur in prev:
-                    path.append((cur[0] * GRID, cur[1] * GRID))
-                    cur = prev[cur]
+                path: list[tuple[float, float]] = []
+                node = cur
+                while node in prev:
+                    path.append((node[0] * GRID, node[1] * GRID))
+                    node = prev[node]
                 path.append((sg[0] * GRID, sg[1] * GRID))
                 path.reverse()
-                path.append((ex, ey))
+                # Snap endpoints to the exact pad coordinates
+                if path:
+                    path[0] = (sx, sy)
+                    path.append((ex, ey))
                 return path
             for dx, dy in DIRS:
                 nxt = (cur[0] + dx, cur[1] + dy)
@@ -2678,66 +2727,77 @@ def run_autoroute(board: dict) -> dict:
                 if nxt in occupied:
                     continue
                 nd = d + 1
-                if nxt not in dist or nd < dist[nxt]:
+                if nd < dist.get(nxt, 10**9):
                     dist[nxt] = nd
                     prev[nxt] = cur
                     heapq.heappush(pq, (nd, nxt))
-        return None  # no path
+        return None  # no path found
 
+    # ── Route each net with greedy nearest-neighbour MST ─────────────────────
     routed = 0
     total  = 0
     new_traces: list[dict] = list(board.get("traces", []))
 
-    skip_nets = {"GND", "NC", ""}
-    for net_entry in board.get("nets", []):
-        net_name = net_entry.get("name", "")
-        if net_name in skip_nets:
+    # Sort nets: power first, then alphabetical for determinism
+    def _net_priority(name: str) -> int:
+        upper = name.upper()
+        power_keywords = ("VCC", "VDD", "VIN", "VBAT", "VBUS", "3V3", "5V",
+                          "12V", "24V", "AVCC", "DVCC", "VPW", "VMOT", "VPWR")
+        return 0 if any(kw in upper for kw in power_keywords) else 1
+
+    for net_name in sorted(net_pads.keys(), key=lambda n: (_net_priority(n), n)):
+        if _autoroute_skip_net(net_name):
             continue
-        pads_in_net = [p for p in net_entry.get("pads", []) if p in pad_pos]
-        if len(pads_in_net) < 2:
+        pads_xy = net_pads[net_name]
+        if len(pads_xy) < 2:
             continue
         total += 1
 
-        # Route MST: connect pads in a chain nearest-neighbor
-        remaining = list(pads_in_net)
-        connected = [remaining.pop(0)]
-        success = True
+        width_mm = _autoroute_trace_width(net_name, dr)
+
+        # Greedy nearest-neighbour MST: always connect closest unconnected pad
+        remaining: list[tuple[float, float]] = list(pads_xy)
+        connected: list[tuple[float, float]] = [remaining.pop(0)]
         segments: list[dict] = []
+        all_routed = True
 
         while remaining:
-            best_i, best_path, best_d = 0, None, float("inf")
+            best_i    = 0
+            best_d    = float("inf")
+            best_src  = connected[0]
             for i, cand in enumerate(remaining):
-                cx2, cy2 = pad_pos[cand]
                 for src in connected:
-                    sx, sy = pad_pos[src]
-                    d = abs(cx2 - sx) + abs(cy2 - sy)
+                    d = abs(cand[0] - src[0]) + abs(cand[1] - src[1])
                     if d < best_d:
-                        best_d = d
-                        best_i = i
-                        best_pair = (sx, sy, cx2, cy2)
-            sx, sy, ex2, ey2 = best_pair
-            path = _bfs(sx, sy, ex2, ey2)
+                        best_d   = d
+                        best_i   = i
+                        best_src = src
+
+            dest = remaining.pop(best_i)
+            connected.append(dest)
+
+            path = _bfs(best_src[0], best_src[1], dest[0], dest[1])
             if path is None:
-                success = False
-                break
+                # BFS blocked — fall back to straight Manhattan segment so the
+                # net is still partially connected rather than lost entirely.
+                all_routed = False
+                mid = (dest[0], best_src[1])  # horizontal-first elbow
+                path = [best_src, mid, dest]
+
             for j in range(len(path) - 1):
                 x0, y0 = path[j]
                 x1, y1 = path[j + 1]
-                segments.append({"start": {"x": x0, "y": y0}, "end": {"x": x1, "y": y1}})
-                # Mark path as occupied
-                steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
-                for s in range(steps + 1):
-                    t = s / max(steps, 1)
-                    gx = int(round((x0 + t * (x1 - x0)) / GRID))
-                    gy = int(round((y0 + t * (y1 - y0)) / GRID))
-                    occupied.add((gx, gy))
-            connected.append(remaining.pop(best_i))
+                if abs(x1 - x0) < 0.001 and abs(y1 - y0) < 0.001:
+                    continue  # skip zero-length segments
+                segments.append({"start": {"x": round(x0, 4), "y": round(y0, 4)},
+                                  "end":   {"x": round(x1, 4), "y": round(y1, 4)}})
+                _mark_segment(x0, y0, x1, y1)
 
-        if success and segments:
+        if segments:
             new_traces.append({
                 "net":      net_name,
                 "layer":    "F.Cu",
-                "width":    trace_w,
+                "width":    width_mm,
                 "segments": segments,
             })
             routed += 1
