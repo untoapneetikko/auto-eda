@@ -3370,10 +3370,6 @@ async def api_pcb_import_schematic(request: Request):
 
         # 2. Build le_pad_key → internal LE net  (from component pad fields)
         le_pad_to_int_net: dict[str, str] = {}
-        le_comps_raw = (
-            (eg_info.get("layout_example") or {}).get("components")
-            or _load_le_comps(LIBRARY_DIR, eg_info["eg_slug"])
-        )
         # Retrieve the raw component list from the library profile directly
         try:
             _le_profile = json.loads(
@@ -3587,32 +3583,74 @@ async def api_pcb_import_schematic(request: Request):
         dx = ax - le_ax
         dy = ay - le_ay
 
+        net_map = eg_info.get("le_int_net_to_sc", {})
         for trace in eg_info["traces"]:
             t = dict(trace)
-            if "x1" in t:
+            # Remap internal LE net name ("N1" → "RFIN") using the chain:
+            #   internal → LE canonical → schematic net name
+            raw_net = t.get("net", "")
+            t["net"] = net_map.get(raw_net, raw_net)
+            # Translate coordinates — three possible storage formats:
+            if "x1" in t:                                        # flat x1/y1/x2/y2
                 t["x1"] = round(float(t["x1"]) + dx, 3)
                 t["y1"] = round(float(t["y1"]) + dy, 3)
                 t["x2"] = round(float(t["x2"]) + dx, 3)
                 t["y2"] = round(float(t["y2"]) + dy, 3)
-            elif "points" in t:
+            if "points" in t:                                    # points list
                 t["points"] = [
                     {"x": round(float(p["x"]) + dx, 3),
                      "y": round(float(p["y"]) + dy, 3)}
                     for p in t["points"]
                 ]
+            if "segments" in t:                                  # segments list
+                t["segments"] = [
+                    {
+                        "start": {"x": round(float(seg["start"]["x"]) + dx, 3),
+                                  "y": round(float(seg["start"]["y"]) + dy, 3)},
+                        "end":   {"x": round(float(seg["end"]["x"])   + dx, 3),
+                                  "y": round(float(seg["end"]["y"])   + dy, 3)},
+                    }
+                    for seg in t["segments"]
+                ]
             pcb_traces.append(t)
 
         for via in eg_info["vias"]:
             v = dict(via)
-            v["x"] = round(float(v.get("x", 0)) + dx, 3)
-            v["y"] = round(float(v.get("y", 0)) + dy, 3)
+            v["x"]   = round(float(v.get("x", 0)) + dx, 3)
+            v["y"]   = round(float(v.get("y", 0)) + dy, 3)
+            raw_net  = v.get("net", "")
+            v["net"] = net_map.get(raw_net, raw_net)
             pcb_vias.append(v)
 
-    # ── Build nets list from netlist dict ──────────────────────────────────
+    # ── Build nets list from netlist dict + translated LE nets ─────────────
+    # Start from the schematic netlist, then merge in the LE canonical nets
+    # (translated to schematic refs) so pad connectivity from the layout_example
+    # is reflected even for pads not covered by the schematic wire tracing.
+    pcb_nets_by_name: dict[str, set] = {}
+    for net_name, pads_list in netlist.items():
+        if isinstance(pads_list, list) and pads_list:
+            pcb_nets_by_name.setdefault(net_name, set()).update(str(p) for p in pads_list)
+
+    for eg_id, eg_info in le_groups.items():
+        le_ref_to_sc_ref = eg_info.get("le_ref_to_sc_ref", {})
+        canonical_to_sc  = eg_info.get("le_canonical_to_sc", {})
+        for le_net in eg_info.get("le_nets_raw", []):
+            canonical = str(le_net.get("name", ""))
+            sc_net_name = canonical_to_sc.get(canonical, canonical)
+            if not sc_net_name:
+                continue
+            for le_pad_ref in le_net.get("pads", []):
+                parts = le_pad_ref.split(".", 1)
+                if len(parts) == 2:
+                    sc_ref = le_ref_to_sc_ref.get(parts[0])
+                    if sc_ref:
+                        pcb_nets_by_name.setdefault(sc_net_name, set()).add(
+                            f"{sc_ref}.{parts[1]}")
+
     pcb_nets: list[dict] = [
-        {"name": net_name, "pads": [str(p) for p in pads_list]}
-        for net_name, pads_list in netlist.items()
-        if isinstance(pads_list, list) and pads_list
+        {"name": name, "pads": sorted(pads)}
+        for name, pads in pcb_nets_by_name.items()
+        if pads
     ]
 
     return {
