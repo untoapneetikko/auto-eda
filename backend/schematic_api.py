@@ -1714,6 +1714,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
     user_msg = (body.get("message") or body.get("input") or "").strip()
     if not user_msg:
         raise HTTPException(400, "message required")
+    model_id = body.get("model") or "claude-sonnet-4-6"
 
     # If the requested name is already running, find/spawn a free instance
     # Use the base agent's name for routing so clones share the same pool
@@ -1795,6 +1796,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                     env={"IS_SANDBOX": "1"},
                     stderr=_capture_stderr,
                     thinking=ThinkingConfigAdaptive(type="adaptive"),
+                    model=model_id,
                 )
 
             async def _stream(session_id, retry=True):
