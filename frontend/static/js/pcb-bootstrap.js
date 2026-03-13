@@ -91,14 +91,60 @@ window.addEventListener('load',()=>{
           const existingBoards = await existingRes.json();
           let bw = opts.boardW || 80;
           let bh = opts.boardH || 60;
-          // If an existing board is found for this project, load it directly —
-          // do NOT re-run importSchematic or we'll overwrite saved component positions.
+          // If an existing board is found for this project, load it and merge any
+          // new schematic components that aren't in the board yet — preserving all
+          // existing component positions.
           if (existingBoards && existingBoards.length > 0) {
             const eb = existingBoards[0];
             const ebFull = await fetch(`/api/pcb-boards/${eb.id}`).then(r=>r.json());
             const loadRes = editor.load(ebFull);
             if (loadRes.ok) {
               _activeBoardId = eb.id;
+
+              // ── Merge new schematic components into existing board ──────────
+              // Run a fresh import to get what the schematic currently contains,
+              // then diff against the loaded board — adding anything missing.
+              try {
+                const projRes = await fetch(`/api/projects/${e.data.projectId}`);
+                const proj = await projRes.json();
+                const boardW = editor.board.boardW || (editor.board.board && editor.board.board.width) || bw;
+                const boardH = editor.board.boardH || (editor.board.board && editor.board.board.height) || bh;
+                const freshBoard = await importSchematic(proj, e.data.netlist, boardW, boardH);
+
+                if (freshBoard && freshBoard.components) {
+                  const existingRefs = new Set((editor.board.components || []).map(c => c.ref || c.id));
+                  const newComps = freshBoard.components.filter(c => !existingRefs.has(c.ref || c.id));
+
+                  if (newComps.length > 0) {
+                    // Place new components in a staging row to the right of the board
+                    let stageX = boardW + 10;
+                    let stageY = 5;
+                    for (const nc of newComps) {
+                      nc.x = stageX;
+                      nc.y = stageY;
+                      stageY += 12;
+                      if (stageY > boardH) { stageY = 5; stageX += 20; }
+                      editor.board.components.push(nc);
+                    }
+                    // Merge new groups
+                    if (freshBoard.groups) {
+                      editor.board.groups = editor.board.groups || [];
+                      const existingGrpIds = new Set(editor.board.groups.map(g => g.id));
+                      for (const g of freshBoard.groups) {
+                        if (!existingGrpIds.has(g.id)) editor.board.groups.push(g);
+                      }
+                    }
+                    // Refresh ratsnest nets
+                    if (freshBoard.nets) editor.board.nets = freshBoard.nets;
+                    await saveBoard();
+                    console.log(`[importProject] merged ${newComps.length} new component(s) into existing board`);
+                  }
+                }
+              } catch(mergeErr) {
+                console.warn('[importProject] merge step failed (non-fatal):', mergeErr);
+              }
+              // ── End merge ──────────────────────────────────────────────────
+
               switchPcbSection('layout');
               afterLoad();
               await loadBoardTabs(_currentProjectId);
@@ -107,7 +153,7 @@ window.addEventListener('load',()=>{
               if (_sb) _sb.style.display = 'none';
               if (src) src.postMessage({ type: 'importProjectDone' }, '*');
               setTimeout(()=>{if(typeof runDRCTab==='function')runDRCTab();},200);
-              return; // positions preserved — skip fresh import
+              return;
             }
           }
           // No saved board exists yet — do a fresh import from the schematic
