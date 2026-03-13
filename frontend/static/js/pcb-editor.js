@@ -747,6 +747,37 @@ class PCBEditor {
     return['#4fc3f7','#f9a825','#ce93d8','#80cbc4','#ff8a65','#aed581','#ffb74d'][h%7];
   }
 
+  // Clamp (ex,ey) so the angle at the last routePoint junction is >= DR.minTraceAngle.
+  // Returns {x,y} — unchanged if there are fewer than 2 points or angle is already fine.
+  _clampRoutePoint(ex,ey){
+    const pts=this.routePoints;
+    if(pts.length<2)return{x:ex,y:ey};
+    const prev=pts[pts.length-2], cur=pts[pts.length-1];
+    const MIN_RAD=(DR.minTraceAngle??90)*Math.PI/180;
+    const EPS=0.001;
+    // Back-vector: from junction toward previous point
+    const bx=prev.x-cur.x, by=prev.y-cur.y;
+    const bl=Math.hypot(bx,by); if(bl<EPS)return{x:ex,y:ey};
+    const bnx=bx/bl, bny=by/bl; // normalised back direction
+    // New-segment vector: from junction toward cursor
+    const fx=ex-cur.x, fy=ey-cur.y;
+    const fl=Math.hypot(fx,fy); if(fl<EPS)return{x:ex,y:ey};
+    const fnx=fx/fl, fny=fy/fl;
+    // Signed angle from back-direction to cursor-direction (positive = CCW)
+    const dot=bnx*fnx+bny*fny;
+    const cross=bnx*fny-bny*fnx; // z of 3D cross product
+    const phi=Math.atan2(cross,dot); // in (-π, π]
+    // If the opening angle (|phi|) is already >= MIN_RAD, no clamping needed
+    if(Math.abs(phi)>=MIN_RAD)return{x:ex,y:ey};
+    // Clamp phi to ±MIN_RAD (keep the sign so we stay on the same side)
+    const clampedPhi=phi>=0?MIN_RAD:-MIN_RAD;
+    // Rotate back-direction by clampedPhi to get the constrained direction
+    const cosPhi=Math.cos(clampedPhi), sinPhi=Math.sin(clampedPhi);
+    const cdx=bnx*cosPhi-bny*sinPhi;
+    const cdy=bnx*sinPhi+bny*cosPhi;
+    return{x:cur.x+cdx*fl, y:cur.y+cdy*fl};
+  }
+
   _drawActiveRoute(){
     const ctx=this.ctx,pts=this.routePoints;
     const layerCol=this.layers[this.routeLayer]?.color||'#cc6633';
@@ -761,9 +792,10 @@ class PCBEditor {
     const netConflict=destNet&&this.routeNet&&destNet!==this.routeNet;
     const netMatch=destNet&&(!this.routeNet||destNet===this.routeNet);
 
-    // Snap endpoint to pad/via if net matches
+    // Snap endpoint to pad/via if net matches, then clamp to minimum trace angle
     let ex=this._mx,ey=this._my;
     if(hitPad&&netMatch){ex=hitPad.x;ey=hitPad.y;}
+    ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
     const endPxX=this.mmX(ex),endPxY=this.mmY(ey);
     const col=netConflict?'#ef4444':netMatch?'#22c55e':layerCol;
@@ -1742,29 +1774,9 @@ class PCBEditor {
             return;
           }
 
-          // Snap to pad position if hitting a pad
-          const ex=hit?hit.x:xmm, ey=hit?hit.y:ymm;
-
-          // Enforce minimum trace angle — block click if it would create a bend < DR.minTraceAngle
-          if(this.routePoints.length>=2){
-            const prev=this.routePoints[this.routePoints.length-2];
-            const cur=this.routePoints[this.routePoints.length-1];
-            const MIN_RAD=(DR.minTraceAngle??90)*Math.PI/180;
-            const EPS=0.001;
-            // "away" vectors from current junction: back to prev, forward to new point
-            const ax=prev.x-cur.x, ay=prev.y-cur.y;
-            const bx=ex-cur.x,     by=ey-cur.y;
-            const la=Math.hypot(ax,ay), lb=Math.hypot(bx,by);
-            if(la>EPS&&lb>EPS){
-              const angle=Math.acos(Math.max(-1,Math.min(1,(ax*bx+ay*by)/(la*lb))));
-              if(angle<MIN_RAD){
-                this._routeError=`Angle too sharp (${Math.round(angle*180/Math.PI)}° < ${DR.minTraceAngle??90}° min)`;
-                this.render();
-                setTimeout(()=>{this._routeError=null;this.render();},2000);
-                return;
-              }
-            }
-          }
+          // Snap to pad position if hitting a pad, then clamp to minimum trace angle
+          let ex=hit?hit.x:xmm, ey=hit?hit.y:ymm;
+          ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
           // Assign net from destination if not yet set
           if(!this.routeNet&&destNet) this.routeNet=destNet;
