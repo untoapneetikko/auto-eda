@@ -22,6 +22,8 @@ class FootprintEditor {
     // ── Paste / mask parametrisation ──
     this.maskExpansion = 0.10; // mm expansion beyond pad edge (each side)
     this.pasteGap      = 0.05; // mm reduction from pad edge (each side)
+    // ── Active work layer (the layer currently being edited) ──
+    this.workLayer = 'F.Cu';
     this._bind();
   }
 
@@ -232,21 +234,21 @@ class FootprintEditor {
       out += `<rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="${fCol}66" stroke-width="0.8"/>`;
     }
 
-    // ── Layer: F.Paste (solder paste — reduced SMD pads) ──────────────────
-    if (this.layers['F.Paste']?.visible) {
-      for (let i = 0; i < this.data.pads.length; i++)
-        out += this._padLayer(this.data.pads[i], i, 'F.Paste');
+    // ── Layer: F.Cu (copper pads) — drawn first so overlays sit on top ──────
+    if (this.layers['F.Cu']?.visible) {
+      for (let i = 0; i < this.data.pads.length; i++) out += this._padH(this.data.pads[i], i);
     }
 
-    // ── Layer: F.Mask (solder mask opening — expanded pads) ───────────────
+    // ── Layer: F.Mask (solder mask opening — expanded, on top of copper) ───
     if (this.layers['F.Mask']?.visible) {
       for (let i = 0; i < this.data.pads.length; i++)
         out += this._padLayer(this.data.pads[i], i, 'F.Mask');
     }
 
-    // ── Layer: F.Cu (copper pads) ─────────────────────────────────────────
-    if (this.layers['F.Cu']?.visible !== false) {
-      for (let i = 0; i < this.data.pads.length; i++) out += this._padH(this.data.pads[i], i);
+    // ── Layer: F.Paste (solder paste — reduced, topmost overlay) ───────────
+    if (this.layers['F.Paste']?.visible) {
+      for (let i = 0; i < this.data.pads.length; i++)
+        out += this._padLayer(this.data.pads[i], i, 'F.Paste');
     }
 
     // ── Layer: F.SilkS (silkscreen — pin 1 marker) ────────────────────────
