@@ -221,34 +221,42 @@ class FootprintEditor {
 
     const cy = this.data.courtyard || this._autoCY();
     const cs = this._toS(cy.x, cy.y);
+    // Active layer = full opacity; all others dimmed so the work layer stands out clearly
+    const lop = name => (this.workLayer === name ? 1.0 : 0.35);
 
     // ── Layer: Courtyard ──────────────────────────────────────────────────
     if (this.layers['Courtyard']?.visible) {
       const cCol = this.layers['Courtyard'].color;
-      out += `<rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="${cCol}55" stroke-width="1" stroke-dasharray="4,3"/>`;
+      out += `<g opacity="${lop('Courtyard')}"><rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="${cCol}55" stroke-width="1" stroke-dasharray="4,3"/></g>`;
     }
 
     // ── Layer: F.Fab (component outline — solid courtyard) ────────────────
     if (this.layers['F.Fab']?.visible) {
       const fCol = this.layers['F.Fab'].color;
-      out += `<rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="${fCol}66" stroke-width="0.8"/>`;
+      out += `<g opacity="${lop('F.Fab')}"><rect x="${cs.x.toFixed(1)}" y="${cs.y.toFixed(1)}" width="${(cy.w*this.zoom).toFixed(1)}" height="${(cy.h*this.zoom).toFixed(1)}" fill="none" stroke="${fCol}66" stroke-width="0.8"/></g>`;
     }
 
-    // ── Layer: F.Cu (copper pads) — drawn first so overlays sit on top ──────
+    // ── Layer: F.Cu (copper pads) ─────────────────────────────────────────
     if (this.layers['F.Cu']?.visible) {
+      out += `<g opacity="${lop('F.Cu')}">`;
       for (let i = 0; i < this.data.pads.length; i++) out += this._padH(this.data.pads[i], i);
+      out += '</g>';
     }
 
     // ── Layer: F.Mask (solder mask opening — expanded, on top of copper) ───
     if (this.layers['F.Mask']?.visible) {
+      out += `<g opacity="${lop('F.Mask')}">`;
       for (let i = 0; i < this.data.pads.length; i++)
         out += this._padLayer(this.data.pads[i], i, 'F.Mask');
+      out += '</g>';
     }
 
     // ── Layer: F.Paste (solder paste — reduced, topmost overlay) ───────────
     if (this.layers['F.Paste']?.visible) {
+      out += `<g opacity="${lop('F.Paste')}">`;
       for (let i = 0; i < this.data.pads.length; i++)
         out += this._padLayer(this.data.pads[i], i, 'F.Paste');
+      out += '</g>';
     }
 
     // ── Layer: F.SilkS (silkscreen — pin 1 marker) ────────────────────────
@@ -256,7 +264,7 @@ class FootprintEditor {
       const p1 = this.data.pads[0], p1s = this._toS(p1.x, p1.y);
       const ay = p1s.y - (p1.size_y||1)*this.zoom/2 - 9;
       const silkCol = this.layers['F.SilkS'].color;
-      out += `<polygon points="${p1s.x-5},${ay-7} ${p1s.x+5},${ay-7} ${p1s.x},${ay-1}" fill="${silkCol}cc"/>`;
+      out += `<g opacity="${lop('F.SilkS')}"><polygon points="${p1s.x-5},${ay-7} ${p1s.x+5},${ay-7} ${p1s.x},${ay-1}" fill="${silkCol}cc"/></g>`;
     }
 
     // Dims (always shown)
@@ -274,9 +282,12 @@ function buildFPLayerPanel() {
   const ul = document.getElementById('fp-layer-list');
   if (!ul || !fpEditor) return;
   ul.innerHTML = '';
+  const wl = fpEditor.workLayer;
   for (const [name, lyr] of Object.entries(fpEditor.layers)) {
+    const isWork = name === wl;
     const d = document.createElement('div');
-    d.style.cssText = 'display:flex;align-items:center;gap:5px;padding:3px 4px;border-radius:3px;user-select:none;font-size:11px;' +
+    d.style.cssText = 'display:flex;align-items:center;gap:5px;padding:3px 4px;border-radius:3px;user-select:none;font-size:11px;cursor:pointer;' +
+      (isWork ? `background:${lyr.color}22;outline:1px solid ${lyr.color}55;` : '') +
       (lyr.visible ? '' : 'opacity:0.45;');
 
     // Color dot with inline color picker
@@ -285,14 +296,19 @@ function buildFPLayerPanel() {
     const cp = document.createElement('input');
     cp.type = 'color'; cp.value = lyr.color;
     cp.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;border:none;';
-    cp.oninput = e => { e.stopPropagation(); lyr.color = cp.value; dot.style.background = lyr.color; if (fpEditor) fpEditor._render(); };
+    cp.oninput = e => { e.stopPropagation(); lyr.color = cp.value; dot.style.background = lyr.color; if (fpEditor) fpEditor._render(); buildFPLayerPanel(); };
     cp.onclick = e => e.stopPropagation();
     dot.appendChild(cp);
+
+    // Star — active work layer indicator (mirrors PCB editor)
+    const star = document.createElement('span');
+    star.textContent = isWork ? '★' : '';
+    star.style.cssText = `font-size:9px;color:${lyr.color};flex-shrink:0;width:9px;`;
 
     // Layer name
     const nm = document.createElement('span');
     nm.textContent = lyr.displayName || name;
-    nm.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);';
+    nm.style.cssText = `flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${isWork ? lyr.color : 'var(--text)'};font-weight:${isWork ? '700' : '400'};`;
 
     // Eye toggle
     const eye = document.createElement('span');
@@ -306,7 +322,15 @@ function buildFPLayerPanel() {
       if (fpEditor) fpEditor._render();
     };
 
-    d.appendChild(dot); d.appendChild(nm); d.appendChild(eye);
+    // Row click → set as work layer
+    d.onclick = () => {
+      if (nm.contentEditable === 'true') return;
+      fpEditor.workLayer = name;
+      buildFPLayerPanel();
+      fpEditor._render();
+    };
+
+    d.appendChild(dot); d.appendChild(star); d.appendChild(nm); d.appendChild(eye);
     ul.appendChild(d);
   }
 }
