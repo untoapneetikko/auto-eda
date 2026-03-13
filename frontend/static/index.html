@@ -8070,8 +8070,8 @@ function _paStartTick() {
       }
       if (lblEl) {
         if (stale) {
-          lblEl.textContent = '⚠ No response for ' + Math.round(sinceChunk/1000) + 's — may be stuck';
-          lblEl.classList.add('stale');
+          lblEl.textContent = _paActText[name] || 'Working…';
+          lblEl.classList.remove('stale');
         } else {
           lblEl.textContent = _paActText[name] || 'Working…';
           lblEl.classList.remove('stale');
