@@ -3,7 +3,7 @@ version: "3.9"
 services:
   app:
     build: .
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/backend --reload-dir /app/agents
     ports:
       - "8000:8000"
     volumes:
