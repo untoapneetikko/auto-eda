@@ -2102,8 +2102,20 @@ async def _ticket_dispatcher():
             pending = [t for t in data["tickets"] if t.get("status") == "pending"]
             for ticket in pending:
                 agent_name = _TICKET_AGENT_MAP.get(ticket.get("type", ""))
+                prompt = (ticket.get("prompt") or "").strip()
+
+                # Reject tickets with obviously broken prompts before dispatching
                 if not agent_name or agent_name not in _PIPELINE_AGENTS:
                     continue
+                if not prompt or "[object Promise]" in prompt or prompt.startswith("WHEN DONE"):
+                    idx = next((i for i, t in enumerate(data["tickets"]) if t["id"] == ticket["id"]), -1)
+                    if idx != -1:
+                        data["tickets"][idx]["status"] = "error"
+                        data["tickets"][idx]["error"] = "bad prompt (unresolved Promise or empty)"
+                        _save_gen_tickets(data)
+                    print(f"[ticket-dispatcher] GT-{ticket['id']:03d} rejected: bad prompt", flush=True)
+                    continue
+
                 # Claim atomically before dispatching so a second poll cycle
                 # doesn't pick up the same ticket again
                 idx = next((i for i, t in enumerate(data["tickets"]) if t["id"] == ticket["id"]), -1)
