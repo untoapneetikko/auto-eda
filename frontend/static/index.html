@@ -407,10 +407,12 @@
   .pipeline-section { border-top:1px solid var(--border); padding:14px 18px 18px; background:var(--bg); flex-shrink:0; }
   .pipeline-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
   .pipeline-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:9px; }
-  .pa-card { background:var(--surface); border:1px solid rgba(34,197,94,0.3); background:rgba(34,197,94,0.04); border-radius:8px; padding:11px 13px; display:flex; flex-direction:column; gap:5px; transition:border-color .15s,background .15s; cursor:pointer; }
-  .pa-card:hover { border-color:rgba(34,197,94,0.7); background:rgba(34,197,94,0.08); }
+  .pa-card { background:var(--surface); border:1px solid var(--border); background:transparent; border-radius:8px; padding:11px 13px; display:flex; flex-direction:column; gap:5px; transition:border-color .15s,background .15s; cursor:pointer; }
+  .pa-card:hover { border-color:rgba(148,163,184,0.4); background:rgba(255,255,255,0.02); }
   .pa-card.pa-running { border-color:#f59e0b; background:rgba(245,158,11,0.08); }
   .pa-card.pa-running:hover { border-color:#fbbf24; background:rgba(245,158,11,0.14); }
+  .pa-card.pa-unread  { border-color:rgba(34,197,94,0.5); background:rgba(34,197,94,0.06); }
+  .pa-card.pa-unread:hover { border-color:rgba(34,197,94,0.8); background:rgba(34,197,94,0.1); }
   .pa-card.pa-error   { border-color:rgba(239,68,68,0.5); background:rgba(239,68,68,0.06); }
   .pa-card.pa-error:hover { border-color:#ef4444; background:rgba(239,68,68,0.1); }
   .pa-card-top { display:flex; align-items:center; gap:7px; }
@@ -8000,10 +8002,21 @@ function paTimeAgo(iso) {
   return Math.floor(diff/86400) + 'd ago';
 }
 
+function _paCardCls(agent) {
+  const st = agent.status;
+  if (st === 'running') return 'pa-running';
+  if (st === 'error') return 'pa-error';
+  if (st === 'done' && agent.last_run) {
+    const lastOpened = parseInt(localStorage.getItem('pa-opened-' + agent.name) || '0');
+    if (new Date(agent.last_run).getTime() > lastOpened) return 'pa-unread';
+  }
+  return '';
+}
+
 function paCard(agent) {
   const st = agent.status;
   const dotCls = st === 'running' ? 'running' : st === 'done' ? 'done' : st === 'error' ? 'error' : 'idle';
-  const cardCls = st === 'running' ? 'pa-running' : st === 'error' ? 'pa-error' : '';
+  const cardCls = _paCardCls(agent);
   const statusLabel = st === 'running' ? '⚡ Running' : st === 'done' ? '✓ Done' : st === 'error' ? '✗ Error' : 'Idle';
   const msgBadge = agent.msg_count ? `<span class="pa-badge">${agent.msg_count} msg${agent.msg_count!==1?'s':''}</span>` : '';
   const preview = agent.last_msg ? `<div class="pa-msg-preview">${esc(agent.last_msg)}</div>` : '';
@@ -8037,6 +8050,7 @@ async function pipelineAgentsLoad() {
 
 async function paOpenChat(name) {
   _activePaAgent = name;
+  localStorage.setItem('pa-opened-' + name, Date.now()); // mark as read
   const agent = _paState[name];
   if (!agent) return;
 
@@ -8222,7 +8236,8 @@ function _handlePipelineSSE(evt, data) {
     else if (evt === 'pipeline_agent_done')  _paState[name].status = data.status === 'done' ? 'done' : data.status === 'error' ? 'error' : 'idle';
     const card = document.getElementById('pa-card-' + name);
     if (card) {
-      card.className = `pa-card${_paState[name].status === 'running' ? ' pa-running' : _paState[name].status === 'error' ? ' pa-error' : ''}`;
+      const cls = _paCardCls(_paState[name]);
+      card.className = `pa-card${cls ? ' ' + cls : ''}`;
     }
   }
 
