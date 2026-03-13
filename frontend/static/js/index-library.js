@@ -114,6 +114,9 @@ async function loadProfile(slug) {
 // ── Profile Render ─────────────────────────────────────────────────────────
 function renderProfile(p) {
   showView('library');
+  // Rebuilding innerHTML destroys the le-frame iframe — mark it as unloaded so
+  // leSaveLayout won't try to getBoard from a blank frame.
+  if (typeof _leLoadedSlug !== 'undefined') _leLoadedSlug = null;
   const main = document.getElementById('view-library');
 
   if (p.status === 'pending_parse') {

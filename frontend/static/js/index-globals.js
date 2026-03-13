@@ -56,7 +56,14 @@ evtSource.addEventListener('profile_updated', e => {
   _scheduleLibReload();
   if (selectedSlug === slug) {
     clearTimeout(_profileReloadTimer);
-    _profileReloadTimer = setTimeout(() => loadProfile(slug), 600);
+    _profileReloadTimer = setTimeout(() => {
+      // Don't blow away the layout-example iframe while the user is actively working on it.
+      // profile_updated fires after every leSaveLayout() PUT, which would destroy the iframe
+      // and leave _leLoadedSlug pointing at a blank frame — silently breaking the next save.
+      if (typeof currentProfileTab !== 'undefined' && currentProfileTab === 'layout-example' &&
+          typeof _leLoadedSlug !== 'undefined' && _leLoadedSlug === slug) return;
+      loadProfile(slug);
+    }, 600);
   }
 });
 evtSource.addEventListener('pipeline_agent_started',   e => _handlePipelineSSE('pipeline_agent_started',   JSON.parse(e.data)));
