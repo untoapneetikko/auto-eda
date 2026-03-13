@@ -19,7 +19,7 @@
       "connections": [
         { "pin": 2,  "net": "RF_INT"     },
         { "pin": 8,  "net": "RF_OUT_INT" },
-        { "pin": 0,  "net": "GND"        },
+        { "pin": 13, "net": "GND"        },
         { "pin": 1,  "net": "GND"        },
         { "pin": 3,  "net": "GND"        },
         { "pin": 4,  "net": "GND"        },
