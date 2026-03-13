@@ -1,4 +1,14 @@
 {
-  "nextId": 1,
-  "tickets": []
+  "nextId": 2,
+  "tickets": [
+    {
+      "id": 1,
+      "type": "schematic",
+      "slug": "PMA3_83LNW",
+      "title": "Library \u2192 Component \u2192 PMA3-83LNW+ \u2192 schematic",
+      "prompt": "\n\nWHEN DONE \u2014 mark this ticket complete:\nPUT http://localhost:3030/api/gen-tickets/1\nBody: { \"status\": \"done\" }",
+      "status": "pending",
+      "created_at": "2026-03-13T15:25:41.653757+00:00"
+    }
+  ]
 }

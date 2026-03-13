@@ -157,40 +157,6 @@
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 480,
       "_exampleY": 210
-    },
-    {
-      "id": "cmmow5miuhia",
-      "slug": "CAPACITOR_POL",
-      "symType": "ic",
-      "designator": "U2",
-      "value": "C_POL",
-      "x": -440,
-      "y": -110,
-      "rotation": 0,
-      "_exampleGroupId": "eg_mmow5miu5q",
-      "_exampleSlug": "CAPACITOR_POL",
-      "_exampleX": 300,
-      "_exampleY": 200
-    },
-    {
-      "id": "cmmow5u81",
-      "slug": "ESP32_WROOM_32",
-      "symType": "ic",
-      "designator": "U3",
-      "value": "ESP32-WROOM-32",
-      "x": 460,
-      "y": -40,
-      "rotation": 0
-    },
-    {
-      "id": "cmmow5uzg",
-      "slug": "ESP32_WROOM_32",
-      "symType": "ic",
-      "designator": "U4",
-      "value": "ESP32-WROOM-32",
-      "x": 110,
-      "y": 320,
-      "rotation": 0
     }
   ],
   "wires": [
@@ -472,5 +438,5 @@
   ],
   "groups": [],
   "created_at": "2026-03-13T12:29:07.720414+00:00",
-  "updated_at": "2026-03-13T14:54:10.426411+00:00"
+  "updated_at": "2026-03-13T15:09:06.524993+00:00"
 }

@@ -520,8 +520,8 @@ function buildExampleCircuit(profile) {
     ];
     // Net labels for RF port stubs
     const labels = [
-      { id:'lbl1', name:'RF_IN',  x:80,  y:220, rotation:0 },
-      { id:'lbl2', name:'RF_OUT', x:580, y:220, rotation:0 },
+      { id:'lbl1', name:'RF_IN',  x:80,  y:240, rotation:0 },
+      { id:'lbl2', name:'RF_OUT', x:580, y:240, rotation:0 },
     ];
     return { components: comps, wires, labels };
   }

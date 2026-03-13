@@ -370,22 +370,6 @@
     "uploaded_at": null,
     "parsed_at": "2026-03-10T00:00:00.000Z"
   },
-  "TEST_PMA3_83LNW": {
-    "slug": "TEST_PMA3_83LNW",
-    "part_number": "TEST_PMA3-83LNW+",
-    "description": "PHEMT-based wideband low-noise MMIC amplifier, 0.4\u20138 GHz, 1.2 dB NF at 2 GHz, +37 dBm OIP3, single 5V/6V supply",
-    "manufacturer": "Mini-Circuits",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "12-lead MCLP 3x3x0.89mm (DQ1225)"
-    ],
-    "builtin": false,
-    "filename": "PMA3_83LNW.pdf",
-    "uploaded_at": "2026-03-08T16:52:47.739Z",
-    "parsed_at": "2026-03-09T00:00:00.000Z"
-  },
   "VCC": {
     "slug": "VCC",
     "part_number": "VCC",
