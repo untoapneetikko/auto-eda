@@ -4,14 +4,19 @@
 Fix bugs and improve the schematic canvas editor in the browser frontend.
 
 ## Scope
-- `frontend/static/index.html` — SchematicEditor class and all schematic UI
-  - Symbol rendering, placement, rotation
-  - Wire drawing, snapping, net labels
-  - Undo/redo stack
-  - Copy/paste, delete, selection
-  - Component palette and search
-  - Net overlay and connectivity highlighting
-- `backend/schematic_api.py` — `/api/projects/*` endpoints (save, load, list)
+index.html was split into separate JS files — edit those directly, NOT index.html itself:
+
+| File | What's in it |
+|------|-------------|
+| `frontend/static/js/index-schematic-editor.js` | **SchematicEditor class** — ALL canvas rendering, wire drawing, symbol placement, undo/redo, selection (~1512 lines). This is your primary file. |
+| `frontend/static/js/index-schematic-ops.js` | Editor instantiation (`const editor`), `renderSchNets`, `exportSVG`, `exportPNG`, `exportBOM`, `exportPCBJson` |
+| `frontend/static/js/index-symbol-renderer.js` | `drawSymbol`, `drawIC`, `drawResistor`, `drawCapacitor`, all canvas draw helpers |
+| `frontend/static/js/index-symbol-editor.js` | `SymbolEditorSVG` class, `symEditor*` functions, info panels |
+| `frontend/static/js/index-navigation.js` | `switchSection`, `renderSchPalette`, `SYMDEFS`, tabs/projects |
+| `frontend/static/js/index-globals.js` | Global vars, `esc()`, SSE setup |
+
+Backend:
+- `backend/schematic_api.py` — `/api/projects/*` endpoints (lines ~423–564)
 
 ## Common Tasks
 - Wire doesn't connect / wrong snap point
@@ -33,7 +38,7 @@ Fix bugs and improve the schematic canvas editor in the browser frontend.
 - Grid is 20px — all positions must snap to multiples of 20
 - Wire format: `{ id, points: [{x,y}...] }` — never use old x1/y1/x2/y2 format
 - `_isEmbedded` flag on appCircuitEditor must not be removed
-- After editing index.html, hard-refresh the browser to test (Ctrl+Shift+R)
+- After editing any JS file, hard-refresh the browser to test (Ctrl+Shift+R)
 
 ## Updating Your Own Code
 The agent files are live-mounted from the host. If you need the latest code:

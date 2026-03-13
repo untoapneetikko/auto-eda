@@ -4,16 +4,23 @@
 Fix bugs and improve the PCB editor (`pcb.html`) and related backend endpoints.
 
 ## Scope
-- `frontend/static/pcb.html` — PCBEditor class and all PCB UI
-  - Component placement, movement, rotation
-  - Trace routing (manual and auto)
-  - Via placement
-  - Layer switching and visibility
-  - Ratsnest display
-  - DRC results overlay
-  - Layer Manager modal
-  - Selection and deletion
-- `backend/schematic_api.py` — `/api/pcb/*` endpoints
+pcb.html was split into separate JS files — edit those directly, NOT pcb.html itself:
+
+| File | What's in it |
+|------|-------------|
+| `frontend/static/js/pcb-editor.js` | **PCBEditor class** — ALL canvas rendering, hit-testing, layers, routing, selection (~1580 lines). This is your primary file. |
+| `frontend/static/js/pcb-board-tabs.js` | Board tabs, `saveBoard`, `deleteCurrentBoard`, `loadBoardTabs`, `renderNetsSection` |
+| `frontend/static/js/pcb-tools.js` | `setTool`, `fitBoard`, `zoomIn`, `zoomOut`, `toggleRatsnest`, `loadFile`, `afterLoad` |
+| `frontend/static/js/pcb-panels.js` | `buildLayerPanel`, `rebuildCompList`, `updateInfoPanel`, `rotSel`, `flipSel`, `delSel` |
+| `frontend/static/js/pcb-automate.js` | `runAutoRoute`, `runAutoPlace`, `newBoardVersion`, `openImportModal`, `doImport` |
+| `frontend/static/js/pcb-drc.js` | `openDRC`, `populateDRTab`, `runDRCTab`, `openLayerManager`, `exportGerber`, `exportKiCad` |
+| `frontend/static/js/pcb-bootstrap.js` | App init, `window.addEventListener('load',...)`, postMessage handler (`importProject`, `projectClosed`) |
+| `frontend/static/js/pcb-globals.js` | `esc`, `SYMDEFS`, `EXAMPLE_PCB`, `DR` design-rules object |
+| `frontend/static/js/pcb-api.js` | `importSchematic`, `runDRC` (API call wrappers) |
+| `frontend/static/js/pcb-3d.js` | `PCB3DViewer` class, `open3DView`, `openModal`, `closeModal` |
+
+Backend:
+- `backend/schematic_api.py` — `/api/pcb/*` endpoints (lines ~2491–3984)
 
 ## Common Tasks
 - Ratsnest lines not updating after routing
@@ -50,9 +57,9 @@ The PCB editor (`pcb.html`) has two embedded URL modes — do NOT confuse them:
 Never change `pcb-frame` back to `?embedded=1` — that hides the board tabs and left panel.
 
 ## Known Architecture: _doPCBImport re-entrancy
-`_doPCBImport` (index.html) calls `switchSection('pcb')` which calls `_pcbAutoLoad`
+`_doPCBImport` (in `frontend/static/js/index-pcb-bridge.js`) calls `switchSection('pcb')` which calls `_pcbAutoLoad`
 which can call `_doPCBImport` again → infinite loop.
-Guard: `_pcbImporting` boolean flag in index.html prevents re-entry.
+Guard: `_pcbImporting` boolean flag in `index-pcb-bridge.js` prevents re-entry.
 `_pcbLoadedProjectId` is only set after `importProjectDone` is received — do not rely on it
 being set during the import sequence.
 

@@ -5,8 +5,12 @@ Manage the component library. Fix bugs in component profiles, version history, a
 
 ## Scope
 - `frontend/static/library/` — all component profile directories
-- `backend/schematic_api.py` — `/api/library/*` endpoints (history, save, activate, snapshots)
-- `frontend/static/index.html` — library UI: profile viewer, pin editor, version control panel (lines 932–1804)
+- `backend/schematic_api.py` — `/api/library/*` endpoints (lines 1–1516, before the pipeline agents section)
+- **Frontend JS files** (index.html was split — edit these, NOT index.html directly):
+  - `frontend/static/js/index-library.js` — profile viewer, upload, `renderLibrary`, `selectPart`, `loadProfile`, `renderProfile`, `switchProfileTab`, `loadActiveVersionBadge`
+  - `frontend/static/js/index-footprint.js` — `FootprintEditor` class, `initFootprintTab`, `loadFootprint`, `fpAddPad`, `fpRenderPadList`
+  - `frontend/static/js/index-agent-history.js` — `ahLoad`, `_ahRenderTree`, `historyNewVersion`, `_loadHistoryList`, version history panel
+  - `frontend/static/js/index-globals.js` — global vars (`library`, `selectedSlug`, `profileCache`), SSE wiring
 
 ## Common Tasks
 - Fix component profile JSON (pins, passives, example_circuit, footprint)
