@@ -317,8 +317,6 @@ class PCBEditor {
       // Draw path helper (optionally skip one segment)
       const drawPath=(skipIdx=-1)=>{
         const cAngle=DR?.cornerAngle??90;
-        // rFrac: 0 at 90° (no rounding), 1 at 0° (max rounding = 45% of shorter segment)
-        const rFrac=cAngle<90?(90-cAngle)/90:0;
         ctx.beginPath();
         let prevEndX=null,prevEndY=null;
         for(let si=0;si<segs.length;si++){
@@ -332,16 +330,26 @@ class PCBEditor {
           // Find next valid connected segment for corner rounding
           let nsi=-1;
           for(let j=si+1;j<segs.length;j++){if(j!==skipIdx){nsi=j;break;}}
-          if(rFrac>0&&nsi>=0){
+          if(nsi>=0){
             const ns=segs[nsi];
             const nsx=this.mmX(ns.start.x),nsy=this.mmY(ns.start.y);
             if(Math.abs(ex-nsx)<0.5&&Math.abs(ey-nsy)<0.5){
               const nx2=this.mmX(ns.end.x),ny2=this.mmY(ns.end.y);
-              const segPx=Math.hypot(ex-sx,ey-sy);
-              const nxtPx=Math.hypot(nx2-nsx,ny2-nsy);
-              // Radius scales with segment length so rounding is always visible
-              const r=rFrac*Math.min(segPx,nxtPx)*0.45;
-              if(r>0.5){ctx.arcTo(ex,ey,nx2,ny2,r);prevEndX=ex;prevEndY=ey;continue;}
+              const dx1=ex-sx,dy1=ey-sy,dx2=nx2-ex,dy2=ny2-ey;
+              const len1=Math.hypot(dx1,dy1),len2=Math.hypot(dx2,dy2);
+              if(len1>0&&len2>0){
+                // Interior angle at this corner (180=straight, 90=right angle, 0=hairpin)
+                const dot=Math.max(-1,Math.min(1,(dx1*dx2+dy1*dy2)/(len1*len2)));
+                const intDeg=180-Math.acos(dot)*180/Math.PI;
+                // Round if corner is tighter than allowed angle, or cAngle=0 (always round)
+                if(cAngle===0||intDeg<cAngle){
+                  // rFrac scales with how far below the threshold this corner is
+                  const rFrac=cAngle===0?1:Math.min(1,(cAngle-intDeg)/cAngle);
+                  // Use full shorter segment as radius so rounding is always clearly visible
+                  const r=rFrac*Math.min(len1,len2)*0.49;
+                  if(r>0){ctx.arcTo(ex,ey,nx2,ny2,r);prevEndX=ex;prevEndY=ey;continue;}
+                }
+              }
             }
           }
           ctx.lineTo(ex,ey);
