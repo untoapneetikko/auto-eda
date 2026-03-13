@@ -1078,100 +1078,191 @@ class PCBEditor {
   _showCtxMenu(e){
     this._hideCtxMenu();
     const{mx,my}=this._cp(e);
-    const hitComps=this.getCompsAt(mx,my);
-    const clickedComp=hitComps[0]||null;
 
-    // If clicking empty space with nothing useful selected — do nothing
-    if(!clickedComp&&!this.selectedComps.length&&!this.selectedComp) return;
+    // ── Hit test ─────────────────────────────────────────────────────────────
+    const hitComps   = this.getCompsAt(mx,my);
+    const hitTraces  = this.getTracesAt(mx,my);
+    const hitVia     = this.getViaAt(mx,my);
+    const clickedComp  = hitComps[0]  || null;
+    const clickedTrace = hitTraces[0]?.trace || null;
+    const clickedVia   = hitVia || null;
 
-    // Determine context: what is currently selected / hovered
-    let selComps=this.selectedComps.length>=2
-      ? this.selectedComps
-      : (this.selectedComp?[this.selectedComp]:[]);
-    if(clickedComp&&!selComps.includes(clickedComp)){
-      // Right-clicked a different comp — select it
-      this.selectedComp=clickedComp;
-      const grp=clickedComp.groupId&&this.board?.groups?.find(g=>g.id===clickedComp.groupId);
-      selComps=grp
-        ?(this.board.components||[]).filter(c=>grp.members.includes(c.id))
-        :[clickedComp];
-      this.selectedComps=selComps;
+    const isMultiSel = this.selectedComps.length >= 2;
+    const items = [];
+
+    // ── Helper: build & show the menu ────────────────────────────────────────
+    const _flush = () => {
+      if(!items.length) return;
+      const menu = document.createElement('div');
+      menu.className = 'sch-ctx-menu';
+      menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px`;
+      for(const item of items){
+        if(item.sep){
+          const d=document.createElement('div'); d.className='sch-ctx-sep'; menu.appendChild(d);
+        } else if(item.header){
+          const d=document.createElement('div');
+          d.style.cssText='padding:4px 14px 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);';
+          d.textContent=item.header; menu.appendChild(d);
+        } else {
+          const d=document.createElement('div');
+          d.className='sch-ctx-item'+(item.danger?' danger':'');
+          d.innerHTML=`<span>${item.label}</span>${item.kbd?`<span class="sch-ctx-kbd">${item.kbd}</span>`:''}`;
+          d.addEventListener('click',()=>{ this._hideCtxMenu(); item.action(); });
+          menu.appendChild(d);
+        }
+      }
+      document.body.appendChild(menu);
+      this._ctxMenuEl = menu;
+      requestAnimationFrame(()=>{
+        const r=menu.getBoundingClientRect(), vw=window.innerWidth, vh=window.innerHeight;
+        if(r.right  > vw) menu.style.left = (e.clientX - r.width)  + 'px';
+        if(r.bottom > vh) menu.style.top  = (e.clientY - r.height) + 'px';
+      });
+      setTimeout(()=>{
+        this._ctxDismiss = ev => { if(!menu.contains(ev.target)) this._hideCtxMenu(); };
+        document.addEventListener('mousedown', this._ctxDismiss);
+      }, 0);
+    };
+
+    // ── Helper: delete a set of components ───────────────────────────────────
+    const _deleteComps = (compsArr) => {
+      this._snapshot();
+      const ids = new Set(compsArr.map(c=>c.id));
+      this.board.components = (this.board.components||[]).filter(c=>!ids.has(c.id));
+      if(this.board.groups){
+        this.board.groups.forEach(g=>{ g.members=g.members.filter(id=>!ids.has(id)); });
+        this.board.groups = this.board.groups.filter(g=>g.members.length>=2);
+      }
+      this.selectedComp=null; this.selectedComps=[];
       this.render();
+      if(typeof rebuildCompList==='function') rebuildCompList();
+      if(typeof _notifyParentRefs==='function') _notifyParentRefs();
+    };
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // CASE 1 — Multi-select
+    // ══════════════════════════════════════════════════════════════════════════
+    if(isMultiSel){
+      const selComps = this.selectedComps;
+      const grpIds   = new Set(selComps.filter(c=>c.groupId).map(c=>c.groupId));
+      const allSameGrp = grpIds.size===1 && selComps.every(c=>c.groupId===[...grpIds][0]);
+
+      if(allSameGrp){
+        const grp = (this.board.groups||[]).find(g=>g.id===[...grpIds][0]);
+        if(grp){
+          items.push({header:`"${grp.name}"`});
+          items.push({label:'Rename Group\u2026', action:()=>{
+            const n=prompt('Group name:',grp.name); if(n){grp.name=n;this.render();}
+          }});
+          items.push({sep:true});
+          items.push({label:'Ungroup', kbd:'Ctrl+\u21e7+G', action:()=>this.ungroupSelected()});
+          items.push({sep:true});
+          items.push({label:'Delete Group', danger:true, action:()=>{
+            this._snapshot();
+            const ids=new Set(grp.members);
+            this.board.components=(this.board.components||[]).filter(c=>!ids.has(c.id));
+            this.board.groups=this.board.groups.filter(g=>g.id!==grp.id);
+            this.selectedComp=null; this.selectedComps=[]; this.render();
+            if(typeof rebuildCompList==='function') rebuildCompList();
+            if(typeof _notifyParentRefs==='function') _notifyParentRefs();
+          }});
+        }
+      } else {
+        items.push({label:`Group ${selComps.length} components`, kbd:'Ctrl+G', action:()=>this.groupSelected()});
+        if(grpIds.size>0)
+          items.push({label:'Ungroup', kbd:'Ctrl+\u21e7+G', action:()=>this.ungroupSelected()});
+        items.push({sep:true});
+        items.push({label:`Delete ${selComps.length} components`, danger:true, action:()=>_deleteComps(selComps)});
+      }
+      _flush(); return;
     }
 
-    const items=[];
-    const groupIds=new Set(selComps.filter(c=>c.groupId).map(c=>c.groupId));
+    // ══════════════════════════════════════════════════════════════════════════
+    // CASE 2 — Single component (clicked or already selected)
+    // ══════════════════════════════════════════════════════════════════════════
+    const comp = clickedComp || this.selectedComp;
+    if(comp){
+      // Ensure it is selected
+      if(this.selectedComp !== comp){
+        this.selectedComp = comp;
+        const grp = comp.groupId && (this.board?.groups||[]).find(g=>g.id===comp.groupId);
+        this.selectedComps = grp ? (this.board.components||[]).filter(c=>grp.members.includes(c.id)) : [comp];
+        this.render();
+      }
 
-    if(groupIds.size===1){
-      const grp=this.board.groups.find(g=>g.id===[...groupIds][0]);
+      const grp = comp.groupId ? (this.board?.groups||[]).find(g=>g.id===comp.groupId) : null;
+      const label = comp.ref || comp.id || 'Component';
+      const val   = comp.value ? ` — ${comp.value}` : '';
+      items.push({header: label + val});
+
+      // Rotate / Flip
+      items.push({label:'Rotate 90° CW', kbd:'R', action:()=>{
+        this._snapshot();
+        comp.rotation=((comp.rotation||0)+90)%360;
+        this.render(); if(typeof updateInfoPanel==='function') updateInfoPanel();
+      }});
+      const onBack = (comp.layer||'F')==='B';
+      items.push({label: onBack ? 'Flip to Front' : 'Flip to Back', action:()=>{
+        this._snapshot();
+        comp.layer = onBack ? 'F' : 'B';
+        this.render(); if(typeof updateInfoPanel==='function') updateInfoPanel();
+      }});
+
+      // Group section
+      items.push({sep:true});
       if(grp){
-        items.push({header:grp.name});
-        items.push({label:'Rename Group\u2026',action:()=>{
-          const n=prompt('Group name:',grp.name);
-          if(n){grp.name=n;this.render();}
+        items.push({header:`Group: "${grp.name}"`});
+        items.push({label:'Rename Group\u2026', action:()=>{
+          const n=prompt('Group name:',grp.name); if(n){grp.name=n;this.render();}
         }});
+        items.push({label:'Ungroup', kbd:'Ctrl+\u21e7+G', action:()=>this.ungroupSelected()});
         items.push({sep:true});
-        items.push({label:'Ungroup',kbd:'Ctrl+\u21e7+G',action:()=>this.ungroupSelected()});
-        items.push({sep:true});
-        items.push({label:'Delete Group',danger:true,action:()=>{
+        items.push({label:'Delete Group', danger:true, action:()=>{
           this._snapshot();
           const ids=new Set(grp.members);
           this.board.components=(this.board.components||[]).filter(c=>!ids.has(c.id));
-          this.board.groups=this.board.groups.filter(g=>g.id!==grp.id);
-          this.selectedComp=null;this.selectedComps=[];
-          this.render();
+          this.board.groups=(this.board.groups||[]).filter(g=>g.id!==grp.id);
+          this.selectedComp=null; this.selectedComps=[]; this.render();
+          if(typeof rebuildCompList==='function') rebuildCompList();
+          if(typeof _notifyParentRefs==='function') _notifyParentRefs();
         }});
+      } else {
+        items.push({label:'Delete', danger:true, action:()=>_deleteComps([comp])});
       }
-    } else {
-      if(selComps.length>=2){
-        items.push({label:`Group ${selComps.length} components`,kbd:'Ctrl+G',action:()=>this.groupSelected()});
+      if(grp){
+        items.push({label:'Delete Component', danger:true, action:()=>_deleteComps([comp])});
       }
-      if(groupIds.size>0){
-        items.push({label:'Ungroup',kbd:'Ctrl+\u21e7+G',action:()=>this.ungroupSelected()});
-      }
-      if(selComps.length>=1){
-        items.push({sep:true});
-        items.push({label:'Delete',danger:true,action:()=>{
-          this._snapshot();
-          const ids=new Set(selComps.map(c=>c.id));
-          this.board.components=(this.board.components||[]).filter(c=>!ids.has(c.id));
-          if(this.board.groups) this.board.groups.forEach(g=>g.members=g.members.filter(id=>!ids.has(id)));
-          if(this.board.groups) this.board.groups=this.board.groups.filter(g=>g.members.length>=2);
-          this.selectedComp=null;this.selectedComps=[];
-          this.render();
-        }});
-      }
+      _flush(); return;
     }
 
-    if(!items.length)return;
-    const menu=document.createElement('div');
-    menu.className='sch-ctx-menu';
-    menu.style.position='fixed';
-    menu.style.left=e.clientX+'px';
-    menu.style.top=e.clientY+'px';
-    for(const item of items){
-      if(item.sep){const d=document.createElement('div');d.className='sch-ctx-sep';menu.appendChild(d);}
-      else if(item.header){const d=document.createElement('div');d.style.cssText='padding:4px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);';d.textContent=item.header;menu.appendChild(d);}
-      else{
-        const d=document.createElement('div');
-        d.className='sch-ctx-item'+(item.danger?' danger':'');
-        d.innerHTML=`<span>${item.label}</span>${item.kbd?`<span class="sch-ctx-kbd">${item.kbd}</span>`:''}`;
-        d.addEventListener('click',()=>{this._hideCtxMenu();item.action();});
-        menu.appendChild(d);
-      }
+    // ══════════════════════════════════════════════════════════════════════════
+    // CASE 3 — Trace
+    // ══════════════════════════════════════════════════════════════════════════
+    if(clickedTrace){
+      this.selectedTrace = clickedTrace; this.render();
+      items.push({header:'Trace'});
+      items.push({label:'Delete Trace', danger:true, action:()=>{
+        this._snapshot();
+        this.board.traces=(this.board.traces||[]).filter(t=>t!==clickedTrace);
+        this.selectedTrace=null; this.render();
+      }});
+      _flush(); return;
     }
-    document.body.appendChild(menu);
-    this._ctxMenuEl=menu;
-    requestAnimationFrame(()=>{
-      const r=menu.getBoundingClientRect();
-      const vw=window.innerWidth,vh=window.innerHeight;
-      if(r.right>vw) menu.style.left=(e.clientX-r.width)+'px';
-      if(r.bottom>vh) menu.style.top=(e.clientY-r.height)+'px';
-    });
-    setTimeout(()=>{
-      this._ctxDismiss=ev=>{if(!menu.contains(ev.target))this._hideCtxMenu();};
-      document.addEventListener('mousedown',this._ctxDismiss);
-    },0);
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // CASE 4 — Via
+    // ══════════════════════════════════════════════════════════════════════════
+    if(clickedVia){
+      this.selectedVia = clickedVia; this.render();
+      items.push({header:'Via'});
+      items.push({label:'Delete Via', danger:true, action:()=>{
+        this._snapshot();
+        this.board.vias=(this.board.vias||[]).filter(v=>v!==clickedVia);
+        this.selectedVia=null; this.render();
+      }});
+      _flush(); return;
+    }
+    // Empty space — nothing to show
   }
 
   _hideCtxMenu(){
