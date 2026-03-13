@@ -412,27 +412,35 @@
   .da-flow { display:flex; gap:6px; align-items:center; margin-top:8px; flex-wrap:wrap; }
   .da-flow-step { font-size:10px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:2px 7px; }
   .da-flow-arrow { font-size:11px; color:#374151; }
-  .pipeline-section { border-top:1px solid var(--border); padding:14px 18px 18px; background:var(--bg); flex-shrink:0; }
-  .pipeline-section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
-  .pipeline-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:9px; }
-  .pa-card { background:var(--surface); border:1px solid var(--border); background:transparent; border-radius:8px; padding:11px 13px; display:flex; flex-direction:column; gap:5px; transition:border-color .15s,background .15s; cursor:pointer; }
-  .pa-card:hover { border-color:rgba(148,163,184,0.4); background:rgba(255,255,255,0.02); }
-  .pa-card.pa-running { border-color:#f59e0b; background:rgba(245,158,11,0.08); }
-  .pa-card.pa-running:hover { border-color:#fbbf24; background:rgba(245,158,11,0.14); }
-  .pa-card.pa-unread  { border-color:rgba(34,197,94,0.5); background:rgba(34,197,94,0.06); }
-  .pa-card.pa-unread:hover { border-color:rgba(34,197,94,0.8); background:rgba(34,197,94,0.1); }
-  .pa-card.pa-error   { border-color:rgba(239,68,68,0.5); background:rgba(239,68,68,0.06); }
-  .pa-card.pa-error:hover { border-color:#ef4444; background:rgba(239,68,68,0.1); }
+  .pipeline-section { border-top:1px solid var(--border); padding:8px 6px 10px; background:var(--bg); flex-shrink:0; }
+  .pipeline-section-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:6px; padding:0 6px; display:flex; align-items:center; gap:8px; }
+  .pipeline-grid { display:flex; flex-direction:column; gap:0; }
+  /* ── Compact agent tree ── */
+  .pa-group { margin-bottom:2px; }
+  .pa-group-hdr { display:flex; align-items:center; gap:6px; padding:5px 10px 5px 8px; cursor:pointer; user-select:none; border-radius:5px; transition:background .12s; }
+  .pa-group-hdr:hover { background:rgba(255,255,255,0.04); }
+  .pa-group-chevron { font-size:9px; color:var(--text-muted); transition:transform .15s; flex-shrink:0; }
+  .pa-group.collapsed .pa-group-chevron { transform:rotate(-90deg); }
+  .pa-group-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); flex:1; }
+  .pa-group-count { font-size:9px; color:var(--text-muted); background:rgba(255,255,255,0.06); border-radius:8px; padding:1px 6px; }
+  .pa-group-body { display:flex; flex-direction:column; gap:1px; padding:0 4px 4px 4px; }
+  .pa-group.collapsed .pa-group-body { display:none; }
+
+  .pa-card { background:transparent; border:1px solid transparent; border-radius:6px; padding:5px 8px; display:flex; align-items:center; gap:7px; transition:border-color .12s,background .12s; cursor:pointer; }
+  .pa-card:hover { border-color:rgba(148,163,184,0.25); background:rgba(255,255,255,0.03); }
+  .pa-card.pa-running { border-color:rgba(245,158,11,0.5); background:rgba(245,158,11,0.06); }
+  .pa-card.pa-unread  { border-color:rgba(34,197,94,0.4); background:rgba(34,197,94,0.05); }
+  .pa-card.pa-error   { border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.05); }
   .pa-card-top { display:flex; align-items:center; gap:7px; }
-  .pa-icon { font-size:15px; flex-shrink:0; }
-  .pa-name { font-size:12px; font-weight:700; color:var(--text); flex:1; }
-  .pa-status-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .pa-icon { font-size:13px; flex-shrink:0; width:18px; text-align:center; }
+  .pa-name { font-size:11px; font-weight:600; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pa-status-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
   .pa-status-dot.idle    { background:#374151; border:1.5px dashed #6b7280; }
   .pa-status-dot.running { background:#6c63ff; box-shadow:0 0 0 0 rgba(108,99,255,0.5); animation:agentPulse2 2s infinite; }
   .pa-status-dot.done    { background:#16a34a; }
   .pa-status-dot.error   { background:#ef4444; }
-  .pa-desc { font-size:10.5px; color:var(--text-muted); line-height:1.4; }
-  .pa-footer { display:flex; align-items:center; gap:6px; margin-top:3px; }
+  .pa-desc { display:none; }
+  .pa-footer { display:none; }
   .pa-last-run { font-size:10px; color:var(--text-muted); flex:1; }
   .pa-msg-preview { font-size:10px; color:#a5b4fc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
   .pa-badge { font-size:10px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:1px 6px; color:var(--text-muted); flex-shrink:0; }
@@ -619,12 +627,8 @@
 
     <!-- ── Pipeline Agents ───────────────────────────────────────────── -->
     <div class="pipeline-section" style="flex:1;">
-      <div class="pipeline-section-title">
-        ⚡ EDA Pipeline Agents
-        <span style="font-size:10px;font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0;">Click to open CLI terminal</span>
-      </div>
-      <div class="pipeline-grid" id="pipeline-agents-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));">
-        <div style="color:var(--text-muted);font-size:12px;grid-column:1/-1;padding:8px 0;">Loading…</div>
+      <div class="pipeline-grid" id="pipeline-agents-grid">
+        <div style="color:var(--text-muted);font-size:12px;padding:8px 6px;">Loading…</div>
       </div>
     </div>
 
@@ -8170,31 +8174,52 @@ function _paCardCls(agent) {
   return '';
 }
 
+const _PA_GROUPS = [
+  { key: 'orchestrator', label: 'Orchestrator', icon: '🎯', names: ['orchestrator'] },
+  { key: 'pipeline',     label: 'Pipeline',     icon: '⚡', names: ['datasheet-parser','component','footprint','example-schematic','schematic','connectivity','autoplace','autoroute','layout','layout-example'] },
+  { key: 'gui',          label: 'GUI',          icon: '🖥️', names: ['library','schematic-gui','layout-gui','import-export'] },
+];
+const _paGroupCollapsed = {};
+
 function paCard(agent) {
   const st = agent.status;
   const dotCls = st === 'running' ? 'running' : st === 'done' ? 'done' : st === 'error' ? 'error' : 'idle';
   const cardCls = _paCardCls(agent);
-  const statusLabel = st === 'running' ? '⚡ Running' : st === 'done' ? '✓ Done' : st === 'error' ? '✗ Error' : 'Idle';
-  const msgBadge = agent.msg_count ? `<span class="pa-badge">${agent.msg_count} msg${agent.msg_count!==1?'s':''}</span>` : '';
-  const preview = agent.last_msg ? `<div class="pa-msg-preview">${esc(agent.last_msg)}</div>` : '';
-  const btnLabel = st === 'running' ? '● Live' : (agent.msg_count ? '💬 Open' : '⚡ Awake');
-  const btnCls = st === 'running' ? 'running' : '';
-  const cloneBadge = agent.is_clone ? `<span class="pa-clone-badge" title="Parallel instance of ${esc(agent.base)}">↳ clone</span>` : '';
-  return `<div class="pa-card ${cardCls}" id="pa-card-${agent.name}" onclick="paOpenChat('${agent.name}')">
-    <div class="pa-card-top">
-      <span class="pa-icon">${agent.icon}</span>
-      <span class="pa-name">${esc(agent.label)}</span>
-      ${cloneBadge}
-      <span class="pa-status-dot ${dotCls}" title="${statusLabel}"></span>
-    </div>
-    <div class="pa-desc">${esc(agent.desc)}</div>
-    ${preview}
-    <div class="pa-footer">
-      <span class="pa-last-run">${statusLabel} · ${paTimeAgo(agent.last_run)}</span>
-      ${msgBadge}
-      <button class="pa-chat-btn ${btnCls}" onclick="event.stopPropagation();paOpenChat('${agent.name}')">${btnLabel}</button>
-    </div>
+  const statusTitle = st === 'running' ? 'Running' : st === 'done' ? 'Done' : st === 'error' ? 'Error' : 'Idle';
+  const msgBadge = agent.msg_count ? `<span class="pa-badge" style="font-size:9px;">${agent.msg_count}</span>` : '';
+  const cloneBadge = agent.is_clone ? `<span class="pa-clone-badge">↳</span>` : '';
+  return `<div class="pa-card ${cardCls}" id="pa-card-${agent.name}" onclick="paOpenChat('${agent.name}')" title="${esc(agent.desc)}">
+    <span class="pa-icon">${agent.icon}</span>
+    <span class="pa-name">${esc(agent.label)}</span>
+    ${cloneBadge}${msgBadge}
+    <span class="pa-status-dot ${dotCls}" title="${statusTitle}"></span>
   </div>`;
+}
+
+function _paRenderGroup(group, agents) {
+  const members = group.names.flatMap(n => agents.filter(a => a.name === n || (a.is_clone && a.base === n)));
+  if (!members.length) return '';
+  const collapsed = _paGroupCollapsed[group.key] ? 'collapsed' : '';
+  const running = members.filter(a => a.status === 'running').length;
+  const unread  = members.filter(a => _paCardCls(a) === 'pa-unread').length;
+  const badge = running ? `<span class="pa-group-count" style="color:#f59e0b;">⚡${running}</span>`
+              : unread  ? `<span class="pa-group-count" style="color:#4ade80;">●${unread}</span>`
+              : `<span class="pa-group-count">${members.length}</span>`;
+  return `<div class="pa-group ${collapsed}" id="pa-group-${group.key}">
+    <div class="pa-group-hdr" onclick="_paToggleGroup('${group.key}')">
+      <span class="pa-group-chevron">▾</span>
+      <span style="font-size:12px;">${group.icon}</span>
+      <span class="pa-group-label">${group.label}</span>
+      ${badge}
+    </div>
+    <div class="pa-group-body">${members.map(paCard).join('')}</div>
+  </div>`;
+}
+
+function _paToggleGroup(key) {
+  _paGroupCollapsed[key] = !_paGroupCollapsed[key];
+  const el = document.getElementById('pa-group-' + key);
+  if (el) el.classList.toggle('collapsed', !!_paGroupCollapsed[key]);
 }
 
 async function pipelineAgentsLoad() {
@@ -8202,7 +8227,15 @@ async function pipelineAgentsLoad() {
   _paState = {};
   agents.forEach(a => _paState[a.name] = a);
   const grid = document.getElementById('pipeline-agents-grid');
-  if (grid) grid.innerHTML = agents.length ? agents.map(paCard).join('') : '<div style="color:var(--text-muted);font-size:12px;">No pipeline agents found.</div>';
+  if (!grid) return;
+  if (!agents.length) { grid.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 6px;">No agents found.</div>'; return; }
+  // Agents not in any group (clones, unknown) fall into pipeline
+  const known = new Set(_PA_GROUPS.flatMap(g => g.names));
+  const extras = agents.filter(a => !known.has(a.base || a.name) && !a.is_clone);
+  const extendedGroups = _PA_GROUPS.map(g =>
+    g.key === 'pipeline' ? {...g, names: [...g.names, ...extras.map(a=>a.name)]} : g
+  );
+  grid.innerHTML = extendedGroups.map(g => _paRenderGroup(g, agents)).join('');
 }
 
 // ── Chat Modal ────────────────────────────────────────────────────────────────
