@@ -494,10 +494,35 @@ function _paAppendMsg(msg, scroll=true) {
 }
 
 function _paFormatAssistant(text) {
-  return esc(text)
-    .replace(/▶ ([^\n]+)/g, '<span class="pa-tool-line">▶ $1</span>')
-    .replace(/◀ ((?:[^\n]|\n(?![▶◀💭]))+)/g, '<span class="pa-result-line">◀ $1</span>')
-    .replace(/💭 ((?:[^\n]|\n(?![▶◀]))+)/g, '<span class="pa-thinking-line">💭 $1</span>');
+  // Render ## Plan / ## Progress blocks as visual checklists
+  const planBlockRe = /^##\s+(Plan|Progress)\s*\n((?:[ \t]*[-*]\s+[\[→].*\n?)*)/gm;
+  let out = text.replace(planBlockRe, (_, title, body) => {
+    const steps = body.split('\n').filter(l => l.trim());
+    const rows = steps.map(line => {
+      const m = line.match(/^\s*[-*]\s+(\[[ x→]\]|→)\s+(.*)/i);
+      if (!m) return '';
+      const marker = m[1].toLowerCase();
+      const label = m[2];
+      if (marker === '[x]') {
+        return `\x01<span class="pa-plan-step done"><span class="pa-plan-check">✓</span><span>${esc(label)}</span></span>\x01`;
+      } else if (marker === '→' || marker === '[→]') {
+        return `\x01<span class="pa-plan-step active"><span class="pa-plan-check">→</span><span>${esc(label)}</span></span>\x01`;
+      } else {
+        return `\x01<span class="pa-plan-step pending"><span class="pa-plan-check">○</span><span>${esc(label)}</span></span>\x01`;
+      }
+    }).filter(Boolean).join('');
+    return `\x01<span class="pa-plan-block"><span class="pa-plan-title">${esc(title)}</span>${rows}</span>\x01`;
+  });
+
+  // Escape remaining text (non-plan parts) and apply other formatters
+  // Split on \x01 markers to avoid double-escaping plan HTML
+  return out.split('\x01').map((chunk, i) => {
+    if (i % 2 === 1) return chunk; // already HTML (plan block)
+    return esc(chunk)
+      .replace(/▶ ([^\n]+)/g, '<span class="pa-tool-line">▶ $1</span>')
+      .replace(/◀ ((?:[^\n]|\n(?![▶◀💭]))+)/g, '<span class="pa-result-line">◀ $1</span>')
+      .replace(/💭 ((?:[^\n]|\n(?![▶◀]))+)/g, '<span class="pa-thinking-line">💭 $1</span>');
+  }).join('');
 }
 
 function _paShowThinking(msg) {
