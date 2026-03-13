@@ -35,3 +35,10 @@ You design for human readability first, correctness second (but both matter).
 - Each block labeled (e.g. "Power Supply", "MCU", "Sensor Interface")
 - Critical nets labeled at every connection point
 - Page borders with title block, revision, date
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

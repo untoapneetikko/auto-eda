@@ -85,3 +85,10 @@ if the algorithm missed a domain-specific constraint (e.g. thermal, RF shielding
 python backend/tools/schema_validator.py data/outputs/placement.json shared/schemas/placement_output.json
 python backend/tools/drc_checker.py data/outputs/placement.json --check clearance,courtyard
 ```
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

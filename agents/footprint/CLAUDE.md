@@ -30,3 +30,10 @@ State which values came from the datasheet vs IPC standard in a `sources` field.
 python backend/tools/schema_validator.py data/outputs/footprint.json shared/schemas/footprint_output.json
 python backend/tools/kicad_validator.py data/outputs/footprint.kicad_mod
 ```
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

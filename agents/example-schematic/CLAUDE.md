@@ -28,3 +28,10 @@ You make schematics that an engineer can understand at a glance.
 ## From Datasheet Only
 Only include components and connections shown in the datasheet example.
 Do not invent additional circuitry. Mark any assumed values with `assumed: true`.
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

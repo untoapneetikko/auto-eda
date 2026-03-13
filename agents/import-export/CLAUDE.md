@@ -28,3 +28,10 @@ Fix bugs in all import and export functionality: Gerber, KiCad, BOM, and schemat
 - BOM columns: ref, value, footprint, quantity, description
 - Coordinate origin: bottom-left corner of board, Y-axis flipped for Gerber (Y increases downward)
 - All dimensions in mm in KiCad format
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

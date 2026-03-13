@@ -38,3 +38,10 @@ Fix bugs and improve the PCB editor (`pcb.html`) and related backend endpoints.
 - Grid: 0.25mm for routing, 1mm for component placement
 - All canvas coordinates are in mm (not pixels)
 - After editing pcb.html, hard-refresh the browser to test (Ctrl+Shift+R)
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

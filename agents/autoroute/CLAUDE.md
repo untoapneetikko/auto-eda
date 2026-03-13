@@ -43,3 +43,10 @@ Run DRC. Fix ALL errors. Warnings allowed only if documented.
 ```bash
 python backend/tools/drc_checker.py data/outputs/routing.json --check clearance,width,shorts
 ```
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

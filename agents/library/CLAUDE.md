@@ -28,3 +28,10 @@ Manage the component library. Fix bugs in component profiles, version history, a
 - Preserve `human_corrections` — they are manually verified data
 - After fixing a bug, test by calling the relevant API endpoint
 - `symbol_type` must always be `"ic"` in profiles
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

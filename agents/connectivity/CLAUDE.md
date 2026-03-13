@@ -29,3 +29,10 @@ Step 5b — runs after schematic, before autoplace.
 - valid = True only when error_count == 0 (warnings do not block)
 - Write output to `data/outputs/connectivity.json`
 - Validate output against `shared/schemas/connectivity_output.json` before finishing
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

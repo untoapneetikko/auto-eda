@@ -37,3 +37,10 @@ Expected pins: `[{number:1, name:"BASE", type:"input"}, {number:2, name:"EMITTER
 ### Example — 8-pin op-amp
 Input: LM358 datasheet
 Expected: 8 pins, dual supply, include both op-amp sections as separate pin groups
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.

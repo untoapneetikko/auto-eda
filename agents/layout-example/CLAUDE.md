@@ -30,3 +30,10 @@ Generate a PCB layout example for a component's typical application circuit. Thi
 - Use footprint data from `profile.json` if available
 - Snap all placements to 0.25mm grid
 - Write compact JSON (no pretty-print indent > 2)
+
+## Updating Your Own Code
+The agent files are live-mounted from the host. If you need the latest code:
+```bash
+cd /app && git pull
+```
+No Docker restart needed — changes take effect immediately.
