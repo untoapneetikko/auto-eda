@@ -150,6 +150,7 @@ class PCBEditor {
       if(this.layers['F.SilkS'].visible) this._drawSilk('F');
     }
     if(this.layers['Ratsnest'].visible) this._drawRatsnest();
+    this._drawGroups();
     this._drawDrawings();
     if(this.tool==='route'&&this.routePoints.length>0) this._drawActiveRoute();
     if(this.tool==='zone'&&this.zonePoints.length>0) this._drawActiveZone();
@@ -1034,6 +1035,71 @@ class PCBEditor {
     ctx.fillRect(this.mmX(comp.x+bb.x1-m),this.mmY(comp.y+bb.y1-m),(bb.x2-bb.x1+m*2)*this.scale,(bb.y2-bb.y1+m*2)*this.scale);
   }
 
+  // Remove group membership for all currently selected components
+  ungroupSelected(){
+    if(!this.board?.groups)return;
+    const selIds=new Set(this.selectedComps.map(c=>c.id));
+    if(!selIds.size)return;
+    // Collect group IDs that contain any selected component
+    const affectedGrpIds=new Set(
+      this.selectedComps.filter(c=>c.groupId).map(c=>c.groupId)
+    );
+    if(!affectedGrpIds.size)return;
+    this._snapshot();
+    // Remove groupId from selected components
+    for(const c of(this.board.components||[]))
+      if(affectedGrpIds.has(c.groupId)&&selIds.has(c.id)) delete c.groupId;
+    // Clean up groups: remove members that were ungrouped, delete empty/single-member groups
+    this.board.groups=this.board.groups.filter(g=>{
+      if(!affectedGrpIds.has(g.id))return true;
+      g.members=g.members.filter(id=>!selIds.has(id));
+      return g.members.length>=2;
+    });
+    this.render();
+  }
+
+  _drawGroups(){
+    const groups=this.board?.groups;
+    if(!groups?.length)return;
+    const ctx=this.ctx;
+    const comps=this.board.components||[];
+    // Determine which group (if any) is currently selected
+    const selGrpId=this.selectedComp?.groupId||null;
+    for(const grp of groups){
+      const members=comps.filter(c=>grp.members.includes(c.id));
+      if(members.length<2)continue;
+      // Compute bounding box over all member pads
+      let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity;
+      for(const c of members){
+        const bb=this._compBBox(c); if(!bb)continue;
+        x1=Math.min(x1,c.x+bb.x1); y1=Math.min(y1,c.y+bb.y1);
+        x2=Math.max(x2,c.x+bb.x2); y2=Math.max(y2,c.y+bb.y2);
+      }
+      if(!isFinite(x1))continue;
+      const pad=1.5;
+      x1-=pad; y1-=pad; x2+=pad; y2+=pad;
+      const sx=this.mmX(x1),sy=this.mmY(y1);
+      const sw=(x2-x1)*this.scale,sh=(y2-y1)*this.scale;
+      const isActive=grp.id===selGrpId;
+      ctx.save();
+      ctx.strokeStyle=isActive?'rgba(99,200,150,0.9)':'rgba(99,200,150,0.45)';
+      ctx.lineWidth=isActive?2:1.5;
+      ctx.setLineDash([6,4]);
+      ctx.strokeRect(sx,sy,sw,sh);
+      ctx.fillStyle=isActive?'rgba(99,200,150,0.08)':'rgba(99,200,150,0.03)';
+      ctx.fillRect(sx,sy,sw,sh);
+      ctx.setLineDash([]);
+      // Label
+      const fs=Math.max(8,Math.min(11,this.scale*0.9));
+      ctx.font=`${fs}px monospace`;
+      ctx.fillStyle=isActive?'rgba(99,200,150,0.95)':'rgba(99,200,150,0.6)';
+      ctx.textBaseline='bottom';
+      ctx.fillText(grp.name||grp.id,sx+3,sy-2);
+      ctx.textBaseline='alphabetic';
+      ctx.restore();
+    }
+  }
+
   _drawSelPad({comp,pad}){
     const{px,py}=this._padWorld(comp,pad);
     const sx=this.mmX(px),sy=this.mmY(py);
@@ -1296,7 +1362,14 @@ class PCBEditor {
               this.selectedPad={comp:picked.obj.comp,pad:picked.obj.pad};
             } else if(picked.type==='comp'){
               const c=picked.obj;
-              this.selectedComp=c; this.selectedComps=[c];
+              this.selectedComp=c;
+              // If component belongs to a group, select all group members together
+              const grp=c.groupId&&this.board?.groups?.find(g=>g.id===c.groupId);
+              if(grp){
+                this.selectedComps=(this.board.components||[]).filter(m=>grp.members.includes(m.id));
+              } else {
+                this.selectedComps=[c];
+              }
               this._startDrag(c,mx,my);
             } else if(picked.type==='via'){
               this.selectedVia=picked.obj;
@@ -1648,6 +1721,9 @@ class PCBEditor {
       }
       else if((k==='z'&&(e.ctrlKey||e.metaKey)&&e.shiftKey)||(k==='y'&&(e.ctrlKey||e.metaKey))){
         e.preventDefault(); editor.redo();
+      }
+      else if(k==='g'&&(e.ctrlKey||e.metaKey)&&e.shiftKey){
+        e.preventDefault(); editor.ungroupSelected();
       }
     });
   }

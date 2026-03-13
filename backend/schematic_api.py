@@ -2409,13 +2409,24 @@ def build_netlist(components: list, wires: list, labels: list) -> dict:
                 if inherited:
                     _assign(root, f"{inherited}_{pname}")
 
-    # Priority 6: NET_N
+    # Priority 6: auto-name remaining port-bearing nets N1, N2 …
     for root in root_to_ports:
         if root not in root_to_net:
             net_counter[0] += 1
-            _assign(root, f"NET_{net_counter[0]}")
+            _assign(root, f"N{net_counter[0]}")
 
-    # 10. Build wireToNet
+    # Priority 7: wire-only clusters (no component ports) – also get N-names
+    for wire in wires:
+        wid = wire.get("id", id(wire))
+        node0 = f"wire::{wid}::0"
+        if node0 not in parent:
+            continue
+        r = find(node0)
+        if r not in root_to_net:
+            net_counter[0] += 1
+            _assign(r, f"N{net_counter[0]}")
+
+    # 10. Build wireToNet – every wire now has a net name
     wire_to_net: dict[str, str] = {}
     for wire in wires:
         wid = wire.get("id", id(wire))
@@ -2426,14 +2437,39 @@ def build_netlist(components: list, wires: list, labels: list) -> dict:
             if net_name:
                 wire_to_net[str(wid)] = net_name
 
-    # Build output
+    # Build namedNets (pin-reference format for PCB/downstream tools)
     for root, ports_in in root_to_ports.items():
-        net_name = root_to_net.get(root, f"NET_X_{root[:8]}")
+        net_name = root_to_net.get(root, f"N?_{root[:6]}")
         pins_out = [_port_designator(n, comp_map) for n in ports_in]
         named_nets.append({"name": net_name, "pins": pins_out})
 
     named_nets.sort(key=lambda n: n["name"])
-    return {"namedNets": named_nets, "wireToNet": wire_to_net}
+
+    # Build frontend-friendly nets list: [{name, ports:[{x,y,symType,portName}]}]
+    # Used by the schematic net overlay and net panel.
+    root_to_port_coords: dict[str, list[dict]] = {}
+    for node_id, wx, wy in portNodes:
+        r = find(node_id)
+        parts = node_id.split("::")
+        cid = parts[1] if len(parts) > 1 else ""
+        comp = comp_map.get(cid, {})
+        root_to_port_coords.setdefault(r, []).append({
+            "x": int(wx), "y": int(wy),
+            "symType": comp.get("symType", "ic"),
+            "portName": parts[2] if len(parts) > 2 else "",
+        })
+
+    nets_out: list[dict] = []
+    emitted: set[str] = set()
+    for root, net_name in root_to_net.items():
+        if root in emitted:
+            continue
+        emitted.add(root)
+        ports_coords = root_to_port_coords.get(root, [])
+        nets_out.append({"name": net_name, "ports": ports_coords})
+    nets_out.sort(key=lambda n: n["name"])
+
+    return {"namedNets": named_nets, "nets": nets_out, "wireToNet": wire_to_net}
 
 
 # ── POST /api/netlist ──────────────────────────────────────────────────────────
@@ -3578,7 +3614,7 @@ async def api_pcb_import_schematic(request: Request):
             bx = round(max(5.0, min(bw - 5.0, bx)), 2)
             by = round(max(5.0, min(bh - 5.0, by)), 2)
 
-        pcb_comps.append({
+        comp_entry: dict = {
             "id":        ref,
             "ref":       ref,
             "value":     value,
@@ -3588,7 +3624,10 @@ async def api_pcb_import_schematic(request: Request):
             "rotation":  rotation,
             "layer":     "F",
             "pads":      pads,
-        })
+        }
+        if eg_id:
+            comp_entry["groupId"] = eg_id
+        pcb_comps.append(comp_entry)
 
     # ── Translate layout_example traces/vias onto the board ────────────────
     # For each example group that had a saved layout, offset its traces/vias
@@ -3673,6 +3712,21 @@ async def api_pcb_import_schematic(request: Request):
         if pads
     ]
 
+    # ── Build groups list from example-group membership ────────────────────
+    pcb_groups_map: dict[str, dict] = {}
+    for comp in pcb_comps:
+        gid = comp.get("groupId")
+        if gid:
+            if gid not in pcb_groups_map:
+                eg_info = le_groups.get(gid, {})
+                pcb_groups_map[gid] = {
+                    "id":      gid,
+                    "name":    eg_info.get("eg_slug", gid),
+                    "members": [],
+                }
+            pcb_groups_map[gid]["members"].append(comp["id"])
+    pcb_groups = list(pcb_groups_map.values())
+
     return {
         "title":      board_title,
         "board":      {"width": bw, "height": bh, "units": "mm"},
@@ -3681,6 +3735,7 @@ async def api_pcb_import_schematic(request: Request):
         "traces":     pcb_traces,
         "vias":       pcb_vias,
         "areas":      [],
+        "groups":     pcb_groups,
     }
 
 
