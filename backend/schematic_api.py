@@ -1875,22 +1875,38 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                                                     "chunk": f"\n[stderr] {line}", "is_tool": True})
 
             def _fmt_tool(tool_name: str, inp: dict) -> str:
-                """Format a tool call into a readable one-liner."""
+                """Format a tool call with full detail."""
                 if tool_name == "Bash":
-                    cmd = inp.get("command", "")
-                    return f"$ {cmd}"
-                if tool_name in ("Read", "Write"):
-                    return f"{tool_name}: {inp.get('file_path','')}"
+                    return f"$ {inp.get('command', '')}"
+                if tool_name == "Read":
+                    path = inp.get('file_path', '')
+                    extra = ""
+                    if inp.get('offset'): extra += f"  offset={inp['offset']}"
+                    if inp.get('limit'):  extra += f"  limit={inp['limit']}"
+                    return f"Read: {path}{extra}"
+                if tool_name == "Write":
+                    path    = inp.get('file_path', '')
+                    content = inp.get('content', '')
+                    return f"Write: {path}\n{content}"
                 if tool_name == "Edit":
-                    return f"Edit: {inp.get('file_path','')} — {str(inp.get('old_string',''))[:60].strip()!r}"
+                    path    = inp.get('file_path', '')
+                    old_str = inp.get('old_string', '')
+                    new_str = inp.get('new_string', '')
+                    return (f"Edit: {path}\n"
+                            f"--- remove:\n{old_str}\n"
+                            f"+++ insert:\n{new_str}")
                 if tool_name == "Grep":
-                    return f"Grep {inp.get('pattern','')!r} in {inp.get('path','.')}"
+                    flags = ""
+                    if inp.get('-i'): flags += " -i"
+                    return f"Grep{flags} {inp.get('pattern','')!r} in {inp.get('path', '.')}"
                 if tool_name == "Glob":
-                    return f"Glob {inp.get('pattern','')}"
+                    return f"Glob {inp.get('pattern','')} in {inp.get('path','.')}"
                 if tool_name == "WebFetch":
                     return f"Fetch: {inp.get('url','')}"
-                # fallback: dump first 200 chars of JSON
-                return f"{tool_name}: {json.dumps(inp)[:200]}"
+                if tool_name == "WebSearch":
+                    return f"Search: {inp.get('query','')}"
+                # fallback: full JSON
+                return f"{tool_name}: {json.dumps(inp, indent=2)}"
 
             def _make_opts(session_id):
                 return ClaudeAgentOptions(
@@ -1989,16 +2005,13 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                                                                 "chunk": tool_line, "is_tool": True,
                                                                 "tool_name": block.name})
                         elif block_type == "tool_result":
-                            # Show abbreviated result
+                            # Show full result output
                             result_text = ""
                             for part in (getattr(block, "content", None) or []):
                                 if getattr(part, "type", "") == "text":
                                     result_text += part.text
                             if result_text:
-                                preview = result_text[:300].strip()
-                                if len(result_text) > 300:
-                                    preview += f"\n  … ({len(result_text)} chars total)"
-                                result_line = f"◀ {preview}\n"
+                                result_line = f"◀ {result_text.strip()}\n"
                                 resp_parts.append(result_line)
                                 full = "".join(resp_parts)
                                 for m in _pipeline_chat[name]:
