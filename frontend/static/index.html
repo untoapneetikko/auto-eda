@@ -8029,8 +8029,13 @@ async function paOpenChat(name) {
   // Update status badge
   _paUpdateModalStatus(agent.status);
 
-  // Load history
+  // Clear immediately so previous agent's messages don't flash
+  const area = document.getElementById('pa-chat-area');
+  if (area) area.innerHTML = '<div class="pa-system-line">Loading…</div>';
+
+  // Load history — guard against race: user may switch agents before fetch resolves
   const hist = await fetch(`/api/pipeline/agents/${name}/history`).then(r=>r.json()).catch(()=>({messages:[],status:'idle'}));
+  if (_activePaAgent !== name) return; // switched away while fetching
   _paRenderHistory(hist);
 
   // Focus input
