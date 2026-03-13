@@ -83,20 +83,54 @@ function rebuildCompList(){
   const ul=document.getElementById('comp-list');ul.innerHTML='';
   _lastSelCiEl=null;
   const comps=editor.board?.components||[];
-  document.getElementById('comp-count').textContent=comps.length?`(${comps.length})`:'';
-  if(!comps.length){ul.innerHTML='<div style="padding:8px;color:var(--text-muted);font-size:11px;">No components</div>';return;}
-  for(const c of comps){
-    const d=document.createElement('div');d.className='ci';d.id='ci-'+c.id;
-    d.innerHTML=`<span class="ci-ref">${c.ref||c.id}</span><div style="flex:1;overflow:hidden"><div class="ci-val">${c.value||''}</div><div class="ci-fp">${c.footprint||''}</div></div>`;
-    d.onclick=()=>{
-      if(_lastSelCiEl) _lastSelCiEl.classList.remove('sel');
-      d.classList.add('sel'); _lastSelCiEl=d;
-      editor.selectedComp=c;
-      editor.panX=editor.canvas.width/2-c.x*editor.scale-editor.offsetX;
-      editor.panY=editor.canvas.height/2-c.y*editor.scale-editor.offsetY;
-      editor.render(); // single render, not two
-      updateInfoPanel();
-    };
+  const schRefs=editor.board?.schematicRefs||null;
+
+  // Build lookup by ref for quick presence check
+  const activeByRef=new Map(comps.map(c=>[c.ref||c.id,c]));
+
+  // Determine the full ordered list to display:
+  // schematicRefs (if present) + any board components not in schematicRefs
+  const rows=[];
+  if(schRefs&&schRefs.length){
+    for(const sr of schRefs){
+      const live=activeByRef.get(sr.ref);
+      rows.push({comp:live||null,ref:sr.ref,value:sr.value,footprint:sr.footprint,missing:!live});
+    }
+    // Also add any components present on board but not in schematicRefs (manually added)
+    const schRefSet=new Set(schRefs.map(s=>s.ref));
+    for(const c of comps){
+      if(!schRefSet.has(c.ref||c.id)) rows.push({comp:c,ref:c.ref||c.id,value:c.value||'',footprint:c.footprint||'',missing:false});
+    }
+  } else {
+    for(const c of comps) rows.push({comp:c,ref:c.ref||c.id,value:c.value||'',footprint:c.footprint||'',missing:false});
+  }
+
+  const totalVisible=rows.filter(r=>!r.missing).length;
+  const totalMissing=rows.filter(r=>r.missing).length;
+  const countLabel=rows.length?(totalMissing?`(${totalVisible}/${rows.length})`:`(${rows.length})`):'';
+  document.getElementById('comp-count').textContent=countLabel;
+
+  if(!rows.length){ul.innerHTML='<div style="padding:8px;color:var(--text-muted);font-size:11px;">No components</div>';return;}
+
+  for(const row of rows){
+    const d=document.createElement('div');
+    d.className='ci'+(row.missing?' ci-missing':'');
+    if(row.comp) d.id='ci-'+row.comp.id;
+    d.innerHTML=row.missing
+      ? `<span class="ci-ref ci-ref-missing">${esc(row.ref)}</span><div style="flex:1;overflow:hidden"><div class="ci-val" style="color:var(--text-muted);text-decoration:line-through">${esc(row.value)}</div><div class="ci-fp" style="color:var(--text-muted)">${esc(row.footprint)}</div></div><span class="ci-missing-badge">missing</span>`
+      : `<span class="ci-ref">${esc(row.ref)}</span><div style="flex:1;overflow:hidden"><div class="ci-val">${esc(row.value)}</div><div class="ci-fp">${esc(row.footprint)}</div></div>`;
+    if(row.comp){
+      const c=row.comp;
+      d.onclick=()=>{
+        if(_lastSelCiEl) _lastSelCiEl.classList.remove('sel');
+        d.classList.add('sel'); _lastSelCiEl=d;
+        editor.selectedComp=c;
+        editor.panX=editor.canvas.width/2-c.x*editor.scale-editor.offsetX;
+        editor.panY=editor.canvas.height/2-c.y*editor.scale-editor.offsetY;
+        editor.render();
+        updateInfoPanel();
+      };
+    }
     ul.appendChild(d);
   }
 }
