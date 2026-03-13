@@ -273,9 +273,293 @@
     }
   ],
   "example_circuit": {
-    "components": [],
-    "wires": [],
-    "labels": []
+    "components": [
+      {
+        "id": "u1",
+        "slug": "PMA3_83LNW",
+        "symType": "ic",
+        "designator": "U1",
+        "value": "PMA3-83LNW+",
+        "x": 380,
+        "y": 280,
+        "rotation": 0
+      },
+      {
+        "id": "c2",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C2",
+        "value": "10pF",
+        "x": 160,
+        "y": 280,
+        "rotation": 90
+      },
+      {
+        "id": "l1",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L1",
+        "value": "18nH",
+        "x": 280,
+        "y": 360,
+        "rotation": 0
+      },
+      {
+        "id": "c3",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C3",
+        "value": "100pF",
+        "x": 540,
+        "y": 280,
+        "rotation": 90
+      },
+      {
+        "id": "l2",
+        "slug": "INDUCTOR",
+        "symType": "inductor",
+        "designator": "L2",
+        "value": "39nH",
+        "x": 480,
+        "y": 200,
+        "rotation": 0
+      },
+      {
+        "id": "c1",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C1",
+        "value": "0.01\u00b5F",
+        "x": 580,
+        "y": 180,
+        "rotation": 0
+      },
+      {
+        "id": "c4",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C4",
+        "value": "100nF",
+        "x": 660,
+        "y": 180,
+        "rotation": 0
+      },
+      {
+        "id": "vcc1",
+        "slug": "VCC",
+        "symType": "vcc",
+        "designator": "VCC1",
+        "value": "5V/6V",
+        "x": 480,
+        "y": 120,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_l1",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND1",
+        "value": "GND",
+        "x": 280,
+        "y": 420,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_paddle",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND2",
+        "value": "GND",
+        "x": 380,
+        "y": 400,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_c1",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND3",
+        "value": "GND",
+        "x": 580,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_c4",
+        "slug": "GND",
+        "symType": "gnd",
+        "designator": "GND4",
+        "value": "GND",
+        "x": 660,
+        "y": 220,
+        "rotation": 0
+      }
+    ],
+    "wires": [
+      {
+        "id": "w_rfin_label_to_c2",
+        "points": [
+          {
+            "x": 60,
+            "y": 280
+          },
+          {
+            "x": 140,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "w_c2_to_rfin_node",
+        "points": [
+          {
+            "x": 180,
+            "y": 280
+          },
+          {
+            "x": 280,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "w_rfin_node_to_l1",
+        "points": [
+          {
+            "x": 280,
+            "y": 280
+          },
+          {
+            "x": 280,
+            "y": 340
+          }
+        ]
+      },
+      {
+        "id": "w_l1_to_gnd",
+        "points": [
+          {
+            "x": 280,
+            "y": 380
+          },
+          {
+            "x": 280,
+            "y": 400
+          }
+        ]
+      },
+      {
+        "id": "w_u1_to_c3",
+        "points": [
+          {
+            "x": 480,
+            "y": 280
+          },
+          {
+            "x": 520,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "w_c3_to_rfout_label",
+        "points": [
+          {
+            "x": 560,
+            "y": 280
+          },
+          {
+            "x": 640,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "w_l2_to_rfout_node",
+        "points": [
+          {
+            "x": 480,
+            "y": 220
+          },
+          {
+            "x": 480,
+            "y": 280
+          }
+        ]
+      },
+      {
+        "id": "w_vdd_to_l2",
+        "points": [
+          {
+            "x": 480,
+            "y": 160
+          },
+          {
+            "x": 480,
+            "y": 180
+          }
+        ]
+      },
+      {
+        "id": "w_vdd_rail",
+        "points": [
+          {
+            "x": 480,
+            "y": 160
+          },
+          {
+            "x": 660,
+            "y": 160
+          }
+        ]
+      },
+      {
+        "id": "w_vcc_to_vdd",
+        "points": [
+          {
+            "x": 480,
+            "y": 140
+          },
+          {
+            "x": 480,
+            "y": 160
+          }
+        ]
+      },
+      {
+        "id": "w_u1_paddle_to_gnd",
+        "points": [
+          {
+            "x": 380,
+            "y": 340
+          },
+          {
+            "x": 380,
+            "y": 380
+          }
+        ]
+      }
+    ],
+    "labels": [
+      {
+        "id": "lbl_rfin",
+        "name": "RF_IN",
+        "x": 60,
+        "y": 280
+      },
+      {
+        "id": "lbl_rfout",
+        "name": "RF_OUT",
+        "x": 640,
+        "y": 280
+      },
+      {
+        "id": "lbl_vdd",
+        "name": "VDD",
+        "x": 700,
+        "y": 160
+      }
+    ]
   },
   "footprint": "QFN-12-3x3",
   "layout_example": {
