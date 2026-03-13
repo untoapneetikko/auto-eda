@@ -1884,10 +1884,10 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                 )
 
             # Exit codes that mean the OS killed the process — safe to retry
+            # NOTE: exit code 1 is NOT included — it means a real CLI error (auth, config, etc.)
             _TRANSIENT_EXIT_CODES = {
                 3221225786,  # 0xC000013A STATUS_CONTROL_C_EXIT (Windows killed process)
                 3221225477,  # 0xC0000005 ACCESS_VIOLATION (rare crash)
-                1,           # generic non-zero exit without stderr
             }
 
             def _is_transient(exc: Exception) -> bool:
@@ -1918,6 +1918,11 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                         async for msg in _stream(None, attempts_left - 1):
                             yield msg
                     else:
+                        # Surface stderr so the user can see why the CLI failed
+                        stderr_txt = getattr(e, "stderr", None) or ""
+                        if stderr_txt:
+                            _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
+                                                                "chunk": f"\n[CLI stderr]: {stderr_txt}\n", "is_tool": True})
                         raise
 
             async for sdk_msg in _stream(existing_session):
@@ -2977,21 +2982,67 @@ def _match_package_to_footprint(package_types: list[str]) -> str | None:
     """Try to resolve a library profile's package_types list to an available footprint stem.
 
     Normalisation cascade (tried in order for each entry):
-      1. Exact case-insensitive match          "SOT-23"         → SOT-23
-      2. Strip parenthetical suffix            "D2PAK (SMD)"    → D2PAK
-      3. First whitespace token                "0402 SMD"       → 0402
-      4. Strip trailing alpha suffix           "TO-220AB"       → TO-220
+      1. Exact case-insensitive match          "SOT-23"              → SOT-23
+      2. Strip parenthetical suffix            "D2PAK (SMD)"         → D2PAK
+      3. First whitespace token                "0402 SMD"            → 0402
+      4. Strip trailing alpha suffix           "TO-220AB"            → TO-220
+      5. Semantic re-writes                    "28-pin DIP (PDIP28)" → DIP-28
+                                               "HTSSOP-16 (...)"     → TSSOP-16
+                                               "16-Pad ... QFN"      → QFN-16-...
     The first entry that resolves wins; later entries act as fall-backs.
     """
     _build_footprint_stems()
     for pkg in package_types:
         pkg = pkg.strip()
+        bare = re.sub(r'\s*\(.*?\)', '', pkg).strip()   # parenthetical removed
+
+        # 5. Semantic re-writes for common verbose package strings
+        semantic: list[str] = []
+
+        # "28-pin DIP ..." → DIP-28
+        m = re.match(r'(\d+)-pin\s+DIP', bare, re.IGNORECASE)
+        if m:
+            semantic.append(f"DIP-{m.group(1)}")
+
+        # "32-pad TQFP ..." → TQFP-32
+        m = re.match(r'(\d+)-pad\s+TQFP', bare, re.IGNORECASE)
+        if m:
+            semantic.append(f"TQFP-{m.group(1)}")
+
+        # "32-pad QFN ..." → QFN-32 (then look for nearest variant in stems)
+        m = re.match(r'(\d+)-[Pp]ad\s+(?:\S+\s+)?QFN', bare, re.IGNORECASE)
+        if not m:
+            m = re.match(r'(\d+)-[Pp]ad.*?QFN', bare, re.IGNORECASE)
+        if m:
+            n = m.group(1)
+            semantic.append(f"QFN-{n}")
+            # also try common size variants e.g. QFN-16-3x3
+            for stem in _FOOTPRINT_STEMS:
+                if stem.startswith(f"qfn-{n}-"):
+                    semantic.append(_FOOTPRINT_STEMS[stem])
+
+        # "HTSSOP-16" → TSSOP-16  (H-prefix thermal pad variant)
+        m = re.match(r'H(TSSOP-\d+)', bare, re.IGNORECASE)
+        if m:
+            semantic.append(m.group(1))
+
+        # "12-lead MCLP ..." → MCLP-12
+        m = re.match(r'(\d+)-lead\s+MCLP', bare, re.IGNORECASE)
+        if m:
+            semantic.append(f"MCLP-{m.group(1)}")
+
+        # "SO-8" / "SOIC-8" synonyms
+        m = re.match(r'SO-(\d+)$', bare, re.IGNORECASE)
+        if m:
+            semantic.append(f"SOIC-{m.group(1)}")
+
         candidates = [
-            pkg,                                          # 1. exact
-            re.sub(r'\s*\(.*?\)', '', pkg).strip(),      # 2. drop parens
-            pkg.split()[0] if pkg.split() else '',       # 3. first token
-            re.sub(r'[A-Za-z]+$', '', re.sub(r'\s*\(.*?\)', '', pkg).strip()),  # 4. strip trailing alpha
-        ]
+            pkg,            # 1. exact
+            bare,           # 2. no parens
+            pkg.split()[0] if pkg.split() else '',   # 3. first token
+            re.sub(r'[A-Za-z]+$', '', bare).strip(), # 4. strip trailing alpha
+        ] + semantic        # 5. semantic re-writes
+
         for c in candidates:
             if c and c.lower() in _FOOTPRINT_STEMS:
                 return _FOOTPRINT_STEMS[c.lower()]
@@ -3022,22 +3073,50 @@ def _pick_footprint(slug: str, sym_type: str, pin_count: int,
         _build_footprint_stems()
         fp_name = _FOOTPRINT_STEMS.get(profile_footprint.lower())
 
-    # 1. Use package_types from the library profile (authoritative source)
-    if fp_name is None:
-        fp_name = _match_package_to_footprint(package_types or [])
-
-    # 2. Direct slug → footprint name map (reliable overrides for generic symbols
-    #    that have many package variants, e.g. RESISTOR always defaults to 0402)
-    SLUG_FP: dict[str, str] = {
+    # 1. Generic-symbol overrides — checked BEFORE package_types.
+    #    These slugs represent multi-package schematic symbols (RESISTOR, LED…).
+    #    We pin a sensible default early so that a random package_type entry like
+    #    "0402 SMD" doesn't accidentally override the intended footprint.
+    GENERIC_SLUG_FP: dict[str, str] = {
         "RESISTOR":      "0402",
         "CAPACITOR":     "0402",
         "CAPACITOR_POL": "CAP-POL-5mm",
         "INDUCTOR":      "0603",
         "DIODE":         "DO-41",
         "LED":           "LED-5mm",
+        "ZENER":         "SOD-123",
+        "SCHOTTKY":      "SOD-123",
+        "FUSE":          "0603",
+        "FERRITE":       "0603",
+        "CRYSTAL":       "0805",
+        "TESTPOINT":     "0402",
     }
     if fp_name is None:
-        fp_name = SLUG_FP.get(slug_up)
+        fp_name = GENERIC_SLUG_FP.get(slug_up)
+
+    # 2. Use package_types from the library profile (authoritative source for real ICs)
+    if fp_name is None:
+        fp_name = _match_package_to_footprint(package_types or [])
+
+    # 3. IC-specific slug fallbacks — for known library components whose package_types
+    #    strings may not resolve, or as a safety net when profile.footprint is absent.
+    IC_SLUG_FP: dict[str, str] = {
+        "AMS1117-3.3":    "SOT-223",
+        "AP2112":         "SOT25",
+        "ATMEGA328P":     "DIP-28",
+        "BC547":          "TO-92",
+        "BC557":          "TO-92",
+        "DRV8833":        "TSSOP-16",
+        "ESP32_WROOM_32": "DIP-40",   # No module footprint — DIP-40 is closest available
+        "IRF540N":        "TO-220",
+        "L298N":          "DIP-20",
+        "LM358":          "DIP-8",
+        "LM7805":         "TO-220",
+        "NE555":          "DIP-8",
+        "STM32F103C8":    "LQFP-48",
+    }
+    if fp_name is None:
+        fp_name = IC_SLUG_FP.get(slug_up)
 
     # 3. symType-level fallback
     SYMTYPE_FP: dict[str, str] = {

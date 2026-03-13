@@ -442,7 +442,7 @@
   .pa-desc { display:none; }
   .pa-footer { display:none; }
   .pa-last-run { font-size:10px; color:var(--text-muted); flex:1; }
-  .pa-msg-preview { font-size:10px; color:#a5b4fc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
+  .pa-msg-preview { font-size:10px; color:#a5b4fc; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; }
   .pa-badge { font-size:10px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:1px 6px; color:var(--text-muted); flex-shrink:0; }
   .pa-clone-badge { font-size:9px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); border-radius:8px; padding:1px 5px; color:#f59e0b; flex-shrink:0; }
   .pa-chat-btn { font-size:11px; font-weight:700; border-radius:5px; padding:3px 10px; cursor:pointer; border:1px solid; transition:all .15s; flex-shrink:0; background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
@@ -8142,10 +8142,14 @@ function paCard(agent) {
   const statusTitle = st === 'running' ? 'Running' : st === 'done' ? 'Done' : st === 'error' ? 'Error' : 'Idle';
   const msgBadge = agent.msg_count ? `<span class="pa-badge" style="font-size:9px;">${agent.msg_count}</span>` : '';
   const cloneBadge = agent.is_clone ? `<span class="pa-clone-badge">↳</span>` : '';
+  const lastMsg = agent.last_msg ? `<span class="pa-msg-preview">${esc(agent.last_msg)}</span>` : '';
   return `<div class="pa-card ${cardCls}" id="pa-card-${agent.name}" onclick="paOpenChat('${agent.name}')" title="${esc(agent.desc)}">
-    <span class="pa-icon">${agent.icon}</span>
-    <span class="pa-name">${esc(agent.label)}</span>
-    ${cloneBadge}${msgBadge}
+    <div style="display:flex;align-items:center;gap:4px;min-width:0;flex:1;">
+      <span class="pa-icon">${agent.icon}</span>
+      <span class="pa-name">${esc(agent.label)}</span>
+      ${cloneBadge}${msgBadge}
+    </div>
+    ${lastMsg}
     <span class="pa-status-dot ${dotCls}" title="${statusTitle}"></span>
   </div>`;
 }
