@@ -3223,6 +3223,115 @@ async def api_pcb_import_schematic(request: Request):
             for p in pads_list:
                 pad_net[str(p)] = net_name
 
+    # ── Pre-load layout_example data for example groups ────────────────────
+    # When a schematic component was placed via an "example circuit" drop
+    # (_exampleGroupId is set), we use the library's saved layout_example to
+    # position it and its support components exactly as the designer intended.
+    #
+    # Match chain:
+    #   schematic._exampleX/Y  →  example_circuit position  →  ref
+    #   ref  →  layout_example component position (mm)
+    #
+    # le_groups[eg_id] = {
+    #   "eg_slug":       str,           e.g. "PMA3_83LNW"
+    #   "le_ref_to_pos": {ref: (x,y,rot)},
+    #   "le_anchor_ref": str,           the main IC ref in the layout_example
+    #   "le_anchor_pos": (x, y),        the main IC's position in layout_example
+    #   "ec_pos_to_ref": {(rx,ry): ref},  rounded example_circuit pos → ref
+    #   "traces":        [...],
+    #   "vias":          [...],
+    # }
+    le_groups: dict[str, dict] = {}
+
+    # Collect unique (eg_id, eg_slug) pairs
+    eg_slugs: dict[str, str] = {}  # eg_id → eg_slug (uppercased)
+    for sc in schematic_comps:
+        eg_id  = sc.get("_exampleGroupId")
+        eg_slug = sc.get("_exampleSlug", "")
+        if eg_id and eg_slug:
+            eg_slugs[eg_id] = eg_slug.upper()
+
+    for eg_id, eg_slug in eg_slugs.items():
+        profile_path = LIBRARY_DIR / eg_slug / "profile.json"
+        if not profile_path.exists():
+            continue
+        try:
+            eg_profile = json.loads(profile_path.read_text("utf-8"))
+        except Exception:
+            continue
+
+        le       = eg_profile.get("layout_example") or {}
+        le_comps = le.get("components") or []
+        ec_comps = (eg_profile.get("example_circuit") or {}).get("components") or []
+        if not le_comps:
+            continue
+
+        # Build example_circuit position → ref map (rounded to nearest int for
+        # fuzzy matching against _exampleX/_exampleY which may be floats)
+        ec_pos_to_ref: dict[tuple, str] = {}
+        for ec in ec_comps:
+            ex  = ec.get("x")
+            ey  = ec.get("y")
+            ref = str(ec.get("ref", ec.get("designator", "")))
+            if ex is not None and ey is not None and ref:
+                ec_pos_to_ref[(round(float(ex)), round(float(ey)))] = ref
+
+        # Build layout_example ref → (x, y, rotation) map
+        le_ref_to_pos: dict[str, tuple] = {}
+        le_anchor_ref: str | None = None
+        le_anchor_pos: tuple | None = None
+        _PASSIVE_FPS = {"0201", "0402", "0603", "0805", "1206", "2010", "2512",
+                        "do-41", "sod-123", "sod123", "led-5mm"}
+        for lc in le_comps:
+            le_ref  = str(lc.get("ref", lc.get("id", "")))
+            le_x    = float(lc.get("x", 0))
+            le_y    = float(lc.get("y", 0))
+            le_rot  = int(lc.get("rotation", 0))
+            le_ref_to_pos[le_ref] = (le_x, le_y, le_rot)
+            # Anchor = the first non-passive (IC) component
+            if le_anchor_ref is None:
+                fp_lower = str(lc.get("footprint", "")).lower()
+                if fp_lower not in _PASSIVE_FPS:
+                    le_anchor_ref = le_ref
+                    le_anchor_pos = (le_x, le_y)
+        # Fallback: first component is anchor
+        if le_anchor_ref is None and le_comps:
+            lc = le_comps[0]
+            le_anchor_ref = str(lc.get("ref", lc.get("id", "")))
+            le_anchor_pos = (float(lc.get("x", 0)), float(lc.get("y", 0)))
+
+        if le_anchor_ref is None:
+            continue
+
+        le_groups[eg_id] = {
+            "eg_slug":       eg_slug,
+            "le_ref_to_pos": le_ref_to_pos,
+            "le_anchor_ref": le_anchor_ref,
+            "le_anchor_pos": le_anchor_pos,
+            "ec_pos_to_ref": ec_pos_to_ref,
+            "traces":        le.get("traces") or [],
+            "vias":          le.get("vias")   or [],
+        }
+
+    # Pre-compute the anchor component's PCB position for each example group
+    # (the IC's schematic x/y is scaled to board mm normally, everything else
+    # in the group is then offset relative to it using layout_example coords)
+    anchor_pcb_pos: dict[str, tuple] = {}  # eg_id → (bx, by)
+    for sc in schematic_comps:
+        eg_id = sc.get("_exampleGroupId")
+        if not eg_id or eg_id not in le_groups:
+            continue
+        sc_slug = str(sc.get("slug", sc.get("symType", ""))).upper()
+        if sc_slug != le_groups[eg_id]["eg_slug"]:
+            continue  # not the anchor
+        sx = float(sc.get("x", 0))
+        sy = float(sc.get("y", 0))
+        ax = board_cx + (sx - schem_cx) * scale_x
+        ay = board_cy + (sy - schem_cy) * scale_y
+        ax = round(max(5.0, min(bw - 5.0, ax)), 2)
+        ay = round(max(5.0, min(bh - 5.0, ay)), 2)
+        anchor_pcb_pos[eg_id] = (ax, ay)
+
     # ── Build PCB components ───────────────────────────────────────────────
     pcb_comps: list[dict] = []
     for sc in schematic_comps:
@@ -3311,13 +3420,56 @@ async def api_pcb_import_schematic(request: Request):
                     "net":    pad_net.get(pad_key, ""),
                 })
 
-        # ── Scale schematic position to board mm ──────────────────────────
-        sx = float(sc.get("x", 0))
-        sy = float(sc.get("y", 0))
-        bx = board_cx + (sx - schem_cx) * scale_x
-        by = board_cy + (sy - schem_cy) * scale_y
-        bx = round(max(5.0, min(bw - 5.0, bx)), 2)
-        by = round(max(5.0, min(bh - 5.0, by)), 2)
+        # ── Determine PCB position ─────────────────────────────────────────
+        # Priority 1: layout_example relative position (for example-group components)
+        # Priority 2: standard schematic → board mm scaling
+        rotation = int(sc.get("rotation", 0))
+        eg_id    = sc.get("_exampleGroupId")
+        eg_info  = le_groups.get(eg_id) if eg_id else None
+
+        if eg_info and eg_id in anchor_pcb_pos:
+            is_anchor = (slug == eg_info["eg_slug"])
+            if is_anchor:
+                # Anchor: use its schematic-derived position (already computed)
+                bx, by = anchor_pcb_pos[eg_id]
+                # Use layout_example rotation for the anchor too
+                le_anchor_ref = eg_info["le_anchor_ref"]
+                if le_anchor_ref in eg_info["le_ref_to_pos"]:
+                    rotation = eg_info["le_ref_to_pos"][le_anchor_ref][2]
+            else:
+                # Support component: translate from layout_example relative to anchor
+                ex_x = sc.get("_exampleX")
+                ex_y = sc.get("_exampleY")
+                le_ref = None
+                if ex_x is not None and ex_y is not None:
+                    le_ref = eg_info["ec_pos_to_ref"].get(
+                        (round(float(ex_x)), round(float(ex_y)))
+                    )
+                if le_ref and le_ref in eg_info["le_ref_to_pos"]:
+                    le_x, le_y, le_rot = eg_info["le_ref_to_pos"][le_ref]
+                    le_ax, le_ay       = eg_info["le_anchor_pos"]
+                    ax, ay             = anchor_pcb_pos[eg_id]
+                    bx = round(ax + (le_x - le_ax), 2)
+                    by = round(ay + (le_y - le_ay), 2)
+                    bx = round(max(2.0, min(bw - 2.0, bx)), 2)
+                    by = round(max(2.0, min(bh - 2.0, by)), 2)
+                    rotation = le_rot
+                else:
+                    # No layout_example match — fall back to schematic position
+                    sx = float(sc.get("x", 0))
+                    sy = float(sc.get("y", 0))
+                    bx = board_cx + (sx - schem_cx) * scale_x
+                    by = board_cy + (sy - schem_cy) * scale_y
+                    bx = round(max(5.0, min(bw - 5.0, bx)), 2)
+                    by = round(max(5.0, min(bh - 5.0, by)), 2)
+        else:
+            # Standard: scale schematic position to board mm
+            sx = float(sc.get("x", 0))
+            sy = float(sc.get("y", 0))
+            bx = board_cx + (sx - schem_cx) * scale_x
+            by = board_cy + (sy - schem_cy) * scale_y
+            bx = round(max(5.0, min(bw - 5.0, bx)), 2)
+            by = round(max(5.0, min(bh - 5.0, by)), 2)
 
         pcb_comps.append({
             "id":        ref,
@@ -3326,10 +3478,44 @@ async def api_pcb_import_schematic(request: Request):
             "footprint": fp_data.get("name", "") if fp_data else slug,
             "x":         bx,
             "y":         by,
-            "rotation":  int(sc.get("rotation", 0)),
+            "rotation":  rotation,
             "layer":     "F",
             "pads":      pads,
         })
+
+    # ── Translate layout_example traces/vias onto the board ────────────────
+    # For each example group that had a saved layout, offset its traces/vias
+    # by the same (anchor_pcb - anchor_le) vector used for components.
+    pcb_traces: list[dict] = []
+    pcb_vias:   list[dict] = []
+    for eg_id, eg_info in le_groups.items():
+        if eg_id not in anchor_pcb_pos:
+            continue
+        ax, ay    = anchor_pcb_pos[eg_id]
+        le_ax, le_ay = eg_info["le_anchor_pos"]
+        dx = ax - le_ax
+        dy = ay - le_ay
+
+        for trace in eg_info["traces"]:
+            t = dict(trace)
+            if "x1" in t:
+                t["x1"] = round(float(t["x1"]) + dx, 3)
+                t["y1"] = round(float(t["y1"]) + dy, 3)
+                t["x2"] = round(float(t["x2"]) + dx, 3)
+                t["y2"] = round(float(t["y2"]) + dy, 3)
+            elif "points" in t:
+                t["points"] = [
+                    {"x": round(float(p["x"]) + dx, 3),
+                     "y": round(float(p["y"]) + dy, 3)}
+                    for p in t["points"]
+                ]
+            pcb_traces.append(t)
+
+        for via in eg_info["vias"]:
+            v = dict(via)
+            v["x"] = round(float(v.get("x", 0)) + dx, 3)
+            v["y"] = round(float(v.get("y", 0)) + dy, 3)
+            pcb_vias.append(v)
 
     # ── Build nets list from netlist dict ──────────────────────────────────
     pcb_nets: list[dict] = [
@@ -3343,8 +3529,8 @@ async def api_pcb_import_schematic(request: Request):
         "board":      {"width": bw, "height": bh, "units": "mm"},
         "components": pcb_comps,
         "nets":       pcb_nets,
-        "traces":     [],
-        "vias":       [],
+        "traces":     pcb_traces,
+        "vias":       pcb_vias,
         "areas":      [],
     }
 
