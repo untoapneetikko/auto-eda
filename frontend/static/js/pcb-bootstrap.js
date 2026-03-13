@@ -116,8 +116,16 @@ window.addEventListener('load',()=>{
                 if (freshBoard && freshBoard.components) {
                   // Always update schematicRefs to the current schematic state (full objects)
                   editor.board.schematicRefs = freshBoard.components.map(c=>JSON.parse(JSON.stringify(c)));
+                  const freshRefs  = new Set(freshBoard.components.map(c => c.ref || c.id));
                   const existingRefs = new Set((editor.board.components || []).map(c => c.ref || c.id));
-                  const newComps = freshBoard.components.filter(c => !existingRefs.has(c.ref || c.id));
+                  const newComps  = freshBoard.components.filter(c => !existingRefs.has(c.ref || c.id));
+
+                  // Remove components that no longer exist in the schematic
+                  const removedRefs = [...existingRefs].filter(r => !freshRefs.has(r));
+                  if (removedRefs.length > 0) {
+                    editor.board.components = editor.board.components.filter(c => freshRefs.has(c.ref || c.id));
+                    console.log(`[importProject] removed ${removedRefs.length} component(s) deleted from schematic:`, removedRefs);
+                  }
 
                   if (newComps.length > 0) {
                     // Place new components in a staging row to the right of the board
@@ -138,10 +146,13 @@ window.addEventListener('load',()=>{
                         if (!existingGrpIds.has(g.id)) editor.board.groups.push(g);
                       }
                     }
-                    // Refresh ratsnest nets
+                    console.log(`[importProject] merged ${newComps.length} new component(s) into existing board`);
+                  }
+
+                  // Refresh nets and save whenever anything changed
+                  if (newComps.length > 0 || removedRefs.length > 0) {
                     if (freshBoard.nets) editor.board.nets = freshBoard.nets;
                     await saveBoard();
-                    console.log(`[importProject] merged ${newComps.length} new component(s) into existing board`);
                   }
                 }
               } catch(mergeErr) {
