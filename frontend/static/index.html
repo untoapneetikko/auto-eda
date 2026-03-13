@@ -2837,15 +2837,19 @@ function leAddComponent(bomIdx) {
 }
 
 async function leSaveLayout() {
-  if (!selectedSlug) return;
+  if (!selectedSlug) {
+    alert('No component selected — open a component from the library first.');
+    return;
+  }
   const frame = document.getElementById('le-frame');
   const btn = document.getElementById('le-save-btn-vis') || document.getElementById('le-save-btn');
-  if (!frame) return;
-  const origText = btn ? btn.textContent : '';
+  if (!frame) { alert('PCB frame not found — try switching away and back to the Layout Example tab.'); return; }
+  const origText = btn ? btn.textContent : '💾 Save';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
   try {
+    if (!frame.contentWindow) throw new Error('PCB editor not loaded — reload the page and try again');
     const board = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('timeout')), 4000);
+      const timer = setTimeout(() => reject(new Error('PCB editor did not respond (timeout) — try clicking away and back to this tab')), 5000);
       const handler = e => {
         if (e.data?.type !== 'boardData') return;
         clearTimeout(timer);
@@ -2855,16 +2859,17 @@ async function leSaveLayout() {
       window.addEventListener('message', handler);
       frame.contentWindow.postMessage({ type: 'getBoard' }, '*');
     });
-    if (!board) throw new Error('No board data');
-    const res = await fetch(`/api/library/${selectedSlug}/layout_example`, {
+    if (!board) throw new Error('No board data returned from PCB editor');
+    const res = await fetch(`/api/library/${encodeURIComponent(selectedSlug)}/layout_example`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(board)
     });
-    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => res.status);
+      throw new Error(`Server error ${res.status}: ${errText}`);
+    }
     if (btn) { btn.textContent = '✓ Saved'; }
-    // After a successful save, allow the next tab-return to re-fetch from server
-    // so the saved state is confirmed as the source of truth.
     _leLoadedSlug = null;
     const notes = document.getElementById('le-notes');
     if (notes && !notes.textContent.includes('✓')) notes.textContent += ' · ✓ saved';
@@ -4997,21 +5002,46 @@ async function addCurrentToExample() {
 
 // Save the example editor's current circuit back to the server
 async function accSaveExample(btn) {
-  if (!selectedSlug || !appCircuitEditor) return;
+  if (!selectedSlug) {
+    if (btn) { btn.textContent = '✕ No component'; setTimeout(() => { btn.textContent = '💾 Save'; }, 2000); }
+    return;
+  }
+  // appCircuitEditor is initialized asynchronously — wait up to 3s for it
+  if (!appCircuitEditor || appCircuitEditor.svg !== document.getElementById('app-circuit-canvas')) {
+    if (btn) { btn.textContent = '⏳ Loading…'; btn.disabled = true; }
+    await new Promise(resolve => {
+      let tries = 0;
+      const wait = setInterval(() => {
+        tries++;
+        if ((appCircuitEditor && appCircuitEditor.svg === document.getElementById('app-circuit-canvas')) || tries > 30) {
+          clearInterval(wait);
+          resolve();
+        }
+      }, 100);
+    });
+    if (!appCircuitEditor) {
+      if (btn) { btn.textContent = '✕ Editor not ready'; btn.disabled = false; setTimeout(() => { btn.textContent = '💾 Save'; }, 2000); }
+      return;
+    }
+  }
   const circuit = {
     components: appCircuitEditor.project.components,
     wires: appCircuitEditor.project.wires,
     labels: appCircuitEditor.project.labels || []
   };
-  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
-  const res = await fetch(`/api/library/${selectedSlug}/example_circuit`, {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(circuit)
-  });
-  if (btn) {
-    btn.textContent = res.ok ? '✓ Saved' : '✕ Error';
-    btn.disabled = false;
-    setTimeout(() => { btn.textContent = '💾 Save'; }, 2000);
+  if (btn) { btn.textContent = '⏳ Saving…'; btn.disabled = true; }
+  try {
+    const res = await fetch(`/api/library/${encodeURIComponent(selectedSlug)}/example_circuit`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(circuit)
+    });
+    if (btn) {
+      btn.textContent = res.ok ? '✓ Saved' : `✕ Error ${res.status}`;
+      btn.disabled = false;
+      setTimeout(() => { btn.textContent = '💾 Save'; }, 2000);
+    }
+  } catch(e) {
+    if (btn) { btn.textContent = '✕ Network error'; btn.disabled = false; setTimeout(() => { btn.textContent = '💾 Save'; }, 2000); }
   }
 }
 
