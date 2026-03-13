@@ -138,6 +138,18 @@ class PCB3DViewer {
 
   load(board) {
     this.board = board;
+    // ── Layer thickness constants (visually exaggerated for clarity) ──────────
+    this.PCB_T = 1.6;    // FR4 substrate
+    this.CU_T  = 0.20;   // copper (real: 0.035 — exaggerated 6× so it reads clearly)
+    this.SM_T  = 0.10;   // solder mask
+    this.SP_T  = 0.06;   // solder paste (in pad openings only)
+    // Derived Y positions (Y=0 is top of FR4, Y=-PCB_T is bottom of FR4)
+    this.Y_CU_TOP    =  this.CU_T / 2;                          // top copper centre
+    this.Y_SM_TOP    =  this.CU_T + this.SM_T / 2;              // top soldermask centre
+    this.Y_SP_TOP    =  this.CU_T + this.SM_T + this.SP_T / 2;  // top paste centre
+    this.Y_CU_BOT    = -this.PCB_T - this.CU_T / 2;             // bottom copper centre
+    this.Y_SM_BOT    = -this.PCB_T - this.CU_T - this.SM_T / 2; // bottom soldermask centre
+    this.Y_SP_BOT    = -this.PCB_T - this.CU_T - this.SM_T - this.SP_T / 2;
     this._clearScene();
 
     // Ground grid
@@ -155,27 +167,37 @@ class PCB3DViewer {
 
   _buildBoard(board) {
     const { width, height } = board.board;
-    const PCB_T = 1.6;
+    const { PCB_T, CU_T, SM_T } = this;
 
     // FR4 substrate
     const geo = new THREE.BoxGeometry(width, PCB_T, height);
-    const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0x1a6b2a }));
-    mesh.position.y = -PCB_T / 2;
-    mesh.receiveShadow = true;
-    this.scene.add(mesh);
+    const substrate = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0x1a6b2a }));
+    substrate.position.y = -PCB_T / 2;
+    substrate.receiveShadow = true;
+    this.scene.add(substrate);
 
-    // Top solder mask
-    const smGeo = new THREE.BoxGeometry(width, 0.04, height);
-    const smTop = new THREE.Mesh(smGeo, new THREE.MeshLambertMaterial({ color: 0x14501e, transparent: true, opacity: 0.88 }));
-    smTop.position.y = 0.022;
+    // Top copper fill (bare board surface — shows under semi-transparent mask)
+    const cuFillMat = new THREE.MeshLambertMaterial({ color: 0xb87333 });
+    const cuTop = new THREE.Mesh(new THREE.BoxGeometry(width, CU_T, height), cuFillMat);
+    cuTop.position.y = this.Y_CU_TOP;
+    this.scene.add(cuTop);
+
+    const cuBot = new THREE.Mesh(new THREE.BoxGeometry(width, CU_T, height), cuFillMat.clone());
+    cuBot.position.y = this.Y_CU_BOT;
+    this.scene.add(cuBot);
+
+    // Top solder mask — semi-transparent dark green, sits above copper
+    const smMat = new THREE.MeshLambertMaterial({ color: 0x0e4f1a, transparent: true, opacity: 0.82, depthWrite: false });
+    const smTop = new THREE.Mesh(new THREE.BoxGeometry(width, SM_T, height), smMat);
+    smTop.position.y = this.Y_SM_TOP;
     this.scene.add(smTop);
 
     // Bottom solder mask
     const smBot = new THREE.Mesh(
-      new THREE.BoxGeometry(width, 0.04, height),
-      new THREE.MeshLambertMaterial({ color: 0x14501e, transparent: true, opacity: 0.88 })
+      new THREE.BoxGeometry(width, SM_T, height),
+      smMat.clone()
     );
-    smBot.position.y = -PCB_T - 0.022;
+    smBot.position.y = this.Y_SM_BOT;
     this.scene.add(smBot);
 
     // Board outline
@@ -189,13 +211,15 @@ class PCB3DViewer {
 
   _buildTraces(board) {
     if (!board.traces || !board.traces.length) return;
-    const CU_T = 0.035;
-    const matTop = new THREE.MeshLambertMaterial({ color: 0xb85522 });
-    const matBot = new THREE.MeshLambertMaterial({ color: 0x3355cc });
+    const { CU_T } = this;
+    // Traces sit above the copper fill plane — use a brighter copper colour so
+    // they contrast against the base fill layer beneath the solder mask.
+    const matTop = new THREE.MeshLambertMaterial({ color: 0xd4681a });
+    const matBot = new THREE.MeshLambertMaterial({ color: 0x4477ee });
     for (const trace of board.traces) {
       const isBot = trace.layer === 'B.Cu';
-      const mat = isBot ? matBot : matTop;
-      const ty = isBot ? (-1.6 - CU_T / 2) : (CU_T / 2);
+      const mat  = isBot ? matBot : matTop;
+      const ty   = isBot ? this.Y_CU_BOT : this.Y_CU_TOP;
       for (const seg of (trace.segments || [])) {
         if (!seg || !seg.start || !seg.end) continue;
         const dx = seg.end.x - seg.start.x, dz = seg.end.y - seg.start.y;
@@ -217,21 +241,31 @@ class PCB3DViewer {
 
   _buildVias(board) {
     if (!board.vias || !board.vias.length) return;
+    const { PCB_T, CU_T, SM_T } = this;
+    const barrelH = PCB_T + CU_T * 2;
     const mat = new THREE.MeshLambertMaterial({ color: 0xd4aa00 });
     for (const via of board.vias) {
-      const r = (via.size || 1.0) / 2;
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 1.6, 16), mat);
-      m.position.set(this._px(via.x), -0.8, this._pz(via.y));
-      this.scene.add(m);
-      // Top annular ring
+      const r  = (via.size  || 1.0) / 2;
       const dr = (via.drill || 0.6) / 2;
+      // Barrel through entire stack
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, barrelH, 16), mat.clone());
+      m.position.set(this._px(via.x), -(PCB_T / 2), this._pz(via.y));
+      this.scene.add(m);
+      // Top annular ring — above solder mask
+      const ringY_top = CU_T + SM_T;
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(Math.min(dr, r * 0.9), r, 16),
         new THREE.MeshLambertMaterial({ color: 0xd4aa00, side: THREE.DoubleSide })
       );
       ring.rotation.x = -Math.PI / 2;
-      ring.position.set(this._px(via.x), 0.04, this._pz(via.y));
+      ring.position.set(this._px(via.x), ringY_top, this._pz(via.y));
       this.scene.add(ring);
+      // Bottom annular ring
+      const ringY_bot = -(PCB_T + CU_T + SM_T);
+      const ringB = ring.clone();
+      ringB.rotation.x = Math.PI / 2;
+      ringB.position.set(this._px(via.x), ringY_bot, this._pz(via.y));
+      this.scene.add(ringB);
     }
   }
 
@@ -305,7 +339,9 @@ class PCB3DViewer {
     const rot = (comp.rotation || 0) * Math.PI / 180;
     const cosR = Math.cos(rot), sinR = Math.sin(rot);
     const isBack = comp.layer === 'B';
-    const padGold = new THREE.MeshLambertMaterial({ color: 0xd4a800 });
+    const { CU_T, SM_T, SP_T, PCB_T } = this;
+    const matGold  = new THREE.MeshLambertMaterial({ color: 0xd4a800 });
+    const matPaste = new THREE.MeshLambertMaterial({ color: 0xaaaaaa }); // solder paste — silver
 
     for (const pad of (comp.pads || [])) {
       // Rotate pad position with component
@@ -316,29 +352,43 @@ class PCB3DViewer {
       if (pad.type === 'thru_hole') {
         const outerR = Math.max(pad.size_x || 1.5, pad.size_y || 1.5) / 2;
         const innerR = Math.max(0.1, (pad.drill || outerR * 0.6) / 2);
-        // Top annular ring
+        const ringY_top = CU_T + SM_T;          // exposed above solder mask
+        const ringY_bot = -(PCB_T + CU_T + SM_T);
+        // Top annular ring (exposed through mask)
         const rg = new THREE.RingGeometry(innerR, outerR, 16);
         const rt = new THREE.Mesh(rg, new THREE.MeshLambertMaterial({ color: 0xd4a800, side: THREE.DoubleSide }));
-        rt.rotation.x = -Math.PI / 2; rt.position.set(px3, 0.04, pz3);
+        rt.rotation.x = -Math.PI / 2; rt.position.set(px3, ringY_top, pz3);
         this.scene.add(rt);
-        // Bottom ring
+        // Bottom annular ring
         const rb = new THREE.Mesh(rg.clone(), new THREE.MeshLambertMaterial({ color: 0xd4a800, side: THREE.DoubleSide }));
-        rb.rotation.x = Math.PI / 2; rb.position.set(px3, -1.64, pz3);
+        rb.rotation.x = Math.PI / 2; rb.position.set(px3, ringY_bot, pz3);
         this.scene.add(rb);
-        // Plated barrel
-        const bg = new THREE.CylinderGeometry(innerR * 0.98, innerR * 0.98, 1.6, 16, 1, true);
+        // Plated through-hole barrel
+        const bg = new THREE.CylinderGeometry(innerR * 0.98, innerR * 0.98, PCB_T + CU_T * 2, 16, 1, true);
         const brl = new THREE.Mesh(bg, new THREE.MeshLambertMaterial({ color: 0xd4a800, side: THREE.BackSide }));
-        brl.position.set(px3, -0.8, pz3);
+        brl.position.set(px3, -(PCB_T / 2), pz3);
         this.scene.add(brl);
       } else {
-        const sy = isBack ? -1.64 : 0.04;
-        const pw = pad.size_x || 1.5, pd = pad.size_y || 1.5;
-        const geo = pad.shape === 'circle'
-          ? new THREE.CylinderGeometry(Math.min(pw, pd) / 2, Math.min(pw, pd) / 2, 0.04, 16)
-          : new THREE.BoxGeometry(pw, 0.04, pd);
-        const m = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ color: 0xd4a800 }));
-        m.position.set(px3, sy, pz3);
+        // SMD pad — gold lands sit just above copper, poking through solder mask
+        const padY  = isBack ? this.Y_CU_BOT : this.Y_CU_TOP;
+        const pw = pad.size_x || 1.5, pd_s = pad.size_y || 1.5;
+        const isCirc = pad.shape === 'circle';
+        const padGeo = isCirc
+          ? new THREE.CylinderGeometry(Math.min(pw, pd_s) / 2, Math.min(pw, pd_s) / 2, CU_T, 16)
+          : new THREE.BoxGeometry(pw, CU_T, pd_s);
+        const m = new THREE.Mesh(padGeo, matGold.clone());
+        m.position.set(px3, padY, pz3);
         this.scene.add(m);
+
+        // Solder paste — thin silver layer on top of pad opening (top side only by default)
+        const pasteY = isBack ? this.Y_SP_BOT : this.Y_SP_TOP;
+        const shrink = 0.9; // paste is slightly smaller than the pad
+        const pasteGeo = isCirc
+          ? new THREE.CylinderGeometry(Math.min(pw, pd_s) * shrink / 2, Math.min(pw, pd_s) * shrink / 2, SP_T, 16)
+          : new THREE.BoxGeometry(pw * shrink, SP_T, pd_s * shrink);
+        const paste = new THREE.Mesh(pasteGeo, matPaste.clone());
+        paste.position.set(px3, pasteY, pz3);
+        this.scene.add(paste);
       }
     }
   }
