@@ -1764,7 +1764,7 @@ class PCBEditor {
         if(!this.board)return;
         if(e.detail===2){
           if(this.zonePoints.length>=3){
-            const lyr=Object.keys(this.layers).find(k=>this.layers[k].active&&k!=='Ratsnest'&&k!=='Edge.Cuts')||'F.Cu';
+            const lyr=this.workLayer||'F.Cu';
             (this.board.zones||(this.board.zones=[])).push({
               layer:lyr,net:this.zoneNet||'GND',
               points:[...this.zonePoints]});
@@ -1777,7 +1777,7 @@ class PCBEditor {
         if(!this.board)return;
         const inp=document.getElementById('area-net-input');
         if(inp)this.areaNet=inp.value.trim()||'GND';
-        this.areaLayer=Object.keys(this.layers).find(k=>this.layers[k].active&&k!=='Ratsnest'&&k!=='Edge.Cuts')||'F.Cu';
+        this.areaLayer=this.workLayer||'F.Cu';
         this.areaStart={x:xmm,y:ymm};
         this._isAreaDrag=true;
       } else if(this.tool==='measure'){

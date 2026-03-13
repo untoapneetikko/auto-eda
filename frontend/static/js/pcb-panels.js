@@ -61,9 +61,50 @@ function buildLayerPanel(){
     };
 
     d.appendChild(dot); d.appendChild(star); d.appendChild(nm); d.appendChild(eye);
-    d.onclick=()=>{if(nm.contentEditable==='true')return;editor.workLayer=name;buildLayerPanel();updateWorkLayerBadge();editor.render();};
+    d.onclick=()=>{
+      if(nm.contentEditable==='true')return;
+      _setWorkLayer(name);
+    };
     ul.appendChild(d);
   }
+}
+
+// Shared helper — sets work layer, syncs active flag, refreshes panel + badge
+function _setWorkLayer(name){
+  if(!editor?.layers[name])return;
+  editor.workLayer=name;
+  // Keep layers[k].active in sync so zone/area/draw tools always have a valid active layer
+  for(const k of Object.keys(editor.layers)) editor.layers[k].active=(k===name);
+  buildLayerPanel();
+  updateWorkLayerBadge();
+  editor.render();
+}
+
+// ── Toolbar layer-picker dropdown (works in both ?app=1 and ?embedded=1 modes) ──
+function openLayerPickerDropdown(){
+  // Remove any existing dropdown
+  const old=document.getElementById('layer-picker-dropdown');
+  if(old){old.remove();return;}
+  const badge=document.getElementById('work-layer-badge');
+  if(!badge||!editor)return;
+  const rect=badge.getBoundingClientRect();
+  const drop=document.createElement('div');
+  drop.id='layer-picker-dropdown';
+  drop.style.cssText=`position:fixed;top:${rect.bottom+4}px;left:${rect.left}px;z-index:9999;background:var(--surface,#1a1c2e);border:1px solid var(--border,#2e3250);border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,0.5);padding:4px;min-width:180px;`;
+  for(const[name,lyr]of Object.entries(editor.layers)){
+    const isWork=name===editor.workLayer;
+    const row=document.createElement('div');
+    row.style.cssText=`display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:${isWork?'700':'400'};color:${isWork?lyr.color:'var(--text,#cdd6f4)'};background:${isWork?lyr.color+'22':'transparent'};`;
+    row.innerHTML=`<span style="width:11px;height:11px;border-radius:2px;background:${lyr.color};flex-shrink:0;display:inline-block;"></span><span style="flex:1;">${lyr.displayName||name}</span>${isWork?'<span style="font-size:10px;">★</span>':''}`;
+    row.onmouseenter=()=>row.style.background=lyr.color+'33';
+    row.onmouseleave=()=>row.style.background=isWork?lyr.color+'22':'transparent';
+    row.onclick=()=>{_setWorkLayer(name);drop.remove();};
+    drop.appendChild(row);
+  }
+  document.body.appendChild(drop);
+  // Dismiss on outside click
+  const dismiss=e=>{if(!drop.contains(e.target)&&e.target!==badge){drop.remove();document.removeEventListener('mousedown',dismiss,true);}};
+  setTimeout(()=>document.addEventListener('mousedown',dismiss,true),0);
 }
 
 function updateWorkLayerBadge(){
