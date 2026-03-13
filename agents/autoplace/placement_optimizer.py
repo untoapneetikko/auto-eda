@@ -63,8 +63,23 @@ _SOIC_BODY_WIDTH = 6.0  # mm
 
 
 def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
-    """Return (width_mm, height_mm) estimate for a given footprint string."""
+    """Return (width_mm, height_mm) estimate for a given footprint string.
+
+    Priority:
+    1. Explicit body-size suffix: "QFN-12-3x3" → 3×3 mm
+    2. Known package table (imperial passives, SOT, etc.)
+    3. Pin-count heuristic as a last resort
+    """
     fp = footprint.upper().strip()
+
+    # ── 1. Explicit WxH body-size anywhere in the string ──────────────
+    # Matches patterns like "3X3", "3.0X3.0", "4X4", "3.9X4.9"
+    m = re.search(r"(\d+(?:\.\d+)?)\s*X\s*(\d+(?:\.\d+)?)", fp)
+    if m:
+        w = float(m.group(1))
+        h = float(m.group(2))
+        if 0.5 <= w <= 50 and 0.5 <= h <= 50:  # sanity range
+            return (w, h)
 
     # Imperial passive sizes (0402, 0603, etc.)
     for code, size in _IMPERIAL_MAP.items():
@@ -84,11 +99,11 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
         height = (pins_per_side - 1) * _SOIC_PIN_PITCH + 2.0  # body
         return (_SOIC_BODY_WIDTH, height)
 
-    # QFN-N or QFP-N — roughly square
+    # QFN-N or QFP-N — pin-count heuristic (conservative: 0.4mm/pin)
     m = re.search(r"QF[NP][-_](\d+)", fp)
     if m:
         n_pins = int(m.group(1))
-        side = max(3.0, n_pins * 0.5)
+        side = max(3.0, n_pins * 0.4)
         return (side, side)
 
     # DIP-N
@@ -131,9 +146,9 @@ def _build_dataframe(placements: list[dict[str, Any]]) -> pl.DataFrame:
         y = float(p.get("y", 0.0))
         fp = p.get("footprint", "")
         w, h = _estimate_footprint_size(fp)
-        # half-extents including courtyard expansion (0.1 mm per side)
-        half_w = w / 2.0 + 0.1
-        half_h = h / 2.0 + 0.1
+        # half-extents = actual 3D package boundary (no extra expansion)
+        half_w = w / 2.0
+        half_h = h / 2.0
         rows.append({
             "reference": ref,
             "x": x,
@@ -278,6 +293,7 @@ def compute_net_proximity_placement(
     iterations: int = 250,
     seed: int = 42,
     schematic_hints: dict[str, tuple[float, float]] | None = None,
+    hint_weight: float = 0.4,
 ) -> list[dict[str, Any]]:
     """
     Compute PCB component placements optimised for net-proximity.
@@ -320,6 +336,10 @@ def compute_net_proximity_placement(
         as initial positions (instead of a uniform grid), so the final layout
         mirrors the schematic topology.  Connectors are still pinned to the
         board edge regardless of their hint.
+    hint_weight:
+        Multiplier (0..1) for the hint-gravity force.  Default 0.4 is gentle
+        (for normalised schematic hints).  Use 0.8–1.0 for existing board
+        positions that should be preserved as closely as possible.
 
     Returns
     -------
@@ -344,9 +364,9 @@ def compute_net_proximity_placement(
     # 2. Estimate courtyard half-extents for each component                #
     # ------------------------------------------------------------------ #
     sizes = [_estimate_footprint_size(c.get("footprint", "")) for c in components]
-    # half-extents + 0.1 mm courtyard expansion per side
-    hw = [s[0] / 2.0 + 0.1 for s in sizes]  # courtyard half-width
-    hh = [s[1] / 2.0 + 0.1 for s in sizes]  # courtyard half-height
+    # half-extents = actual 3D package boundary (package-to-package gap)
+    hw = [s[0] / 2.0 for s in sizes]  # package half-width
+    hh = [s[1] / 2.0 for s in sizes]  # package half-height
 
     # ------------------------------------------------------------------ #
     # 3. Classify components                                               #
@@ -432,6 +452,10 @@ def compute_net_proximity_placement(
         forces = [[0.0, 0.0] for _ in range(n)]
 
         # ---- Force A: net-attraction ---------------------------------- #
+        # When hint_weight is high (e.g. 0.85 for board-position anchors),
+        # net-attraction is scaled down by (1 - hint_weight) so hints
+        # dominate.  hint_weight=0 → full net force, hint_weight=1 → no net.
+        net_scale = 1.0 - (hint_weight if schematic_hints else 0.0)
         for i, comp in enumerate(components):
             if is_conn[i]:
                 continue
@@ -455,7 +479,7 @@ def compute_net_proximity_placement(
             dy = (cy_sum / weight) - pos[i][1]
             dist = math.hypot(dx, dy)
             if dist > 1e-6:
-                pull = min(dist, max_step)
+                pull = min(dist, max_step) * net_scale
                 forces[i][0] += (dx / dist) * pull
                 forces[i][1] += (dy / dist) * pull
 
@@ -478,10 +502,14 @@ def compute_net_proximity_placement(
         # ---- Force A3: schematic hint gravity ------------------------- #
         # Each component that has a schematic hint gets a continuous pull
         # toward that hint position throughout the algorithm.  This biases
-        # the final layout to mirror the schematic topology.  Strength
-        # decreases with cooling so hard constraints win at convergence.
+        # the final layout to mirror the schematic topology.  hint_weight
+        # controls the strength: 0.4 for schematic hints, 0.8+ for board
+        # position anchors.  The force does NOT fully decay with cooling —
+        # a floor of 30 % of hint_weight is maintained so positions stay
+        # anchored even at late iterations.
         if schematic_hints:
-            hint_strength = max_step * 0.4
+            effective_hw = hint_weight * max(alpha, 0.3)
+            hint_strength = max_step * effective_hw
             for i, comp in enumerate(components):
                 if is_conn[i]:
                     continue

@@ -2706,6 +2706,28 @@ def run_autoplace(board: dict) -> dict:
     if project_id:
         schematic_hints = _load_schematic_hints(project_id, bw, bh)
 
+    # ── Fallback: use existing board positions as hints ───────────────────
+    # If no project linked or _load_schematic_hints returned nothing, use
+    # the current component x/y as hints.  This means autoplace *refines*
+    # the existing layout (e.g. one created from a layout_example) instead
+    # of replacing it from scratch.  hint_weight is set high (0.85) so the
+    # algorithm preserves the existing positions closely.
+    using_board_positions = False
+    if not schematic_hints:
+        for comp in components:
+            ref = comp.get("ref", comp.get("id", ""))
+            cx = comp.get("x")
+            cy = comp.get("y")
+            if ref and cx is not None and cy is not None:
+                schematic_hints[ref] = (float(cx), float(cy))
+        using_board_positions = bool(schematic_hints)
+
+    # ── Save original rotations (autoplace preserves existing rotations) ──
+    orig_rotations: dict[str, int] = {}
+    for comp in components:
+        ref = comp.get("ref", comp.get("id", ""))
+        orig_rotations[ref] = comp.get("rotation", 0)
+
     # ── Build optimizer-format component list ────────────────────────────
     opt_components = [
         {
@@ -2729,11 +2751,11 @@ def run_autoplace(board: dict) -> dict:
                 continue
             base = suffix_pat.sub("", ref)
             if base != ref and base in schematic_hints:
-                bx, by = schematic_hints[base]
+                bx_base, by_base = schematic_hints[base]
                 n_dup = sum(1 for k in schematic_hints
                             if suffix_pat.sub("", k) == base)
-                schematic_hints[ref] = (bx + (n_dup % 3) * 4.0,
-                                        by + (n_dup // 3) * 4.0)
+                schematic_hints[ref] = (bx_base + (n_dup % 3) * 4.0,
+                                        by_base + (n_dup // 3) * 4.0)
 
     # ── Run placement ────────────────────────────────────────────────────
     placements = compute_net_proximity_placement(
@@ -2741,16 +2763,19 @@ def run_autoplace(board: dict) -> dict:
         board_width_mm=bw,
         board_height_mm=bh,
         schematic_hints=schematic_hints if schematic_hints else None,
+        # When preserving existing board positions, use strong hint gravity
+        # so the algorithm refines rather than rearranges.
+        hint_weight=0.85 if using_board_positions else 0.4,
     )
 
-    # ── Write x/y/rotation back into board component dicts ──────────────
+    # ── Write x/y back; preserve original rotations ──────────────────────
     placement_by_ref = {p["reference"]: p for p in placements}
     for comp in components:
         ref = comp.get("ref", comp.get("id", ""))
         if ref in placement_by_ref:
             comp["x"] = placement_by_ref[ref]["x"]
             comp["y"] = placement_by_ref[ref]["y"]
-            comp["rotation"] = placement_by_ref[ref]["rotation"]
+            comp["rotation"] = orig_rotations.get(ref, comp.get("rotation", 0))
 
     result = dict(board)
     result["components"] = components
