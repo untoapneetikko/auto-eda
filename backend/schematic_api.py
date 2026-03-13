@@ -1883,7 +1883,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                     permission_mode="bypassPermissions",
                     max_turns=40,
                     resume=session_id,
-                    env={"IS_SANDBOX": "1"},
+                    env={"IS_SANDBOX": "1", "CLAUDECODE": ""},
                     stderr=_capture_stderr,
                     thinking=ThinkingConfigAdaptive(type="adaptive"),
                     model=model_id,
