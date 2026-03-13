@@ -252,4 +252,3 @@ function buildReset() {
   document.getElementById('build-status')?.classList.remove('visible');
   document.getElementById('build-submit-btn').disabled = false;
 }
-</script>

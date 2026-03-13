@@ -484,4 +484,49 @@ function refresh3DView() {
     if (empty) empty.style.display = 'flex';
     if (title) title.textContent = '';
   }
+  build3DLayerPanel();
+}
+
+const _3D_LAYERS = [
+  { id: 'cu_top',  label: 'F.Cu — Top Copper',         color: '#d4881a' },
+  { id: 'cu_bot',  label: 'B.Cu — Bottom Copper',       color: '#4488ff' },
+  { id: 'sm_top',  label: 'F.Mask — Top Solder Mask',   color: '#22c55e' },
+  { id: 'sm_bot',  label: 'B.Mask — Bottom Solder Mask',color: '#86efac' },
+  { id: 'sp_top',  label: 'F.Paste — Top Paste',        color: '#aaaaaa' },
+  { id: 'sp_bot',  label: 'B.Paste — Bottom Paste',     color: '#cccccc' },
+];
+const _3dLayerVis = Object.fromEntries(_3D_LAYERS.map(l => [l.id, true]));
+
+function build3DLayerPanel() {
+  const el = document.getElementById('3d-layer-list');
+  if (!el) return;
+  el.innerHTML = '';
+  for (const lyr of _3D_LAYERS) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:4px;cursor:pointer;transition:background .1s;';
+    row.onmouseenter = () => row.style.background = 'var(--surface2)';
+    row.onmouseleave = () => row.style.background = '';
+
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:10px;height:10px;border-radius:50%;flex-shrink:0;background:${lyr.color};`;
+
+    const name = document.createElement('span');
+    name.style.cssText = 'flex:1;font-size:11px;color:var(--text-dim);';
+    name.textContent = lyr.label;
+
+    const eye = document.createElement('span');
+    const vis = _3dLayerVis[lyr.id];
+    eye.style.cssText = `font-size:13px;color:${vis ? lyr.color : 'var(--text-muted)'};`;
+    eye.textContent = vis ? '👁' : '○';
+    eye.title = 'Toggle visibility';
+
+    row.onclick = () => {
+      _3dLayerVis[lyr.id] = !_3dLayerVis[lyr.id];
+      if (viewer3d) viewer3d.setLayerVisible(lyr.id, _3dLayerVis[lyr.id]);
+      build3DLayerPanel();
+    };
+
+    row.appendChild(dot); row.appendChild(name); row.appendChild(eye);
+    el.appendChild(row);
+  }
 }

@@ -36,6 +36,10 @@ class PCBEditor {
     this.layers = {
       'F.Cu':      { color:'#cc6633', visible:true, active:true,  displayName:'Top Copper' },
       'B.Cu':      { color:'#4466ee', visible:true, active:false, displayName:'Bottom Copper' },
+      'F.Mask':    { color:'#1a7a2a', visible:true, active:false, displayName:'Top Solder Mask' },
+      'B.Mask':    { color:'#0e5c1e', visible:true, active:false, displayName:'Bottom Solder Mask' },
+      'F.Paste':   { color:'#aaaaaa', visible:true, active:false, displayName:'Top Solder Paste' },
+      'B.Paste':   { color:'#888888', visible:true, active:false, displayName:'Bottom Solder Paste' },
       'F.SilkS':   { color:'#cccccc', visible:true, active:false, displayName:'Top Silk' },
       'B.SilkS':   { color:'#777777', visible:true, active:false, displayName:'Bottom Silk' },
       'Edge.Cuts': { color:'#ffee00', visible:true, active:false, displayName:'Board Outline' },

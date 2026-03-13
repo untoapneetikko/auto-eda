@@ -45,7 +45,20 @@ function buildLayerPanel(){
     const eye=document.createElement('span');
     eye.className='layer-eye'; eye.textContent=lyr.visible?'👁':'○';
     eye.title='Toggle visibility';
-    eye.onclick=e=>{e.stopPropagation();lyr.visible=!lyr.visible;buildLayerPanel();editor.render();};
+    eye.onclick=e=>{
+      e.stopPropagation();
+      lyr.visible=!lyr.visible;
+      buildLayerPanel();
+      editor.render();
+      // Sync to 3D viewer if open
+      const map3d={'F.Cu':'cu_top','B.Cu':'cu_bot','F.Mask':'sm_top','B.Mask':'sm_bot','F.Paste':'sp_top','B.Paste':'sp_bot'};
+      const lid=map3d[name];
+      if(lid&&typeof viewer3d!=='undefined'&&viewer3d){
+        if(typeof _3dLayerVis!=='undefined') _3dLayerVis[lid]=lyr.visible;
+        viewer3d.setLayerVisible(lid,lyr.visible);
+        if(typeof build3DLayerPanel==='function') build3DLayerPanel();
+      }
+    };
 
     d.appendChild(dot); d.appendChild(star); d.appendChild(nm); d.appendChild(eye);
     d.onclick=()=>{if(nm.contentEditable==='true')return;editor.workLayer=name;buildLayerPanel();updateWorkLayerBadge();editor.render();};

@@ -1113,7 +1113,10 @@ class SchematicEditor {
 
   // ── Undo/redo ─────────────────────────────────────────────────────────────
   _saveHist() {
-    this._refreshNetOverlay();
+    // Debounce net overlay refresh — max one network call per 600 ms so rapid
+    // drags / edits don't flood /api/netlist and freeze the UI.
+    clearTimeout(this._netRefreshTimer);
+    this._netRefreshTimer = setTimeout(() => this._refreshNetOverlay(), 600);
     const s = JSON.stringify({ c: this.project.components, w: this.project.wires, l: this.project.labels || [], g: this.project.groups || [] });
     this.history = this.history.slice(0, this.historyIdx + 1);
     this.history.push(s);
