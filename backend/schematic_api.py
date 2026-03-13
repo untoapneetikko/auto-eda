@@ -1849,6 +1849,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
         resp_id = _pa_next_id()
         resp_ts = datetime.now(timezone.utc).isoformat()
         resp_parts: list[str] = []
+        text_parts: list[str] = []   # only actual assistant text, for dedup
 
         # Placeholder for streaming assistant message
         _pipeline_chat[name].append({"id": resp_id, "role": "assistant", "content": "", "ts": resp_ts, "streaming": True})
@@ -1968,6 +1969,7 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                         elif block_type == "text":
                             chunk = block.text
                             resp_parts.append(chunk)
+                            text_parts.append(chunk)
                             full = "".join(resp_parts)
                             for m in _pipeline_chat[name]:
                                 if m["id"] == resp_id:
@@ -2006,8 +2008,9 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                                 _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
                                                                     "chunk": result_line, "is_result": True})
                 elif isinstance(sdk_msg, ResultMessage):
-                    if sdk_msg.result and sdk_msg.result not in "".join(resp_parts):
+                    if sdk_msg.result and sdk_msg.result not in "".join(text_parts):
                         resp_parts.append(f"\n{sdk_msg.result}")
+                        text_parts.append(sdk_msg.result)
                         _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id, "chunk": f"\n{sdk_msg.result}"})
 
                 # Periodically flush to disk every 5 messages so progress survives restarts
