@@ -775,35 +775,64 @@ class PCBEditor {
       const sx=this.mmX(x1),sy=this.mmY(y1),ex=this.mmX(x2),ey=this.mmY(y2);
       const w=ex-sx,h=ey-sy;
       const sel=this.selectedArea===a;
-      ctx.save();
-      // Build clip path: area rectangle + clearance cutouts (evenodd)
-      ctx.beginPath();
-      ctx.rect(sx,sy,w,h);
-      // Pad clearance cutouts — extend boundary test by halfPad+cl so edge pads aren't missed
+      // Offscreen canvas: fill rectangle, then destination-out clearances.
+      // Fixes evenodd "phantom copper" when two clearance shapes overlap.
+      const margin=Math.ceil((cl+2)*this.scale)+2;
+      const bx1=Math.floor(sx)-margin,by1=Math.floor(sy)-margin;
+      const bx2=Math.ceil(ex)+margin,by2=Math.ceil(ey)+margin;
+      const bw=Math.max(1,bx2-bx1),bh=Math.max(1,by2-by1);
+      const off=document.createElement('canvas');
+      off.width=bw; off.height=bh;
+      const oc=off.getContext('2d');
+      oc.translate(-bx1,-by1);
+      // Step 1: fill area rectangle
+      oc.fillStyle=col+(sel?'50':'28');
+      oc.fillRect(sx,sy,w,h);
+      // Step 2: cut clearance holes
+      oc.globalCompositeOperation='destination-out';
+      oc.fillStyle='rgba(0,0,0,1)';
+      oc.beginPath();
+      // — Pad clearances —
       for(const c of(this.board?.components||[])){
+        const rot=(c.rotation||0)*Math.PI/180;
+        const cosR=Math.cos(rot),sinR=Math.sin(rot);
         for(const p of(c.pads||[])){
-          if(!p.net||p.net===a.net)continue;
+          if(p.net&&p.net===a.net)continue;
           const{px,py}=this._padWorld(c,p);
-          const hp=Math.max(p.size_x||1.6,p.size_y||1.6)/2;
-          if(px<x1-hp-cl||px>x2+hp+cl||py<y1-hp-cl||py>y2+hp+cl)continue;
-          const r=(hp+cl)*this.scale;
+          const hpx=(p.size_x||1.6)/2,hpy=(p.size_y||1.6)/2;
+          const maxhp=Math.max(hpx,hpy);
+          if(px<x1-maxhp-cl||px>x2+maxhp+cl||py<y1-maxhp-cl||py>y2+maxhp+cl)continue;
           const psx=this.mmX(px),psy=this.mmY(py);
-          ctx.moveTo(psx+r,psy);
-          ctx.arc(psx,psy,r,0,-Math.PI*2,true);
+          if(p.shape==='rect'||p.shape==='square'){
+            const hw=(hpx+cl)*this.scale,hh=(hpy+cl)*this.scale;
+            const c0x=psx+(-hw)*cosR-(-hh)*sinR, c0y=psy+(-hw)*sinR+(-hh)*cosR;
+            const c1x=psx+(+hw)*cosR-(-hh)*sinR, c1y=psy+(+hw)*sinR+(-hh)*cosR;
+            const c2x=psx+(+hw)*cosR-(+hh)*sinR, c2y=psy+(+hw)*sinR+(+hh)*cosR;
+            const c3x=psx+(-hw)*cosR-(+hh)*sinR, c3y=psy+(-hw)*sinR+(+hh)*cosR;
+            oc.moveTo(c0x,c0y);
+            oc.lineTo(c1x,c1y);
+            oc.lineTo(c2x,c2y);
+            oc.lineTo(c3x,c3y);
+            oc.closePath();
+          }else{
+            const r=(maxhp+cl)*this.scale;
+            oc.moveTo(psx+r,psy);
+            oc.arc(psx,psy,r,0,Math.PI*2);
+          }
         }
       }
-      // Via clearance cutouts
+      // — Via clearances —
       for(const v of(this.board?.vias||[])){
-        if(v.net===a.net)continue;
+        if(v.net&&v.net===a.net)continue;
         if(v.x<x1-cl||v.x>x2+cl||v.y<y1-cl||v.y>y2+cl)continue;
         const r=((v.size||DR.viaSize||1.0)/2+cl)*this.scale;
         const vsx=this.mmX(v.x),vsy=this.mmY(v.y);
-        ctx.moveTo(vsx+r,vsy);
-        ctx.arc(vsx,vsy,r,0,-Math.PI*2,true);
+        oc.moveTo(vsx+r,vsy);
+        oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
-      // Trace clearance cutouts (capsule per segment)
+      // — Trace clearances (capsule) —
       for(const tr of(this.board?.traces||[])){
-        if(tr.net===a.net)continue;
+        if(tr.net&&tr.net===a.net)continue;
         const pts=tr.path||[];
         const hw=(tr.width_mm||DR.traceWidth||0.25)/2+cl;
         for(let i=0;i<pts.length-1;i++){
@@ -814,18 +843,17 @@ class PCBEditor {
           const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
           const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
           const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
-          ctx.moveTo(asx-nx,asy-ny);
-          ctx.lineTo(bsx-nx,bsy-ny);
-          ctx.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
-          ctx.lineTo(asx+nx,asy+ny);
-          ctx.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
-          ctx.closePath();
+          oc.moveTo(asx-nx,asy-ny);
+          oc.lineTo(bsx-nx,bsy-ny);
+          oc.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
+          oc.lineTo(asx+nx,asy+ny);
+          oc.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
+          oc.closePath();
         }
       }
-      ctx.clip('evenodd');
-      ctx.fillStyle=col+(sel?'50':'28');
-      ctx.fillRect(sx,sy,w,h);
-      ctx.restore();
+      oc.fill();
+      // Step 3: composite onto main canvas
+      ctx.drawImage(off,bx1,by1);
       // Border
       ctx.strokeStyle=col+(sel?'ff':'99');
       ctx.lineWidth=sel?2:1;
