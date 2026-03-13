@@ -24,10 +24,10 @@
 
   header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
   header h1 { font-size: 16px; font-weight: 700; }
-  #live-indicator { position:fixed; top:10px; left:10px; z-index:9999; display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; letter-spacing:.06em; padding:4px 10px; border-radius:6px; border:1px solid; transition:all .3s; cursor:default; backdrop-filter:blur(6px); }
-  #live-indicator.live { color:#4ade80; border-color:rgba(74,222,128,.4); background:rgba(10,15,25,.85); }
-  #live-indicator.dead { color:#f87171; border-color:rgba(248,113,113,.4); background:rgba(10,15,25,.85); }
-  #live-indicator.reconnecting { color:#fbbf24; border-color:rgba(251,191,36,.4); background:rgba(10,15,25,.85); }
+  #live-indicator { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; letter-spacing:.06em; padding:4px 10px; border-radius:6px; border:1px solid; transition:all .3s; cursor:default; pointer-events:none; user-select:none; margin-left:4px; }
+  #live-indicator.live { color:#4ade80; border-color:rgba(74,222,128,.35); background:rgba(74,222,128,.07); }
+  #live-indicator.dead { color:#f87171; border-color:rgba(248,113,113,.35); background:rgba(248,113,113,.07); }
+  #live-indicator.reconnecting { color:#fbbf24; border-color:rgba(251,191,36,.35); background:rgba(251,191,36,.07); }
   #live-dot { width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
   #live-indicator.live #live-dot { animation:livepulse 1.8s ease-in-out infinite; }
   #live-ping { font-size:9px; opacity:.6; font-family:monospace; }
@@ -498,15 +498,15 @@
 <!-- ── Top Navigation ─────────────────────────────────────────────────────── -->
 <header>
   <button onclick="switchSection('build')" style="background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(168,85,247,0.25));border:1px solid rgba(168,85,247,0.5);color:#c084fc;border-radius:7px;padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.02em;transition:all .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">✨ Build</button>
-  <nav class="main-nav" style="margin-left:16px;display:flex;gap:4px;">
+  <nav class="main-nav" style="margin-left:16px;display:flex;gap:4px;align-items:center;">
     <button class="nav-tab active" id="nav-library" onclick="switchSection('library')">📚 Library</button>
     <button class="nav-tab" id="nav-schematic" onclick="switchSection('schematic')">📐 Schematic</button>
     <button class="nav-tab" id="nav-pcb" onclick="switchSection('pcb')">🔲 PCB</button>
     <button class="nav-tab" id="nav-generate" style="display:none;"></button>
     <button class="nav-tab" id="nav-build" style="display:none;"></button>
+    <div id="live-indicator" class="dead" title="Server connection status"><div id="live-dot"></div><span id="live-label">OFFLINE</span><span id="live-ping"></span></div>
   </nav>
 </header>
-<div id="live-indicator" class="dead" title="Server connection status"><div id="live-dot"></div><span id="live-label">OFFLINE</span><span id="live-ping"></span></div>
 
 <!-- ══ SECTION: DATASHEETS ════════════════════════════════════════════════ -->
 <div id="section-library" class="app-section">
