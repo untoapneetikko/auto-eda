@@ -1724,6 +1724,7 @@ class PCBEditor {
           const hit=this.getPadAt(mx,my);
           const hv=hit?null:this.getViaAt(mx,my);
           const sx=hit?hit.x:xmm, sy=hit?hit.y:ymm;
+          this.routeLayer=this.workLayer||'F.Cu';
           this.routeNet=(hit?.pad?.net)||(hv?.net)||null;
           this.routePoints=[{x:sx,y:sy}];
         } else {
