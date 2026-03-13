@@ -24,6 +24,13 @@
 
   header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
   header h1 { font-size: 16px; font-weight: 700; }
+  #live-indicator { display:flex; align-items:center; gap:5px; font-size:10px; font-weight:700; letter-spacing:.06em; padding:3px 8px; border-radius:4px; border:1px solid; margin-left:auto; transition:all .3s; cursor:default; }
+  #live-indicator.live { color:#4ade80; border-color:rgba(74,222,128,.35); background:rgba(74,222,128,.08); }
+  #live-indicator.dead { color:#f87171; border-color:rgba(248,113,113,.35); background:rgba(248,113,113,.08); }
+  #live-indicator.reconnecting { color:#fbbf24; border-color:rgba(251,191,36,.35); background:rgba(251,191,36,.08); }
+  #live-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+  #live-indicator.live #live-dot { animation:livepulse 1.8s ease-in-out infinite; }
+  @keyframes livepulse { 0%,100%{opacity:1} 50%{opacity:.35} }
 
 
   .layout { display: flex; flex-direction: row; height: calc(100vh - 49px); overflow: hidden; }
@@ -497,6 +504,7 @@
     <button class="nav-tab" id="nav-generate" style="display:none;"></button>
     <button class="nav-tab" id="nav-build" style="display:none;"></button>
   </nav>
+  <div id="live-indicator" class="dead" title="Server connection status"><div id="live-dot"></div><span id="live-label">OFFLINE</span></div>
 </header>
 
 <!-- ══ SECTION: DATASHEETS ════════════════════════════════════════════════ -->
@@ -888,6 +896,18 @@ async function prefetchICLayout(slug) {
 
 // ── SSE live updates ───────────────────────────────────────────────────────
 const evtSource = new EventSource('/api/events');
+
+// ── Live indicator ────────────────────────────────────────────────────────────
+function _setLive(state) { // 'live' | 'reconnecting' | 'dead'
+  const el = document.getElementById('live-indicator');
+  const lbl = document.getElementById('live-label');
+  if (!el || !lbl) return;
+  el.className = state;
+  lbl.textContent = state === 'live' ? 'LIVE' : state === 'reconnecting' ? 'RECONNECTING…' : 'OFFLINE';
+}
+evtSource.onopen  = () => _setLive('live');
+evtSource.onerror = () => _setLive(evtSource.readyState === 0 ? 'reconnecting' : 'dead');
+
 evtSource.addEventListener('library_updated', () => loadLibrary());
 evtSource.addEventListener('profile_updated', e => {
   const { slug } = JSON.parse(e.data);
