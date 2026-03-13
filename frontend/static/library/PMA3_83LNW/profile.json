@@ -276,9 +276,8 @@
     "components": [
       {
         "id": "u1",
+        "ref": "U1",
         "slug": "PMA3_83LNW",
-        "symType": "ic",
-        "designator": "U1",
         "value": "PMA3-83LNW+",
         "x": 380,
         "y": 280,
@@ -286,9 +285,8 @@
       },
       {
         "id": "c2",
+        "ref": "C2",
         "slug": "CAPACITOR",
-        "symType": "capacitor",
-        "designator": "C2",
         "value": "10pF",
         "x": 160,
         "y": 280,
@@ -296,9 +294,8 @@
       },
       {
         "id": "l1",
+        "ref": "L1",
         "slug": "INDUCTOR",
-        "symType": "inductor",
-        "designator": "L1",
         "value": "18nH",
         "x": 280,
         "y": 360,
@@ -306,9 +303,8 @@
       },
       {
         "id": "c3",
+        "ref": "C3",
         "slug": "CAPACITOR",
-        "symType": "capacitor",
-        "designator": "C3",
         "value": "100pF",
         "x": 540,
         "y": 280,
@@ -316,9 +312,8 @@
       },
       {
         "id": "l2",
+        "ref": "L2",
         "slug": "INDUCTOR",
-        "symType": "inductor",
-        "designator": "L2",
         "value": "39nH",
         "x": 480,
         "y": 200,
@@ -326,9 +321,8 @@
       },
       {
         "id": "c1",
+        "ref": "C1",
         "slug": "CAPACITOR",
-        "symType": "capacitor",
-        "designator": "C1",
         "value": "0.01\u00b5F",
         "x": 580,
         "y": 180,
@@ -336,9 +330,8 @@
       },
       {
         "id": "c4",
+        "ref": "C4",
         "slug": "CAPACITOR",
-        "symType": "capacitor",
-        "designator": "C4",
         "value": "100nF",
         "x": 660,
         "y": 180,
@@ -346,9 +339,8 @@
       },
       {
         "id": "vcc1",
+        "ref": "VCC1",
         "slug": "VCC",
-        "symType": "vcc",
-        "designator": "VCC1",
         "value": "5V/6V",
         "x": 480,
         "y": 120,
@@ -356,9 +348,8 @@
       },
       {
         "id": "gnd_l1",
+        "ref": "GND1",
         "slug": "GND",
-        "symType": "gnd",
-        "designator": "GND1",
         "value": "GND",
         "x": 280,
         "y": 420,
@@ -366,9 +357,8 @@
       },
       {
         "id": "gnd_paddle",
+        "ref": "GND2",
         "slug": "GND",
-        "symType": "gnd",
-        "designator": "GND2",
         "value": "GND",
         "x": 380,
         "y": 400,
@@ -376,9 +366,8 @@
       },
       {
         "id": "gnd_c1",
+        "ref": "GND3",
         "slug": "GND",
-        "symType": "gnd",
-        "designator": "GND3",
         "value": "GND",
         "x": 580,
         "y": 220,
@@ -386,9 +375,8 @@
       },
       {
         "id": "gnd_c4",
+        "ref": "GND4",
         "slug": "GND",
-        "symType": "gnd",
-        "designator": "GND4",
         "value": "GND",
         "x": 660,
         "y": 220,
@@ -397,167 +385,133 @@
     ],
     "wires": [
       {
-        "id": "w_rfin_label_to_c2",
-        "points": [
-          {
-            "x": 60,
-            "y": 280
-          },
-          {
-            "x": 140,
-            "y": 280
-          }
-        ]
+        "id": "w_rfin_to_c2",
+        "x1": 60,
+        "y1": 280,
+        "x2": 140,
+        "y2": 280
       },
       {
-        "id": "w_c2_to_rfin_node",
-        "points": [
-          {
-            "x": 180,
-            "y": 280
-          },
-          {
-            "x": 280,
-            "y": 280
-          }
-        ]
+        "id": "w_c2_to_node",
+        "x1": 180,
+        "y1": 280,
+        "x2": 280,
+        "y2": 280
+      },
+      {
+        "id": "w_node_to_u1",
+        "x1": 280,
+        "y1": 280,
+        "x2": 300,
+        "y2": 280
       },
       {
         "id": "w_rfin_node_to_l1",
-        "points": [
-          {
-            "x": 280,
-            "y": 280
-          },
-          {
-            "x": 280,
-            "y": 340
-          }
-        ]
+        "x1": 280,
+        "y1": 280,
+        "x2": 280,
+        "y2": 340
       },
       {
         "id": "w_l1_to_gnd",
-        "points": [
-          {
-            "x": 280,
-            "y": 380
-          },
-          {
-            "x": 280,
-            "y": 400
-          }
-        ]
+        "x1": 280,
+        "y1": 380,
+        "x2": 280,
+        "y2": 400
       },
       {
         "id": "w_u1_to_c3",
-        "points": [
-          {
-            "x": 480,
-            "y": 280
-          },
-          {
-            "x": 520,
-            "y": 280
-          }
-        ]
+        "x1": 460,
+        "y1": 280,
+        "x2": 520,
+        "y2": 280
       },
       {
-        "id": "w_c3_to_rfout_label",
-        "points": [
-          {
-            "x": 560,
-            "y": 280
-          },
-          {
-            "x": 640,
-            "y": 280
-          }
-        ]
+        "id": "w_c3_to_rfout",
+        "x1": 560,
+        "y1": 280,
+        "x2": 640,
+        "y2": 280
       },
       {
-        "id": "w_l2_to_rfout_node",
-        "points": [
-          {
-            "x": 480,
-            "y": 220
-          },
-          {
-            "x": 480,
-            "y": 280
-          }
-        ]
+        "id": "w_l2_to_pad8",
+        "x1": 480,
+        "y1": 220,
+        "x2": 480,
+        "y2": 280
       },
       {
-        "id": "w_vdd_to_l2",
-        "points": [
-          {
-            "x": 480,
-            "y": 160
-          },
-          {
-            "x": 480,
-            "y": 180
-          }
-        ]
+        "id": "w_vcc_to_rail",
+        "x1": 480,
+        "y1": 140,
+        "x2": 480,
+        "y2": 160
       },
       {
         "id": "w_vdd_rail",
-        "points": [
-          {
-            "x": 480,
-            "y": 160
-          },
-          {
-            "x": 660,
-            "y": 160
-          }
-        ]
+        "x1": 480,
+        "y1": 160,
+        "x2": 660,
+        "y2": 160
       },
       {
-        "id": "w_vcc_to_vdd",
-        "points": [
-          {
-            "x": 480,
-            "y": 140
-          },
-          {
-            "x": 480,
-            "y": 160
-          }
-        ]
+        "id": "w_vdd_to_l2",
+        "x1": 480,
+        "y1": 160,
+        "x2": 480,
+        "y2": 180
       },
       {
-        "id": "w_u1_paddle_to_gnd",
-        "points": [
-          {
-            "x": 380,
-            "y": 340
-          },
-          {
-            "x": 380,
-            "y": 380
-          }
-        ]
+        "id": "w_c1_top",
+        "x1": 580,
+        "y1": 160,
+        "x2": 580,
+        "y2": 170
+      },
+      {
+        "id": "w_c1_bot",
+        "x1": 580,
+        "y1": 190,
+        "x2": 580,
+        "y2": 220
+      },
+      {
+        "id": "w_c4_top",
+        "x1": 660,
+        "y1": 160,
+        "x2": 660,
+        "y2": 170
+      },
+      {
+        "id": "w_c4_bot",
+        "x1": 660,
+        "y1": 190,
+        "x2": 660,
+        "y2": 220
+      },
+      {
+        "id": "w_paddle_to_gnd",
+        "x1": 380,
+        "y1": 340,
+        "x2": 380,
+        "y2": 380
       }
     ],
     "labels": [
       {
-        "id": "lbl_rfin",
-        "name": "RF_IN",
         "x": 60,
-        "y": 280
+        "y": 280,
+        "text": "RF_IN"
       },
       {
-        "id": "lbl_rfout",
-        "name": "RF_OUT",
         "x": 640,
-        "y": 280
+        "y": 280,
+        "text": "RF_OUT"
       },
       {
-        "id": "lbl_vdd",
-        "name": "VDD",
         "x": 700,
-        "y": 160
+        "y": 160,
+        "text": "VDD"
       }
     ]
   },
