@@ -2306,10 +2306,15 @@ class PCBEditor {
 // ═══════════════════════════════════════════════════════════════
 // SCHEMATIC IMPORTER — delegated to Python API
 // ═══════════════════════════════════════════════════════════════
-async function importSchematic(projectData) {
+async function importSchematic(projectData, netlist, boardW, boardH) {
   const res = await fetch('/api/pcb/import-schematic', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ project: projectData })
+    body: JSON.stringify({
+      project: projectData,
+      netlist: netlist || null,
+      boardW: boardW || null,
+      boardH: boardH || null,
+    })
   });
   if (!res.ok) { let msg = 'Import failed'; try { const e = await res.json(); msg = e.detail || e.error || msg; } catch(_) { msg = res.statusText || msg; } throw new Error(msg); }
   return await res.json();
@@ -2458,7 +2463,7 @@ window.addEventListener('load',()=>{
           }
           const r = await fetch(`/api/projects/${e.data.projectId}`);
           const proj = await r.json();
-          const pcb = await importSchematic(proj);
+          const pcb = await importSchematic(proj, e.data.netlist, bw, bh);
           if (pcb) {
             // Only reuse the board ID if we explicitly loaded an existing board for THIS project.
             // Do NOT grab editor.board.id here — it may belong to a different (or deleted) project.

@@ -2891,6 +2891,248 @@ async def autoplace_direct(request: Request):
     return {"components": result.get("components", []), "placed": len(result.get("components", []))}
 
 
+# ── Schematic → PCB importer ───────────────────────────────────────────────────
+
+def _pick_footprint(slug: str, sym_type: str, pin_count: int) -> dict | None:
+    """Return footprint JSON dict for a schematic component, or None for power symbols."""
+    slug_up = slug.upper()
+
+    # Skip power symbols — they have no physical footprint
+    if sym_type in ("vcc", "gnd", "pwr", "power") or slug_up in ("GND", "VCC", "PWR", "POWER"):
+        return None
+
+    # Direct slug → footprint name map (common library slugs)
+    SLUG_FP: dict[str, str] = {
+        "RESISTOR":      "0402",
+        "CAPACITOR":     "0402",
+        "CAPACITOR_POL": "CAP-POL-5mm",
+        "INDUCTOR":      "0603",
+        "DIODE":         "0402",
+        "LED":           "LED-5mm",
+        "BC547":         "SOT-23",
+        "BC557":         "SOT-23",
+        "AMS1117-3.3":   "SOT-223",
+        "AP2112":        "SOT-23",
+        "DRV8833":       "TSSOP-16",
+    }
+
+    # symType-level fallback
+    SYMTYPE_FP: dict[str, str] = {
+        "resistor":   "0402",
+        "capacitor":  "0402",
+        "inductor":   "0603",
+        "diode":      "0402",
+        "led":        "LED-5mm",
+        "transistor": "SOT-23",
+        "mosfet":     "SOT-23",
+        "jfet":       "SOT-23",
+        "zener":      "0402",
+        "schottky":   "0402",
+        "tvs":        "0402",
+        "ferrite":    "0402",
+        "crystal":    "0805",
+        "oscillator": "DIP-8",
+        "switch":     "0402",
+        "connector":  "DIP-8",
+        "relay":      "DIP-8",
+        "fuse":       "0603",
+        "testpoint":  "0402",
+    }
+
+    fp_name: str | None = SLUG_FP.get(slug_up)
+
+    if fp_name is None:
+        fp_name = SYMTYPE_FP.get((sym_type or "").lower())
+
+    if fp_name is None:
+        # IC: choose DIP by pin count
+        if pin_count <= 8:
+            fp_name = "DIP-8"
+        elif pin_count <= 16:
+            fp_name = "DIP-16"
+        elif pin_count <= 20:
+            fp_name = "DIP-20"
+        elif pin_count <= 28:
+            fp_name = "DIP-28"
+        elif pin_count <= 40:
+            fp_name = "DIP-40"
+        else:
+            fp_name = "LQFP-64"
+
+    fp_path = FOOTPRINTS_DIR / (fp_name + ".json")
+    if fp_path.exists():
+        try:
+            return json.loads(fp_path.read_text("utf-8"))
+        except Exception:
+            pass
+    return None
+
+
+@router.post("/pcb/import-schematic")
+async def api_pcb_import_schematic(request: Request):
+    """Convert a schematic project JSON into an initial PCB board layout.
+
+    Accepts: { "project": <project JSON>, "netlist": <optional namedNets dict>,
+               "boardW": float, "boardH": float }
+    Returns: PCB board JSON consumable by PCBEditor.load()
+    """
+    body = await request.json()
+    project: dict = body.get("project", {})
+    netlist: dict = body.get("netlist") or {}  # { net_name: ["R1.1", "C1.2", ...], ... }
+
+    schematic_comps: list[dict] = project.get("components", [])
+    bw = float(body.get("boardW", 100.0))
+    bh = float(body.get("boardH", 80.0))
+
+    # ── Scale schematic positions → board mm ──────────────────────────────
+    xs = [float(c["x"]) for c in schematic_comps if isinstance(c.get("x"), (int, float))]
+    ys = [float(c["y"]) for c in schematic_comps if isinstance(c.get("y"), (int, float))]
+
+    if xs and ys:
+        schem_cx = sum(xs) / len(xs)
+        schem_cy = sum(ys) / len(ys)
+        schem_w  = max(max(xs) - min(xs), 1.0)
+        schem_h  = max(max(ys) - min(ys), 1.0)
+        margin   = 0.15
+        scale_x  = (bw * (1 - 2 * margin)) / schem_w
+        scale_y  = (bh * (1 - 2 * margin)) / schem_h
+    else:
+        schem_cx = schem_cy = 0.0
+        scale_x  = scale_y  = 1.0
+
+    board_cx = bw / 2.0
+    board_cy = bh / 2.0
+
+    # ── Build pad→net lookup from netlist ──────────────────────────────────
+    pad_net: dict[str, str] = {}  # "R1.1" → "GND"
+    for net_name, pads_list in netlist.items():
+        if isinstance(pads_list, list):
+            for p in pads_list:
+                pad_net[str(p)] = net_name
+
+    # ── Build PCB components ───────────────────────────────────────────────
+    pcb_comps: list[dict] = []
+    for sc in schematic_comps:
+        slug     = str(sc.get("slug", sc.get("symType", ""))).upper()
+        sym_type = str(sc.get("symType", "")).lower()
+        ref      = str(sc.get("ref", sc.get("designator", sc.get("id", ""))))
+        value    = str(sc.get("value", ""))
+
+        # Skip power symbols — no physical component on PCB
+        if sym_type in ("vcc", "gnd", "pwr", "power") or slug in ("GND", "VCC", "PWR", "POWER"):
+            continue
+        if not ref:
+            continue
+
+        # Load library profile for pin names
+        profile: dict = {}
+        profile_path = LIBRARY_DIR / slug / "profile.json"
+        if profile_path.exists():
+            try:
+                profile = json.loads(profile_path.read_text("utf-8"))
+            except Exception:
+                pass
+
+        pins: list[dict] = profile.get("pins", [])
+        pin_count = len(pins)
+        pin_by_num: dict[str, str] = {
+            str(p.get("number", "")): str(p.get("name", "")) for p in pins
+        }
+
+        fp_data = _pick_footprint(slug, sym_type, pin_count)
+
+        # ── Build pads ────────────────────────────────────────────────────
+        pads: list[dict] = []
+        if fp_data:
+            for fp_pad in fp_data.get("pads", []):
+                pad_num  = str(fp_pad.get("number", ""))
+                pad_name = pin_by_num.get(pad_num, pad_num)
+                pad_key  = f"{ref}.{pad_num}"
+                pad_entry: dict = {
+                    "number": pad_num,
+                    "name":   pad_name,
+                    "x":      float(fp_pad.get("x", 0)),
+                    "y":      float(fp_pad.get("y", 0)),
+                    "type":   fp_pad.get("type",  "smd"),
+                    "shape":  fp_pad.get("shape", "rect"),
+                    "size_x": float(fp_pad.get("size_x", 0.6)),
+                    "size_y": float(fp_pad.get("size_y", 0.6)),
+                    "net":    pad_net.get(pad_key, ""),
+                }
+                if "drill" in fp_pad:
+                    pad_entry["drill"] = fp_pad["drill"]
+                pads.append(pad_entry)
+        elif pins:
+            # Generate inline pads from pin list (fallback for unknown packages)
+            half = (pin_count - 1) / 2.0
+            for i, pin in enumerate(pins):
+                pad_num = str(pin.get("number", i + 1))
+                pad_key = f"{ref}.{pad_num}"
+                pads.append({
+                    "number": pad_num,
+                    "name":   str(pin.get("name", pad_num)),
+                    "x":      round((i - half) * 2.54, 3),
+                    "y":      0.0,
+                    "type":   "thru_hole",
+                    "shape":  "circle",
+                    "size_x": 1.6,
+                    "size_y": 1.6,
+                    "drill":  0.8,
+                    "net":    pad_net.get(pad_key, ""),
+                })
+        else:
+            # Last-resort: 2-pad SMD
+            for i, pad_num in enumerate(["1", "2"]):
+                pad_key = f"{ref}.{pad_num}"
+                pads.append({
+                    "number": pad_num,
+                    "name":   pad_num,
+                    "x":      -0.5 + i * 1.0,
+                    "y":      0.0,
+                    "type":   "smd",
+                    "shape":  "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net":    pad_net.get(pad_key, ""),
+                })
+
+        # ── Scale schematic position to board mm ──────────────────────────
+        sx = float(sc.get("x", 0))
+        sy = float(sc.get("y", 0))
+        bx = board_cx + (sx - schem_cx) * scale_x
+        by = board_cy + (sy - schem_cy) * scale_y
+        bx = round(max(5.0, min(bw - 5.0, bx)), 2)
+        by = round(max(5.0, min(bh - 5.0, by)), 2)
+
+        pcb_comps.append({
+            "id":        ref,
+            "ref":       ref,
+            "value":     value,
+            "footprint": fp_data.get("name", "") if fp_data else slug,
+            "x":         bx,
+            "y":         by,
+            "rotation":  int(sc.get("rotation", 0)),
+            "layer":     "F",
+            "pads":      pads,
+        })
+
+    # ── Build nets list from netlist dict ──────────────────────────────────
+    pcb_nets: list[dict] = [
+        {"name": net_name, "pads": [str(p) for p in pads_list]}
+        for net_name, pads_list in netlist.items()
+        if isinstance(pads_list, list) and pads_list
+    ]
+
+    return {
+        "board":      {"width": bw, "height": bh, "units": "mm"},
+        "components": pcb_comps,
+        "nets":       pcb_nets,
+        "traces":     [],
+        "vias":       [],
+        "areas":      [],
+    }
+
+
 # ── Gerber export helper ───────────────────────────────────────────────────────
 
 def gerber_for_board(board: dict) -> bytes:

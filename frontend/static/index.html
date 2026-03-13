@@ -2220,6 +2220,14 @@ async function _loadHistoryList() {
     list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;text-align:center;">No saved versions yet.<br><span style="font-size:10px;opacity:.7;">Click "+ New Version" to checkpoint this component, or run a Generate.</span></div>';
     return;
   }
+  // Use event delegation — never embed IDs/labels directly inside onclick strings
+  list.onclick = e => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.action === 'activate') historyActivate(id, Number(btn.dataset.vnum));
+    if (btn.dataset.action === 'delete')   historyDelete(id);
+  };
   list.innerHTML = versions.map((v, i) => {
     const isAuto = !v.label || v.label.startsWith('auto');
     const labelHtml = v.label
@@ -2232,15 +2240,71 @@ async function _loadHistoryList() {
         <div style="font-size:11px;font-weight:600;color:var(--text);">v${vNum} — ${labelHtml}</div>
         <div style="font-size:10px;color:var(--text-muted);margin-top:1px;">${when}</div>
       </div>
-      <button onclick="historyActivate('${v.id}',${vNum})" style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.35);border-radius:4px;color:#a78bfa;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;" title="Activate this version of the component">Activate</button>
-      <button onclick="historyDelete('${v.id}',${JSON.stringify(v.label||'')})" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:4px;color:#f87171;padding:2px 6px;font-size:10px;cursor:pointer;flex-shrink:0;" title="Delete this snapshot">✕</button>
+      <button data-action="activate" data-id="${escapeHtml(v.id)}" data-vnum="${vNum}" style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.35);border-radius:4px;color:#a78bfa;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;flex-shrink:0;" title="Activate this version of the component">Activate</button>
+      <button data-action="delete" data-id="${escapeHtml(v.id)}" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:4px;color:#f87171;padding:2px 6px;font-size:10px;cursor:pointer;flex-shrink:0;" title="Delete this snapshot">✕</button>
     </div>`;
   }).join('');
 }
 
-// Save button — overwrites the active version's snapshot in place, or creates "checkpoint" if none exists
+// After any tab-level save writes to profile.json, call this to keep the active
+// version snapshot in sync so that Activate doesn't revert the user's changes.
+async function _syncActiveSnapshot() {
+  if (!selectedSlug) return;
+  const av = await fetch(`/api/library/${selectedSlug}/active_version`).then(r => r.json()).catch(() => null);
+  if (av && av.id) {
+    await fetch(`/api/library/${selectedSlug}/history/${av.id}`, { method: 'PUT' }).catch(() => {});
+  }
+}
+
+// Flush the CURRENTLY ACTIVE tab's editor → profile.json before snapshotting.
+// Only flushes the tab that is open right now — stale editors from previously
+// visited tabs are intentionally skipped to avoid overwriting profile.json with
+// data that predates the last version activation or Generate.
+async function _flushEditorsToProfile() {
+  if (!selectedSlug) return;
+  // 1. Schematic Example — only flush if user is currently on that tab
+  if (currentProfileTab === 'schematic') {
+    const svgEl = document.getElementById('app-circuit-canvas');
+    if (appCircuitEditor && appCircuitEditor.svg === svgEl) {
+      await fetch(`/api/library/${encodeURIComponent(selectedSlug)}/example_circuit`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          components: appCircuitEditor.project.components,
+          wires:      appCircuitEditor.project.wires,
+          labels:     appCircuitEditor.project.labels || []
+        })
+      }).catch(() => {});
+    }
+  }
+  // 2. Layout Example — only flush if user is currently on that tab
+  if (currentProfileTab === 'layout-example') {
+    const frame = document.getElementById('le-frame');
+    if (frame && frame.contentWindow && _leLoadedSlug === selectedSlug) {
+      try {
+        const board = await new Promise((resolve, reject) => {
+          const t = setTimeout(() => reject(new Error('timeout')), 2000);
+          const h = e => {
+            if (e.data?.type !== 'boardData') return;
+            clearTimeout(t); window.removeEventListener('message', h); resolve(e.data.board);
+          };
+          window.addEventListener('message', h);
+          frame.contentWindow.postMessage({ type: 'getBoard' }, '*');
+        });
+        if (board) {
+          await fetch(`/api/library/${encodeURIComponent(selectedSlug)}/layout_example`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(board)
+          }).catch(() => {});
+        }
+      } catch (e) { /* iframe not ready — skip silently */ }
+    }
+  }
+}
+
+// Save button — flush editors then overwrite the active version's snapshot in place
 async function historySaveActive() {
   if (!selectedSlug) return;
+  await _flushEditorsToProfile();
   const av = await fetch(`/api/library/${selectedSlug}/active_version`).then(r => r.json()).catch(() => null);
   if (av) {
     const res = await fetch(`/api/library/${selectedSlug}/history/${av.id}`, { method: 'PUT' });
@@ -2262,9 +2326,10 @@ async function historySaveActive() {
   loadActiveVersionBadge(selectedSlug);
 }
 
-// New Version button — always creates a fresh snapshot
+// New Version button — flush editors then create a fresh named snapshot
 async function historySave() {
   if (!selectedSlug) return;
+  await _flushEditorsToProfile();
   const input = document.getElementById('history-save-label');
   const label = input ? input.value.trim() : '';
   const res = await fetch(`/api/library/${selectedSlug}/history/save`, {
@@ -2295,7 +2360,7 @@ async function historyActivate(id, vNum) {
   showGenToast(`🕐 ${name} restored for ${selectedSlug}`);
 }
 
-async function historyDelete(id, label) {
+async function historyDelete(id) {
   const res = await fetch(`/api/library/${selectedSlug}/history/${id}`, { method: 'DELETE' });
   if (!res.ok) { alert('Failed to delete version'); return; }
   await _loadHistoryList();
@@ -2876,8 +2941,8 @@ async function leSaveLayout() {
       const errText = await res.text().catch(() => res.status);
       throw new Error(`Server error ${res.status}: ${errText}`);
     }
+    await _syncActiveSnapshot(); // keep active version snapshot in sync (must complete before user can Activate)
     if (btn) { btn.textContent = '✓ Saved'; }
-    _leLoadedSlug = null;
     const notes = document.getElementById('le-notes');
     if (notes && !notes.textContent.includes('✓')) notes.textContent += ' · ✓ saved';
     setTimeout(() => {
@@ -5042,10 +5107,11 @@ async function accSaveExample(btn) {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(circuit)
     });
-    if (btn) {
-      btn.textContent = res.ok ? '✓ Saved' : `✕ Error ${res.status}`;
-      btn.disabled = false;
-      setTimeout(() => { btn.textContent = '💾 Save'; }, 2000);
+    if (res.ok) {
+      await _syncActiveSnapshot(); // keep active version snapshot in sync
+      if (btn) { btn.textContent = '✓ Saved'; btn.disabled = false; setTimeout(() => { btn.textContent = '💾 Save'; }, 2000); }
+    } else {
+      if (btn) { btn.textContent = `✕ Error ${res.status}`; btn.disabled = false; setTimeout(() => { btn.textContent = '💾 Save'; }, 2000); }
     }
   } catch(e) {
     if (btn) { btn.textContent = '✕ Network error'; btn.disabled = false; setTimeout(() => { btn.textContent = '💾 Save'; }, 2000); }
@@ -7236,6 +7302,7 @@ async function doCreatePCBLayout() {
 
 // Auto-load the saved PCB board for a project when the user switches to the
 let _pcbLoadedProjectId = null; // track last project sent to PCB iframe
+let _pcbImporting = false;      // re-entrancy guard for _doPCBImport
 
 // PCB tab — fires only if a board already exists, so first-time creation still
 // goes through the "→ PCB Layout" button flow.
@@ -7263,6 +7330,8 @@ async function _pcbAutoLoad(projectId) {
 
 // Internal: switch to PCB section and send importProject postMessage
 async function _doPCBImport(projectId, boardOpts) {
+  if (_pcbImporting) return; // prevent re-entrancy from switchSection → _pcbAutoLoad loop
+  _pcbImporting = true;
   switchSection('pcb');
   const frame = document.getElementById('pcb-frame');
   // Pre-load IC profiles into profileCache so buildNetlist() gets real pin names, not placeholders
@@ -7286,10 +7355,14 @@ async function _doPCBImport(projectId, boardOpts) {
   window.addEventListener('message', onDone);
   let attempts = 0;
   const tryPost = () => {
-    if (done) return;
+    if (done) { _pcbImporting = false; return; }
     attempts++;
     try { frame.contentWindow?.postMessage({ type: 'importProject', projectId, boardOpts: boardOpts || null, netlist }, '*'); } catch(_) {}
-    if (attempts < 20) setTimeout(tryPost, 400);
+    if (attempts < 20) {
+      setTimeout(tryPost, 400);
+    } else {
+      _pcbImporting = false; // exhausted retries — release lock
+    }
   };
   setTimeout(tryPost, 600);
 }
