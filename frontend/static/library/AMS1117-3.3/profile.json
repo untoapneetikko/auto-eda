@@ -1,89 +1,26 @@
 {
   "part_number": "AMS1117-3.3",
-  "description": "3.3V 1A low-dropout (LDO) linear voltage regulator — 1.2V dropout, SOT-223 or TO-252 package",
-  "manufacturer": "Advanced Monolithic Systems / Many sources",
-  "package_types": ["SOT-223", "TO-252 (DPAK)", "SOT-89"],
-  "supply_voltage_range": "4.5V to 15V input for 3.3V output",
-  "absolute_max": {
-    "input_voltage": "15V",
-    "output_current": "1A (with adequate thermal management)",
-    "power_dissipation": "830mW (SOT-223), 2W (TO-252) — see derating",
-    "operating_temp": "-40°C to +125°C junction"
-  },
-  "pins": [
-    {
-      "number": 1,
-      "name": "GND",
-      "type": "gnd",
-      "description": "Ground / adjust pin. For fixed-voltage version, connect directly to GND.",
-      "active": null,
-      "internal_pull": null,
-      "requirements": "Connect to common GND. The exposed pad on SOT-223 (pin 2/tab) is also OUTPUT — do not confuse with GND.",
-      "ambiguous": false,
-      "datasheet_page": 1
-    },
-    {
-      "number": 2,
-      "name": "OUTPUT",
-      "type": "power",
-      "description": "Regulated 3.3V output. In SOT-223 the large tab is also the OUTPUT — it can be soldered to a copper pour for heatsinking.",
-      "active": null,
-      "internal_pull": null,
-      "requirements": "10µF tantalum or ceramic cap to GND required for stability. Place close to the pin.",
-      "ambiguous": false,
-      "datasheet_page": 1
-    },
-    {
-      "number": 3,
-      "name": "INPUT",
-      "type": "power",
-      "description": "Unregulated input voltage. Must be at least 1.2V above output (4.5V minimum for 3.3V output).",
-      "active": null,
-      "internal_pull": null,
-      "requirements": "10µF tantalum or ceramic cap to GND recommended for stability.",
-      "ambiguous": false,
-      "datasheet_page": 1
-    }
-  ],
-  "required_passives": [
-    {
-      "type": "capacitor",
-      "value": "10µF",
-      "placement": "OUTPUT (pin 2) to GND",
-      "reason": "Required for stability — AMS1117 is unstable without output capacitor. Tantalum or low-ESR ceramic required.",
-      "datasheet_page": 1
-    },
-    {
-      "type": "capacitor",
-      "value": "10µF",
-      "placement": "INPUT (pin 3) to GND",
-      "reason": "Recommended for stability at input",
-      "datasheet_page": 1
-    }
-  ],
-  "application_circuits": [
-    {
-      "name": "Fixed 3.3V LDO",
-      "description": "INPUT: 4.5V–15V with 10µF cap. OUTPUT: 3.3V with 10µF cap. GND pin to common ground.",
-      "page": 1
-    }
-  ],
-  "common_mistakes": [
-    "Output capacitor is required for stability — the AMS1117 will oscillate without it",
-    "SOT-223 large tab is OUTPUT not GND — check pinout carefully",
-    "Minimum input voltage is 4.5V for 3.3V output (1.2V dropout) — 5V input is the typical use case",
-    "Power dissipation at 5V input, 1A load = (5-3.3)×1 = 1.7W — exceeds SOT-223 rating without PCB copper heatsinking",
-    "AMS1117 versions differ: AMS1117-3.3 is fixed, AMS1117-ADJ is adjustable — part number suffix matters",
-    "Output capacitor must have adequate ESR — very low ESR ceramic caps can cause instability with some AMS1117 variants (check datasheet)"
-  ],
-  "notes": "Very common 3.3V regulator for 5V→3.3V conversion on Arduino, Raspberry Pi accessories, etc. The SOT-223 exposed pad provides some heatsinking when soldered to PCB copper. For heavy loads (>500mA) add copper pours or use TO-252 package. Equivalent: LD1117-3.3, LM1117-3.3.",
-  "symbol_type": "ic",
+  "description": "1A Low Dropout Linear Regulator, 3.3V fixed output",
   "status": "parsed",
-  "confidence": "HIGH",
-  "extraction_note": null,
-  "filename": "builtin",
-  "uploaded_at": null,
-  "parsed_at": "2026-03-08T00:00:00.000Z",
-  "builtin": true,
-  "human_corrections": []
+  "slug": "AMS1117-3.3",
+  "symbol_type": "ic",
+  "package_types": ["SOT-223", "TO-252", "TO-220"],
+  "footprint": "SOT-223",
+  "pins": [
+    {"number": "1", "name": "GND",    "type": "passive"},
+    {"number": "2", "name": "OUTPUT", "type": "output"},
+    {"number": "3", "name": "INPUT",  "type": "input"},
+    {"number": "4", "name": "OUTPUT", "type": "output"}
+  ],
+  "human_corrections": [],
+  "layout_example": {
+    "components": [],
+    "traces": [],
+    "nets": []
+  },
+  "example_circuit": {
+    "components": [],
+    "wires": [],
+    "labels": []
+  }
 }
