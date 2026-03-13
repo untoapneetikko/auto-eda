@@ -1007,11 +1007,11 @@ class PCBEditor {
   }
 
   // Returns true if placing the dragged segment at (nsx,nsy)→(nex,ney) keeps
-  // all junction angles with rubber-banded neighbours ≥ 45°.
+  // all junction angles with rubber-banded neighbours ≥ DR.minTraceAngle (default 90°).
   _checkTraceAngles(tr,si,nsx,nsy,nex,ney){
-    const EPS=0.001,MIN_RAD=Math.PI/4; // 45°
+    const EPS=0.001,MIN_RAD=(DR.minTraceAngle??90)*Math.PI/180;
     const orig=this._dragTraceOrigSeg,origAll=this._dragTraceOrigAll;
-    // Returns true if the opening angle between two "away" vectors is >= 45°
+    // Returns true if the opening angle between two "away" vectors is >= minTraceAngle
     const ok=(ax,ay,bx,by)=>{
       const la=Math.hypot(ax,ay),lb=Math.hypot(bx,by);
       if(la<EPS*10||lb<EPS*10)return true;
@@ -1745,6 +1745,27 @@ class PCBEditor {
           // Snap to pad position if hitting a pad
           const ex=hit?hit.x:xmm, ey=hit?hit.y:ymm;
 
+          // Enforce minimum trace angle — block click if it would create a bend < DR.minTraceAngle
+          if(this.routePoints.length>=2){
+            const prev=this.routePoints[this.routePoints.length-2];
+            const cur=this.routePoints[this.routePoints.length-1];
+            const MIN_RAD=(DR.minTraceAngle??90)*Math.PI/180;
+            const EPS=0.001;
+            // "away" vectors from current junction: back to prev, forward to new point
+            const ax=prev.x-cur.x, ay=prev.y-cur.y;
+            const bx=ex-cur.x,     by=ey-cur.y;
+            const la=Math.hypot(ax,ay), lb=Math.hypot(bx,by);
+            if(la>EPS&&lb>EPS){
+              const angle=Math.acos(Math.max(-1,Math.min(1,(ax*bx+ay*by)/(la*lb))));
+              if(angle<MIN_RAD){
+                this._routeError=`Angle too sharp (${Math.round(angle*180/Math.PI)}° < ${DR.minTraceAngle??90}° min)`;
+                this.render();
+                setTimeout(()=>{this._routeError=null;this.render();},2000);
+                return;
+              }
+            }
+          }
+
           // Assign net from destination if not yet set
           if(!this.routeNet&&destNet) this.routeNet=destNet;
 
@@ -1912,7 +1933,7 @@ class PCBEditor {
             if(Math.abs(o.start.x-orig.end.x)<EPS&&Math.abs(o.start.y-orig.end.y)<EPS){s.start.x=nex;s.start.y=ney;}
           }
         }
-        // Enforce 45° minimum angle rule — reject move if it would create a sharp angle
+        // Enforce minimum angle rule (DR.minTraceAngle, default 90°) — reject move if it would create a sharp angle
         if(!this._checkTraceAngles(tr,si,nsx,nsy,nex,ney)){
           // Restore segments from origAll (undo the tentative update above)
           for(let i=0;i<tr.segments.length;i++){

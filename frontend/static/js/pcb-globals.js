@@ -51,6 +51,8 @@ let DR = {
   silkscreenWidth: 0.12,  // Min silkscreen line width (mm)
   // Routing aesthetics
   cornerAngle: 90,        // Trace corner angle: 90 = sharp, 0 = fully rounded (degrees)
+  // Routing constraints
+  minTraceAngle: 90,      // Minimum allowed angle between trace segments (degrees); 90 = no acute bends
 };
 // Persist DR to localStorage
 function _saveDRStorage(){try{localStorage.setItem('pcb_DR',JSON.stringify(DR));}catch(_){}}
