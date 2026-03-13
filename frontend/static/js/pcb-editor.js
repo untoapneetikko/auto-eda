@@ -377,38 +377,83 @@ class PCBEditor {
         zx1=Math.min(zx1,pt.x);zy1=Math.min(zy1,pt.y);
         zx2=Math.max(zx2,pt.x);zy2=Math.max(zy2,pt.y);
       }
-      ctx.save();
-      // Build clip path: zone polygon + clearance cutouts (evenodd)
-      ctx.beginPath();
-      ctx.moveTo(this.mmX(z.points[0].x),this.mmY(z.points[0].y));
+      // Use an offscreen canvas sized to just this zone's screen bounding box.
+      // This avoids the evenodd "phantom copper" bug: with evenodd clipping,
+      // two overlapping clearance shapes flip back to filled. With destination-out
+      // compositing, overlapping clearances simply erase — always correct.
+      const margin=Math.ceil((cl+2)*this.scale)+2;
+      const bx1=Math.floor(this.mmX(zx1))-margin;
+      const by1=Math.floor(this.mmY(zy1))-margin;
+      const bx2=Math.ceil(this.mmX(zx2))+margin;
+      const by2=Math.ceil(this.mmY(zy2))+margin;
+      const bw=Math.max(1,bx2-bx1),bh=Math.max(1,by2-by1);
+      const off=document.createElement('canvas');
+      off.width=bw; off.height=bh;
+      const oc=off.getContext('2d');
+      // Translate so that board coords map correctly into the small canvas
+      oc.translate(-bx1,-by1);
+      // ── Step 1: fill the zone polygon ────────────────────────────────────
+      oc.beginPath();
+      oc.moveTo(this.mmX(z.points[0].x),this.mmY(z.points[0].y));
       for(let i=1;i<z.points.length;i++)
-        ctx.lineTo(this.mmX(z.points[i].x),this.mmY(z.points[i].y));
-      ctx.closePath();
-      // Pad clearance cutouts
+        oc.lineTo(this.mmX(z.points[i].x),this.mmY(z.points[i].y));
+      oc.closePath();
+      oc.fillStyle=col+'33';
+      oc.fill();
+      // ── Step 2: cut clearance areas via destination-out ──────────────────
+      // Overlapping cutouts stay empty (they don't re-fill like evenodd would).
+      // Clearance applies to every copper object NOT on the same net as this zone,
+      // including pads/vias with no net at all.
+      oc.globalCompositeOperation='destination-out';
+      oc.fillStyle='rgba(0,0,0,1)';
+      oc.beginPath();
+      // — Pad clearances —
       for(const c of(this.board?.components||[])){
+        const rot=(c.rotation||0)*Math.PI/180;
+        const cosR=Math.cos(rot),sinR=Math.sin(rot);
         for(const p of(c.pads||[])){
-          if(!p.net||p.net===z.net)continue;
+          // Skip only if the pad is on the EXACT same net as the zone
+          if(p.net&&p.net===z.net)continue;
           const{px,py}=this._padWorld(c,p);
-          const hp=Math.max(p.size_x||1.6,p.size_y||1.6)/2;
-          if(px<zx1-hp-cl||px>zx2+hp+cl||py<zy1-hp-cl||py>zy2+hp+cl)continue;
-          const r=(hp+cl)*this.scale;
+          const hpx=(p.size_x||1.6)/2,hpy=(p.size_y||1.6)/2;
+          const maxhp=Math.max(hpx,hpy);
+          if(px<zx1-maxhp-cl||px>zx2+maxhp+cl||py<zy1-maxhp-cl||py>zy2+maxhp+cl)continue;
           const psx=this.mmX(px),psy=this.mmY(py);
-          ctx.moveTo(psx+r,psy);
-          ctx.arc(psx,psy,r,0,-Math.PI*2,true);
+          if(p.shape==='rect'||p.shape==='square'){
+            // Rectangular clearance — matches pad outline + rotation.
+            // Corners computed analytically so we can batch into one path.
+            const hw=(hpx+cl)*this.scale,hh=(hpy+cl)*this.scale;
+            // Four corners in local pad space rotated to screen space:
+            // local (±hw, ±hh) → screen via rotation matrix
+            const c0x=psx+(-hw)*cosR-(-hh)*sinR, c0y=psy+(-hw)*sinR+(-hh)*cosR;
+            const c1x=psx+(+hw)*cosR-(-hh)*sinR, c1y=psy+(+hw)*sinR+(-hh)*cosR;
+            const c2x=psx+(+hw)*cosR-(+hh)*sinR, c2y=psy+(+hw)*sinR+(+hh)*cosR;
+            const c3x=psx+(-hw)*cosR-(+hh)*sinR, c3y=psy+(-hw)*sinR+(+hh)*cosR;
+            oc.moveTo(c0x,c0y);
+            oc.lineTo(c1x,c1y);
+            oc.lineTo(c2x,c2y);
+            oc.lineTo(c3x,c3y);
+            oc.closePath();
+          }else{
+            // Circular/oval clearance for round pads
+            const r=(maxhp+cl)*this.scale;
+            oc.moveTo(psx+r,psy);
+            oc.arc(psx,psy,r,0,Math.PI*2);
+          }
         }
       }
-      // Via clearance cutouts
+      // — Via clearances (always circular) —
       for(const v of(this.board?.vias||[])){
-        if(v.net===z.net)continue;
+        if(v.net&&v.net===z.net)continue;
         if(v.x<zx1-cl||v.x>zx2+cl||v.y<zy1-cl||v.y>zy2+cl)continue;
         const r=((v.size||DR.viaSize||1.0)/2+cl)*this.scale;
         const vsx=this.mmX(v.x),vsy=this.mmY(v.y);
-        ctx.moveTo(vsx+r,vsy);
-        ctx.arc(vsx,vsy,r,0,-Math.PI*2,true);
+        oc.moveTo(vsx+r,vsy);
+        oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
-      // Trace clearance cutouts (capsule per segment)
+      // — Trace clearances (capsule = rectangle + semicircular end-caps) —
       for(const tr of(this.board?.traces||[])){
-        if(tr.net===z.net)continue;
+        if(tr.net&&tr.net===z.net)continue;
         const pts=tr.path||[];
         const hw=(tr.width_mm||DR.traceWidth||0.25)/2+cl;
         for(let i=0;i<pts.length-1;i++){
@@ -419,19 +464,18 @@ class PCBEditor {
           const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
           const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
           const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
-          ctx.moveTo(asx-nx,asy-ny);
-          ctx.lineTo(bsx-nx,bsy-ny);
-          ctx.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
-          ctx.lineTo(asx+nx,asy+ny);
-          ctx.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
-          ctx.closePath();
+          oc.moveTo(asx-nx,asy-ny);
+          oc.lineTo(bsx-nx,bsy-ny);
+          oc.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
+          oc.lineTo(asx+nx,asy+ny);
+          oc.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
+          oc.closePath();
         }
       }
-      ctx.clip('evenodd');
-      ctx.fillStyle=col+'33';
-      ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
-      ctx.restore();
-      // Border (drawn outside clip so the outline is always complete)
+      oc.fill(); // erase all clearance shapes in one pass
+      // ── Step 3: composite the zone tile onto the main canvas ─────────────
+      ctx.drawImage(off,bx1,by1);
+      // Border (drawn on main canvas so outline is always sharp)
       ctx.strokeStyle=col+'99';
       ctx.lineWidth=1; ctx.setLineDash([4,2]);
       ctx.beginPath();
