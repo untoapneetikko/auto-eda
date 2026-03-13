@@ -402,8 +402,8 @@ class SchematicEditor {
           const d1 = Math.hypot(p0.x - port.x, p0.y - port.y);
           const d2 = Math.hypot(pN.x - port.x, pN.y - port.y);
           // Skip dot-wires that sit on the interior of another wire (T-junction markers)
-          if (d1 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y });
-          if (d2 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y });
+          if (d1 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
+          if (d2 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
         }
       }
       this.dragState = { id: comp.id, sx, sy, origX: comp.x, origY: comp.y, connectedWires };
@@ -505,7 +505,7 @@ class SchematicEditor {
       if (comp) {
         comp.x = this._snap(this.dragState.origX + w1.x - w0.x);
         comp.y = this._snap(this.dragState.origY + w1.y - w0.y);
-        // Move connected wire endpoints to follow ports
+        // Move connected wire endpoints to follow ports; lock the "other end" to its original pin
         if (this.dragState.connectedWires?.length) {
           const ports = this._ports(comp);
           for (const cw of this.dragState.connectedWires) {
@@ -518,6 +518,15 @@ class SchematicEditor {
             } else {
               const last = wire.points[wire.points.length - 1];
               last.x = port.x + cw.dx; last.y = port.y + cw.dy;
+            }
+            // Explicitly hold the other endpoint to its original position so it
+            // cannot drift if another cw entry for the same wire runs out of order.
+            if (cw.otherPtOrig) {
+              const otherAlsoMoved = this.dragState.connectedWires.some(c => c.id === cw.id && c !== cw);
+              if (!otherAlsoMoved) {
+                const otherPt = cw.end === 0 ? wire.points[wire.points.length - 1] : wire.points[0];
+                otherPt.x = cw.otherPtOrig.x; otherPt.y = cw.otherPtOrig.y;
+              }
             }
           }
         }
@@ -561,8 +570,8 @@ class SchematicEditor {
             const d1 = Math.hypot(p0.x - port.x, p0.y - port.y);
             const d2 = Math.hypot(pN.x - port.x, pN.y - port.y);
             // Skip dot-wires that sit on the interior of another wire (T-junction markers)
-            if (d1 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y });
-            if (d2 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y });
+            if (d1 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
+            if (d2 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
           }
         }
         items.push({ type: 'comp', id, origX: comp.x, origY: comp.y, connectedWires });
@@ -629,9 +638,42 @@ class SchematicEditor {
         this._render(); return;
       }
       const compId = this.dragState.id;
+      const cWires = this.dragState.connectedWires || [];
       this.dragState = null;
       const comp = this.project.components.find(c => c.id === compId);
-      if (comp) this._autoConnectPorts(comp);
+      if (comp) {
+        // Snap the "other end" of each stretched wire to the nearest port or label it
+        // was touching — this ensures the free endpoint holds precisely to its pin.
+        const TOL = this.GRID * 1.5;
+        for (const cw of cWires) {
+          const wire = this.project.wires.find(w => w.id === cw.id);
+          if (!wire || !cw.otherPtOrig) continue;
+          const otherAlsoMoved = cWires.some(c => c.id === cw.id && c !== cw);
+          if (otherAlsoMoved) continue; // both ends connected to same comp — skip
+          const otherIdx = cw.end === 0 ? wire.points.length - 1 : 0;
+          const otherPt = wire.points[otherIdx];
+          // Try snapping to the nearest component port
+          let snapped = false;
+          for (const other of this.project.components) {
+            if (other.id === compId) continue;
+            for (const port of this._ports(other)) {
+              if (Math.hypot(port.x - otherPt.x, port.y - otherPt.y) < TOL) {
+                otherPt.x = port.x; otherPt.y = port.y; snapped = true; break;
+              }
+            }
+            if (snapped) break;
+          }
+          // Try snapping to the nearest label pin
+          if (!snapped) {
+            for (const lbl of (this.project.labels || [])) {
+              if (Math.hypot(lbl.x - otherPt.x, lbl.y - otherPt.y) < TOL) {
+                otherPt.x = lbl.x; otherPt.y = lbl.y; break;
+              }
+            }
+          }
+        }
+        this._autoConnectPorts(comp);
+      }
       this._saveHist();
       return;
     }
@@ -1265,8 +1307,29 @@ class SchematicEditor {
     if (this.tool === 'label' && this.labelCursor) h += this._lblGhostH();
     h += this._jH();
     h += this._drcH();
+    if (this.dragState?.connectedWires?.length) h += this._dragAnchorH();
     if (this.rubberState) h += this._rubberH();
     this._vg.innerHTML = h;
+  }
+
+  // Render green "anchor" rings at the pinned (free) ends of wires being stretched
+  // during a component drag — gives clear visual feedback that those endpoints are held.
+  _dragAnchorH() {
+    let h = '';
+    const seen = new Set();
+    const cWires = this.dragState.connectedWires;
+    for (const cw of cWires) {
+      if (!cw.otherPtOrig) continue;
+      // Skip wires where BOTH ends are connected to the dragged component
+      if (cWires.some(c => c.id === cw.id && c !== cw)) continue;
+      const key = `${cw.otherPtOrig.x},${cw.otherPtOrig.y}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const { x, y } = cw.otherPtOrig;
+      h += `<circle cx="${x}" cy="${y}" r="5.5" fill="none" stroke="#4ade80" stroke-width="1.5" opacity="0.85"/>`;
+      h += `<circle cx="${x}" cy="${y}" r="2" fill="#4ade80" opacity="0.9"/>`;
+    }
+    return h;
   }
 
   _lblH(lbl, sel) {
