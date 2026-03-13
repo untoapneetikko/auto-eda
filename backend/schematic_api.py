@@ -2132,7 +2132,7 @@ _SYMDEFS: dict[str, list[tuple[str, int, int]]] = {
     "pnp":         [("base", -30, 0), ("collector", 20, -25), ("emitter", 20, 25)],
     "nmos":        [("gate", -30, 0), ("drain", 20, -25), ("source", 20, 25)],
     "pmos":        [("gate", -30, 0), ("drain", 20, -25), ("source", 20, 25)],
-    "amplifier":   [("in", -50, -20), ("in2", -50, 20), ("out", 50, 0), ("vcc", 0, 40)],
+    "amplifier":   [("IN", -50, 0), ("OUT", 50, 0), ("GND", 0, 40)],
     "opamp":       [("in_pos", -50, -20), ("in_neg", -50, 20), ("out", 50, 0)],
 }
 

@@ -135,6 +135,9 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
 # ---------------------------------------------------------------------------
 
 MIN_CLEARANCE_MM = 0.25
+# Silkscreen gap: minimum body-to-body spacing to guarantee silkscreen labels
+# (which extend beyond the package boundary) never overlap each other.
+SILKSCREEN_GAP_MM = 1.0
 
 
 def _build_dataframe(placements: list[dict[str, Any]]) -> pl.DataFrame:

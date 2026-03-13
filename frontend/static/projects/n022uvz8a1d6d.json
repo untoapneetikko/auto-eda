@@ -1,0 +1,296 @@
+{
+    "id": "n022uvz8a1d6d",
+    "name": "RF Amplifier Test Board — PMA3-83LNW+",
+    "description": "Single-stage wideband LNA test board. PMA3-83LNW+ (0.4–8 GHz, 22 dB gain, 1.2 dB NF) biased at 5V. Input/output matching per Mini-Circuits datasheet application circuit. SMA connectors on RF-IN and RF-OUT.",
+    "components": [
+        {
+            "id": "c_u1_pma3",
+            "slug": "PMA3_83LNW",
+            "symType": "ic",
+            "designator": "U1",
+            "value": "PMA3-83LNW+",
+            "x": 600,
+            "y": 400,
+            "rotation": 0
+        },
+        {
+            "id": "c_c1_rfin",
+            "slug": "CAPACITOR",
+            "symType": "capacitor",
+            "designator": "C1",
+            "value": "10pF",
+            "x": 380,
+            "y": 370,
+            "rotation": 1,
+            "notes": "RF input series coupling capacitor"
+        },
+        {
+            "id": "c_l1_shunt",
+            "slug": "INDUCTOR",
+            "symType": "inductor",
+            "designator": "L1",
+            "value": "18nH",
+            "x": 420,
+            "y": 410,
+            "rotation": 1,
+            "notes": "Shunt inductor — RF input DC bias return path and ESD protection"
+        },
+        {
+            "id": "c_l2_choke",
+            "slug": "INDUCTOR",
+            "symType": "inductor",
+            "designator": "L2",
+            "value": "39nH",
+            "x": 780,
+            "y": 370,
+            "rotation": 1,
+            "notes": "RF choke — DC bias feed to RF-OUT/DC-IN pin"
+        },
+        {
+            "id": "c_c2_rfout",
+            "slug": "CAPACITOR",
+            "symType": "capacitor",
+            "designator": "C2",
+            "value": "100pF",
+            "x": 840,
+            "y": 410,
+            "rotation": 3,
+            "notes": "RF output series coupling capacitor"
+        },
+        {
+            "id": "c_c3_byp100n",
+            "slug": "CAPACITOR",
+            "symType": "capacitor",
+            "designator": "C3",
+            "value": "100nF",
+            "x": 800,
+            "y": 260,
+            "rotation": 1,
+            "notes": "VDD high-frequency bypass cap — place close to L2"
+        },
+        {
+            "id": "c_c4_byp10n",
+            "slug": "CAPACITOR",
+            "symType": "capacitor",
+            "designator": "C4",
+            "value": "10nF",
+            "x": 800,
+            "y": 220,
+            "rotation": 1,
+            "notes": "VDD wideband bypass cap"
+        },
+        {
+            "id": "c_c5_bulk",
+            "slug": "CAPACITOR_POL",
+            "symType": "capacitor_pol",
+            "designator": "C5",
+            "value": "10uF",
+            "x": 800,
+            "y": 180,
+            "rotation": 1,
+            "notes": "VDD bulk electrolytic bypass"
+        },
+        {
+            "id": "c_r1_bias",
+            "slug": "RESISTOR",
+            "symType": "resistor",
+            "designator": "R1",
+            "value": "10Ω",
+            "x": 730,
+            "y": 240,
+            "rotation": 0,
+            "notes": "Optional series resistor on VDD for current limiting / stability — can be 0Ω for direct connection"
+        },
+        {
+            "id": "c_vcc",
+            "slug": "VCC",
+            "symType": "vcc",
+            "designator": "VDD",
+            "value": "+5V",
+            "x": 680,
+            "y": 160,
+            "rotation": 0
+        },
+        {
+            "id": "c_gnd_l1",
+            "slug": "GND",
+            "symType": "gnd",
+            "designator": "GND1",
+            "value": "GND",
+            "x": 420,
+            "y": 470,
+            "rotation": 0,
+            "notes": "L1 shunt return to ground"
+        },
+        {
+            "id": "c_gnd_ic",
+            "slug": "GND",
+            "symType": "gnd",
+            "designator": "GND2",
+            "value": "GND",
+            "x": 600,
+            "y": 480,
+            "rotation": 0,
+            "notes": "IC ground pads (exposed pad + GND pins)"
+        },
+        {
+            "id": "c_gnd_byp",
+            "slug": "GND",
+            "symType": "gnd",
+            "designator": "GND3",
+            "value": "GND",
+            "x": 820,
+            "y": 300,
+            "rotation": 0,
+            "notes": "Bypass cap ground return"
+        }
+    ],
+    "wires": [
+        {
+            "id": "w_rfin_to_c1",
+            "points": [
+                { "x": 280, "y": 370 },
+                { "x": 360, "y": 370 }
+            ]
+        },
+        {
+            "id": "w_c1_to_l1top",
+            "points": [
+                { "x": 400, "y": 370, "isPort": true },
+                { "x": 420, "y": 370 },
+                { "x": 420, "y": 390, "isPort": true }
+            ]
+        },
+        {
+            "id": "w_c1_to_u1rfin",
+            "points": [
+                { "x": 400, "y": 370, "isPort": true },
+                { "x": 500, "y": 370 }
+            ]
+        },
+        {
+            "id": "w_l1_to_gnd",
+            "points": [
+                { "x": 420, "y": 430, "isPort": true },
+                { "x": 420, "y": 470, "isPort": true }
+            ]
+        },
+        {
+            "id": "w_u1_rfout_to_l2",
+            "points": [
+                { "x": 700, "y": 410, "isPort": true },
+                { "x": 760, "y": 410 }
+            ]
+        },
+        {
+            "id": "w_l2_top_to_r1",
+            "points": [
+                { "x": 780, "y": 350, "isPort": true },
+                { "x": 780, "y": 240 },
+                { "x": 710, "y": 240, "isPort": true }
+            ]
+        },
+        {
+            "id": "w_r1_to_vcc",
+            "points": [
+                { "x": 680, "y": 240, "isPort": true },
+                { "x": 680, "y": 180 }
+            ]
+        },
+        {
+            "id": "w_u1_rfout_to_c2",
+            "points": [
+                { "x": 700, "y": 410, "isPort": true },
+                { "x": 820, "y": 410 }
+            ]
+        },
+        {
+            "id": "w_c2_to_rfout",
+            "points": [
+                { "x": 860, "y": 410, "isPort": true },
+                { "x": 960, "y": 410 }
+            ]
+        },
+        {
+            "id": "w_byp_rail",
+            "points": [
+                { "x": 780, "y": 240 },
+                { "x": 800, "y": 240 }
+            ]
+        },
+        {
+            "id": "w_c3_to_gnd",
+            "points": [
+                { "x": 820, "y": 280, "isPort": true },
+                { "x": 820, "y": 300, "isPort": true }
+            ]
+        },
+        {
+            "id": "w_c4_c3_rail",
+            "points": [
+                { "x": 800, "y": 200, "isPort": true },
+                { "x": 800, "y": 240 }
+            ]
+        },
+        {
+            "id": "w_c5_c4_rail",
+            "points": [
+                { "x": 800, "y": 160, "isPort": true },
+                { "x": 800, "y": 200 }
+            ]
+        },
+        {
+            "id": "w_u1_gnd",
+            "points": [
+                { "x": 600, "y": 460, "isPort": true },
+                { "x": 600, "y": 480, "isPort": true }
+            ]
+        }
+    ],
+    "labels": [
+        {
+            "id": "lbl_rfin",
+            "name": "RF-IN",
+            "x": 280,
+            "y": 370,
+            "rotation": 2
+        },
+        {
+            "id": "lbl_rfout",
+            "name": "RF-OUT",
+            "x": 960,
+            "y": 410,
+            "rotation": 0
+        },
+        {
+            "id": "lbl_vdd",
+            "name": "+5V",
+            "x": 680,
+            "y": 140,
+            "rotation": 0
+        }
+    ],
+    "metadata": {
+        "board_type": "RF amplifier test board",
+        "amplifier": "PMA3-83LNW+",
+        "manufacturer": "Mini-Circuits",
+        "frequency_range": "0.4–8 GHz",
+        "gain": "22.6 dB @ 2 GHz (6V), ~19.5 dB @ 2 GHz (5V)",
+        "noise_figure": "1.2 dB @ 2 GHz (typ)",
+        "supply_voltage": "+5V",
+        "supply_current": "~58 mA (typ)",
+        "impedance": "50Ω",
+        "package": "12-lead MCLP 3×3mm (DQ1225)",
+        "pcb_notes": [
+            "Use 50Ω controlled-impedance traces on RF-IN and RF-OUT signal paths",
+            "Place L1 and C1 as close as possible to U1 RF-IN pin",
+            "Place L2 and C2 as close as possible to U1 RF-OUT/DC-IN pin",
+            "Mount C3 and C4 within 1mm of the VDD bias node",
+            "Expose pad must be soldered to ground plane with multiple vias",
+            "Use solid ground plane under RF traces — no splits",
+            "RF connector footprints: SMA edge-launch or SMA end-launch"
+        ]
+    },
+    "created_at": "2026-03-13T00-00-00.000Z",
+    "updated_at": "2026-03-13T00-00-00.000Z"
+}

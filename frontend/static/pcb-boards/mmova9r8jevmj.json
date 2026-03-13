@@ -1,0 +1,3004 @@
+{
+  "title": "juttu - V1",
+  "board": {
+    "width": 80,
+    "height": 60,
+    "units": "mm"
+  },
+  "components": [
+    {
+      "id": "U1",
+      "ref": "U1",
+      "value": "PMA3-83LNW+",
+      "footprint": "QFN-12-3x3",
+      "x": 35.964,
+      "y": 14.149000000000001,
+      "rotation": 180,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "NC",
+          "x": -0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "RF-IN",
+          "x": 0,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "3",
+          "name": "NC",
+          "x": 0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "4",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "5",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "6",
+          "name": "NC",
+          "x": 1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "7",
+          "name": "NC",
+          "x": 0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "8",
+          "name": "RF-OUT/DC-IN",
+          "x": 0,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "9",
+          "name": "NC",
+          "x": -0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "10",
+          "name": "NC",
+          "x": -1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "11",
+          "name": "NC (float!)",
+          "x": -1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "12",
+          "name": "NC (float!)",
+          "x": -1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "0",
+          "name": "GND (Paddle)",
+          "x": 0,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 1.7,
+          "size_y": 1.7,
+          "net": ""
+        }
+      ],
+      "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "C1",
+      "ref": "C1",
+      "value": "10pF",
+      "footprint": "0402",
+      "x": 38.214,
+      "y": 13.442,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "L1",
+      "ref": "L1",
+      "value": "18nH",
+      "footprint": "0603",
+      "x": 40.309,
+      "y": 12.660000000000004,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "A",
+          "x": -0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "B",
+          "x": 0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        }
+      ],
+      "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "C2",
+      "ref": "C2",
+      "value": "100pF",
+      "footprint": "0402",
+      "x": 37.5,
+      "y": 12,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "L2",
+      "ref": "L2",
+      "value": "39nH",
+      "footprint": "0603",
+      "x": 39.107,
+      "y": 11.609000000000002,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "A",
+          "x": -0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "B",
+          "x": 0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        }
+      ],
+      "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "C3",
+      "ref": "C3",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 38.754,
+      "y": 12.692,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "C4",
+      "ref": "C4",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 36.045,
+      "y": 8.560000000000002,
+      "rotation": 1,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "U2",
+      "ref": "U2",
+      "value": "C_POL",
+      "footprint": "CAP-POL-5mm",
+      "x": 28,
+      "y": 25.5,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": 0,
+          "y": -1,
+          "type": "thru_hole",
+          "shape": "rect",
+          "size_x": 1.8,
+          "size_y": 1.8,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0,
+          "y": 1,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        }
+      ]
+    },
+    {
+      "id": "U4",
+      "ref": "U4",
+      "value": "ESP32-WROOM-32",
+      "footprint": "DIP-40",
+      "x": 67.5,
+      "y": -17.5,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "GND",
+          "x": -7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "rect",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "2",
+          "name": "3V3",
+          "x": -7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "3",
+          "name": "EN",
+          "x": -7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "4",
+          "name": "GPIO36/VP",
+          "x": -7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "5",
+          "name": "GPIO39/VN",
+          "x": -7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "6",
+          "name": "GPIO34",
+          "x": -7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "7",
+          "name": "GPIO35",
+          "x": -7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "8",
+          "name": "GPIO32",
+          "x": -7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "9",
+          "name": "GPIO33",
+          "x": -7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "10",
+          "name": "GPIO25",
+          "x": -7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "11",
+          "name": "GPIO26",
+          "x": -7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "12",
+          "name": "GPIO27",
+          "x": -7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "13",
+          "name": "GPIO14",
+          "x": -7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "14",
+          "name": "GPIO12",
+          "x": -7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "15",
+          "name": "GND",
+          "x": -7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "16",
+          "name": "GPIO13",
+          "x": -7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "17",
+          "name": "GPIO9/SD2",
+          "x": -7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "18",
+          "name": "GPIO10/SD3",
+          "x": -7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "19",
+          "name": "GPIO11/CMD",
+          "x": -7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "20",
+          "name": "VDD_SDIO",
+          "x": -7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "21",
+          "name": "GPIO6/CLK",
+          "x": 7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "22",
+          "name": "GPIO7/SD0",
+          "x": 7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "23",
+          "name": "GPIO8/SD1",
+          "x": 7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "24",
+          "name": "GPIO15",
+          "x": 7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "25",
+          "name": "GPIO2",
+          "x": 7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "26",
+          "name": "GPIO0",
+          "x": 7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "27",
+          "name": "GPIO4",
+          "x": 7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "28",
+          "name": "GPIO16",
+          "x": 7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "29",
+          "name": "GPIO17",
+          "x": 7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "30",
+          "name": "GPIO5",
+          "x": 7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "31",
+          "name": "GPIO18",
+          "x": 7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "32",
+          "name": "GPIO19",
+          "x": 7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "33",
+          "name": "GPIO21",
+          "x": 7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "34",
+          "name": "GPIO3/RXD0",
+          "x": 7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "35",
+          "name": "GPIO1/TXD0",
+          "x": 7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "36",
+          "name": "GPIO22",
+          "x": 7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "37",
+          "name": "GPIO23",
+          "x": 7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "38",
+          "name": "GND",
+          "x": 7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "39",
+          "name": "39",
+          "x": 7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "40",
+          "name": "40",
+          "x": 7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        }
+      ]
+    },
+    {
+      "id": "U3",
+      "ref": "U3",
+      "value": "ESP32-WROOM-32",
+      "footprint": "DIP-40",
+      "x": 63.5,
+      "y": 5.5,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "GND",
+          "x": -7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "rect",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "2",
+          "name": "3V3",
+          "x": -7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "3",
+          "name": "EN",
+          "x": -7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "4",
+          "name": "GPIO36/VP",
+          "x": -7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "5",
+          "name": "GPIO39/VN",
+          "x": -7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "6",
+          "name": "GPIO34",
+          "x": -7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "7",
+          "name": "GPIO35",
+          "x": -7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "8",
+          "name": "GPIO32",
+          "x": -7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "9",
+          "name": "GPIO33",
+          "x": -7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "10",
+          "name": "GPIO25",
+          "x": -7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "11",
+          "name": "GPIO26",
+          "x": -7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "12",
+          "name": "GPIO27",
+          "x": -7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "13",
+          "name": "GPIO14",
+          "x": -7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "14",
+          "name": "GPIO12",
+          "x": -7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "15",
+          "name": "GND",
+          "x": -7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "16",
+          "name": "GPIO13",
+          "x": -7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "17",
+          "name": "GPIO9/SD2",
+          "x": -7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "18",
+          "name": "GPIO10/SD3",
+          "x": -7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "19",
+          "name": "GPIO11/CMD",
+          "x": -7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "20",
+          "name": "VDD_SDIO",
+          "x": -7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "21",
+          "name": "GPIO6/CLK",
+          "x": 7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "22",
+          "name": "GPIO7/SD0",
+          "x": 7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "23",
+          "name": "GPIO8/SD1",
+          "x": 7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "24",
+          "name": "GPIO15",
+          "x": 7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "25",
+          "name": "GPIO2",
+          "x": 7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "26",
+          "name": "GPIO0",
+          "x": 7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "27",
+          "name": "GPIO4",
+          "x": 7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "28",
+          "name": "GPIO16",
+          "x": 7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "29",
+          "name": "GPIO17",
+          "x": 7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "30",
+          "name": "GPIO5",
+          "x": 7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "31",
+          "name": "GPIO18",
+          "x": 7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "32",
+          "name": "GPIO19",
+          "x": 7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "33",
+          "name": "GPIO21",
+          "x": 7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "34",
+          "name": "GPIO3/RXD0",
+          "x": 7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "35",
+          "name": "GPIO1/TXD0",
+          "x": 7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "36",
+          "name": "GPIO22",
+          "x": 7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "37",
+          "name": "GPIO23",
+          "x": 7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "38",
+          "name": "GND",
+          "x": 7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "39",
+          "name": "39",
+          "x": 7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "40",
+          "name": "40",
+          "x": 7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "GND",
+      "pads": [
+        "C3.2",
+        "L1.2",
+        "U1.0",
+        "U1.1",
+        "U1.10",
+        "U1.3",
+        "U1.4",
+        "U1.5",
+        "U1.6",
+        "U1.7",
+        "U1.9"
+      ]
+    },
+    {
+      "name": "RF_IN",
+      "pads": [
+        "C1.1",
+        "L1.1",
+        "U1.2"
+      ]
+    },
+    {
+      "name": "RF_OUT_DC_IN",
+      "pads": [
+        "C2.2",
+        "L2.2",
+        "U1.8"
+      ]
+    },
+    {
+      "name": "VDD",
+      "pads": [
+        "C3.1",
+        "L2.1"
+      ]
+    },
+    {
+      "name": "RF_OUT",
+      "pads": [
+        "C2.1"
+      ]
+    },
+    {
+      "name": "RF_SRC",
+      "pads": [
+        "C1.2"
+      ]
+    }
+  ],
+  "traces": [
+    {
+      "net": "RF_OUT_DC_IN",
+      "segments": [
+        {
+          "start": {
+            "x": 34.5,
+            "y": 34.71
+          },
+          "end": {
+            "x": 34.5,
+            "y": 33.71
+          }
+        },
+        {
+          "start": {
+            "x": 34.5,
+            "y": 33.71
+          },
+          "end": {
+            "x": 33.15,
+            "y": 33.71
+          }
+        },
+        {
+          "start": {
+            "x": 34.5,
+            "y": 33.71
+          },
+          "end": {
+            "x": 22.5,
+            "y": 40.8
+          }
+        }
+      ]
+    },
+    {
+      "net": "RF_IN",
+      "segments": [
+        {
+          "start": {
+            "x": 18.12,
+            "y": 3.370000000000001
+          },
+          "end": {
+            "x": 34.5,
+            "y": 39.21
+          }
+        },
+        {
+          "start": {
+            "x": 34.5,
+            "y": 39.21
+          },
+          "end": {
+            "x": 33.825,
+            "y": 39.21
+          }
+        },
+        {
+          "start": {
+            "x": 34.5,
+            "y": 39.21
+          },
+          "end": {
+            "x": 18.12,
+            "y": 3.370000000000001
+          }
+        }
+      ]
+    },
+    {
+      "net": "",
+      "layer": "F.Cu",
+      "width": 3,
+      "segments": [
+        {
+          "start": {
+            "x": 39.81085834841539,
+            "y": 29.151418040172565
+          },
+          "end": {
+            "x": 47.81085834841539,
+            "y": 37.651418040172565
+          }
+        },
+        {
+          "start": {
+            "x": 47.81085834841539,
+            "y": 37.651418040172565
+          },
+          "end": {
+            "x": 47.81085834841539,
+            "y": 37.651418040172565
+          }
+        }
+      ]
+    },
+    {
+      "net": "",
+      "layer": "F.Cu",
+      "width": 0.25,
+      "segments": [
+        {
+          "start": {
+            "x": 12.120000000000001,
+            "y": 28.189999999999998
+          },
+          "end": {
+            "x": 16.5,
+            "y": 26
+          }
+        },
+        {
+          "start": {
+            "x": 16.5,
+            "y": 26
+          },
+          "end": {
+            "x": 16.5,
+            "y": 26
+          }
+        }
+      ]
+    }
+  ],
+  "vias": [],
+  "areas": [],
+  "projectId": "219f21b5b061",
+  "id": "mmova9r8jevmj",
+  "updated_at": "2026-03-13T14:54:14.850774+00:00",
+  "groups": [
+    {
+      "id": "grp_jqeooui",
+      "name": "Group 2",
+      "members": [
+        "U1",
+        "C1",
+        "L1",
+        "C2",
+        "L2",
+        "C3",
+        "C4"
+      ]
+    },
+    {
+      "id": "eg_mmov9lrmih",
+      "name": "PMA3_83LNW",
+      "members": [
+        "U1",
+        "C1",
+        "L1",
+        "C2",
+        "L2",
+        "C3",
+        "C4"
+      ]
+    },
+    {
+      "id": "eg_mmow5miu5q",
+      "name": "eg_mmow5miu5q",
+      "members": [
+        "U2"
+      ]
+    }
+  ],
+  "schematicRefs": [
+    {
+      "id": "U1",
+      "ref": "U1",
+      "value": "PMA3-83LNW+",
+      "footprint": "QFN-12-3x3",
+      "x": 35,
+      "y": 31.44,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "NC",
+          "x": -0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "RF-IN",
+          "x": 0,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "3",
+          "name": "NC",
+          "x": 0.65,
+          "y": 1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "4",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "5",
+          "name": "NC",
+          "x": 1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "6",
+          "name": "NC",
+          "x": 1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "7",
+          "name": "NC",
+          "x": 0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "8",
+          "name": "RF-OUT/DC-IN",
+          "x": 0,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "9",
+          "name": "NC",
+          "x": -0.65,
+          "y": -1.75,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.3,
+          "size_y": 0.7,
+          "net": ""
+        },
+        {
+          "number": "10",
+          "name": "NC",
+          "x": -1.75,
+          "y": -0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "11",
+          "name": "NC (float!)",
+          "x": -1.75,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "12",
+          "name": "NC (float!)",
+          "x": -1.75,
+          "y": 0.65,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.7,
+          "size_y": 0.3,
+          "net": ""
+        },
+        {
+          "number": "0",
+          "name": "GND (Paddle)",
+          "x": 0,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 1.7,
+          "size_y": 1.7,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
+    },
+    {
+      "id": "C1",
+      "ref": "C1",
+      "value": "10pF",
+      "footprint": "0402",
+      "x": 35.67,
+      "y": 34.69,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
+    },
+    {
+      "id": "L1",
+      "ref": "L1",
+      "value": "18nH",
+      "footprint": "0603",
+      "x": 34.33,
+      "y": 34.69,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "A",
+          "x": -0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "B",
+          "x": 0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
+    },
+    {
+      "id": "C2",
+      "ref": "C2",
+      "value": "100pF",
+      "footprint": "0402",
+      "x": 36.35,
+      "y": 28.19,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
+    },
+    {
+      "id": "L2",
+      "ref": "L2",
+      "value": "39nH",
+      "footprint": "0603",
+      "x": 33.65,
+      "y": 28.19,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "A",
+          "x": -0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "B",
+          "x": 0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
+    },
+    {
+      "id": "C3",
+      "ref": "C3",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 35,
+      "y": 28.19,
+      "rotation": 90,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
+    },
+    {
+      "id": "C4",
+      "ref": "C4",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 44.95,
+      "y": 21.36,
+      "rotation": 1,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
+    },
+    {
+      "id": "U2",
+      "ref": "U2",
+      "value": "C_POL",
+      "footprint": "CAP-POL-5mm",
+      "x": 19.84,
+      "y": 23.04,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": 0,
+          "y": -1,
+          "type": "thru_hole",
+          "shape": "rect",
+          "size_x": 1.8,
+          "size_y": 1.8,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0,
+          "y": 1,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        }
+      ],
+      "groupId": "eg_mmow5miu5q"
+    },
+    {
+      "id": "U3",
+      "ref": "U3",
+      "value": "ESP32-WROOM-32",
+      "footprint": "DIP-40",
+      "x": 75,
+      "y": 28.92,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "GND",
+          "x": -7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "rect",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "2",
+          "name": "3V3",
+          "x": -7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "3",
+          "name": "EN",
+          "x": -7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "4",
+          "name": "GPIO36/VP",
+          "x": -7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "5",
+          "name": "GPIO39/VN",
+          "x": -7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "6",
+          "name": "GPIO34",
+          "x": -7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "7",
+          "name": "GPIO35",
+          "x": -7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "8",
+          "name": "GPIO32",
+          "x": -7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "9",
+          "name": "GPIO33",
+          "x": -7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "10",
+          "name": "GPIO25",
+          "x": -7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "11",
+          "name": "GPIO26",
+          "x": -7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "12",
+          "name": "GPIO27",
+          "x": -7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "13",
+          "name": "GPIO14",
+          "x": -7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "14",
+          "name": "GPIO12",
+          "x": -7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "15",
+          "name": "GND",
+          "x": -7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "16",
+          "name": "GPIO13",
+          "x": -7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "17",
+          "name": "GPIO9/SD2",
+          "x": -7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "18",
+          "name": "GPIO10/SD3",
+          "x": -7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "19",
+          "name": "GPIO11/CMD",
+          "x": -7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "20",
+          "name": "VDD_SDIO",
+          "x": -7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "21",
+          "name": "GPIO6/CLK",
+          "x": 7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "22",
+          "name": "GPIO7/SD0",
+          "x": 7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "23",
+          "name": "GPIO8/SD1",
+          "x": 7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "24",
+          "name": "GPIO15",
+          "x": 7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "25",
+          "name": "GPIO2",
+          "x": 7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "26",
+          "name": "GPIO0",
+          "x": 7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "27",
+          "name": "GPIO4",
+          "x": 7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "28",
+          "name": "GPIO16",
+          "x": 7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "29",
+          "name": "GPIO17",
+          "x": 7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "30",
+          "name": "GPIO5",
+          "x": 7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "31",
+          "name": "GPIO18",
+          "x": 7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "32",
+          "name": "GPIO19",
+          "x": 7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "33",
+          "name": "GPIO21",
+          "x": 7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "34",
+          "name": "GPIO3/RXD0",
+          "x": 7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "35",
+          "name": "GPIO1/TXD0",
+          "x": 7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "36",
+          "name": "GPIO22",
+          "x": 7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "37",
+          "name": "GPIO23",
+          "x": 7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "38",
+          "name": "GND",
+          "x": 7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "39",
+          "name": "39",
+          "x": 7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "40",
+          "name": "40",
+          "x": 7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        }
+      ]
+    },
+    {
+      "id": "U4",
+      "ref": "U4",
+      "value": "ESP32-WROOM-32",
+      "footprint": "DIP-40",
+      "x": 54.06,
+      "y": 55,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "GND",
+          "x": -7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "rect",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "2",
+          "name": "3V3",
+          "x": -7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "3",
+          "name": "EN",
+          "x": -7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "4",
+          "name": "GPIO36/VP",
+          "x": -7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "5",
+          "name": "GPIO39/VN",
+          "x": -7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "6",
+          "name": "GPIO34",
+          "x": -7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "7",
+          "name": "GPIO35",
+          "x": -7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "8",
+          "name": "GPIO32",
+          "x": -7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "9",
+          "name": "GPIO33",
+          "x": -7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "10",
+          "name": "GPIO25",
+          "x": -7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "11",
+          "name": "GPIO26",
+          "x": -7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "12",
+          "name": "GPIO27",
+          "x": -7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "13",
+          "name": "GPIO14",
+          "x": -7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "14",
+          "name": "GPIO12",
+          "x": -7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "15",
+          "name": "GND",
+          "x": -7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "16",
+          "name": "GPIO13",
+          "x": -7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "17",
+          "name": "GPIO9/SD2",
+          "x": -7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "18",
+          "name": "GPIO10/SD3",
+          "x": -7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "19",
+          "name": "GPIO11/CMD",
+          "x": -7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "20",
+          "name": "VDD_SDIO",
+          "x": -7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "21",
+          "name": "GPIO6/CLK",
+          "x": 7.62,
+          "y": 24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "22",
+          "name": "GPIO7/SD0",
+          "x": 7.62,
+          "y": 21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "23",
+          "name": "GPIO8/SD1",
+          "x": 7.62,
+          "y": 19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "24",
+          "name": "GPIO15",
+          "x": 7.62,
+          "y": 16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "25",
+          "name": "GPIO2",
+          "x": 7.62,
+          "y": 13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "26",
+          "name": "GPIO0",
+          "x": 7.62,
+          "y": 11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "27",
+          "name": "GPIO4",
+          "x": 7.62,
+          "y": 8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "28",
+          "name": "GPIO16",
+          "x": 7.62,
+          "y": 6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "29",
+          "name": "GPIO17",
+          "x": 7.62,
+          "y": 3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "30",
+          "name": "GPIO5",
+          "x": 7.62,
+          "y": 1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "31",
+          "name": "GPIO18",
+          "x": 7.62,
+          "y": -1.27,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "32",
+          "name": "GPIO19",
+          "x": 7.62,
+          "y": -3.81,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "33",
+          "name": "GPIO21",
+          "x": 7.62,
+          "y": -6.35,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "34",
+          "name": "GPIO3/RXD0",
+          "x": 7.62,
+          "y": -8.89,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "35",
+          "name": "GPIO1/TXD0",
+          "x": 7.62,
+          "y": -11.43,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "36",
+          "name": "GPIO22",
+          "x": 7.62,
+          "y": -13.97,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "37",
+          "name": "GPIO23",
+          "x": 7.62,
+          "y": -16.51,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "38",
+          "name": "GND",
+          "x": 7.62,
+          "y": -19.05,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "39",
+          "name": "39",
+          "x": 7.62,
+          "y": -21.59,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        },
+        {
+          "number": "40",
+          "name": "40",
+          "x": 7.62,
+          "y": -24.13,
+          "type": "thru_hole",
+          "shape": "circle",
+          "size_x": 1.6,
+          "size_y": 1.6,
+          "net": "",
+          "drill": 0.8
+        }
+      ]
+    }
+  ]
+}

@@ -3,7 +3,7 @@ version: "3.9"
 services:
   app:
     build: .
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/backend --reload-dir /app/agents --timeout-graceful-shutdown 1
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/backend --reload-dir /app/agents
     ports:
       - "8000:8000"
     volumes:
@@ -25,8 +25,6 @@ services:
       - UPLOAD_DIR=/app/data/uploads
       # GitHub token for agent git push — set in .env or shell: export GITHUB_TOKEN=ghp_...
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
-      # Needed so 'docker compose' inside the container resolves the right project
-      - COMPOSE_PROJECT_NAME=auto-eda
     depends_on:
       - redis
     restart: unless-stopped

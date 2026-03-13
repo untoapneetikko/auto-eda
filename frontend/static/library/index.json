@@ -2,20 +2,20 @@
   "AMS1117-3.3": {
     "slug": "AMS1117-3.3",
     "part_number": "AMS1117-3.3",
-    "description": "3.3V 1A low-dropout (LDO) linear voltage regulator \u2014 1.2V dropout, SOT-223 or TO-252 package",
-    "manufacturer": "Advanced Monolithic Systems / Many sources",
+    "description": "1A Low Dropout Linear Regulator, 3.3V fixed output",
+    "manufacturer": "",
     "status": "parsed",
     "confidence": "HIGH",
     "symbol_type": "ic",
     "package_types": [
       "SOT-223",
-      "TO-252 (DPAK)",
-      "SOT-89"
+      "TO-252",
+      "TO-220"
     ],
-    "builtin": true,
-    "filename": "builtin",
+    "builtin": false,
+    "filename": "",
     "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
+    "parsed_at": null
   },
   "AP2112": {
     "slug": "AP2112",
