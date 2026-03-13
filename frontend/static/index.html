@@ -784,6 +784,13 @@
   <div style="flex:1;display:flex;flex-direction:row;min-width:0;">
   <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
     <div class="editor-toolbar">
+      <button class="tool-btn" id="projects-dropdown-btn" onclick="toggleProjectsDropdown(event)" title="Projects">&#128193; Project</button>
+      <div class="toolbar-sep"></div>
+      <button class="btn-pcb" onclick="openPCBLayout()" id="btn-open-pcb" title="Open or create PCB layout for this schematic" style="background:var(--accent);color:#fff;border-color:var(--accent);">PCB Layout</button>
+      <div class="toolbar-sep"></div>
+      <button class="btn-save" id="btn-save" onclick="saveProject()">&#128190; Save</button>
+      <button class="tool-btn" onclick="openDeleteProjectModal()" title="Delete this project" style="color:#f87171;border-color:#f87171;margin-left:2px;">&#128465; Delete</button>
+      <div class="toolbar-sep"></div>
       <button class="tool-btn active" data-tool="select" onclick="editor.setTool('select')" title="Select — S">&#9654; Select</button>
       <button class="tool-btn" data-tool="boxselect" onclick="editor.setTool('boxselect')" title="Box Select — B · Drag to select area, never moves components">&#9633; Box</button>
       <button class="tool-btn" data-tool="wire" onclick="editor.setTool('wire')" title="Wire — W">&#9135; Wire</button>
@@ -793,11 +800,6 @@
       <button class="tool-btn" onclick="editor._fit()" title="Fit — F">&#9635;</button>
       <button class="tool-btn" id="btn-undo" onclick="editor._undo()" title="Undo — Ctrl+Z" disabled style="opacity:0.35;cursor:default;">&#8630; Undo</button>
       <button class="tool-btn" id="btn-redo" onclick="editor._redo()" title="Redo — Ctrl+Y / Ctrl+Shift+Z" disabled style="opacity:0.35;cursor:default;">&#8631; Redo</button>
-      <button class="tool-btn" id="projects-dropdown-btn" onclick="toggleProjectsDropdown(event)" title="Projects">&#128193; Projects</button>
-      <div class="toolbar-spacer"></div>
-      <button class="btn-save" id="btn-save" onclick="saveProject()">&#128190; Save</button>
-      <button class="tool-btn" onclick="openDeleteProjectModal()" title="Delete this project" style="color:#f87171;border-color:#f87171;margin-left:2px;">&#128465; Delete</button>
-      <div class="toolbar-sep"></div>
       <button class="tool-btn" data-tool="label" onclick="editor.setTool('label')" title="Net Label — L">&#9657; Label</button>
       <input id="label-name-input" type="text" placeholder="Net name…" title="Net label name" style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:11px;font-family:monospace;" onkeydown="if(event.key==='Enter'){event.target.blur();editor.setTool('label');}" />
       <div class="toolbar-sep"></div>
@@ -806,8 +808,6 @@
       <button class="tool-btn" onclick="exportBOM()" title="Export Bill of Materials to CSV">&#128203; BOM</button>
       <div class="toolbar-sep"></div>
       <button class="tool-btn" onclick="runCompatibilityCheck()" title="Check for design issues">&#9888; Check</button>
-<div class="toolbar-sep"></div>
-      <button class="btn-pcb" onclick="openPCBLayout()" id="btn-open-pcb" title="Open or create PCB layout for this schematic" style="background:var(--accent);color:#fff;border-color:var(--accent);">&#8658; PCB Layout</button>
     </div>
     <div class="project-tabs" id="project-tabs"></div>
     <div class="editor-canvas-wrap" style="flex:1;">
