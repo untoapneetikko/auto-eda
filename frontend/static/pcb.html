@@ -2675,23 +2675,6 @@ function closeBoardTab(boardId){
 }
 
 async function newBoardVersion(){
-  // Determine next version number
-  const existing = _pcbBoardsList.filter(b => !_currentProjectId || b.projectId === _currentProjectId);
-  let maxV = existing.length;
-  existing.forEach(b => {
-    const m = (b.title || '').match(/-\s*V(\d+)$/i);
-    if (m) maxV = Math.max(maxV, parseInt(m[1]));
-  });
-  const nextV = maxV + 1;
-
-  // Derive base name from existing tab titles
-  let baseName = 'Design';
-  if (_pcbBoardsList.length) {
-    const m = (_pcbBoardsList[0].title || '').match(/^(.*?)\s*-\s*V\d+$/i);
-    baseName = m ? m[1].trim() : (_pcbBoardsList[0].title || 'Design');
-  }
-  const title = `${baseName} - V${nextV}`;
-
   const btn = document.getElementById('btn-autoplace');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Creating…'; }
   switchPcbSection('layout');
@@ -2700,18 +2683,18 @@ async function newBoardVersion(){
     let board;
 
     if (_currentProjectId) {
-      // Import schematic components fresh (same as importProject but new board)
+      // Import schematic components fresh — backend calculates correct V{n} title
       const bw = 100, bh = 80;
       const projRes = await fetch(`/api/projects/${_currentProjectId}`);
       if (!projRes.ok) throw new Error('Could not load project');
       const proj = await projRes.json();
       board = await importSchematic(proj, _currentNetlist, bw, bh);
       if (!board) throw new Error('No physical components in schematic');
-      board.title     = title;
+      // Backend already sets board.title to "{project} - V{n+1}" — don't override it
       board.projectId = _currentProjectId;
     } else {
       board = {
-        title,
+        title: 'Design - V1',
         board: { width: 100, height: 80, units: 'mm' },
         components: [], nets: [], traces: [], vias: [], areas: [],
       };
