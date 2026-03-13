@@ -1883,17 +1883,39 @@ async def api_pipeline_agent_chat(name: str, request: Request):
                     model=model_id,
                 )
 
-            async def _stream(session_id, retry=True):
+            # Exit codes that mean the OS killed the process — safe to retry
+            _TRANSIENT_EXIT_CODES = {
+                3221225786,  # 0xC000013A STATUS_CONTROL_C_EXIT (Windows killed process)
+                3221225477,  # 0xC0000005 ACCESS_VIOLATION (rare crash)
+                1,           # generic non-zero exit without stderr
+            }
+
+            def _is_transient(exc: Exception) -> bool:
+                msg = str(exc)
+                for code in _TRANSIENT_EXIT_CODES:
+                    if str(code) in msg:
+                        return True
+                return False
+
+            async def _stream(session_id, attempts_left=3):
                 try:
                     async for msg in _agent_query(prompt=prompt, opts=_make_opts(session_id)):
                         yield msg
                 except Exception as e:
-                    if retry and session_id:
-                        # Session expired or invalid — broadcast warning and retry fresh
+                    if _is_transient(e) and attempts_left > 1:
+                        wait = 2 ** (3 - attempts_left)  # 1s, 2s, 4s backoff
+                        _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
+                                                            "chunk": f"\n[process killed by OS, retrying in {wait}s… ({attempts_left-1} left)]\n",
+                                                            "is_tool": True})
+                        await asyncio.sleep(wait)
+                        async for msg in _stream(session_id, attempts_left - 1):
+                            yield msg
+                    elif session_id and attempts_left > 1 and "session" in str(e).lower():
+                        # Session expired or invalid — retry fresh
                         _pipeline_sessions[name] = None
                         _broadcast("pipeline_agent_chunk", {"name": name, "msg_id": resp_id,
                                                             "chunk": "\n[session expired, restarting…]\n", "is_tool": True})
-                        async for msg in _stream(None, retry=False):
+                        async for msg in _stream(None, attempts_left - 1):
                             yield msg
                     else:
                         raise
