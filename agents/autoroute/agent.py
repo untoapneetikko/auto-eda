@@ -71,6 +71,36 @@ def routing_priority(net_name: str) -> int:
     return {"power": 0, "highspeed": 1, "analog": 2, "signal": 3}[t]
 
 
+# Nets that must never be routed as physical traces.
+# GND is handled as a copper pour / ground plane, not individual traces.
+# NC (no-connect) pads are intentionally unconnected.
+_SKIP_NET_PREFIXES = ("NC", "PWR_FLAG")
+_SKIP_NET_SUBSTRINGS = ("GND", "UNCONNECTED", "NOCONNECT", "NO_CONNECT")
+
+
+def should_skip_net(net_name: str) -> bool:
+    """
+    Return True for nets that must NOT be routed:
+      - Any GND variant  (GND, AGND, PGND, DGND, GND_*, …)
+      - NC / no-connect nets
+      - Single-pad unconnected markers
+
+    GND is handled by a copper pour/ground-plane elsewhere; routing
+    individual GND traces would create a messy spider-web and is wrong.
+    NC pads are intentionally left floating.
+    """
+    upper = net_name.upper().lstrip("/\\~ ")
+    # Exact-prefix matches
+    for prefix in _SKIP_NET_PREFIXES:
+        if upper == prefix or upper.startswith(prefix + "_") or upper.startswith(prefix + "-"):
+            return True
+    # Substring matches (catches AGND, PGND, DGND, NOCONNECT, …)
+    for sub in _SKIP_NET_SUBSTRINGS:
+        if sub in upper:
+            return True
+    return False
+
+
 def detect_crystals(components: list[dict]) -> set[str]:
     """
     Return a set of reference designators that are crystals or oscillators.
@@ -171,6 +201,11 @@ def build_initial_routing(schematic: dict, placement: dict, crystal_refs: set[st
     sorted_nets = sorted(net_map.keys(), key=routing_priority)
 
     for net_name in sorted_nets:
+        # Never route GND (ground plane) or NC (no-connect) nets
+        if should_skip_net(net_name):
+            print(f"[autoroute] Skipping net (GND/NC): {net_name}")
+            continue
+
         pads = net_map[net_name]
         if len(pads) < 2:
             continue  # Single-pad net — nothing to route
@@ -356,6 +391,9 @@ def check_all_nets_routed(schematic: dict, routing: dict) -> list[str]:
     unrouted = []
 
     for net_name, pads in net_map.items():
+        # GND and NC nets are intentionally not routed — don't flag them
+        if should_skip_net(net_name):
+            continue
         if len(pads) >= 2 and net_name not in routed_nets:
             unrouted.append(net_name)
 
@@ -403,10 +441,12 @@ def get_routing_context(
     # Detect no-route zones
     crystal_refs = detect_crystals(components)
 
-    # Build enriched net list
+    # Build enriched net list (skip GND and NC — never routed as individual traces)
     net_map = build_net_map(schematic)
     nets_out = []
     for net_name, pads in net_map.items():
+        if should_skip_net(net_name):
+            continue  # GND / NC — excluded from routing context
         net_type = classify_net(net_name)
         current = estimate_current(net_name, net_type)
         width_info = calculate_trace_width(net_name, current)
