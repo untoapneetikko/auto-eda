@@ -554,7 +554,15 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <button class="tbtn" onclick="refresh3DView()" title="Reload board from editor">↺ Refresh</button>
     <button class="tbtn" onclick="if(viewer3d)viewer3d.resetView()" title="Reset camera">⊡ Fit View</button>
     <div class="tsep"></div>
-    <span style="font-size:11px;color:var(--text-muted);">Left drag: orbit &nbsp;·&nbsp; Right drag: pan &nbsp;·&nbsp; Scroll: zoom &nbsp;·&nbsp; Dbl-click: reset view</span>
+    <span style="font-size:11px;color:var(--text-muted);font-weight:600;">Layers:</span>
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#22c55e;cursor:pointer;" title="Top Solder Mask"><input type="checkbox" id="lyr-sm-top" checked onchange="viewer3d&&viewer3d.setLayerVisible('sm_top',this.checked)" style="accent-color:#22c55e;">F.Mask</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#86efac;cursor:pointer;" title="Bottom Solder Mask"><input type="checkbox" id="lyr-sm-bot" checked onchange="viewer3d&&viewer3d.setLayerVisible('sm_bot',this.checked)" style="accent-color:#86efac;">B.Mask</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#aaaaaa;cursor:pointer;" title="Top Solder Paste"><input type="checkbox" id="lyr-sp-top" checked onchange="viewer3d&&viewer3d.setLayerVisible('sp_top',this.checked)" style="accent-color:#aaaaaa;">F.Paste</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#cccccc;cursor:pointer;" title="Bottom Solder Paste"><input type="checkbox" id="lyr-sp-bot" checked onchange="viewer3d&&viewer3d.setLayerVisible('sp_bot',this.checked)" style="accent-color:#cccccc;">B.Paste</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#d4881a;cursor:pointer;" title="Top Copper"><input type="checkbox" id="lyr-cu-top" checked onchange="viewer3d&&viewer3d.setLayerVisible('cu_top',this.checked)" style="accent-color:#d4881a;">F.Cu</label>
+    <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#4488ff;cursor:pointer;" title="Bottom Copper"><input type="checkbox" id="lyr-cu-bot" checked onchange="viewer3d&&viewer3d.setLayerVisible('cu_bot',this.checked)" style="accent-color:#4488ff;">B.Cu</label>
+    <div class="tsep"></div>
+    <span style="font-size:11px;color:var(--text-muted);">Left drag: orbit &nbsp;·&nbsp; Right drag: pan &nbsp;·&nbsp; Scroll: zoom &nbsp;·&nbsp; Dbl-click: reset</span>
     <span id="viewer-3d-title" style="margin-left:auto;font-size:11px;color:var(--accent);font-family:monospace;"></span>
   </div>
   <div id="viewer-3d-canvas" style="flex:1;position:relative;background:#0b0b14;overflow:hidden;">

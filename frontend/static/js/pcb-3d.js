@@ -136,6 +136,18 @@ class PCB3DViewer {
   _px(x) { return x - this.board.board.width / 2; }
   _pz(y) { return y - this.board.board.height / 2; }
 
+  // Tag a mesh (or group of meshes) so setLayerVisible can find it
+  _tag(obj, layer) {
+    obj.userData.layer3d = layer;
+    return obj;
+  }
+
+  setLayerVisible(layer, visible) {
+    this.scene.traverse(o => {
+      if (o.userData.layer3d === layer) o.visible = visible;
+    });
+  }
+
   load(board) {
     this.board = board;
     // ── Layer thickness constants (visually exaggerated for clarity) ──────────
@@ -144,11 +156,11 @@ class PCB3DViewer {
     this.SM_T  = 0.10;   // solder mask
     this.SP_T  = 0.06;   // solder paste (in pad openings only)
     // Derived Y positions (Y=0 is top of FR4, Y=-PCB_T is bottom of FR4)
-    this.Y_CU_TOP    =  this.CU_T / 2;                          // top copper centre
-    this.Y_SM_TOP    =  this.CU_T + this.SM_T / 2;              // top soldermask centre
-    this.Y_SP_TOP    =  this.CU_T + this.SM_T + this.SP_T / 2;  // top paste centre
-    this.Y_CU_BOT    = -this.PCB_T - this.CU_T / 2;             // bottom copper centre
-    this.Y_SM_BOT    = -this.PCB_T - this.CU_T - this.SM_T / 2; // bottom soldermask centre
+    this.Y_CU_TOP    =  this.CU_T / 2;
+    this.Y_SM_TOP    =  this.CU_T + this.SM_T / 2;
+    this.Y_SP_TOP    =  this.CU_T + this.SM_T + this.SP_T / 2;
+    this.Y_CU_BOT    = -this.PCB_T - this.CU_T / 2;
+    this.Y_SM_BOT    = -this.PCB_T - this.CU_T - this.SM_T / 2;
     this.Y_SP_BOT    = -this.PCB_T - this.CU_T - this.SM_T - this.SP_T / 2;
     this._clearScene();
 
@@ -178,25 +190,22 @@ class PCB3DViewer {
 
     // Top copper fill (bare board surface — shows under semi-transparent mask)
     const cuFillMat = new THREE.MeshLambertMaterial({ color: 0xb87333 });
-    const cuTop = new THREE.Mesh(new THREE.BoxGeometry(width, CU_T, height), cuFillMat);
+    const cuTop = this._tag(new THREE.Mesh(new THREE.BoxGeometry(width, CU_T, height), cuFillMat), 'cu_top');
     cuTop.position.y = this.Y_CU_TOP;
     this.scene.add(cuTop);
 
-    const cuBot = new THREE.Mesh(new THREE.BoxGeometry(width, CU_T, height), cuFillMat.clone());
+    const cuBot = this._tag(new THREE.Mesh(new THREE.BoxGeometry(width, CU_T, height), cuFillMat.clone()), 'cu_bot');
     cuBot.position.y = this.Y_CU_BOT;
     this.scene.add(cuBot);
 
     // Top solder mask — semi-transparent dark green, sits above copper
     const smMat = new THREE.MeshLambertMaterial({ color: 0x0e4f1a, transparent: true, opacity: 0.82, depthWrite: false });
-    const smTop = new THREE.Mesh(new THREE.BoxGeometry(width, SM_T, height), smMat);
+    const smTop = this._tag(new THREE.Mesh(new THREE.BoxGeometry(width, SM_T, height), smMat), 'sm_top');
     smTop.position.y = this.Y_SM_TOP;
     this.scene.add(smTop);
 
     // Bottom solder mask
-    const smBot = new THREE.Mesh(
-      new THREE.BoxGeometry(width, SM_T, height),
-      smMat.clone()
-    );
+    const smBot = this._tag(new THREE.Mesh(new THREE.BoxGeometry(width, SM_T, height), smMat.clone()), 'sm_bot');
     smBot.position.y = this.Y_SM_BOT;
     this.scene.add(smBot);
 
@@ -239,6 +248,7 @@ class PCB3DViewer {
           this._pz((seg.start.y + seg.end.y) / 2)
         );
         m.rotation.y = -Math.atan2(dz, dx);
+        this._tag(m, isBot ? 'cu_bot' : 'cu_top');
         this.scene.add(m);
       }
     }
@@ -385,13 +395,13 @@ class PCB3DViewer {
         m.position.set(px3, padY, pz3);
         this.scene.add(m);
 
-        // Solder paste — thin silver layer on top of pad opening (top side only by default)
+        // Solder paste — thin silver layer on top of pad opening
         const pasteY = isBack ? this.Y_SP_BOT : this.Y_SP_TOP;
-        const shrink = 0.9; // paste is slightly smaller than the pad
+        const shrink = 0.9;
         const pasteGeo = isCirc
           ? new THREE.CylinderGeometry(Math.min(pw, pd_s) * shrink / 2, Math.min(pw, pd_s) * shrink / 2, SP_T, 16)
           : new THREE.BoxGeometry(pw * shrink, SP_T, pd_s * shrink);
-        const paste = new THREE.Mesh(pasteGeo, matPaste.clone());
+        const paste = this._tag(new THREE.Mesh(pasteGeo, matPaste.clone()), isBack ? 'sp_bot' : 'sp_top');
         paste.position.set(px3, pasteY, pz3);
         this.scene.add(paste);
       }
