@@ -74,7 +74,9 @@ try:
     from schematic_api import router as _schematic_router
     app.include_router(_schematic_router)
 except Exception as e:
-    print(f"[warn] schematic_api not loaded: {e}")
+    import traceback
+    print(f"[ERROR] schematic_api failed to load — all /api/pcb, /api/netlist, /api/pipeline routes will 404!")
+    traceback.print_exc()
 
 
 # ── Upload ────────────────────────────────────────────────────────────────────
