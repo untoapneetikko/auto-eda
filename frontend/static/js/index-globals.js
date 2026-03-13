@@ -50,10 +50,14 @@ function _scheduleLibReload() {
   _libReloadTimer = setTimeout(() => loadLibrary(), 600);
 }
 evtSource.addEventListener('library_updated', () => _scheduleLibReload());
+let _profileReloadTimer = null;
 evtSource.addEventListener('profile_updated', e => {
   const { slug } = JSON.parse(e.data);
   _scheduleLibReload();
-  if (selectedSlug === slug) loadProfile(slug);
+  if (selectedSlug === slug) {
+    clearTimeout(_profileReloadTimer);
+    _profileReloadTimer = setTimeout(() => loadProfile(slug), 600);
+  }
 });
 evtSource.addEventListener('pipeline_agent_started',   e => _handlePipelineSSE('pipeline_agent_started',   JSON.parse(e.data)));
 evtSource.addEventListener('pipeline_agent_msg_start', e => _handlePipelineSSE('pipeline_agent_msg_start', JSON.parse(e.data)));

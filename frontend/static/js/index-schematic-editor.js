@@ -537,9 +537,10 @@ class SchematicEditor {
     if (this.tool === 'label') {
       const w = this._toW(sx, sy); this.labelCursor = this._snapPt(w.x, w.y); this._render(); return;
     }
+    const prevHC = this.hoveredComp, prevHP = this.hoveredPort;
     this.hoveredComp = this._hitComp(sx, sy);
     this.hoveredPort = this._hitPort(sx, sy);
-    this._render();
+    if (this.hoveredComp !== prevHC || this.hoveredPort !== prevHP) this._render();
     const w = this._toW(sx, sy), s = this._snapPt(w.x, w.y);
     const el = document.getElementById('editor-status-coords');
     if (el) el.textContent = `${s.x}, ${s.y}`;

@@ -107,6 +107,11 @@ class PCBEditor {
   }
 
   render(){
+    if(this._renderPending)return;
+    this._renderPending=true;
+    requestAnimationFrame(()=>{this._renderPending=false;this._renderNow();});
+  }
+  _renderNow(){
     const ctx=this.ctx,W=this.canvas.width,H=this.canvas.height;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle='#080808'; ctx.fillRect(0,0,W,H);

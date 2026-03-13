@@ -25,9 +25,11 @@ window.addEventListener('load',()=>{
   _loadDRStorage(); // restore persisted design rules before anything renders
   editor=new PCBEditor(cv);
   resize();
-  // Auto-save DR whenever any field in the Design Rules tab changes
-  document.addEventListener('input', e=>{if(e.target.closest&&e.target.closest('#pcb-section-drc'))saveDRTab();});
-  document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#pcb-section-drc'))saveDRTab();});
+  // Auto-save DR whenever any field in the Design Rules tab changes (debounced)
+  let _drSaveTimer=null;
+  function _debouncedSaveDR(){clearTimeout(_drSaveTimer);_drSaveTimer=setTimeout(saveDRTab,400);}
+  document.addEventListener('input', e=>{if(e.target.closest&&e.target.closest('#pcb-section-drc'))_debouncedSaveDR();});
+  document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#pcb-section-drc'))_debouncedSaveDR();});
   buildLayerPanel();
   updateWorkLayerBadge();
   editor.render();
