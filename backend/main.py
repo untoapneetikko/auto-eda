@@ -26,6 +26,11 @@ import sys
 import uuid
 from pathlib import Path
 
+# On Windows, asyncio defaults to SelectorEventLoop which cannot spawn subprocesses.
+# Force ProactorEventLoop so anyio.open_process (used by claude-agent-sdk) works.
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+
 import redis
 from fastapi import FastAPI, HTTPException, UploadFile, Form
 from fastapi.responses import FileResponse, StreamingResponse
