@@ -1,0 +1,668 @@
+{
+    "id": "rf_amp_pma3_83lnw",
+    "title": "RF Amplifier Test Board — PMA3-83LNW+",
+    "projectId": "n022uvz8a1d6d",
+    "updated_at": "2026-03-13T00-00-00.000Z",
+    "board": {
+        "width": 35,
+        "height": 22,
+        "units": "mm"
+    },
+    "components": [
+        {
+            "id": "U1",
+            "ref": "U1",
+            "value": "PMA3-83LNW+",
+            "footprint": "MCLP-12-3x3",
+            "x": 17,
+            "y": 11,
+            "rotation": 90,
+            "layer": "F",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "NC",
+                    "x": -0.65,
+                    "y": 1.75,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.3,
+                    "size_y": 0.7,
+                    "net": "GND"
+                },
+                {
+                    "number": "2",
+                    "name": "RF-IN",
+                    "x": 0,
+                    "y": 1.75,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.3,
+                    "size_y": 0.7,
+                    "net": "RF_IN_NODE"
+                },
+                {
+                    "number": "3",
+                    "name": "NC",
+                    "x": 0.65,
+                    "y": 1.75,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.3,
+                    "size_y": 0.7,
+                    "net": "GND"
+                },
+                {
+                    "number": "4",
+                    "name": "NC",
+                    "x": 1.75,
+                    "y": 0.65,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.7,
+                    "size_y": 0.3,
+                    "net": "GND"
+                },
+                {
+                    "number": "5",
+                    "name": "NC",
+                    "x": 1.75,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.7,
+                    "size_y": 0.3,
+                    "net": "GND"
+                },
+                {
+                    "number": "6",
+                    "name": "NC",
+                    "x": 1.75,
+                    "y": -0.65,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.7,
+                    "size_y": 0.3,
+                    "net": "GND"
+                },
+                {
+                    "number": "7",
+                    "name": "NC",
+                    "x": 0.65,
+                    "y": -1.75,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.3,
+                    "size_y": 0.7,
+                    "net": "GND"
+                },
+                {
+                    "number": "8",
+                    "name": "RF-OUT/DC-IN",
+                    "x": 0,
+                    "y": -1.75,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.3,
+                    "size_y": 0.7,
+                    "net": "RF_OUT_DC_IN"
+                },
+                {
+                    "number": "9",
+                    "name": "NC",
+                    "x": -0.65,
+                    "y": -1.75,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.3,
+                    "size_y": 0.7,
+                    "net": "GND"
+                },
+                {
+                    "number": "10",
+                    "name": "NC",
+                    "x": -1.75,
+                    "y": -0.65,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.7,
+                    "size_y": 0.3,
+                    "net": "GND"
+                },
+                {
+                    "number": "11",
+                    "name": "NC (float)",
+                    "x": -1.75,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.7,
+                    "size_y": 0.3,
+                    "net": ""
+                },
+                {
+                    "number": "12",
+                    "name": "NC (float)",
+                    "x": -1.75,
+                    "y": 0.65,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.7,
+                    "size_y": 0.3,
+                    "net": ""
+                },
+                {
+                    "number": "0",
+                    "name": "GND (Exposed Paddle)",
+                    "x": 0,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 1.7,
+                    "size_y": 1.7,
+                    "net": "GND"
+                }
+            ]
+        },
+        {
+            "id": "C1",
+            "ref": "C1",
+            "value": "10pF",
+            "footprint": "0402",
+            "x": 12,
+            "y": 11,
+            "rotation": 0,
+            "layer": "F",
+            "notes": "RF-IN series coupling cap",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "RF_SRC"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "RF_IN_NODE"
+                }
+            ]
+        },
+        {
+            "id": "L1",
+            "ref": "L1",
+            "value": "18nH",
+            "footprint": "0603",
+            "x": 14,
+            "y": 13.5,
+            "rotation": 90,
+            "layer": "F",
+            "notes": "Shunt inductor: RF-IN DC bias return + ESD path",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.8,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.9,
+                    "size_y": 0.8,
+                    "net": "RF_IN_NODE"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.8,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.9,
+                    "size_y": 0.8,
+                    "net": "GND"
+                }
+            ]
+        },
+        {
+            "id": "L2",
+            "ref": "L2",
+            "value": "39nH",
+            "footprint": "0603",
+            "x": 21,
+            "y": 8,
+            "rotation": 90,
+            "layer": "F",
+            "notes": "RF choke: DC bias feed to RF-OUT/DC-IN pin",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.8,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.9,
+                    "size_y": 0.8,
+                    "net": "VDD_FILTERED"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.8,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.9,
+                    "size_y": 0.8,
+                    "net": "RF_OUT_DC_IN"
+                }
+            ]
+        },
+        {
+            "id": "C2",
+            "ref": "C2",
+            "value": "100pF",
+            "footprint": "0402",
+            "x": 24,
+            "y": 11,
+            "rotation": 0,
+            "layer": "F",
+            "notes": "RF-OUT series coupling cap",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "RF_OUT_DC_IN"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "RF_OUT"
+                }
+            ]
+        },
+        {
+            "id": "R1",
+            "ref": "R1",
+            "value": "10Ω",
+            "footprint": "0402",
+            "x": 17,
+            "y": 7,
+            "rotation": 0,
+            "layer": "F",
+            "notes": "Optional VDD series resistor for stability — can be 0Ω",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "VDD"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "VDD_FILTERED"
+                }
+            ]
+        },
+        {
+            "id": "C3",
+            "ref": "C3",
+            "value": "100nF",
+            "footprint": "0402",
+            "x": 20,
+            "y": 7,
+            "rotation": 90,
+            "layer": "F",
+            "notes": "HF bypass — place within 1mm of VDD rail",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "VDD_FILTERED"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "GND"
+                }
+            ]
+        },
+        {
+            "id": "C4",
+            "ref": "C4",
+            "value": "10nF",
+            "footprint": "0402",
+            "x": 22,
+            "y": 7,
+            "rotation": 90,
+            "layer": "F",
+            "notes": "Wideband bypass",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "VDD_FILTERED"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.5,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 0.6,
+                    "size_y": 0.6,
+                    "net": "GND"
+                }
+            ]
+        },
+        {
+            "id": "C5",
+            "ref": "C5",
+            "value": "10uF",
+            "footprint": "0805",
+            "x": 26,
+            "y": 7,
+            "rotation": 90,
+            "layer": "F",
+            "notes": "Bulk electrolytic bypass",
+            "pads": [
+                {
+                    "number": "1",
+                    "name": "A",
+                    "x": -0.9,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 1.2,
+                    "size_y": 1.4,
+                    "net": "VDD_FILTERED"
+                },
+                {
+                    "number": "2",
+                    "name": "B",
+                    "x": 0.9,
+                    "y": 0,
+                    "type": "smd",
+                    "shape": "rect",
+                    "size_x": 1.2,
+                    "size_y": 1.4,
+                    "net": "GND"
+                }
+            ]
+        }
+    ],
+    "nets": [
+        {
+            "name": "GND",
+            "pads": [
+                "U1.0", "U1.1", "U1.3", "U1.4", "U1.5", "U1.6", "U1.7", "U1.9", "U1.10",
+                "L1.2", "C3.2", "C4.2", "C5.2"
+            ]
+        },
+        {
+            "name": "RF_SRC",
+            "pads": ["C1.1"],
+            "note": "SMA J1 center pin — RF input from source/instrument"
+        },
+        {
+            "name": "RF_IN_NODE",
+            "pads": ["C1.2", "L1.1", "U1.2"],
+            "note": "RF input node: C1 output, L1 shunt, U1 RF-IN pin"
+        },
+        {
+            "name": "RF_OUT_DC_IN",
+            "pads": ["U1.8", "L2.2", "C2.1"],
+            "note": "Combined RF output / DC bias input node at U1 pin 8"
+        },
+        {
+            "name": "VDD",
+            "pads": ["R1.1"],
+            "note": "+5V supply input — from J3 connector or test point"
+        },
+        {
+            "name": "VDD_FILTERED",
+            "pads": ["R1.2", "L2.1", "C3.1", "C4.1", "C5.1"],
+            "note": "Filtered VDD rail feeding L2 bias choke"
+        },
+        {
+            "name": "RF_OUT",
+            "pads": ["C2.2"],
+            "note": "SMA J2 center pin — RF output to load/instrument"
+        }
+    ],
+    "traces": [
+        {
+            "net": "RF_SRC",
+            "width_mm": 0.35,
+            "note": "50Ω microstrip — width calculated for board stackup",
+            "segments": [
+                { "start": { "x": 5, "y": 11 }, "end": { "x": 11.5, "y": 11 } }
+            ]
+        },
+        {
+            "net": "RF_IN_NODE",
+            "width_mm": 0.35,
+            "note": "50Ω microstrip — keep short",
+            "segments": [
+                { "start": { "x": 12.5, "y": 11 }, "end": { "x": 14, "y": 11 } },
+                { "start": { "x": 14, "y": 11 }, "end": { "x": 15.25, "y": 11 } },
+                { "start": { "x": 14, "y": 11 }, "end": { "x": 14, "y": 12.7 } }
+            ]
+        },
+        {
+            "net": "RF_OUT_DC_IN",
+            "width_mm": 0.35,
+            "note": "50Ω microstrip — keep short",
+            "segments": [
+                { "start": { "x": 18.75, "y": 11 }, "end": { "x": 21, "y": 11 } },
+                { "start": { "x": 21, "y": 11 }, "end": { "x": 23.5, "y": 11 } },
+                { "start": { "x": 21, "y": 11 }, "end": { "x": 21, "y": 8.8 } }
+            ]
+        },
+        {
+            "net": "RF_OUT",
+            "width_mm": 0.35,
+            "note": "50Ω microstrip",
+            "segments": [
+                { "start": { "x": 24.5, "y": 11 }, "end": { "x": 30, "y": 11 } }
+            ]
+        },
+        {
+            "net": "VDD",
+            "width_mm": 0.5,
+            "segments": [
+                { "start": { "x": 14, "y": 7 }, "end": { "x": 16.5, "y": 7 } }
+            ]
+        },
+        {
+            "net": "VDD_FILTERED",
+            "width_mm": 0.5,
+            "segments": [
+                { "start": { "x": 17.5, "y": 7 }, "end": { "x": 21, "y": 7 } },
+                { "start": { "x": 21, "y": 7 }, "end": { "x": 21, "y": 7.2 } },
+                { "start": { "x": 21, "y": 7 }, "end": { "x": 20, "y": 7 } },
+                { "start": { "x": 20, "y": 7 }, "end": { "x": 20, "y": 6.5 } },
+                { "start": { "x": 21, "y": 7 }, "end": { "x": 22, "y": 7 } },
+                { "start": { "x": 22, "y": 7 }, "end": { "x": 22, "y": 6.5 } },
+                { "start": { "x": 21, "y": 7 }, "end": { "x": 26, "y": 7 } },
+                { "start": { "x": 26, "y": 7 }, "end": { "x": 26, "y": 6.1 } }
+            ]
+        },
+        {
+            "net": "GND",
+            "width_mm": 0.5,
+            "segments": [
+                { "start": { "x": 14, "y": 14.3 }, "end": { "x": 14, "y": 16 } },
+                { "start": { "x": 20, "y": 7.5 }, "end": { "x": 20, "y": 16 } },
+                { "start": { "x": 22, "y": 7.5 }, "end": { "x": 22, "y": 16 } },
+                { "start": { "x": 26, "y": 7.9 }, "end": { "x": 26, "y": 16 } }
+            ]
+        }
+    ],
+    "vias": [
+        {
+            "x": 17,
+            "y": 11,
+            "drill": 0.3,
+            "diameter": 0.6,
+            "net": "GND",
+            "note": "Thermal via under U1 exposed paddle — use 4x2x2 grid"
+        },
+        {
+            "x": 16.5,
+            "y": 10.5,
+            "drill": 0.3,
+            "diameter": 0.6,
+            "net": "GND"
+        },
+        {
+            "x": 17.5,
+            "y": 10.5,
+            "drill": 0.3,
+            "diameter": 0.6,
+            "net": "GND"
+        },
+        {
+            "x": 16.5,
+            "y": 11.5,
+            "drill": 0.3,
+            "diameter": 0.6,
+            "net": "GND"
+        },
+        {
+            "x": 17.5,
+            "y": 11.5,
+            "drill": 0.3,
+            "diameter": 0.6,
+            "net": "GND"
+        },
+        {
+            "x": 14,
+            "y": 16,
+            "drill": 0.3,
+            "diameter": 0.6,
+            "net": "GND",
+            "note": "GND stitch via — L1 return"
+        }
+    ],
+    "areas": [
+        {
+            "net": "GND",
+            "layer": "B.Cu",
+            "type": "copper_pour",
+            "priority": 0,
+            "note": "Full ground plane on back copper — no splits, no voids under RF traces",
+            "outline": [
+                { "x": 0, "y": 0 },
+                { "x": 35, "y": 0 },
+                { "x": 35, "y": 22 },
+                { "x": 0, "y": 22 }
+            ]
+        },
+        {
+            "net": "GND",
+            "layer": "F.Cu",
+            "type": "copper_pour",
+            "priority": 0,
+            "note": "Front copper GND pour — fill all non-signal areas, clearance 0.2mm",
+            "outline": [
+                { "x": 0, "y": 0 },
+                { "x": 35, "y": 0 },
+                { "x": 35, "y": 22 },
+                { "x": 0, "y": 22 }
+            ]
+        }
+    ],
+    "connectors": [
+        {
+            "id": "J1",
+            "ref": "J1",
+            "type": "SMA_edge_launch",
+            "x": 2.5,
+            "y": 11,
+            "net": "RF_SRC",
+            "note": "RF-IN — SMA edge-launch, 50Ω. Orient flush with board edge."
+        },
+        {
+            "id": "J2",
+            "ref": "J2",
+            "type": "SMA_edge_launch",
+            "x": 32.5,
+            "y": 11,
+            "net": "RF_OUT",
+            "note": "RF-OUT — SMA edge-launch, 50Ω. Orient flush with board edge."
+        },
+        {
+            "id": "J3",
+            "ref": "J3",
+            "type": "2pin_header_2.54mm",
+            "x": 10,
+            "y": 7,
+            "net": "VDD",
+            "note": "+5V power input — 2-pin header, pin 1 = VDD, pin 2 = GND"
+        }
+    ],
+    "design_rules": {
+        "min_trace_width_mm": 0.15,
+        "min_clearance_mm": 0.15,
+        "min_via_drill_mm": 0.3,
+        "rf_trace_width_mm": 0.35,
+        "power_trace_width_mm": 0.5,
+        "stackup": "2-layer FR4, 1.6mm, 35um Cu",
+        "rf_trace_note": "0.35mm trace on 1.6mm FR4 gives ~50Ω. Recalculate for actual stackup."
+    }
+}
