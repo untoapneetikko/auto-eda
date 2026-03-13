@@ -3281,8 +3281,9 @@ async function runAutoRoute() {
     }
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'Autoroute failed');
-    if (data.traces && editor?.board) {
-      editor.board.traces = data.traces;
+    const traces = data.traces ?? data.board?.traces;
+    if (traces && editor?.board) {
+      editor.board.traces = traces;
       editor.render(); rebuildCompList(); updateBoardInfo();
     }
     const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets`;
