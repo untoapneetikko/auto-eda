@@ -1340,6 +1340,23 @@ def api_history_activate(slug: str, hid: str):
     _active_version_path(slug).write_text(
         json.dumps({"id": hid, "label": snap.get("label", ""), "vNum": v_num}, indent=2),
         encoding="utf-8")
+    _broadcast("library_updated", {"slug": slug, "reason": "version_activated"})
+    return {"ok": True, "label": snap.get("label", ""), "vNum": v_num}
+
+@router.post("/library/{slug}/history/{hid}/set-active")
+def api_history_set_active(slug: str, hid: str):
+    """Mark a snapshot as the active version WITHOUT overwriting profile.json.
+    Use this after creating a new snapshot from the current profile — no data loss risk."""
+    snap_path = _history_dir(slug) / (hid + ".json")
+    if not snap_path.exists():
+        raise HTTPException(404, "Not found")
+    snap = json.loads(snap_path.read_text(encoding="utf-8"))
+    h = _history_dir(slug)
+    files = sorted(h.glob("*.json"))
+    v_num = next((i + 1 for i, f in enumerate(files) if f.stem == hid), 0)
+    _active_version_path(slug).write_text(
+        json.dumps({"id": hid, "label": snap.get("label", ""), "vNum": v_num}, indent=2),
+        encoding="utf-8")
     return {"ok": True, "label": snap.get("label", ""), "vNum": v_num}
 
 @router.get("/library/{slug}/active_version")
@@ -2580,13 +2597,15 @@ async def autoroute_direct(request: Request):
 # ── Autoplace ─────────────────────────────────────────────────────────────────
 
 def run_autoplace(board: dict) -> dict:
-    """Simple grid-based net-aware autoplacer.
+    """Force-directed net-proximity autoplacer.
 
-    Sorts components by number of net connections (descending), then places
-    them left-to-right in rows with a configurable pitch, keeping connected
-    components close together using a greedy nearest-neighbour heuristic.
+    Converts the PCB board JSON into the format expected by
+    compute_net_proximity_placement(), runs the Fruchterman-Reingold
+    force-directed algorithm (net-attraction + global radial repulsion +
+    courtyard clearance enforcement), then writes the resulting x/y
+    positions back into the board component list.
     """
-    import math as _math
+    from agents.autoplace.placement_optimizer import compute_net_proximity_placement  # noqa: PLC0415
 
     bw = float(board.get("board", {}).get("width", 100))
     bh = float(board.get("board", {}).get("height", 100))
@@ -2594,30 +2613,54 @@ def run_autoplace(board: dict) -> dict:
     if not components:
         return {**board}
 
-    # Build net adjacency: comp_ref → set of nets
+    # Build comp_ref → list[net_name] from the board nets list.
+    # Each net entry looks like: {"name": "VDD", "pads": ["U1.1", "C1.2", ...]}
     nets = board.get("nets", [])
-    comp_nets: dict[str, set] = {c["ref"]: set() for c in components}
+    comp_nets: dict[str, list[str]] = {c["ref"]: [] for c in components}
     for net in nets:
+        net_name = net.get("name", "")
+        if not net_name:
+            continue
         for pad_ref in net.get("pads", []):
             ref = pad_ref.split(".")[0]
-            if ref in comp_nets:
-                comp_nets[ref].add(net.get("name", ""))
+            if ref in comp_nets and net_name not in comp_nets[ref]:
+                comp_nets[ref].append(net_name)
 
-    # Sort: most connections first
-    components.sort(key=lambda c: -len(comp_nets.get(c.get("ref", ""), set())))
+    # Also pull nets directly from component pad definitions if present
+    # (pads list on each component: [{..., "net": "VDD"}, ...])
+    for comp in components:
+        ref = comp.get("ref", "")
+        for pad in comp.get("pads", []):
+            net_name = pad.get("net", "")
+            if net_name and ref in comp_nets and net_name not in comp_nets[ref]:
+                comp_nets[ref].append(net_name)
 
-    # Simple row placement with 8mm pitch
-    pitch_x, pitch_y = 8.0, 8.0
-    margin = 5.0
-    cols = max(1, int((bw - 2 * margin) / pitch_x))
+    # Build the optimizer-format component list
+    opt_components = [
+        {
+            "reference": c.get("ref", c.get("id", "?")),
+            "value":     c.get("value", ""),
+            "footprint": c.get("footprint", ""),
+            "nets":      comp_nets.get(c.get("ref", c.get("id", "")), []),
+        }
+        for c in components
+    ]
 
-    placed: list[str] = []
-    for i, comp in enumerate(components):
-        col = i % cols
-        row = i // cols
-        comp["x"] = round(margin + col * pitch_x, 3)
-        comp["y"] = round(margin + row * pitch_y, 3)
-        placed.append(comp.get("ref", ""))
+    # Run the force-directed placement
+    placements = compute_net_proximity_placement(
+        components=opt_components,
+        board_width_mm=bw,
+        board_height_mm=bh,
+    )
+
+    # Write x/y back into the original component dicts (preserve all other fields)
+    placement_by_ref = {p["reference"]: p for p in placements}
+    for comp in components:
+        ref = comp.get("ref", comp.get("id", ""))
+        if ref in placement_by_ref:
+            comp["x"] = placement_by_ref[ref]["x"]
+            comp["y"] = placement_by_ref[ref]["y"]
+            comp["rotation"] = placement_by_ref[ref]["rotation"]
 
     result = dict(board)
     result["components"] = components
