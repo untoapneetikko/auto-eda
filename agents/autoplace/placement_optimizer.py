@@ -359,29 +359,53 @@ def compute_net_proximity_placement(
             pos[i][1] = hh[i] + EDGE_MARGIN
 
     # ------------------------------------------------------------------ #
-    # 6. Iterative optimisation                                            #
+    # 6. Iterative optimisation  (Fruchterman-Reingold style)              #
+    #                                                                      #
+    # Each iteration accumulates two forces per component, then applies    #
+    # them simultaneously, then enforces courtyard hard constraints.       #
+    #                                                                      #
+    # Force A — NET ATTRACTION (spring toward co-net centroid)             #
+    #   Pulls each component toward the centroid of every component it     #
+    #   shares a net with.  Weighted by number of shared connections.      #
+    #   Step capped by cooling schedule to avoid oscillation.              #
+    #                                                                      #
+    # Force B — GLOBAL RADIAL REPULSION (1/r²)                            #
+    #   Applied between EVERY pair of components regardless of nets.       #
+    #   This is what prevents all components collapsing onto a single      #
+    #   line — the radial direction spreads them in 2D naturally.          #
+    #   Strength decreases with the cooling schedule.                      #
+    #                                                                      #
+    # Hard constraint — COURTYARD CLEARANCE                                #
+    #   After forces are applied, any pair closer than the package-to-     #
+    #   package gap is pushed apart radially until exactly legal.          #
     # ------------------------------------------------------------------ #
-    REPULSION_PASSES = 8  # courtyard-push passes per iteration
+    COURTYARD_PASSES = 10  # hard-constraint enforcement passes per iter
 
     for iteration in range(iterations):
-        # Cooling: large steps early, tiny steps near the end
-        alpha = 1.0 - (iteration / iterations)
-        max_step = 6.0 * alpha + 0.3  # mm — maximum single-step pull
+        alpha = 1.0 - (iteration / iterations)        # 1 → 0 as we cool
+        max_step  = 5.0 * alpha + 0.2                 # attraction cap (mm)
+        # Repulsion constant: tuned so global spread force is weaker than
+        # net-attraction at typical cluster distances, but strong enough to
+        # break degeneracy (prevents all components collapsing onto one line).
+        # Formula: k²/d where k = sqrt(area/n)*0.15 → gentle at d > ~2 mm.
+        _k = math.sqrt(board_width_mm * board_height_mm / max(n, 1)) * 0.15
+        k_repulse = _k * _k * alpha
 
-        # --- Net-attraction pull ---
+        forces = [[0.0, 0.0] for _ in range(n)]
+
+        # ---- Force A: net-attraction ---------------------------------- #
         for i, comp in enumerate(components):
             if is_conn[i]:
-                continue  # connectors are pinned to edge
-
+                continue
             nets = comp.get("nets", [])
             if not nets:
                 continue
 
-            # Weighted centroid over ALL nets (each co-net neighbour counts once)
             cx_sum = cy_sum = weight = 0.0
             for net in nets:
-                neighbours = [j for j in net_to_idxs.get(net, []) if j != i]
-                for j in neighbours:
+                for j in net_to_idxs.get(net, []):
+                    if j == i:
+                        continue
                     cx_sum += pos[j][0]
                     cy_sum += pos[j][1]
                     weight += 1.0
@@ -389,75 +413,95 @@ def compute_net_proximity_placement(
             if weight == 0:
                 continue
 
-            target_x = cx_sum / weight
-            target_y = cy_sum / weight
-
-            dx = target_x - pos[i][0]
-            dy = target_y - pos[i][1]
+            dx = (cx_sum / weight) - pos[i][0]
+            dy = (cy_sum / weight) - pos[i][1]
             dist = math.hypot(dx, dy)
             if dist > 1e-6:
-                move = min(dist, max_step)
-                pos[i][0] += (dx / dist) * move
-                pos[i][1] += (dy / dist) * move
+                pull = min(dist, max_step)
+                forces[i][0] += (dx / dist) * pull
+                forces[i][1] += (dy / dist) * pull
 
-        # --- Courtyard repulsion (multiple passes for stability) ---
-        for _ in range(REPULSION_PASSES):
+        # ---- Force B: global radial repulsion ------------------------- #
+        for i in range(n):
+            for j in range(i + 1, n):
+                ddx = pos[i][0] - pos[j][0]
+                ddy = pos[i][1] - pos[j][1]
+                dist = math.hypot(ddx, ddy)
+
+                if dist < 1e-4:
+                    # Degenerate — add random nudge to break symmetry
+                    angle = rng.uniform(0, 2 * math.pi)
+                    ddx, ddy = math.cos(angle), math.sin(angle)
+                    dist = 1e-4
+
+                # Repulsion force magnitude (Fruchterman-Reingold: k²/d)
+                rep = min(k_repulse / dist, max_step)
+                nx, ny = ddx / dist, ddy / dist
+                forces[i][0] += nx * rep
+                forces[i][1] += ny * rep
+                forces[j][0] -= nx * rep
+                forces[j][1] -= ny * rep
+
+        # ---- Apply accumulated forces --------------------------------- #
+        for i in range(n):
+            if is_conn[i]:
+                continue
+            fx, fy = forces[i]
+            fmag = math.hypot(fx, fy)
+            if fmag > max_step:
+                fx = (fx / fmag) * max_step
+                fy = (fy / fmag) * max_step
+            pos[i][0] += fx
+            pos[i][1] += fy
+
+        # ---- Hard constraint: courtyard clearance --------------------- #
+        for _ in range(COURTYARD_PASSES):
             for i in range(n):
                 for j in range(i + 1, n):
-                    xi, yi = pos[i]
-                    xj, yj = pos[j]
+                    ddx = pos[j][0] - pos[i][0]
+                    ddy = pos[j][1] - pos[i][1]
+                    dist = math.hypot(ddx, ddy)
 
-                    # Minimum centre-to-centre separation along each axis
-                    req_sep_x = hw[i] + hw[j] + min_clearance_mm
-                    req_sep_y = hh[i] + hh[j] + min_clearance_mm
+                    if dist < 1e-4:
+                        angle = rng.uniform(0, 2 * math.pi)
+                        ddx, ddy = math.cos(angle), math.sin(angle)
+                        dist = 1e-4
 
-                    ddx = xj - xi
-                    ddy = yj - yi
-                    abs_dx = abs(ddx)
-                    abs_dy = abs(ddy)
-
-                    gap_x = abs_dx - (hw[i] + hw[j])
-                    gap_y = abs_dy - (hh[i] + hh[j])
-                    # Effective courtyard gap = max of the two axes
-                    # (AABB logic: if gap_y >= 0 they don't overlap in Y)
-                    effective_gap = max(gap_x, gap_y)
-
-                    if effective_gap >= min_clearance_mm:
-                        continue  # already legal — no push needed
-
-                    # Push apart along the axis that needs the least shove
-                    push_along_x = req_sep_x - abs_dx
-                    push_along_y = req_sep_y - abs_dy
-
-                    if push_along_x <= push_along_y:
-                        # Push horizontally — smaller correction
-                        half = push_along_x / 2.0 + 1e-4
-                        sign = 1 if ddx >= 0 else -1
-                        if is_conn[i]:
-                            pos[j][0] += sign * half * 2
-                        elif is_conn[j]:
-                            pos[i][0] -= sign * half * 2
-                        else:
-                            pos[i][0] -= sign * half
-                            pos[j][0] += sign * half
+                    # AABB minimum centre-to-centre distance in direction (ddx,ddy)
+                    nx, ny = ddx / dist, ddy / dist
+                    # Conservative bound: use the larger half-extent on each axis
+                    if abs(nx) > 1e-9:
+                        t_x = (hw[i] + hw[j] + min_clearance_mm) / abs(nx)
                     else:
-                        # Push vertically — smaller correction
-                        half = push_along_y / 2.0 + 1e-4
-                        sign = 1 if ddy >= 0 else -1
-                        if is_conn[i]:
-                            pos[j][1] += sign * half * 2
-                        elif is_conn[j]:
-                            pos[i][1] -= sign * half * 2
-                        else:
-                            pos[i][1] -= sign * half
-                            pos[j][1] += sign * half
+                        t_x = float("inf")
+                    if abs(ny) > 1e-9:
+                        t_y = (hh[i] + hh[j] + min_clearance_mm) / abs(ny)
+                    else:
+                        t_y = float("inf")
+                    min_dist = min(t_x, t_y)  # AABB touch distance in this dir
 
-            # Boundary clamp + re-pin connectors
-            for i in range(n):
-                pos[i][0] = max(hw[i] + 1.0, min(board_width_mm  - hw[i] - 1.0, pos[i][0]))
-                pos[i][1] = max(hh[i] + 1.0, min(board_height_mm - hh[i] - 1.0, pos[i][1]))
-                if is_conn[i]:
-                    pos[i][1] = hh[i] + EDGE_MARGIN  # re-pin to edge after repulsion
+                    if dist >= min_dist:
+                        continue  # already clear
+
+                    push = (min_dist - dist) / 2.0 + 1e-4
+                    if is_conn[i]:
+                        pos[j][0] += nx * push * 2
+                        pos[j][1] += ny * push * 2
+                    elif is_conn[j]:
+                        pos[i][0] -= nx * push * 2
+                        pos[i][1] -= ny * push * 2
+                    else:
+                        pos[i][0] -= nx * push
+                        pos[i][1] -= ny * push
+                        pos[j][0] += nx * push
+                        pos[j][1] += ny * push
+
+        # ---- Boundary clamp + re-pin connectors ----------------------- #
+        for i in range(n):
+            pos[i][0] = max(hw[i] + 1.0, min(board_width_mm  - hw[i] - 1.0, pos[i][0]))
+            pos[i][1] = max(hh[i] + 1.0, min(board_height_mm - hh[i] - 1.0, pos[i][1]))
+            if is_conn[i]:
+                pos[i][1] = hh[i] + EDGE_MARGIN
 
     # ------------------------------------------------------------------ #
     # 7. Final strict-clearance enforcement pass                           #
