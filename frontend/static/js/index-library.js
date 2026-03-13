@@ -1,0 +1,598 @@
+// ── Upload ─────────────────────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file?.type === 'application/pdf') uploadFile(file);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) uploadFile(e.target.files[0]); });
+
+async function uploadFile(file) {
+  const status = document.getElementById('upload-status');
+  const instructions = document.getElementById('parse-instructions');
+  status.className = 'upload-status uploading';
+  status.textContent = `Uploading ${file.name}...`;
+  instructions.style.display = 'none';
+
+  const form = new FormData();
+  form.append('pdf', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error);
+
+    status.className = 'upload-status success';
+    status.textContent = `✓ Uploaded — ${data.charCount.toLocaleString()} chars extracted (${data.confidence} confidence)`;
+
+    // Show Claude Code instructions
+    const prompt = buildPrompt(data.slug);
+    instructions.style.display = 'block';
+    instructions.innerHTML = `
+      <strong style="color:var(--text);">Now ask Claude Code to parse it:</strong><br>
+      <div style="margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:10px;font-family:monospace;font-size:11px;color:var(--text-dim);white-space:pre-wrap;cursor:pointer;" onclick="copyPrompt(this)" title="Click to copy">${prompt}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Click the box to copy, then paste into your Claude Code session.</div>
+    `;
+
+    await loadLibrary();
+    selectPart(data.slug);
+
+  } catch (err) {
+    status.className = 'upload-status error';
+    status.textContent = '✗ ' + err.message;
+  }
+}
+
+function buildPrompt(slug) {
+  return `parse datasheet ${slug}`;
+}
+
+async function copyPrompt(el) {
+  await navigator.clipboard.writeText(el.textContent.trim());
+  const orig = el.style.borderColor;
+  el.style.borderColor = 'var(--green)';
+  setTimeout(() => el.style.borderColor = orig, 1000);
+}
+
+// ── Library ────────────────────────────────────────────────────────────────
+function renderLibrary(filter = '') {
+  const list = document.getElementById('library-list');
+  document.getElementById('lib-count').textContent = Object.keys(library).length;
+
+  const parts = Object.values(library).filter(p =>
+    !filter ||
+    p.part_number?.toLowerCase().includes(filter.toLowerCase()) ||
+    p.description?.toLowerCase().includes(filter.toLowerCase())
+  ).sort((a, b) => (b.parsed_at || b.uploaded_at || '').localeCompare(a.parsed_at || a.uploaded_at || ''));
+
+  if (parts.length === 0) {
+    list.innerHTML = `<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">No components yet.<br>Upload a datasheet PDF to start.</div>`;
+    return;
+  }
+
+  list.innerHTML = parts.map(p => {
+    const conf = p.status === 'pending_parse' ? 'pending_parse' : (p.confidence || 'HIGH');
+    const label = p.status === 'pending_parse' ? 'PENDING' : conf;
+    const isBuiltin = p.builtin;
+    return `<div class="part-item ${selectedSlug === p.slug ? 'active' : ''}" data-slug="${p.slug}" onclick="selectPart('${p.slug}')">
+      <div class="part-item-header">
+        <span class="part-name">${p.part_number || p.slug}</span>
+        <div style="display:flex;gap:4px;align-items:center;">
+          ${isBuiltin ? `<span style="font-size:9px;background:rgba(100,116,139,0.2);color:var(--text-muted);border-radius:3px;padding:1px 5px;">BUILT-IN</span>` : ''}
+          <span class="confidence-badge conf-${conf.toLowerCase()}">${label}</span>
+        </div>
+      </div>
+      <div class="part-desc">${p.description || (p.status === 'pending_parse' ? 'Awaiting parse by Claude Code' : 'No description')}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('lib-search').addEventListener('input', e => renderLibrary(e.target.value));
+
+async function selectPart(slug) {
+  selectedSlug = slug;
+  _leLoadedSlug = null; // force Layout Example reload for the new component
+  renderLibrary(document.getElementById('lib-search').value);
+  await loadProfile(slug);
+}
+
+async function loadProfile(slug) {
+  if (!slug || slug === 'undefined' || slug === 'null') return;
+  const res = await fetch(`/api/library/${slug}`, { cache: 'no-store' });
+  const profile = await res.json();
+  renderProfile(profile);
+  loadActiveVersionBadge(slug);
+}
+
+// ── Profile Render ─────────────────────────────────────────────────────────
+function renderProfile(p) {
+  showView('library');
+  const main = document.getElementById('view-library');
+
+  if (p.status === 'pending_parse') {
+    const prompt = `Read DATASHEET_PARSING_GUIDE.md first — it has the full schema, rules, and worked example (PMA3-83LNW+).
+
+Then parse this component:
+- Raw text: library/${p.slug}/raw_text.txt
+- Write result to: library/${p.slug}/profile.json
+- Preserve any existing human_corrections in the file
+- Set status "parsed", parsed_at current ISO timestamp
+- Keep existing filename/uploaded_at/page_count/raw_text_length values`;
+
+    main.innerHTML = `
+      <div class="pending-box">
+        <h3>⏳ ${p.part_number || p.slug} — Awaiting Parse</h3>
+        <p>
+          PDF uploaded successfully. Text extracted: <strong>${(p.raw_text_length || 0).toLocaleString()} characters</strong>
+          · Confidence: <strong>${p.confidence || '?'}</strong>
+          ${p.extraction_note ? `<br><span style="color:var(--yellow);">⚠ ${p.extraction_note}</span>` : ''}
+        </p>
+        <p style="margin-top:10px;">Copy this prompt and paste it into your Claude Code session:</p>
+        <div class="copy-prompt" onclick="copyText(this)" title="Click to copy">${prompt}</div>
+        <div class="copy-hint">Click the box to copy · Claude Code will read the extracted text and write the full component profile · This page updates automatically when done.</div>
+      </div>`;
+    return;
+  }
+
+  const absMax = p.absolute_max || {};
+  const pins = p.pins || [];
+  const passives = p.required_passives || [];
+  const mistakes = p.common_mistakes || [];
+  const corrections = p.human_corrections || [];
+  const confColor = { HIGH: 'var(--green)', MEDIUM: 'var(--yellow)', LOW: 'var(--red)', FAILED: 'var(--red)' };
+
+  main.innerHTML = `
+    <div class="profile-card" id="profile-card-root">
+      <div class="profile-header">
+        <div style="min-width:0;">
+          <div class="profile-part" style="display:flex;align-items:center;gap:8px;">${p.part_number || p.slug}<span id="active-version-badge" style="display:none;font-size:10px;font-weight:600;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);border-radius:4px;padding:1px 7px;color:#a78bfa;font-family:monospace;letter-spacing:.03em;"></span></div>
+          <div class="profile-desc">${p.description || ''}</div>
+          <div class="profile-meta">
+            ${p.manufacturer ? `<span class="meta-tag">${p.manufacturer}</span>` : ''}
+            ${(p.package_types || []).map(t => `<span class="meta-tag">${t}</span>`).join('')}
+            ${p.supply_voltage_range ? `<span class="meta-tag">⚡ ${p.supply_voltage_range}</span>` : ''}
+            <span class="meta-tag" style="color:${confColor[p.confidence]||'var(--green)'}">● ${p.confidence || 'HIGH'} confidence</span>
+            <span class="meta-tag desig-badge" title="Schematic designator prefix — edit inline" onclick="editDesignator(this, '${selectedSlug}')" style="cursor:pointer;color:#a78bfa;border-color:rgba(167,139,250,0.4);">${p.designator ? '🔖 ' + p.designator : '+ Add designator'}</span>
+          </div>
+        </div>
+        <div class="actions-bar" style="position:relative;">
+          <button class="btn btn-rebuild" id="rebuild-btn" onclick="queueRebuild()">✨ Generate</button>
+          <button class="btn btn-secondary" id="history-btn" onclick="openHistoryPanel()" title="Browse and restore previous versions">📋 Versions</button>
+          <button class="btn btn-secondary" onclick="exportProfile()">Export JSON</button>
+          <button class="btn btn-danger" onclick="deletePart()">Delete</button>
+          <!-- Generate popover -->
+          <div id="rebuild-popover" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:9999;background:var(--bg-2,#1e1e2e);border:1px solid var(--border,#333);border-radius:8px;padding:12px;width:340px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase;">What to generate</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;">
+              <button class="gen-toggle" id="gen-t-symbol"    onclick="genToggle('symbol')">🔷 Symbol</button>
+              <button class="gen-toggle" id="gen-t-schematic" onclick="genToggle('schematic')">📐 Schematic Example</button>
+              <button class="gen-toggle" id="gen-t-footprint" onclick="genToggle('footprint')">📦 Component Layout</button>
+              <button class="gen-toggle" id="gen-t-layout"    onclick="genToggle('layout')">🗺 Layout Example</button>
+            </div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase;">Optional instructions</div>
+            <textarea id="rebuild-notes" rows="3" placeholder="e.g. Add 2 missing bypass caps on the BIAS line. Use 100nF 0402." style="width:100%;box-sizing:border-box;background:var(--bg-1,#141420);border:1px solid var(--border,#333);border-radius:5px;color:var(--text,#e2e2e2);font-size:12px;padding:7px 9px;resize:vertical;outline:none;font-family:inherit;"></textarea>
+            <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">
+              <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="closeRebuildPopover()">Cancel</button>
+              <button class="btn btn-rebuild" id="rebuild-queue-btn" style="font-size:11px;padding:4px 12px;" onclick="confirmRebuild()">Queue ↗</button>
+            </div>
+          </div>
+          <!-- Versions popover -->
+          <div id="history-popover" style="display:none;position:fixed;z-index:9999;background:var(--bg-2,#1e1e2e);border:1px solid var(--border,#333);border-radius:8px;padding:14px;width:460px;box-shadow:0 8px 32px rgba(0,0,0,0.6);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;">Component Versions</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span id="history-slug-badge" style="font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 6px;color:var(--text-muted);font-family:monospace;"></span>
+                <button onclick="document.getElementById('history-popover').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;">✕</button>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;">
+              <button id="history-save-btn" onclick="historySaveActive()" style="flex:1;background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.35);border-radius:6px;color:#a78bfa;font-size:12px;font-weight:700;padding:7px 10px;cursor:pointer;">💾 Save</button>
+              <button onclick="historyNewVersion()" style="flex:1;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:6px;color:#4ade80;font-size:12px;font-weight:700;padding:7px 10px;cursor:pointer;">+ New Version</button>
+            </div>
+            <div id="history-name-row" style="display:none;margin-bottom:10px;gap:6px;flex-direction:row;">
+              <input id="history-save-label" type="text" placeholder="Version name…" style="flex:1;background:var(--bg-1,#141420);border:1px solid var(--border,#333);border-radius:5px;color:var(--text);font-size:11px;padding:5px 8px;outline:none;font-family:inherit;" onkeydown="if(event.key==='Enter')historySave();if(event.key==='Escape')historyCloseNameRow()">
+              <button onclick="historySave()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.35);border-radius:5px;color:#4ade80;font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;white-space:nowrap;">Create</button>
+              <button onclick="historyCloseNameRow()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--text-muted);font-size:11px;padding:5px 8px;cursor:pointer;">✕</button>
+            </div>
+            <div id="history-list" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">
+              <div style="color:var(--text-muted);font-size:11px;padding:8px 0;">Loading…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-tabs">
+        <button class="profile-tab active" id="tab-btn-datasheet" onclick="switchProfileTab('datasheet', this)">Symbol</button>
+        <button class="profile-tab" id="tab-btn-schematic" onclick="switchProfileTab('schematic', this)">Schematic Example</button>
+        <button class="profile-tab" id="tab-btn-footprint" onclick="switchProfileTab('footprint', this)">Component Layout</button>
+        <button class="profile-tab" id="tab-btn-layout-example" onclick="switchProfileTab('layout-example', this)">Layout Example</button>
+      </div>
+
+      <div id="tab-datasheet" class="tab-panel">
+      <div class="profile-body">
+        ${p.extraction_note ? `<div class="warning-banner">⚠ ${p.extraction_note} — Verify pin assignments before using in a circuit.</div>` : ''}
+
+        <div>
+          <!-- Symbol Editor toolbar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <div class="section-title" style="margin-bottom:0;">🔷 Symbol Editor</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button onclick="symEditorAddPin('left')" title="Add pin on left side" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 9px;font-size:11px;cursor:pointer;">+ L Pin</button>
+              <button onclick="symEditorAddPin('right')" title="Add pin on right side" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 9px;font-size:11px;cursor:pointer;">+ R Pin</button>
+              <button onclick="symEditorSave()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Save</button>
+            </div>
+          </div>
+          <!-- Editor area: canvas + right panel (pin list / pin form) -->
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;min-height:300px;">
+            <!-- Canvas — visual display only, no click events needed -->
+            <div style="flex:1;min-width:0;">
+              <svg id="symbol-canvas" style="display:block;width:100%;min-height:200px;"></svg>
+            </div>
+            <!-- Right panel -->
+            <div style="width:250px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;">
+
+              <!-- PIN LIST VIEW -->
+              <div id="sym-list-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+                <div style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;">Pins — click to edit</div>
+                <div id="sym-pin-list" style="overflow-y:auto;flex:1;"></div>
+                <div id="sym-nonic-hint" style="display:none;padding:8px 10px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);line-height:1.5;">Click a pin in the canvas or list to edit it</div>
+              </div>
+
+              <!-- PIN FORM VIEW (shown on pin click) -->
+              <div id="sym-form-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+                <div style="padding:7px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+                  <button onclick="symEditorBackToList()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:0;font-weight:600;">← Pins</button>
+                  <button id="sym-remove-btn" onclick="symEditorRemovePin()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:3px;color:#ef4444;padding:2px 7px;font-size:10px;cursor:pointer;">✕ Remove</button>
+                </div>
+                <div style="overflow-y:auto;flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+                  <div style="display:flex;gap:7px;">
+                    <div style="display:flex;flex-direction:column;gap:3px;">
+                      <label style="font-size:10px;color:var(--text-muted);">Pin #</label>
+                      <input id="spe-number" type="number" oninput="symEditorUpdatePin('number',this.value)"
+                        style="width:50px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;font-family:monospace;">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
+                      <label style="font-size:10px;color:var(--text-muted);">Name</label>
+                      <input id="spe-name" type="text" oninput="symEditorUpdatePin('name',this.value)"
+                        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;font-family:monospace;">
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:3px;">
+                    <label style="font-size:10px;color:var(--text-muted);">Type</label>
+                    <select id="spe-type" onchange="symEditorUpdatePin('type',this.value)"
+                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;width:100%;">
+                      <option value="input">input</option><option value="output">output</option>
+                      <option value="power">power</option><option value="gnd">gnd</option>
+                      <option value="passive">passive</option><option value="bidirectional">bidirectional</option>
+                    </select>
+                  </div>
+                  <div style="display:flex;gap:7px;">
+                    <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
+                      <label style="font-size:10px;color:var(--text-muted);">Active</label>
+                      <select id="spe-active" onchange="symEditorUpdatePin('active',this.value||null)"
+                        style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;width:100%;">
+                        <option value="">—</option><option value="high">high</option><option value="low">low</option>
+                      </select>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:3px;width:52px;">
+                      <label style="font-size:10px;color:var(--text-muted);">DS Page</label>
+                      <input id="spe-page" type="number" oninput="symEditorUpdatePin('datasheet_page',this.value)"
+                        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;">
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:3px;">
+                    <label style="font-size:10px;color:var(--text-muted);">Description</label>
+                    <textarea id="spe-desc" rows="3" oninput="symEditorUpdatePin('description',this.value)"
+                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;resize:vertical;width:100%;line-height:1.4;"></textarea>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:3px;">
+                    <label style="font-size:10px;color:var(--text-muted);">Requirements</label>
+                    <textarea id="spe-req" rows="2" oninput="symEditorUpdatePin('requirements',this.value)"
+                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;resize:vertical;width:100%;line-height:1.4;"></textarea>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        ${Object.keys(absMax).length ? `
+        <div>
+          <div class="section-title">⛔ Absolute Maximum Ratings</div>
+          <div class="abs-max-grid">
+            ${Object.entries(absMax).map(([k,v]) => `
+              <div class="abs-max-item">
+                <div class="abs-max-label">${k.replace(/_/g,' ')}</div>
+                <div class="abs-max-value">${v}</div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${pins.length ? `
+        <div>
+          <div class="section-title">📌 Pins (${pins.length})</div>
+          <table class="pin-table">
+            <thead><tr><th>#</th><th>Name</th><th>Type</th><th>Description & Requirements</th><th style="width:36px;text-align:center;color:var(--text-muted);font-size:10px;">p.</th></tr></thead>
+            <tbody>
+              ${pins.map(pin => `
+                <tr onclick="showPdfRef(${pin.datasheet_page||1}, ${JSON.stringify(pin.name||'')}, ${JSON.stringify((pin.description||'')+(pin.requirements?'↳ '+pin.requirements:''))}, this)" style="cursor:pointer;" title="Click to jump to datasheet page ${pin.datasheet_page||'?'}">
+                  <td class="pin-num">${pin.number??'—'}</td>
+                  <td class="pin-name">${pin.name||'—'}
+                    ${pin.active?`<span style="font-size:10px;color:var(--text-muted)"> /${pin.active}</span>`:''}
+                    ${pin.internal_pull?`<span style="font-size:10px;color:var(--text-muted)"> pull-${pin.internal_pull}</span>`:''}
+                  </td>
+                  <td><span class="pin-type type-${(pin.type||'passive').toLowerCase()}">${pin.type||'passive'}</span></td>
+                  <td>
+                    ${pin.description||''}
+                    ${pin.requirements?`<div class="pin-req">↳ ${pin.requirements}</div>`:''}
+                    ${pin.ambiguous?`<div class="pin-ambiguous">⚠ Ambiguous — verify manually</div>`:''}
+                  </td>
+                  <td style="text-align:center;font-size:10px;font-family:monospace;color:${pin.datasheet_page?'var(--accent)':'var(--border)'};">${pin.datasheet_page?pin.datasheet_page:'—'}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>` : ''}
+
+        ${passives.length ? `
+        <div>
+          <div class="section-title">🔧 Required Passives</div>
+          <div class="passives-list">
+            ${passives.map((pas,pi) => `
+              <div class="passive-item" onclick="showPdfRef(${pas.datasheet_page||4}, ${JSON.stringify(pas.value+' '+pas.type)}, ${JSON.stringify(pas.placement+(pas.reason?'. '+pas.reason:''))}, this)" style="cursor:pointer;" title="Click to jump to datasheet page ${pas.datasheet_page||'?'}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+                  <div class="passive-value">${pas.type} ${pas.value}</div>
+                  ${pas.datasheet_page?`<span style="font-size:10px;font-family:monospace;color:var(--accent);flex-shrink:0;">p.${pas.datasheet_page}</span>`:''}
+                </div>
+                <div class="passive-placement">📍 ${pas.placement}</div>
+                ${pas.reason?`<div class="passive-reason">${pas.reason}</div>`:''}
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${mistakes.length ? `
+        <div>
+          <div class="section-title">⚡ Common Mistakes & Warnings</div>
+          <div class="mistakes-list">
+            ${mistakes.map(m => `<div class="mistake-item">⚠ ${m}</div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${corrections.length ? `
+        <div>
+          <div class="section-title">✏ Human Corrections</div>
+          <div class="corrections-list">
+            ${corrections.map(c => `
+              <div class="correction-item">
+                <div style="font-size:10px;color:var(--text-muted);">${c.date}</div>
+                <div><strong>Was:</strong> ${c.original}</div>
+                <div><strong>Fixed:</strong> ${c.correction}</div>
+                ${c.reason?`<div style="color:var(--text-muted);margin-top:3px;">${c.reason}</div>`:''}
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        <div>
+          <div class="section-title">Add Human Correction</div>
+          <textarea id="corr-original" rows="2" placeholder="What was wrong (e.g. pin 4 connected to wrong net)"></textarea>
+          <textarea id="corr-fix" rows="2" placeholder="Correction (e.g. pin 4 is BOOT — must be pulled high via 100k)" style="margin-top:6px;"></textarea>
+          <textarea id="corr-reason" rows="1" placeholder="Reason (optional)" style="margin-top:6px;"></textarea>
+          <button class="btn btn-secondary" style="margin-top:8px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#22c55e;" onclick="saveCorrection()">Save Correction</button>
+        </div>
+
+        ${p.notes?`
+        <div>
+          <div class="section-title">📝 Notes</div>
+          <div style="font-size:13px;color:var(--text-dim);line-height:1.6;">${p.notes}</div>
+        </div>`:''}
+
+        <div style="font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:12px;">
+          Parsed ${p.parsed_at ? new Date(p.parsed_at).toLocaleString() : 'unknown'} · ${p.filename || ''}
+        </div>
+      </div>
+      </div>
+
+      <div id="tab-schematic" class="tab-panel" style="display:none;">
+        <div class="profile-body">
+          <div style="display:flex;align-items:stretch;">
+            <div style="flex:1;min-width:0;">
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px 0 0 8px;overflow:hidden;">
+                <!-- Toolbar: same tools as main editor -->
+                <div style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;">
+                  <button data-acc-tool="select" class="active" onclick="appCircuitEditor?.setTool('select')" title="Select — S" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">▶ Select</button>
+                  <button data-acc-tool="boxselect" onclick="appCircuitEditor?.setTool('boxselect')" title="Box Select — B" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">⬚ Box</button>
+                  <button data-acc-tool="wire" onclick="appCircuitEditor?.setTool('wire')" title="Wire — W" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">─ Wire</button>
+                  <button data-acc-tool="delete" onclick="appCircuitEditor?.setTool('delete')" title="Delete — D" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">✕ Delete</button>
+                  <span style="width:1px;height:16px;background:var(--border);display:inline-block;margin:0 2px;"></span>
+                  <button onclick="appCircuitEditor?._rotateSelected()" title="Rotate — R" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">⟳</button>
+                  <button onclick="appCircuitEditor?._fit()" title="Fit — F" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">⊞ Fit</button>
+                  <button id="acc-btn-undo" onclick="appCircuitEditor?._undo()" title="Undo — Ctrl+Z" disabled style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:default;opacity:0.35;">↩</button>
+                  <button id="acc-btn-redo" onclick="appCircuitEditor?._redo()" title="Redo — Ctrl+Y / Ctrl+Shift+Z" disabled style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:default;opacity:0.35;">↪</button>
+                  <span style="width:1px;height:16px;background:var(--border);display:inline-block;margin:0 2px;"></span>
+                  <button data-acc-tool="label" onclick="appCircuitEditor?.setTool('label')" title="Net Label — L" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">⊳ Label</button>
+                  <input id="acc-label-input" type="text" placeholder="Net name…" style="width:72px;padding:2px 5px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:10px;font-family:monospace;" onkeydown="if(event.key==='Enter'){event.target.blur();appCircuitEditor?.setTool('label');}"/>
+                  <span style="width:1px;height:16px;background:var(--border);display:inline-block;margin:0 2px;"></span>
+                  <button onclick="accSaveExample(this)" title="Save example circuit" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#22c55e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;cursor:pointer;">💾 Save</button>
+                  <button onclick="openExampleInEditor()" title="Open in full Schematic Editor" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">✏ Open in Editor</button>
+                </div>
+                <!-- Component palette bar -->
+                <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid var(--border);background:var(--bg);min-height:32px;">
+                  <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">Place:</span>
+                  <input id="acc-palette-search" type="text" placeholder="Search library…" oninput="renderAccPalette(this.value)" style="width:110px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:10px;font-family:monospace;flex-shrink:0;"/>
+                  <div id="acc-palette" style="display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;flex:1;align-items:center;"></div>
+                </div>
+                <svg id="app-circuit-canvas" style="display:block;width:100%;height:420px;"></svg>
+              </div>
+            </div>
+            <!-- Component info panel -->
+            <div id="acc-info-panel" style="width:195px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-left:none;border-radius:0 8px 8px 0;display:flex;flex-direction:column;overflow:hidden;">
+              <div style="padding:7px 10px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Component Info</div>
+              <div id="acc-info-empty" style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:10px;text-align:center;padding:12px;line-height:1.5;">Click a component<br>to see details</div>
+              <div id="acc-info-content" style="display:none;flex-direction:column;overflow-y:auto;flex:1;">
+                <div style="padding:6px 6px 4px;">
+                  <svg id="acc-info-canvas" style="width:100%;height:110px;display:block;background:var(--bg);border-radius:4px;border:1px solid var(--border);"></svg>
+                </div>
+                <div style="padding:0 8px 5px;">
+                  <div id="acc-info-name" style="font-family:monospace;font-weight:700;font-size:11px;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+                  <div id="acc-info-desc" style="font-size:10px;color:var(--text-dim);margin-top:2px;line-height:1.4;"></div>
+                </div>
+                <div style="padding:0 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:3px;">Pins</div>
+                <div id="acc-info-pins" style="padding:0 8px 8px;font-size:10px;"></div>
+              </div>
+            </div>
+            <!-- Nets section -->
+            <div style="border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;min-height:0;max-height:160px;">
+              <div style="padding:7px 10px 5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+                <span>Nets</span>
+                <span id="acc-nets-count" style="font-size:10px;font-weight:600;"></span>
+              </div>
+              <div id="acc-nets-list" style="overflow-y:auto;flex:1;">
+                <div style="padding:6px 10px;font-size:10px;color:var(--text-muted);">No nets yet.</div>
+              </div>
+            </div>
+          </div>
+
+          ${(() => {
+            // Build BOM from example_circuit.components if available, else required_passives
+            const ecComps = (p.example_circuit?.components || []).filter(c => c.slug && c.slug !== 'GND' && c.slug !== 'VCC');
+            if (!ecComps.length && !(p.required_passives||[]).length) return '';
+            const rows = ecComps.length
+              ? ecComps.map(c => {
+                  const typeLabel = c.symType === 'ic' ? 'IC' : (c.symType || 'passive');
+                  const typeCls = c.symType === 'ic' ? 'type-output' : 'type-passive';
+                  return `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;" title="Place ${c.designator||''} in schematic"
+                      data-slug="${esc(c.slug)}" data-st="${esc(c.symType||'ic')}" data-val="${esc(c.value||'')}">
+                    <td class="pin-num">${c.designator||''}</td>
+                    <td><span class="pin-type ${typeCls}">${typeLabel}</span></td>
+                    <td class="pin-name">${c.value||c.slug||''}</td>
+                    <td style="font-size:11px;color:var(--text-muted);">${c.slug||''}</td>
+                  </tr>`;
+                }).join('')
+              : `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;"
+                    data-slug="${esc(p.slug||p.part_number||'')}" data-st="ic" data-val="">
+                  <td class="pin-num">U1</td><td><span class="pin-type type-output">IC</span></td>
+                  <td class="pin-name">${p.part_number||''}</td><td style="font-size:11px;color:var(--text-muted);">${p.manufacturer||''}</td>
+                </tr>` + (p.required_passives||[]).map((pas,i) => {
+                  const ref = pas.type==='capacitor'?'C':pas.type==='inductor'?'L':'R';
+                  const slug = pas.type==='capacitor'?'CAPACITOR':pas.type==='inductor'?'INDUCTOR':'RESISTOR';
+                  return `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;"
+                      data-slug="${esc(slug)}" data-st="${esc(pas.type)}" data-val="${esc(pas.value||'')}">
+                    <td class="pin-num">${ref}${i+1}</td><td><span class="pin-type type-passive">${pas.type}</span></td>
+                    <td class="pin-name">${pas.value}</td><td style="font-size:11px;color:var(--text-muted);">${pas.part_number||'—'}</td>
+                  </tr>`;
+                }).join('');
+            return `<div>
+              <div class="section-title" style="display:flex;align-items:center;gap:8px;">🧩 Circuit Components <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">— click a row to place</span></div>
+              <table class="pin-table"><thead><tr><th>Ref</th><th>Type</th><th>Value</th><th>Slug</th></tr></thead><tbody>${rows}</tbody></table>
+            </div>`;
+          })()}
+        </div>
+      </div>
+
+      <div id="tab-footprint" class="tab-panel" style="display:none;">
+        <div class="profile-body">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <div class="section-title" style="margin-bottom:0;">🔲 Component Layout (Footprint)</div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+              <select id="fp-select" onchange="onFootprintSelect(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">
+                <option value="">— select footprint —</option>
+              </select>
+              <button onclick="fpSaveAssignment(this)" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Assign</button>
+              <button onclick="fpSavePads(this)" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;">💾 Save Pads</button>
+              <button onclick="fpGenerate(this)" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:4px;color:var(--accent);padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;">⚡ Generate</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+            <!-- Footprint canvas -->
+            <div style="flex:1;min-width:240px;">
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+                <svg id="fp-svg" style="display:block;width:100%;height:260px;cursor:crosshair;"></svg>
+              </div>
+              <div style="margin-top:6px;font-size:10px;color:var(--text-muted);text-align:center;">All dimensions in mm · Click pad to select</div>
+            </div>
+            <!-- Pad table -->
+            <div style="flex:1;min-width:240px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px;">Pads</div>
+              <div id="fp-pad-list" style="font-size:11px;"></div>
+              <button onclick="fpAddPad()" style="margin-top:8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 10px;font-size:11px;cursor:pointer;">+ Add Pad</button>
+            </div>
+          </div>
+          <!-- Footprint metadata -->
+          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+            <label style="font-size:11px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;">Name<input id="fp-name" type="text" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 7px;font-size:11px;font-family:monospace;width:120px;"></label>
+            <label style="font-size:11px;color:var(--text-muted);display:flex;flex-direction:column;gap:3px;">Description<input id="fp-desc" type="text" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 7px;font-size:11px;width:220px;"></label>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-layout-example" class="tab-panel" style="display:none;">
+        <div style="display:flex;flex-direction:column;height:calc(100vh - 160px);min-height:400px;">
+          <div id="le-notes" style="display:none;"></div>
+          <button id="le-save-btn" style="display:none;" onclick="leSaveLayout()"></button>
+          <!-- body: PCB iframe on top, BOM strip below -->
+          <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+            <!-- PCB editor iframe -->
+            <div style="flex:1;min-height:0;overflow:hidden;">
+              <iframe id="le-frame" src="/pcb.html?embedded=1" style="display:block;width:100%;height:100%;border:none;"></iframe>
+            </div>
+            <!-- BOM strip below canvas -->
+            <div style="flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;max-height:140px;">
+              <div style="padding:4px 10px 2px;display:flex;align-items:center;gap:8px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);">Components</div>
+                <div id="le-bom-count" style="font-size:10px;color:var(--text-muted);flex:1;">Click to add to layout</div>
+                <button id="le-save-btn-vis" onclick="leSaveLayout()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:3px;color:#22c55e;padding:1px 10px;font-size:10px;cursor:pointer;font-weight:600;">💾 Save</button>
+              </div>
+              <div id="le-bom-list" style="overflow-x:auto;overflow-y:hidden;display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px 6px;"></div>
+            </div>
+            <!-- Net mismatch table (shown below BOM when there are mismatches) -->
+            <div id="le-net-warning" style="display:none;flex-shrink:0;background:var(--surface);border-top:1px solid rgba(239,68,68,0.4);max-height:130px;overflow-y:auto;">
+              <div style="padding:3px 10px 2px;display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--surface);z-index:1;">
+                <span style="color:#ef4444;font-size:12px;font-weight:700;">✕ Net mismatch</span>
+                <button onclick="leAutoCorrectAllNets()" style="margin-left:6px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:3px;color:#fca5a5;padding:1px 8px;font-size:10px;cursor:pointer;font-weight:600;">Auto-correct all</button>
+                <span style="font-size:10px;color:var(--text-muted);margin-left:4px;">or fix individually below</span>
+              </div>
+              <table id="le-net-warning-list" style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace;"></table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>`;
+
+  updatePdfPanel(p);
+  requestAnimationFrame(() => renderSymbolWithEditor(p));
+  // Restore previously active profile tab (e.g. after SSE-triggered re-render)
+  if (currentProfileTab && currentProfileTab !== 'datasheet') {
+    const tabBtn = document.getElementById('tab-btn-' + currentProfileTab);
+    if (tabBtn) switchProfileTab(currentProfileTab, tabBtn);
+  }
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+let currentProfileTab = 'datasheet';
+function switchProfileTab(name, btn) {
+  currentProfileTab = name;
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.profile-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  btn.classList.add('active');
+  if (name === 'schematic') {
+    renderAccPalette(document.getElementById('acc-palette-search')?.value || '');
+    requestAnimationFrame(() => {
+      fetch(`/api/library/${selectedSlug}`).then(r => r.json()).then(p => renderAppCircuitWithEditor(p));
+    });
+  }
+  if (name === 'footprint') {
+    requestAnimationFrame(() => initFootprintTab(selectedSlug));
+  }
+  if (name === 'layout-example') {
+    requestAnimationFrame(() => renderLayoutExample(selectedSlug));
+  }
+}
