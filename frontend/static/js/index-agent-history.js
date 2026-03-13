@@ -218,6 +218,7 @@ async function _flushEditorsToProfile() {
           const t = setTimeout(() => reject(new Error('timeout')), 2000);
           const h = e => {
             if (e.data?.type !== 'boardData') return;
+            if (e.source !== frame.contentWindow) return; // ignore boardData from other iframes (e.g. pcb-frame)
             clearTimeout(t); window.removeEventListener('message', h); resolve(e.data.board);
           };
           window.addEventListener('message', h);

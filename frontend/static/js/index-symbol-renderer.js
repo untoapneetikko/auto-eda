@@ -448,6 +448,7 @@ async function leSaveLayout() {
       const timer = setTimeout(() => reject(new Error('PCB editor did not respond (timeout) — try clicking away and back to this tab')), 5000);
       const handler = e => {
         if (e.data?.type !== 'boardData') return;
+        if (e.source !== frame.contentWindow) return; // ignore boardData from other iframes (e.g. pcb-frame)
         clearTimeout(timer);
         window.removeEventListener('message', handler);
         resolve(e.data.board);
