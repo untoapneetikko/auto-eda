@@ -1,24 +1,3 @@
-  const projectId = tab?.projectId || editor.project?.id || null;
-  const isDirty = editor.dirty;
-
-  // Update "Update PCB" button visibility
-  const btn = document.getElementById('btn-update-pcb');
-  if (btn) btn.style.display = (isDirty && projectId) ? '' : 'none';
-
-  // Update PCB nav tab badge
-  const navPcb = document.getElementById('nav-pcb');
-  if (navPcb) {
-    navPcb.innerHTML = isDirty && projectId
-      ? '🔲 PCB <span style="color:#f59e0b;font-size:10px;">⚠</span>'
-      : '🔲 PCB';
-  }
-
-  // Notify PCB iframe if loaded
-  if (frame?.contentWindow && frame.src) {
-    try { frame.contentWindow.postMessage({ type: 'schematicDirty', projectId, isDirty }, '*'); } catch(_) {}
-  }
-}
-
 // Called when PCB iframe loads (or when switching to PCB tab) — re-send state
 function _pcbFrameReady() {
   const frame = document.getElementById('pcb-frame');
