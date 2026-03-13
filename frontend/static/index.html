@@ -4963,7 +4963,7 @@ function switchSection(name) {
   }
   if (name === 'pcb') {
     const frame = document.getElementById('pcb-frame');
-    if (!frame.src) frame.src = '/pcb.html?embedded=1';
+    if (!frame.src) frame.src = '/pcb.html?app=1';
     // Re-send current dirty state once frame is ready
     setTimeout(_pcbFrameReady, 800);
     // Auto-load the PCB for the active project so the user never needs to

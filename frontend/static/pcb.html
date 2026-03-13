@@ -2379,11 +2379,14 @@ let editor;
 window.addEventListener('load',()=>{
   // If standalone (not embedded in iframe), show back link
   const isEmbedded = window.location.search.includes('embedded=1');
-  if(!isEmbedded && window.parent===window){
+  // app=1  → main app PCB frame (shows board tabs, left panel)
+  // embedded=1 without app=1 → Layout Example iframe (hides board tabs, left panel)
+  const isAppFrame = window.location.search.includes('app=1');
+  if(!isEmbedded && !isAppFrame && window.parent===window){
     const bl=document.getElementById('pcb-back-link');
     if(bl)bl.style.display='';
   }
-  if(isEmbedded){
+  if(isEmbedded && !isAppFrame){
     document.body.classList.add('embedded');
   }
   const cv=document.getElementById('pcb-canvas');
@@ -2403,9 +2406,9 @@ window.addEventListener('load',()=>{
   updateToolPanel('select');
   loadBoardTabs().then(()=>{
     // Restore last board from localStorage — standalone mode only.
-    // In embedded mode the parent page controls the board via importProject messages,
+    // In embedded/app-frame mode the parent page controls the board via importProject messages,
     // so we must not pre-load a stale board that would interfere with that flow.
-    if(!isEmbedded && !editor.board){
+    if(!isEmbedded && !isAppFrame && !editor.board){
       try{
         const saved=localStorage.getItem('pcb_last_board');
         if(saved){
