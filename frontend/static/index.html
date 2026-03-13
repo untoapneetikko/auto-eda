@@ -7782,6 +7782,7 @@ function escapeHtml(s) {
 // ── Agents View ──────────────────────────────────────────────────────────────
 
 let _agentsTimer = null;
+let _agentsLastLoad = 0;
 
 const CAT_ICON = { library:'📚', schematic:'📐', layout:'🔲', other:'⚙' };
 const PRI_STYLE = { urgent:'background:rgba(239,68,68,0.2);color:#ef4444', high:'background:rgba(245,158,11,0.2);color:#f59e0b', medium:'background:rgba(108,99,255,0.2);color:#818cf8', low:'background:rgba(100,116,139,0.2);color:#64748b' };
@@ -7827,6 +7828,9 @@ function agentsLiveCard(agent) {
 
 async function agentsLoad() {
   clearTimeout(_agentsTimer);
+  const now = Date.now();
+  if (now - _agentsLastLoad < 2500) { _agentsTimer = setTimeout(agentsLoad, 2500); return; }
+  _agentsLastLoad = now;
 
   await pipelineAgentsLoad();
 
@@ -8224,7 +8228,7 @@ function _handlePipelineSSE(evt, data) {
 
   // On done: reload history into server cache regardless of pane state, re-render if open
   if (evt === 'pipeline_agent_done') {
-    setTimeout(pipelineAgentsLoad, 400);
+    setTimeout(agentsLoad, 400);
     fetch(`/api/pipeline/agents/${name}/history`)
       .then(r => r.json())
       .then(hist => { if (name === _activePaAgent) _paRenderHistory(hist); })
@@ -8290,7 +8294,7 @@ function _handlePipelineSSE(evt, data) {
     const btn = document.getElementById('pa-send-btn');
     if (btn) btn.disabled = false;
     document.getElementById('pa-chat-input')?.focus();
-    setTimeout(pipelineAgentsLoad, 400);
+    setTimeout(agentsLoad, 400);
   }
 }
 
