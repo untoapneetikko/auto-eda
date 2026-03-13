@@ -660,21 +660,58 @@ async def api_gen_tickets_update(tid: int, request: Request):
     _save_gen_tickets(data)
     ticket = data["tickets"][idx]
 
-    # Auto-snapshot when a ticket transitions to "done"
+    # Update active version when a ticket transitions to "done"
     if body.get("status") == "done" and old_status != "done" and ticket.get("slug"):
         slug = ticket["slug"]
         label = f"AI — GT-{tid:03d}"
-        ts = _snapshot_profile(slug, label)
-        if ts:
-            h = _history_dir(slug)
-            files = sorted(h.glob("*.json"))
-            v_num = next((i + 1 for i, f in enumerate(files) if f.stem == ts), len(files))
-            _active_version_path(slug).write_text(
-                json.dumps({"id": ts, "label": label, "vNum": v_num}, indent=2),
-                encoding="utf-8")
+        av_path = _active_version_path(slug)
+        pp = _profile_path(slug)
+        if pp.exists():
+            # If an active version exists, update it in-place with the new AI content
+            # (don't create a new version number — just stamp the existing snapshot with
+            #  the AI label and the freshly-written profile data).
+            active_id = None
+            v_num = 1
+            if av_path.exists():
+                try:
+                    av = json.loads(av_path.read_text(encoding="utf-8"))
+                    active_id = av.get("id")
+                    v_num = av.get("vNum", 1)
+                except Exception:
+                    pass
+            if active_id:
+                snap_path = _history_dir(slug) / (active_id + ".json")
+                if snap_path.exists():
+                    snap_path.write_text(json.dumps({
+                        "saved_at": datetime.now(timezone.utc).isoformat(),
+                        "label": label,
+                        "profile": json.loads(pp.read_text(encoding="utf-8")),
+                    }, indent=2), encoding="utf-8")
+                    av_path.write_text(
+                        json.dumps({"id": active_id, "label": label, "vNum": v_num}, indent=2),
+                        encoding="utf-8")
+                else:
+                    # Snapshot file missing — create fresh
+                    ts = _snapshot_profile(slug, label)
+                    if ts:
+                        h = _history_dir(slug)
+                        files = sorted(h.glob("*.json"))
+                        v_num = next((i + 1 for i, f in enumerate(files) if f.stem == ts), len(files))
+                        av_path.write_text(
+                            json.dumps({"id": ts, "label": label, "vNum": v_num}, indent=2),
+                            encoding="utf-8")
+            else:
+                # No active version yet — create one
+                ts = _snapshot_profile(slug, label)
+                if ts:
+                    h = _history_dir(slug)
+                    files = sorted(h.glob("*.json"))
+                    v_num = next((i + 1 for i, f in enumerate(files) if f.stem == ts), len(files))
+                    av_path.write_text(
+                        json.dumps({"id": ts, "label": label, "vNum": v_num}, indent=2),
+                        encoding="utf-8")
             _broadcast("library_updated", {"slug": slug, "reason": "ticket_completed",
                                            "ticketId": tid, "label": label, "vNum": v_num})
-            # Also fire profile_updated so the profile panel reloads if this slug is open
             _broadcast("profile_updated", {"slug": slug, "reason": "ticket_completed",
                                            "label": label, "vNum": v_num})
 

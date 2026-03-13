@@ -101,6 +101,13 @@ class SchematicEditor {
 
   loadExample(profile) {
     const circ = JSON.parse(JSON.stringify(profile.example_circuit || buildExampleCircuit(profile)));
+    // Normalize wires: support both {points:[]} and legacy {x1,y1,x2,y2} formats
+    circ.wires = (circ.wires || []).map(w => {
+      if (!w.points && (w.x1 !== undefined)) {
+        return { id: w.id || ('w_' + Math.random().toString(36).slice(2)), points: [{x: w.x1, y: w.y1}, {x: w.x2, y: w.y2}] };
+      }
+      return w;
+    });
     // Tag every component with its example origin so PCB importer can use template layout
     const _egId = 'eg_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 4);
     const _egSlug = profile.slug || '';
@@ -120,6 +127,13 @@ class SchematicEditor {
     // Deep copy so we don't mutate the cached profile data
     const circ = JSON.parse(JSON.stringify(profile.example_circuit || buildExampleCircuit(profile)));
     if (!circ.components.length) return;
+    // Normalize wires: support both {points:[]} and legacy {x1,y1,x2,y2} formats
+    circ.wires = (circ.wires || []).map(w => {
+      if (!w.points && (w.x1 !== undefined)) {
+        return { id: w.id || ('w_' + Math.random().toString(36).slice(2)), points: [{x: w.x1, y: w.y1}, {x: w.x2, y: w.y2}] };
+      }
+      return w;
+    });
     // Tag with example origin BEFORE applying placement offset
     const _egId = 'eg_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 4);
     const _egSlug = profile.slug || '';

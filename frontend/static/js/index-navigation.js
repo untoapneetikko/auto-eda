@@ -149,6 +149,15 @@ async function accSaveExample(btn) {
     wires: appCircuitEditor.project.wires,
     labels: appCircuitEditor.project.labels || []
   };
+  // Guard: don't overwrite a non-empty saved circuit with an empty canvas.
+  // This can happen if the editor re-initialises before the circuit is loaded.
+  if (circuit.components.length === 0) {
+    const stored = profileCache[selectedSlug]?.example_circuit;
+    if (stored && (stored.components || []).length > 0) {
+      if (btn) { btn.textContent = '✕ Canvas empty – not saved'; btn.disabled = false; setTimeout(() => { btn.textContent = '💾 Save'; }, 2500); }
+      return;
+    }
+  }
   if (btn) { btn.textContent = '⏳ Saving…'; btn.disabled = true; }
   try {
     const res = await fetch(`/api/library/${encodeURIComponent(selectedSlug)}/example_circuit`, {
