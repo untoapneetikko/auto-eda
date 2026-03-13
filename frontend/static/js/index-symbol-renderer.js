@@ -207,6 +207,16 @@ function leFixTraceNets(board) {
 
 function leAutoCorrectPad(ref, padNum, expectedNet, rowIdx) {
   if (!_leBoard) return;
+  // Sync current component positions from the live iframe into _leBoard so we
+  // don't reset any moves the user made when we reload the board.
+  const frame = document.getElementById('le-frame');
+  const liveBoard = frame?.contentWindow?.pcbEditorInstance?.board;
+  if (liveBoard?.components) {
+    for (const lc of liveBoard.components) {
+      const bc = _leBoard.components?.find(c => c.ref === lc.ref);
+      if (bc) { bc.x = lc.x; bc.y = lc.y; bc.rotation = lc.rotation; }
+    }
+  }
   const comp = _leBoard.components?.find(c => c.ref === ref);
   if (!comp) return;
   const pad = comp.pads?.find(p => String(p.number) === String(padNum) || p.name === padNum);
@@ -215,13 +225,22 @@ function leAutoCorrectPad(ref, padNum, expectedNet, rowIdx) {
   // Dim the row to indicate fixed
   const row = document.getElementById(`le-mm-row-${rowIdx}`);
   if (row) row.style.opacity = '0.35';
-  const frame = document.getElementById('le-frame');
   frame?.contentWindow?.postMessage({ type: 'loadBoard', board: _leBoard, hideBoardOutline: true }, '*');
 }
 
 // Fix all mismatched pads in _leBoard at once
 function leAutoCorrectAllNets() {
   if (!_leBoard) return;
+  // Sync current component positions from the live iframe into _leBoard so we
+  // don't reset any moves the user made when we reload the board.
+  const frame = document.getElementById('le-frame');
+  const liveBoard = frame?.contentWindow?.pcbEditorInstance?.board;
+  if (liveBoard?.components) {
+    for (const lc of liveBoard.components) {
+      const bc = _leBoard.components?.find(c => c.ref === lc.ref);
+      if (bc) { bc.x = lc.x; bc.y = lc.y; bc.rotation = lc.rotation; }
+    }
+  }
   const mismatches = leValidateNets(_leBoard, _leBomData);
   for (const m of mismatches) {
     const comp = _leBoard.components?.find(c => c.ref === m.ref);
@@ -229,7 +248,6 @@ function leAutoCorrectAllNets() {
     if (pad) pad.net = m.expected;
   }
   leFixTraceNets(_leBoard);
-  const frame = document.getElementById('le-frame');
   frame?.contentWindow?.postMessage({ type: 'loadBoard', board: _leBoard, hideBoardOutline: true }, '*');
   leShowNetWarning(leValidateNets(_leBoard, _leBomData));
 }
@@ -426,14 +444,13 @@ function leAddComponent(bomIdx) {
 }
 
 async function leSaveLayout() {
-  if (!selectedSlug) {
+  const slug = selectedSlug; // capture now — selectedSlug may change during async ops
+  if (!slug) {
     alert('No component selected — open a component from the library first.');
     return;
   }
   // Guard: iframe must have finished loading THIS component's board.
-  // _leLoadedSlug is set inside send() only after postMessage({loadBoard}) fires,
-  // so if it doesn't match we'd be saving a stale board from a previous component.
-  if (_leLoadedSlug !== selectedSlug) {
+  if (_leLoadedSlug !== slug) {
     alert('Layout not ready yet — please wait a moment and try again.');
     return;
   }
@@ -443,42 +460,26 @@ async function leSaveLayout() {
   const origText = btn ? btn.textContent : '💾 Save';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
   try {
-    if (!frame.contentWindow) throw new Error('PCB editor not loaded — reload the page and try again');
-    console.log('[LE-SAVE] requesting board from le-frame, slug=', selectedSlug);
-    const board = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('PCB editor did not respond (timeout) — try clicking away and back to this tab')), 5000);
-      const handler = e => {
-        if (e.data?.type !== 'boardData') return;
-        console.log('[LE-SAVE] boardData received, e.source===frame.contentWindow:', e.source === frame.contentWindow, e.source, frame.contentWindow);
-        if (e.source !== frame.contentWindow) { console.warn('[LE-SAVE] boardData from unexpected source, ignoring'); return; }
-        clearTimeout(timer);
-        window.removeEventListener('message', handler);
-        resolve(e.data.board);
-      };
-      window.addEventListener('message', handler);
-      frame.contentWindow.postMessage({ type: 'getBoard' }, '*');
-    });
-    if (!board) throw new Error('No board data returned from PCB editor');
-    // Log component positions to verify we have the moved state
-    const positions = (board.components || []).map(c => `${c.ref}:(${c.x},${c.y})`).join(', ');
-    console.log('[LE-SAVE] board components positions:', positions);
-    const res = await fetch(`/api/library/${encodeURIComponent(selectedSlug)}/layout_example`, {
+    // Read board directly from the same-origin iframe's editor instance.
+    // This avoids the async postMessage getBoard/boardData round-trip which can
+    // fail if the message handler isn't registered or e.source checks mismatch.
+    const pcbInst = frame.contentWindow?.pcbEditorInstance;
+    const board = pcbInst?.board ?? null;
+    if (!board) throw new Error('PCB editor board not available — try switching away and back to the Layout Example tab');
+    const res = await fetch(`/api/library/${encodeURIComponent(slug)}/layout_example`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(board)
     });
-    console.log('[LE-SAVE] PUT response status:', res.status);
     if (!res.ok) {
       const errText = await res.text().catch(() => res.status);
       throw new Error(`Server error ${res.status}: ${errText}`);
     }
-    const resJson = await res.json().catch(() => null);
-    console.log('[LE-SAVE] PUT response body:', resJson);
     // Keep the in-memory cache in sync so the early-return in renderLayoutExample
     // serves the freshly-saved board rather than the stale pre-edit snapshot.
     _leBoard = board;
-    await _syncActiveSnapshot(); // keep active version snapshot in sync (must complete before user can Activate)
-    console.log('[LE-SAVE] save complete ✓');
+    _leLoadedSlug = slug; // ensure guard stays valid (slug is stable)
+    await _syncActiveSnapshot(); // keep active version snapshot in sync
     if (btn) { btn.textContent = '✓ Saved'; }
     const notes = document.getElementById('le-notes');
     if (notes && !notes.textContent.includes('✓')) notes.textContent += ' · ✓ saved';

@@ -3,6 +3,43 @@
 // App bootstrap
 // ═══════════════════════════════════════════════════════════════
 let editor;
+// Expose editor for same-origin parent frames (e.g. leSaveLayout reads board directly
+// via frame.contentWindow.pcbEditorInstance.board — avoids async postMessage round-trip).
+Object.defineProperty(window, 'pcbEditorInstance', { get: () => editor, configurable: true });
+
+// ── Early message listener ───────────────────────────────────────────────────
+// Registered immediately so loadBoard/getBoard messages sent by the parent right
+// after creating the iframe (before CDN scripts finish and window.load fires)
+// are never dropped.  Messages that need closure-scoped helpers are buffered
+// and replayed once _pcbMsgExtra is wired up at the end of window.load.
+let _pendingMsgs = [];
+window.addEventListener('message', e => {
+  if (!e.data || typeof e.data !== 'object') return;
+  if (!editor) { _pendingMsgs.push(e); return; }
+  _dispatchPcbMsg(e);
+});
+
+function _dispatchPcbMsg(e) {
+  if (e.data.type === 'loadBoard' && e.data.board) {
+    editor.hideBoardOutline = !!e.data.hideBoardOutline;
+    const result = editor.load(e.data.board);
+    if (result.ok) {
+      editor.render();
+      setTimeout(()=>{if(typeof runDRCTab==='function')runDRCTab();},100);
+    }
+    return;
+  }
+  if (e.data.type === 'getBoard') {
+    const src = e.source || (window.parent !== window ? window.parent : null);
+    if (src) src.postMessage({ type: 'boardData', board: editor.board }, '*');
+    return;
+  }
+  // Remaining messages need helpers from the window.load closure — delegate.
+  if (typeof _pcbMsgExtra === 'function') _pcbMsgExtra(e);
+}
+
+let _pcbMsgExtra = null;
+// ── End early listener ───────────────────────────────────────────────────────
 
 window.addEventListener('load',()=>{
   // If standalone (not embedded in iframe), show back link
@@ -53,27 +90,13 @@ window.addEventListener('load',()=>{
     }
   });
 
-  // postMessage API for embedding (e.g. Layout Example tab)
-  window.addEventListener('message', e => {
-    if (!e.data || typeof e.data !== 'object') return;
+  // Wire up the extra handler for messages that need closure-scoped helpers,
+  // then replay any messages that arrived before editor was ready.
+  _pcbMsgExtra = (e) => {
     if (e.data.type === 'tabVisible') {
       // Parent section became visible — re-size canvas and fit board
       resize();
       if (editor && editor.board) editor.render();
-    }
-    if (e.data.type === 'loadBoard' && e.data.board) {
-      editor.hideBoardOutline = !!e.data.hideBoardOutline;
-      const result = editor.load(e.data.board);
-      if (result.ok) {
-        editor.render();
-        // Auto-run DRC so conflict markers and table appear immediately
-        setTimeout(()=>{if(typeof runDRCTab==='function')runDRCTab();},100);
-      }
-    }
-    if (e.data.type === 'getBoard') {
-      // Parent requesting current board JSON (e.g. for save)
-      const src = e.source || (window.parent !== window ? window.parent : null);
-      if (src) src.postMessage({ type: 'boardData', board: editor.board }, '*');
     }
     if (e.data.type === 'importProject' && e.data.projectId) {
       // Guard: if the same project is already mid-import, ignore this retry message.
@@ -254,6 +277,11 @@ window.addEventListener('load',()=>{
         editor._flashComp = comp; setTimeout(() => { editor._flashComp = null; editor.render(); }, 700);
       }
     }
-  });
+  };
+
+  // Replay any messages buffered before editor was ready (e.g. loadBoard sent
+  // by parent the instant the iframe's load event fired on their side).
+  _pendingMsgs.splice(0).forEach(_dispatchPcbMsg);
 });
+
 
