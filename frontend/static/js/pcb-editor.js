@@ -1047,6 +1047,9 @@ class PCBEditor {
     this._snapshot();
     for(const c of(this.board.components||[]))
       if(affectedGrpIds.has(c.groupId)&&selIds.has(c.id)) delete c.groupId;
+    // Also remove groupId from traces and vias that belonged to affected groups
+    for(const tr of(this.board.traces||[])) if(affectedGrpIds.has(tr.groupId)) delete tr.groupId;
+    for(const v of(this.board.vias||[])) if(affectedGrpIds.has(v.groupId)) delete v.groupId;
     this.board.groups=this.board.groups.filter(g=>{
       if(!affectedGrpIds.has(g.id))return true;
       g.members=g.members.filter(id=>!selIds.has(id));
@@ -1072,6 +1075,30 @@ class PCBEditor {
     });
     for(const c of comps) c.groupId=gid;
     this.board.groups.push({id:gid,name:gname,members:memberIds});
+    // Auto-assign groupId to traces/vias that are geometrically inside the group bounding box
+    {
+      let bx1=Infinity,by1=Infinity,bx2=-Infinity,by2=-Infinity;
+      for(const c of comps){
+        const bb=this._compBBox(c);if(!bb)continue;
+        bx1=Math.min(bx1,c.x+bb.x1);by1=Math.min(by1,c.y+bb.y1);
+        bx2=Math.max(bx2,c.x+bb.x2);by2=Math.max(by2,c.y+bb.y2);
+      }
+      if(isFinite(bx1)){
+        const m=2; // 2 mm margin
+        bx1-=m;by1-=m;bx2+=m;by2+=m;
+        for(const tr of(this.board.traces||[])){
+          if(tr.groupId)continue;
+          const allIn=(tr.segments||[]).length>0&&(tr.segments||[]).every(seg=>
+            seg.start.x>=bx1&&seg.start.x<=bx2&&seg.start.y>=by1&&seg.start.y<=by2&&
+            seg.end.x>=bx1&&seg.end.x<=bx2&&seg.end.y>=by1&&seg.end.y<=by2);
+          if(allIn) tr.groupId=gid;
+        }
+        for(const v of(this.board.vias||[])){
+          if(v.groupId)continue;
+          if(v.x>=bx1&&v.x<=bx2&&v.y>=by1&&v.y<=by2) v.groupId=gid;
+        }
+      }
+    }
     this.render();
   }
 
@@ -1276,16 +1303,28 @@ class PCBEditor {
     const ctx=this.ctx;
     const comps=this.board.components||[];
     // Determine which group (if any) is currently selected
-    const selGrpId=this.selectedComp?.groupId||null;
+    const selGrpId=this.selectedComp?.groupId||this.selectedVia?.groupId||this.selectedTrace?.groupId||null;
     for(const grp of groups){
       const members=comps.filter(c=>grp.members.includes(c.id));
       if(members.length<2)continue;
-      // Compute bounding box over all member pads
+      // Compute bounding box over all member pads, grouped traces and grouped vias
       let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity;
       for(const c of members){
         const bb=this._compBBox(c); if(!bb)continue;
         x1=Math.min(x1,c.x+bb.x1); y1=Math.min(y1,c.y+bb.y1);
         x2=Math.max(x2,c.x+bb.x2); y2=Math.max(y2,c.y+bb.y2);
+      }
+      for(const tr of(this.board.traces||[])){
+        if(tr.groupId!==grp.id)continue;
+        for(const seg of(tr.segments||[])){
+          x1=Math.min(x1,seg.start.x,seg.end.x);y1=Math.min(y1,seg.start.y,seg.end.y);
+          x2=Math.max(x2,seg.start.x,seg.end.x);y2=Math.max(y2,seg.start.y,seg.end.y);
+        }
+      }
+      for(const v of(this.board.vias||[])){
+        if(v.groupId!==grp.id)continue;
+        x1=Math.min(x1,v.x);y1=Math.min(y1,v.y);
+        x2=Math.max(x2,v.x);y2=Math.max(y2,v.y);
       }
       if(!isFinite(x1))continue;
       const pad=1.5;
@@ -1584,15 +1623,47 @@ class PCBEditor {
               }
               this._startDrag(c,mx,my);
             } else if(picked.type==='via'){
-              this.selectedVia=picked.obj;
-              this._isDragVia=true;
-              this._dragViaOff={x:this.cX(mx)-picked.obj.x,y:this.cY(my)-picked.obj.y};
+              const _via=picked.obj;
+              const _viaGrp=_via.groupId&&this.board?.groups?.find(g=>g.id===_via.groupId);
+              if(_viaGrp){
+                // Via belongs to a group — select all group members and drag the whole group
+                const _repC=(this.board.components||[]).find(c=>_viaGrp.members.includes(c.id));
+                if(_repC){
+                  this.selectedComp=_repC;
+                  this.selectedComps=(this.board.components||[]).filter(c=>_viaGrp.members.includes(c.id));
+                  this._startDrag(_repC,mx,my);
+                } else {
+                  this.selectedVia=_via;this._isDragVia=true;
+                  this._dragViaOff={x:this.cX(mx)-_via.x,y:this.cY(my)-_via.y};
+                }
+              } else {
+                this.selectedVia=_via;
+                this._isDragVia=true;
+                this._dragViaOff={x:this.cX(mx)-_via.x,y:this.cY(my)-_via.y};
+              }
             } else if(picked.type==='trace'){
-              this.selectedTrace=picked.obj;
-              this._startTraceDrag(picked.obj,picked.segIdx??0,mx,my);
-              // Sync route net input to selected trace net
-              const rni=document.getElementById('route-net-input');
-              if(rni)rni.value=picked.obj.net||'';
+              const _tr=picked.obj;
+              const _trGrp=_tr.groupId&&this.board?.groups?.find(g=>g.id===_tr.groupId);
+              if(_trGrp){
+                // Trace belongs to a group — select all group members and drag the whole group
+                const _repC=(this.board.components||[]).find(c=>_trGrp.members.includes(c.id));
+                if(_repC){
+                  this.selectedComp=_repC;
+                  this.selectedComps=(this.board.components||[]).filter(c=>_trGrp.members.includes(c.id));
+                  this._startDrag(_repC,mx,my);
+                } else {
+                  this.selectedTrace=_tr;
+                  this._startTraceDrag(_tr,picked.segIdx??0,mx,my);
+                  const rni=document.getElementById('route-net-input');
+                  if(rni)rni.value=_tr.net||'';
+                }
+              } else {
+                this.selectedTrace=_tr;
+                this._startTraceDrag(_tr,picked.segIdx??0,mx,my);
+                // Sync route net input to selected trace net
+                const rni=document.getElementById('route-net-input');
+                if(rni)rni.value=_tr.net||'';
+              }
             } else if(picked.type==='area'){
               this.selectedArea=picked.obj;
             } else if(picked.type==='drawing'){
@@ -1709,17 +1780,35 @@ class PCBEditor {
           for(const{comp,ox,oy}of compsToMove){
             comp.x=newPX+ox; comp.y=newPY+oy;
           }
-          // Move trace endpoints connected to dragged pads
-          if(this._dragPadSnap){
-            const EPS=0.15;
-            for(const snap of this._dragPadSnap){
-              const oldX=snap.px, oldY=snap.py;
-              const newX=oldX+dx, newY=oldY+dy;
-              snap.px=newX; snap.py=newY;
-              for(const tr of(this.board.traces||[])){
-                for(const seg of(tr.segments||[])){
-                  if(Math.abs(seg.start.x-oldX)<EPS&&Math.abs(seg.start.y-oldY)<EPS){seg.start.x=newX;seg.start.y=newY;}
-                  if(Math.abs(seg.end.x-oldX)<EPS&&Math.abs(seg.end.y-oldY)<EPS){seg.end.x=newX;seg.end.y=newY;}
+          // If dragging a grouped component, translate ALL grouped traces and vias by dx/dy
+          const _dragGrpId=this._dragC?.groupId||null;
+          if(_dragGrpId){
+            for(const tr of(this.board.traces||[])){
+              if(tr.groupId!==_dragGrpId)continue;
+              for(const seg of(tr.segments||[])){
+                seg.start.x+=dx;seg.start.y+=dy;
+                seg.end.x+=dx;seg.end.y+=dy;
+              }
+            }
+            for(const v of(this.board.vias||[])){
+              if(v.groupId!==_dragGrpId)continue;
+              v.x+=dx;v.y+=dy;
+            }
+            // Keep pad-snap positions in sync so ratsnest stays correct
+            if(this._dragPadSnap){for(const snap of this._dragPadSnap){snap.px+=dx;snap.py+=dy;}}
+          } else {
+            // Move trace endpoints connected to dragged pads (non-grouped drag)
+            if(this._dragPadSnap){
+              const EPS=0.15;
+              for(const snap of this._dragPadSnap){
+                const oldX=snap.px, oldY=snap.py;
+                const newX=oldX+dx, newY=oldY+dy;
+                snap.px=newX; snap.py=newY;
+                for(const tr of(this.board.traces||[])){
+                  for(const seg of(tr.segments||[])){
+                    if(Math.abs(seg.start.x-oldX)<EPS&&Math.abs(seg.start.y-oldY)<EPS){seg.start.x=newX;seg.start.y=newY;}
+                    if(Math.abs(seg.end.x-oldX)<EPS&&Math.abs(seg.end.y-oldY)<EPS){seg.end.x=newX;seg.end.y=newY;}
+                  }
                 }
               }
             }
