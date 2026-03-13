@@ -560,6 +560,96 @@ def api_pcb_boards_delete(bid: str):
         f.unlink()
     return {"ok": True}
 
+@router.post("/pcb/import-schematic")
+async def api_pcb_import_schematic(request: Request):
+    """Convert a schematic project into an initial PCB board structure.
+
+    Body: { project: <project JSON>, boardW?: 80, boardH?: 60 }
+    Returns a board object compatible with PCBEditor.load():
+      { id, title, projectId, board:{width,height}, components:[...], traces:[], vias:[], nets:[], areas:[] }
+    """
+    import secrets as _sec
+    body = await request.json()
+    project  = body.get("project", {})
+    board_w  = float(body.get("boardW", 80))
+    board_h  = float(body.get("boardH", 60))
+
+    project_id  = project.get("id", "")
+    schem_comps = project.get("components", [])
+
+    if not schem_comps:
+        raise HTTPException(400, "No components in project")
+
+    # ── Load library profiles for all slugs ──────────────────────────────
+    profiles: dict[str, dict] = {}
+    for c in schem_comps:
+        slug = c.get("slug", "")
+        if slug and slug not in profiles:
+            pp = _profile_path(slug)
+            if pp.exists():
+                try:
+                    profiles[slug] = json.loads(pp.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+
+    # ── Convert schematic components → PCB components with pads ──────────
+    pcb_components: list[dict] = []
+    for comp in schem_comps:
+        slug    = comp.get("slug", "")
+        ref     = comp.get("ref") or comp.get("designator") or comp.get("id", "?")
+        value   = comp.get("value") or slug or ref
+        profile = profiles.get(slug, {})
+        pins    = profile.get("pins", [])
+
+        # Pick the first listed package, fall back to pin-count heuristics
+        pkg_types = profile.get("package_types") or []
+        if pkg_types:
+            pkg = pkg_types[0]
+        elif len(pins) > 4:
+            pkg = f"DIP-{max(len(pins), 8)}"
+        else:
+            pkg = "0402"
+
+        fp = _generate_footprint_rules(pkg, pins, ref)
+        if fp:
+            pads    = [dict(p) for p in fp.get("pads", [])]
+            fp_name = fp.get("name", pkg)
+        else:
+            # Generic 2-pad SMD fallback
+            pads = [
+                {"number": "1", "x": -0.5, "y": 0.0, "type": "smd",
+                 "shape": "rect", "size_x": 0.6, "size_y": 0.6},
+                {"number": "2", "x":  0.5, "y": 0.0, "type": "smd",
+                 "shape": "rect", "size_x": 0.6, "size_y": 0.6},
+            ]
+            fp_name = pkg or "Generic"
+
+        pcb_components.append({
+            "id":        f"{ref}_{_sec.token_hex(3)}",
+            "ref":       ref,
+            "value":     value,
+            "footprint": fp_name,
+            "x":         round(board_w / 2, 2),
+            "y":         round(board_h / 2, 2),
+            "rotation":  0,
+            "layer":     "F",
+            "pads":      pads,
+        })
+
+    board_data = {
+        "id":        _sec.token_hex(6),
+        "title":     project.get("name", "PCB Layout"),
+        "projectId": project_id,
+        "board":     {"width": board_w, "height": board_h},
+        "components": pcb_components,
+        "traces":    [],
+        "vias":      [],
+        "nets":      [],
+        "areas":     [],
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    return board_data
+
 # ── Issues ────────────────────────────────────────────────────────────────────
 @router.get("/issues")
 def api_issues_list():

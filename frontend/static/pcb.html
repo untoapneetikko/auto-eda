@@ -2311,7 +2311,7 @@ async function importSchematic(projectData) {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ project: projectData })
   });
-  if (!res.ok) { const e = await res.json(); throw new Error(e.detail || e.error || 'Import failed'); }
+  if (!res.ok) { let msg = 'Import failed'; try { const e = await res.json(); msg = e.detail || e.error || msg; } catch(_) { msg = res.statusText || msg; } throw new Error(msg); }
   return await res.json();
 }
 
