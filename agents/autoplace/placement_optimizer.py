@@ -810,6 +810,50 @@ def compute_greedy_placement(
         if not changed:
             break
 
+    # ── Net-pull compaction: slide each component toward net neighbours ──
+    # After push-apart, components may have drifted far from their net group.
+    # For each component, compute the pin-level centroid of its net neighbours
+    # and try to move it closer without causing collisions.
+    for _pull_pass in range(40):
+        any_moved = False
+        pull_order = list(range(n))
+        rng.shuffle(pull_order)
+        for i in pull_order:
+            if _is_connector(components[i]):
+                continue
+            # Compute target: weighted centroid of net-neighbour connecting pads
+            anchors: list[tuple[float, float, float]] = []
+            for j in range(n):
+                if j == i:
+                    continue
+                shared = _shared_nets(i, j)
+                if shared:
+                    ax, ay = _net_anchor(j, shared)
+                    anchors.append((ax, ay, float(len(shared))))
+            if not anchors:
+                continue
+            total_w = sum(a[2] for a in anchors)
+            tx = sum(a[0] * a[2] for a in anchors) / total_w
+            ty = sum(a[1] * a[2] for a in anchors) / total_w
+            # Direction vector toward target
+            dx_pull = tx - pos[i][0]
+            dy_pull = ty - pos[i][1]
+            dist = math.hypot(dx_pull, dy_pull)
+            if dist < 0.1:
+                continue
+            # Try stepping toward target (binary search for max step)
+            for frac in (1.0, 0.5, 0.25, 0.12):
+                nx = pos[i][0] + dx_pull * frac
+                ny = pos[i][1] + dy_pull * frac
+                old_x, old_y = pos[i][0], pos[i][1]
+                pos[i] = [nx, ny]
+                if not any(_collides(i, j) for j in range(n) if j != i):
+                    any_moved = True
+                    break
+                pos[i] = [old_x, old_y]
+        if not any_moved:
+            break
+
     # ── Re-centre cluster on the board ────────────────────────────────
     # The algorithm ignores board boundaries for tight packing.  Now shift
     # the entire cluster so its centroid sits at the board centre.
