@@ -25,6 +25,7 @@ class SchematicEditor {
     this.showNets = false;
     this._cachedNetOverlay = null;
     this._highlightedNet = null;
+    this._highlightedComp = null; // ID of highlighted component (from list click)
     this._noEvents = !!opts.noEvents;
     this._isEmbedded = !!opts.labelInputId; // true for appCircuitEditor, false for main editor
     this.labelInputId = opts.labelInputId || 'label-name-input';
@@ -1666,7 +1667,9 @@ class SchematicEditor {
     const hn = this._highlightedNet;
     const hlKeys = hn ? this._hlPortKeys() : null;
     const onNet = hn && (name === hn || hlKeys?.has(`${Math.round(lbl.x)},${Math.round(lbl.y)}`));
-    const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"' : '';
+    const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"'
+               : (this._highlightedComp && !sel) ? ' opacity="0.15"'
+               : '';
     const r = (sel || onNet) ? 4 : 3;
     const ring = sel
       ? `<circle cx="${lbl.x}" cy="${lbl.y}" r="7" fill="none" stroke="${nc}" stroke-width="1" opacity="0.4"/>`
@@ -1781,6 +1784,8 @@ class SchematicEditor {
       const hlWires = this._highlightedWireSet();
       if (hlWires?.has(wire.id)) { c = '#facc15'; sw = 2.8; }
       else { c = '#4b9cd3'; sw = 1.8; opStr = ' opacity="0.2"'; }
+    } else if (this._highlightedComp) {
+      c = '#4b9cd3'; sw = 1.8; opStr = ' opacity="0.15"';
     } else if (this.showNets) {
       // Color each wire by its assigned net so every wire visually shows it has a net
       const wNet = this._cachedNetOverlay?.wireToNet?.get(wire.id);
@@ -1814,19 +1819,23 @@ class SchematicEditor {
 
     // Net highlight: check if any world-space port of this component is on the highlighted net
     const hn = this._highlightedNet;
+    const hc = this._highlightedComp;
     let onNet = false;
     if (hn && !sel) {
       const hlKeys = this._hlPortKeys();
       if (hlKeys) onNet = this._ports(comp).some(p => hlKeys.has(`${Math.round(p.x)},${Math.round(p.y)}`));
     }
-    const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"' : '';
+    const isHlComp = hc && comp.id === hc;
+    const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"'
+                : (hc && !sel && !isHlComp) ? ' opacity="0.15"'
+                : '';
 
     let ph = '';
     if (showPorts) for (const p of ports)
       ph += `<circle cx="${p.dx}" cy="${p.dy}" r="3.5" fill="${hov ? '#60a5fa' : 'rgba(96,165,250,0.4)'}"/>`;
     // Net highlight ring (yellow glow behind the symbol when component is on the active net)
     let hlRing = '';
-    if (onNet) {
+    if (onNet || isHlComp) {
       const hw = lay.w / 2 + 5, hh = lay.h / 2 + 5;
       hlRing = `<rect x="${-hw}" y="${-hh}" width="${hw*2}" height="${hh*2}" fill="rgba(250,204,21,0.12)" stroke="#facc15" stroke-width="1.5" opacity="0.9"/>`;
     }

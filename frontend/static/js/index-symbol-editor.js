@@ -639,37 +639,40 @@ const _compTypeLabels = {
   vcc:'VCC', gnd:'GND'
 };
 
-function _compListRowHtml(c, onclickJs) {
+function _compListRowHtml(c, onclickJs, active) {
   const col = _compTypeColors[c.symType] || '#6c63ff';
   const lbl = _compTypeLabels[c.symType] || (c.symType||'IC').slice(0,4).toUpperCase();
   const des = esc(c.designator || c.id || '?');
   const val = esc(c.value || c.slug || '');
-  return `<div onclick="${onclickJs}" style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-    <span style="font-size:10px;font-weight:700;color:var(--text);font-family:monospace;min-width:26px;">${des}</span>
+  const bg = active ? 'background:rgba(250,204,21,0.1);border-left:3px solid #facc15;padding-left:7px;' : 'border-left:3px solid transparent;padding-left:7px;';
+  return `<div onclick="${onclickJs}" style="display:flex;align-items:center;gap:6px;padding:5px 10px 5px 7px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${bg}" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${active?'rgba(250,204,21,0.1)':''}'">
+    <span style="font-size:10px;font-weight:700;color:${active?'#facc15':'var(--text)'};font-family:monospace;min-width:26px;">${des}</span>
     <span style="font-size:9px;font-weight:700;color:${col};background:${col}22;border-radius:3px;padding:1px 4px;flex-shrink:0;">${lbl}</span>
     <span style="font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" title="${val}">${val}</span>
   </div>`;
 }
 
 function _schSelectComp(id) {
-  editor.selected = { type: 'comp', id };
+  editor._highlightedComp = editor._highlightedComp === id ? null : id;
   const comp = editor.project.components.find(c => c.id === id);
-  if (comp) {
+  if (editor._highlightedComp && comp) {
     editor.panX = editor._W() / 2 - comp.x * editor.zoom;
     editor.panY = editor._H() / 2 - comp.y * editor.zoom;
   }
   editor._render();
+  _renderSchCompList(); // refresh row highlight state
 }
 
 function _accSelectComp(id) {
   if (!appCircuitEditor) return;
-  appCircuitEditor.selected = { type: 'comp', id };
+  appCircuitEditor._highlightedComp = appCircuitEditor._highlightedComp === id ? null : id;
   const comp = appCircuitEditor.project.components.find(c => c.id === id);
-  if (comp) {
+  if (appCircuitEditor._highlightedComp && comp) {
     appCircuitEditor.panX = appCircuitEditor._W() / 2 - comp.x * appCircuitEditor.zoom;
     appCircuitEditor.panY = appCircuitEditor._H() / 2 - comp.y * appCircuitEditor.zoom;
   }
   appCircuitEditor._render();
+  _renderAccCompList(); // refresh row highlight state
 }
 
 function _renderSchCompList() {
@@ -680,7 +683,8 @@ function _renderSchCompList() {
     el.innerHTML = '<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">No components yet.</div>';
     return;
   }
-  el.innerHTML = comps.map(c => _compListRowHtml(c, `_schSelectComp('${c.id}')`)).join('');
+  const hc = editor._highlightedComp;
+  el.innerHTML = comps.map(c => _compListRowHtml(c, `_schSelectComp('${c.id}')`, c.id === hc)).join('');
 }
 
 function _renderAccCompList() {
@@ -702,7 +706,8 @@ function _renderAccCompList() {
   el.style.flexDirection = 'column';
   el.style.padding = '0';
   el.style.overflowY = 'auto';
-  el.innerHTML = comps.map(c => _compListRowHtml(c, `_accSelectComp('${c.id}')`)).join('');
+  const hc = appCircuitEditor._highlightedComp;
+  el.innerHTML = comps.map(c => _compListRowHtml(c, `_accSelectComp('${c.id}')`, c.id === hc)).join('');
 }
 
 function _showSchProjectPanel() {
