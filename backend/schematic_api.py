@@ -357,6 +357,14 @@ async def api_library_layout_example(slug: str, request: Request):
     profile["layout_example"] = body
     _write_profile(slug, profile)
     snapshot_id = _snapshot_profile(slug, "layout_example")
+    # Stamp this snapshot as the active version so history badge stays in sync
+    if snapshot_id:
+        h = _history_dir(slug)
+        files = sorted(h.glob("*.json"))
+        v_num = next((i + 1 for i, f in enumerate(files) if f.stem == snapshot_id), 1)
+        _active_version_path(slug).write_text(
+            json.dumps({"id": snapshot_id, "label": "layout_example", "vNum": v_num}, indent=2),
+            encoding="utf-8")
     return {"ok": True, "snapshot_id": snapshot_id}
 
 @router.put("/library/{slug}/footprint")

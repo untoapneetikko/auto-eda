@@ -454,61 +454,69 @@ function leAddComponent(bomIdx) {
 }
 
 async function leSaveLayout() {
-  const slug = selectedSlug; // capture now — selectedSlug may change during async ops
-  if (!slug) {
-    alert('No component selected — open a component from the library first.');
-    return;
-  }
-  const frame = document.getElementById('le-frame');
+  const slug = selectedSlug;
+  if (!slug) { alert('No component selected.'); return; }
+
   const btn = document.getElementById('le-save-btn-vis') || document.getElementById('le-save-btn');
-  if (!frame) { alert('PCB frame not found — try switching away and back to the Layout Example tab.'); return; }
   const origText = btn ? btn.textContent : '💾 Save';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
+
   try {
-    // Request the live board state from the iframe via getBoard/boardData.
-    // This reads editor.board directly — guaranteed fresh regardless of whether
-    // _snapshot() fired (it won't if the user released the mouse outside the canvas).
-    const board = await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        window.removeEventListener('message', handler);
-        reject(new Error('timeout waiting for board data — try switching away and back to the Layout Example tab'));
-      }, 4000);
-      function handler(e) {
-        if (e.data?.type !== 'boardData') return;
-        clearTimeout(timer);
-        window.removeEventListener('message', handler);
-        resolve(e.data.board);
-      }
-      window.addEventListener('message', handler);
-      frame.contentWindow?.postMessage({ type: 'getBoard' }, '*');
-    });
-    if (!board) throw new Error('PCB editor board not available — try switching away and back to the Layout Example tab');
-    const bodyStr = JSON.stringify(board);
-    // Show positions being saved in the button so user can verify without DevTools
-    const posSummary = (board.components || []).map(c => `${c.ref}:(${(+c.x).toFixed(1)},${(+c.y).toFixed(1)})`).join(' ');
-    if (btn) { btn.textContent = `Saving ${posSummary}`; }
+    // ── Step 1: get the live board JSON ──────────────────────────────────────
+    // Primary: direct same-origin property access — synchronous, always fresh.
+    const frame = document.getElementById('le-frame');
+    if (!frame) throw new Error('Layout Example iframe not found — switch to the Layout Example tab first.');
+
+    let board = frame.contentWindow?.pcbEditorInstance?.board ?? null;
+
+    // Fallback 1: leBoardChanged cache (updated on every drag)
+    if (!board) board = _leBoard ?? null;
+
+    // Fallback 2: postMessage roundtrip
+    if (!board) {
+      board = await new Promise((resolve, reject) => {
+        const t = setTimeout(() => {
+          window.removeEventListener('message', _h);
+          reject(new Error('Board not ready — open the Layout Example tab and wait for it to load'));
+        }, 4000);
+        function _h(e) {
+          if (e.data?.type !== 'boardData') return;
+          clearTimeout(t);
+          window.removeEventListener('message', _h);
+          resolve(e.data.board);
+        }
+        window.addEventListener('message', _h);
+        frame.contentWindow?.postMessage({ type: 'getBoard' }, '*');
+      });
+    }
+
+    if (!board) throw new Error('No board data available');
+
+    // ── Step 2: save to profile + snapshot + set active version ──────────────
     const res = await fetch(`/api/library/${encodeURIComponent(slug)}/layout_example`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: bodyStr
+      body: JSON.stringify(board)
     });
     if (!res.ok) {
-      const errText = await res.text().catch(() => res.status);
-      throw new Error(`Server error ${res.status}: ${errText}`);
+      const txt = await res.text().catch(() => String(res.status));
+      throw new Error(`Server error ${res.status}: ${txt}`);
     }
-    // Keep the in-memory cache in sync so the early-return in renderLayoutExample
-    // serves the freshly-saved board rather than the stale pre-edit snapshot.
+
+    // ── Step 3: update local cache + UI ──────────────────────────────────────
     _leBoard = board;
-    _leLoadedSlug = slug; // ensure guard stays valid (slug is stable)
-    await _syncActiveSnapshot(); // keep active version snapshot in sync
-    if (btn) { btn.textContent = `✓ ${posSummary}`; }
+    _leLoadedSlug = slug;
+
+    if (btn) { btn.textContent = '✓ Saved'; }
     const notes = document.getElementById('le-notes');
     if (notes && !notes.textContent.includes('✓')) notes.textContent += ' · ✓ saved';
+    if (typeof loadActiveVersionBadge === 'function') loadActiveVersionBadge(slug);
+
     setTimeout(() => {
       if (btn) { btn.disabled = false; btn.textContent = origText; }
     }, 2000);
-  } catch(e) {
-    console.error('[LE-SAVE] failed:', e);
+
+  } catch (e) {
     if (btn) { btn.disabled = false; btn.textContent = origText; }
     alert('Save failed: ' + e.message);
   }
