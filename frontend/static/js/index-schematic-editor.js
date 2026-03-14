@@ -345,11 +345,26 @@ class SchematicEditor {
       }
     }
 
-    // Component/label takes priority over wire — prevents wire-endpoint hits
-    // from blocking GND/VCC symbols whose ports sit right on wire endpoints.
+    // Hit resolution: wire precision (6px) beats loose component bbox, EXCEPT when
+    // the click is within PORT_R world-units of a component port — in that case the
+    // component wins so GND/VCC/etc. remain draggable even when a wire endpoint
+    // sits exactly on the port.
     const labelHit = this._hitLabel(sx, sy);
-    const comp = !labelHit ? this._hitComp(sx, sy) : null;
-    const wireFirst = !labelHit && !comp ? this._hitWire(sx, sy) : null;
+    const compHit  = !labelHit ? this._hitComp(sx, sy) : null;
+    const wireHit  = !labelHit ? this._hitWire(sx, sy) : null;
+    let comp = null;
+    if (compHit) {
+      if (!wireHit) {
+        comp = compHit; // only component, no wire
+      } else {
+        // Both hit: prefer component only when click is very close to one of its ports
+        const PORT_R = 12 / this.zoom;
+        const wp = this._toW(sx, sy);
+        const nearPort = this._ports(compHit).some(p => Math.hypot(p.x - wp.x, p.y - wp.y) < PORT_R);
+        comp = nearPort ? compHit : null;
+      }
+    }
+    const wireFirst = wireHit && !comp ? wireHit : null;
     const hitId = labelHit?.id || comp?.id;
 
     // Shift+click: toggle item in/out of multi-select
