@@ -468,9 +468,13 @@ Then parse this component:
               </div>
               <!-- Search overlay — covers the nets list when active -->
               <div id="acc-search-panel" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);flex-direction:column;z-index:10;">
-                <div style="padding:5px 8px 4px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px;flex-shrink:0;">
-                  <input id="acc-palette-search" type="text" placeholder="Search…" oninput="renderAccPalette(this.value)" style="flex:1;min-width:0;padding:2px 5px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:10px;font-family:monospace;"/>
-                  <button onclick="accShowPanel('nets')" title="Close search" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;">✕</button>
+                <div style="padding:7px 10px 5px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+                  <span>Components</span>
+                  <button onclick="accShowPanel('nets')" title="Close" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0;line-height:1;">✕</button>
+                </div>
+                <div style="padding:8px 8px 6px;flex-shrink:0;">
+                  <input id="acc-palette-search" type="text" placeholder="🔍 Search components…" oninput="renderAccPalette(this.value)"
+                    class="library-search" style="margin-bottom:0;font-size:11px;padding:6px 8px;width:100%;box-sizing:border-box;"/>
                 </div>
                 <div id="acc-palette" style="overflow-y:auto;flex:1;font-size:10px;"></div>
               </div>
