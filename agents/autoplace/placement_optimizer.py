@@ -404,6 +404,47 @@ def compute_greedy_placement(
     def _shared(i: int, j: int) -> int:
         return sum(1 for m in net_members.values() if i in m and j in m)
 
+    # ── Pad-level net index: which pad of component i connects to net N? ──
+    # comp_pad_nets[i][net_name] → list of pad indices into comp_pads[i]
+    # We also store the raw pad data per-component to re-index after rotation.
+    raw_pad_data: list[list[dict[str, Any]]] = [c.get("pads", []) for c in components]
+
+    def _build_pad_net_index(i: int) -> dict[str, list[int]]:
+        """Map net_name → list of pad indices in comp_pads[i]."""
+        result: dict[str, list[int]] = {}
+        raw = raw_pad_data[i]
+        for pi, p in enumerate(raw):
+            net = p.get("net", "")
+            if net:
+                result.setdefault(net, []).append(pi)
+        return result
+
+    comp_pad_nets: list[dict[str, list[int]]] = [_build_pad_net_index(i) for i in range(n)]
+
+    def _net_anchor(j: int, shared_nets_with_i: list[str]) -> tuple[float, float]:
+        """World position of j's connecting pad(s) for shared nets with i.
+
+        Instead of using j's component centre, compute the centroid of j's
+        pads that actually participate in the shared nets.  Falls back to
+        j's centre if no pad-level net info is available.
+        """
+        pad_positions: list[tuple[float, float]] = []
+        for net_name in shared_nets_with_i:
+            pad_indices = comp_pad_nets[j].get(net_name, [])
+            for pi in pad_indices:
+                if pi < len(comp_pads[j]):
+                    lx, ly, _, _ = comp_pads[j][pi]
+                    pad_positions.append((pos[j][0] + lx, pos[j][1] + ly))
+        if not pad_positions:
+            return (pos[j][0], pos[j][1])
+        cx = sum(p[0] for p in pad_positions) / len(pad_positions)
+        cy = sum(p[1] for p in pad_positions) / len(pad_positions)
+        return (cx, cy)
+
+    def _shared_nets(i: int, j: int) -> list[str]:
+        """Return list of net names shared between i and j."""
+        return [net for net, members in net_members.items() if i in members and j in members]
+
     pos: list[list[float]] = [[0.0, 0.0] for _ in range(n)]
 
     # ── Collision detection (pad-level) ────────────────────────────────
@@ -427,62 +468,109 @@ def compute_greedy_placement(
 
     # ── Exact Tetris snap positions ────────────────────────────────────
     def _snap_positions(i: int, j: int) -> list[tuple[float, float]]:
-        """Candidate positions where i locks adjacent to j with zero gap waste."""
+        """Candidate positions where i locks adjacent to j with zero gap waste.
+
+        Generates both centre-aligned and pin-aligned candidates.
+        Pin-aligned candidates place i so that its connecting pad is
+        directly adjacent to j's connecting pad on their shared net.
+        """
         cx_j, cy_j = pos[j]
         pads_i, pads_j = comp_pads[i], comp_pads[j]
         results: list[tuple[float, float]] = []
 
-        # RIGHT of j (cx_i > cx_j, same cy)
-        min_cx = -math.inf
-        constrained = False
-        for (lxi, lyi, hwi, hhi) in pads_i:
-            for (lxj, lyj, hwj, hhj) in pads_j:
-                if abs(lyi - lyj) < hhi + hhj + gap:
-                    constrained = True
-                    req = cx_j + lxj - lxi + hwi + hwj + gap
-                    if req > min_cx:
-                        min_cx = req
-        if constrained:
-            results.append((min_cx, cy_j))
+        def _cardinal_snaps(anchor_x: float, anchor_y: float) -> list[tuple[float, float]]:
+            """Compute 4 cardinal snaps for i relative to an anchor point."""
+            out: list[tuple[float, float]] = []
 
-        # LEFT of j
-        max_cx = math.inf
-        constrained = False
-        for (lxi, lyi, hwi, hhi) in pads_i:
-            for (lxj, lyj, hwj, hhj) in pads_j:
-                if abs(lyi - lyj) < hhi + hhj + gap:
-                    constrained = True
-                    req = cx_j + lxj - lxi - hwi - hwj - gap
-                    if req < max_cx:
-                        max_cx = req
-        if constrained:
-            results.append((max_cx, cy_j))
+            # RIGHT of j (cx_i > anchor_x, aligned at anchor_y)
+            min_cx = -math.inf
+            constrained = False
+            for (lxi, lyi, hwi, hhi) in pads_i:
+                for (lxj, lyj, hwj, hhj) in pads_j:
+                    world_lyj = cy_j + lyj
+                    world_lyi = anchor_y + lyi
+                    if abs(world_lyi - world_lyj) < hhi + hhj + gap:
+                        constrained = True
+                        req = cx_j + lxj - lxi + hwi + hwj + gap
+                        if req > min_cx:
+                            min_cx = req
+            if constrained:
+                out.append((min_cx, anchor_y))
 
-        # BELOW j (cy_i > cy_j, same cx)
-        min_cy = -math.inf
-        constrained = False
-        for (lxi, lyi, hwi, hhi) in pads_i:
-            for (lxj, lyj, hwj, hhj) in pads_j:
-                if abs(lxi - lxj) < hwi + hwj + gap:
-                    constrained = True
-                    req = cy_j + lyj - lyi + hhi + hhj + gap
-                    if req > min_cy:
-                        min_cy = req
-        if constrained:
-            results.append((cx_j, min_cy))
+            # LEFT of j
+            max_cx = math.inf
+            constrained = False
+            for (lxi, lyi, hwi, hhi) in pads_i:
+                for (lxj, lyj, hwj, hhj) in pads_j:
+                    world_lyj = cy_j + lyj
+                    world_lyi = anchor_y + lyi
+                    if abs(world_lyi - world_lyj) < hhi + hhj + gap:
+                        constrained = True
+                        req = cx_j + lxj - lxi - hwi - hwj - gap
+                        if req < max_cx:
+                            max_cx = req
+            if constrained:
+                out.append((max_cx, anchor_y))
 
-        # ABOVE j
-        max_cy = math.inf
-        constrained = False
-        for (lxi, lyi, hwi, hhi) in pads_i:
-            for (lxj, lyj, hwj, hhj) in pads_j:
-                if abs(lxi - lxj) < hwi + hwj + gap:
-                    constrained = True
-                    req = cy_j + lyj - lyi - hhi - hhj - gap
-                    if req < max_cy:
-                        max_cy = req
-        if constrained:
-            results.append((cx_j, max_cy))
+            # BELOW j (cy_i > anchor_y, aligned at anchor_x)
+            min_cy = -math.inf
+            constrained = False
+            for (lxi, lyi, hwi, hhi) in pads_i:
+                for (lxj, lyj, hwj, hhj) in pads_j:
+                    world_lxj = cx_j + lxj
+                    world_lxi = anchor_x + lxi
+                    if abs(world_lxi - world_lxj) < hwi + hwj + gap:
+                        constrained = True
+                        req = cy_j + lyj - lyi + hhi + hhj + gap
+                        if req > min_cy:
+                            min_cy = req
+            if constrained:
+                out.append((anchor_x, min_cy))
+
+            # ABOVE j
+            max_cy = math.inf
+            constrained = False
+            for (lxi, lyi, hwi, hhi) in pads_i:
+                for (lxj, lyj, hwj, hhj) in pads_j:
+                    world_lxj = cx_j + lxj
+                    world_lxi = anchor_x + lxi
+                    if abs(world_lxi - world_lxj) < hwi + hwj + gap:
+                        constrained = True
+                        req = cy_j + lyj - lyi - hhi - hhj - gap
+                        if req < max_cy:
+                            max_cy = req
+            if constrained:
+                out.append((anchor_x, max_cy))
+
+            return out
+
+        # Centre-aligned snaps (original behaviour)
+        results.extend(_cardinal_snaps(cx_j, cy_j))
+
+        # Pin-aligned snaps: for each shared net, generate candidates
+        # where i's connecting pad aligns with j's connecting pad.
+        shared = _shared_nets(i, j)
+        seen_offsets: set[tuple[float, float]] = set()
+        for net_name in shared:
+            j_pad_indices = comp_pad_nets[j].get(net_name, [])
+            i_pad_indices = comp_pad_nets[i].get(net_name, [])
+            for jpi in j_pad_indices:
+                if jpi >= len(pads_j):
+                    continue
+                j_lx, j_ly, _, _ = pads_j[jpi]
+                j_world_x = cx_j + j_lx
+                j_world_y = cy_j + j_ly
+                for ipi in i_pad_indices:
+                    if ipi >= len(pads_i):
+                        continue
+                    i_lx, i_ly, _, _ = pads_i[ipi]
+                    # Position i so pad ipi lands at j's pad jpi location
+                    anchor_x = j_world_x - i_lx
+                    anchor_y = j_world_y - i_ly
+                    key = (round(anchor_x, 3), round(anchor_y, 3))
+                    if key not in seen_offsets:
+                        seen_offsets.add(key)
+                        results.extend(_cardinal_snaps(anchor_x, anchor_y))
 
         # DIAGONAL candidates (conservative: envelope-based)
         dx = env_hw[i] + env_hw[j] + gap
@@ -515,7 +603,8 @@ def compute_greedy_placement(
 
     # ── Try all 4 rotations for component i, pick tightest fit ────────
     def _best_rotation_candidates(idx: int, anchor_pool: list[int],
-                                  net_neighbors: dict[int, int]) -> tuple[list[tuple[float, float]], int]:
+                                  net_neighbors: dict[int, int],
+                                  net_neighbors_nets: dict[int, list[str]]) -> tuple[list[tuple[float, float]], int]:
         """Try rotations 0/90/180/270°.  Return (best candidates, best rotation)."""
         orig_rot = rotations[idx]
         best_rot = orig_rot
@@ -531,10 +620,17 @@ def compute_greedy_placement(
             if not cands:
                 continue
             # Evaluate: pick the candidate closest to net group centroid
+            # Use PIN-LEVEL anchors — the centroid of connecting pads, not
+            # component centres.
             if net_neighbors:
-                total_w = sum(net_neighbors.values())
-                gcx = sum(pos[j][0] * w for j, w in net_neighbors.items()) / total_w
-                gcy = sum(pos[j][1] * w for j, w in net_neighbors.items()) / total_w
+                anchors: list[tuple[float, float, float]] = []  # (ax, ay, weight)
+                for j, w in net_neighbors.items():
+                    shared = net_neighbors_nets.get(j, [])
+                    ax, ay = _net_anchor(j, shared)
+                    anchors.append((ax, ay, float(w)))
+                total_w = sum(a[2] for a in anchors)
+                gcx = sum(a[0] * a[2] for a in anchors) / total_w
+                gcy = sum(a[1] * a[2] for a in anchors) / total_w
                 min_d = min(math.hypot(cx - gcx, cy - gcy) for cx, cy in cands)
             else:
                 min_d = min(math.hypot(cx - cx_board, cy - cy_board) for cx, cy in cands)
@@ -570,22 +666,24 @@ def compute_greedy_placement(
 
         # ── Find net neighbours ("same colour" in Tetris) ────────────
         net_neighbors: dict[int, int] = {}
+        net_neighbors_nets: dict[int, list[str]] = {}  # j → shared net names
         for j in placed:
             s = _shared(idx, j)
             if s > 0:
                 net_neighbors[j] = s
+                net_neighbors_nets[j] = _shared_nets(idx, j)
 
         anchor_pool = list(net_neighbors.keys()) if net_neighbors else placed[:1]
 
         # ── Try all rotations, pick tightest ──────────────────────────
-        candidates, _best_rot = _best_rotation_candidates(idx, anchor_pool, net_neighbors)
+        candidates, _best_rot = _best_rotation_candidates(idx, anchor_pool, net_neighbors, net_neighbors_nets)
 
         if not candidates:
             cx_p = sum(pos[j][0] for j in placed) / len(placed)
             cy_p = sum(pos[j][1] for j in placed) / len(placed)
             candidates = [(cx_p + env_hw[idx] + env_hw[placed[0]] + gap, cy_p)]
 
-        # ── Score: fewest pad collisions, then closest to net group ───
+        # ── Score: fewest pad collisions, then closest to net pins ─────
         best_pos = None
         best_score: tuple[float, float] = (math.inf, math.inf)
 
@@ -593,10 +691,13 @@ def compute_greedy_placement(
             pos[idx] = [cx_c, cy_c]
 
             violations = sum(1 for j in placed if _collides(idx, j))
-            net_dist = sum(
-                math.hypot(pos[idx][0] - pos[j][0], pos[idx][1] - pos[j][1])
-                for j in net_neighbors
-            ) if net_neighbors else 0.0
+            # Distance to pin-level anchors (connecting pads), not centres
+            net_dist = 0.0
+            if net_neighbors:
+                for j, w in net_neighbors.items():
+                    shared = net_neighbors_nets.get(j, [])
+                    ax, ay = _net_anchor(j, shared)
+                    net_dist += math.hypot(pos[idx][0] - ax, pos[idx][1] - ay) * w
 
             score = (violations, net_dist)
             if score < best_score:
