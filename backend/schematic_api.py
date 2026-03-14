@@ -3389,7 +3389,11 @@ async def autoplace_board_id(bid: str, clearance_mm: float = 1.0):
     board = json.loads(fpath.read_text("utf-8"))
     result = run_autoplace(board, min_clearance_mm=max(0.0, clearance_mm))
     fpath.write_text(json.dumps(result, indent=2), "utf-8")
-    return {"components": result.get("components", []), "placed": len(result.get("components", []))}
+    resp: dict[str, Any] = {"components": result.get("components", []), "placed": len(result.get("components", []))}
+    # Include updated traces when trace-aware optimisation ran
+    if "traces" in result and result["traces"]:
+        resp["traces"] = result["traces"]
+    return resp
 
 
 @router.post("/pcb/autoplace")
@@ -3398,7 +3402,10 @@ async def autoplace_direct(request: Request):
     board = body.get("board", body)
     clearance_mm = float(body.get("clearance_mm", 1.0))
     result = run_autoplace(board, min_clearance_mm=max(0.0, clearance_mm))
-    return {"components": result.get("components", []), "placed": len(result.get("components", []))}
+    resp: dict[str, Any] = {"components": result.get("components", []), "placed": len(result.get("components", []))}
+    if "traces" in result and result["traces"]:
+        resp["traces"] = result["traces"]
+    return resp
 
 
 # ── Schematic → PCB importer ───────────────────────────────────────────────────

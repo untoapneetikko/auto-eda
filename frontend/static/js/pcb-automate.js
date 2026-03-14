@@ -106,7 +106,8 @@ async function runAutoRoute() {
 // ── Auto Place ───────────────────────────────────────────────
 async function runAutoPlace() {
   const btn = document.getElementById('btn-autoplace');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Placing…'; }
+  const hasTraces = (editor?.board?.traces || []).some(t => (t.segments || []).length > 0);
+  if (btn) { btn.disabled = true; btn.textContent = hasTraces ? '⏳ Optimizing…' : '⏳ Placing…'; }
   try {
     const boardId = editor?.board?.id || _activeBoardId;
     let res;
@@ -124,6 +125,11 @@ async function runAutoPlace() {
     if (!res.ok) throw new Error(data.detail || data.error || 'Auto-place failed');
     if (data.components && editor?.board) {
       editor.board.components = data.components;
+      // Trace-aware mode: backend also returns updated traces with
+      // endpoints snapped to the new component positions.
+      if (data.traces) {
+        editor.board.traces = data.traces;
+      }
       editor._snapshot();
       editor.render(); rebuildCompList(); updateBoardInfo();
     }

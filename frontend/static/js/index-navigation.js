@@ -190,10 +190,15 @@ async function placeFromPalette(slug) {
 function accShowPanel(mode) {
   const searchPanel = document.getElementById('acc-search-panel');
   if (!searchPanel) return;
-  if (mode === 'search') {
+  searchPanel.style.display = mode === 'search' ? 'flex' : 'none';
+}
+
+function accHandleSearch(val) {
+  const searchPanel = document.getElementById('acc-search-panel');
+  if (!searchPanel) return;
+  if (val.trim()) {
     searchPanel.style.display = 'flex';
-    const inp = document.getElementById('acc-palette-search');
-    if (inp) { inp.focus(); renderAccPalette(inp.value); }
+    renderAccPalette(val);
   } else {
     searchPanel.style.display = 'none';
   }
