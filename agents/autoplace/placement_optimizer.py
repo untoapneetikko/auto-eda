@@ -395,14 +395,33 @@ def compute_greedy_placement(
         _rebuild_pads(i)
 
     # ── Net membership ─────────────────────────────────────────────────
+    # GND / NC / power nets are deprioritised: they connect almost every
+    # component and would pull everything into one lump if weighted equally.
+    _LOW_PRIORITY_NETS = re.compile(
+        r"^(GND|AGND|DGND|PGND|GND_.*|NC|N/C|NOCONNECT|NO_CONNECT"
+        r"|VCC|VDD|VIN|VBAT|VBUS|3V3|5V|12V|24V|AVCC|DVCC"
+        r"|PWR_FLAG|VPWR|VMOT|VPW)$",
+        re.IGNORECASE,
+    )
+    _LOW_WEIGHT = 0.1  # signal nets get weight 1.0, GND/power get 0.1
+
     net_members: dict[str, set[int]] = {}
+    net_weight: dict[str, float] = {}
     for i, comp in enumerate(components):
         for net in comp.get("nets", []):
             if net:
                 net_members.setdefault(net, set()).add(i)
+                if net not in net_weight:
+                    net_weight[net] = _LOW_WEIGHT if _LOW_PRIORITY_NETS.match(net) else 1.0
 
     def _shared(i: int, j: int) -> int:
-        return sum(1 for m in net_members.values() if i in m and j in m)
+        """Weighted count of shared nets (signal nets >> GND/power)."""
+        total = 0.0
+        for net_name, m in net_members.items():
+            if i in m and j in m:
+                total += net_weight.get(net_name, 1.0)
+        # Return as int-compatible for sorting, but scaled up to preserve ordering
+        return int(total * 10)
 
     # ── Pad-level net index: which pad of component i connects to net N? ──
     # comp_pad_nets[i][net_name] → list of pad indices into comp_pads[i]
@@ -442,8 +461,11 @@ def compute_greedy_placement(
         return (cx, cy)
 
     def _shared_nets(i: int, j: int) -> list[str]:
-        """Return list of net names shared between i and j."""
-        return [net for net, members in net_members.items() if i in members and j in members]
+        """Return shared net names, signal nets first (GND/power last)."""
+        shared = [net for net, members in net_members.items() if i in members and j in members]
+        # Sort: signal nets first (weight 1.0), GND/power last (weight 0.1)
+        shared.sort(key=lambda n: -net_weight.get(n, 1.0))
+        return shared
 
     pos: list[list[float]] = [[0.0, 0.0] for _ in range(n)]
 
@@ -822,6 +844,7 @@ def compute_greedy_placement(
             if _is_connector(components[i]):
                 continue
             # Compute target: weighted centroid of net-neighbour connecting pads
+            # Signal nets pull much harder than GND/power nets
             anchors: list[tuple[float, float, float]] = []
             for j in range(n):
                 if j == i:
@@ -829,7 +852,8 @@ def compute_greedy_placement(
                 shared = _shared_nets(i, j)
                 if shared:
                     ax, ay = _net_anchor(j, shared)
-                    anchors.append((ax, ay, float(len(shared))))
+                    w = sum(net_weight.get(sn, 1.0) for sn in shared)
+                    anchors.append((ax, ay, w))
             if not anchors:
                 continue
             total_w = sum(a[2] for a in anchors)
