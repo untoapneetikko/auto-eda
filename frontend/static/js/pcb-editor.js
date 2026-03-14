@@ -1092,28 +1092,71 @@ class PCBEditor {
   }
 
   // Rotate all selected components as a group by `deg` degrees CW around their collective centroid.
+  // Also rotates grouped traces and vias with the same groupId(s).
   // Falls back to rotating just selectedComp if no multi-selection exists.
   rotateSelGroup(deg=90){
     const comps=this.selectedComps.length>1
       ? this.selectedComps
       : (this.selectedComp ? [this.selectedComp] : []);
     if(!comps.length)return;
+    const rad=deg*Math.PI/180;
+    const cos=Math.cos(rad), sin=Math.sin(rad);
+    const rotPt=(px,py,cx,cy)=>{
+      const dx=px-cx, dy=py-cy;
+      return {x:cx+(dx*cos-dy*sin), y:cy+(dx*sin+dy*cos)};
+    };
     // Mutate first, then snapshot — ensures the embedded leBoardChanged
     // notification (fired inside _snapshot) carries the post-rotation board.
     if(comps.length===1){
-      // Single component — rotate in place
-      comps[0].rotation=((comps[0].rotation||0)+deg)%360;
+      // Single component — rotate in place, plus rotate grouped traces/vias around it
+      const c=comps[0];
+      const cx=c.x, cy=c.y;
+      c.rotation=((c.rotation||0)+deg)%360;
+      // Rotate grouped traces/vias around this component's center
+      const grpId=c.groupId;
+      if(grpId){
+        for(const tr of(this.board.traces||[])){
+          if(tr.groupId!==grpId)continue;
+          for(const seg of(tr.segments||[])){
+            const s=rotPt(seg.start.x,seg.start.y,cx,cy);
+            const e=rotPt(seg.end.x,seg.end.y,cx,cy);
+            seg.start.x=s.x;seg.start.y=s.y;
+            seg.end.x=e.x;seg.end.y=e.y;
+          }
+        }
+        for(const v of(this.board.vias||[])){
+          if(v.groupId!==grpId)continue;
+          const p=rotPt(v.x,v.y,cx,cy);
+          v.x=p.x;v.y=p.y;
+        }
+      }
     } else {
       // Multi-selection — rotate positions around the group centroid
       const cx=comps.reduce((s,c)=>s+c.x,0)/comps.length;
       const cy=comps.reduce((s,c)=>s+c.y,0)/comps.length;
-      const rad=deg*Math.PI/180;
-      const cos=Math.cos(rad), sin=Math.sin(rad);
+      // Collect all groupIds from the selected components
+      const grpIds=new Set(comps.filter(c=>c.groupId).map(c=>c.groupId));
       for(const c of comps){
-        const dx=c.x-cx, dy=c.y-cy;
-        c.x=cx+(dx*cos-dy*sin);
-        c.y=cy+(dx*sin+dy*cos);
+        const p=rotPt(c.x,c.y,cx,cy);
+        c.x=p.x;c.y=p.y;
         c.rotation=((c.rotation||0)+deg)%360;
+      }
+      // Rotate traces and vias that belong to any of the selected groups
+      if(grpIds.size){
+        for(const tr of(this.board.traces||[])){
+          if(!grpIds.has(tr.groupId))continue;
+          for(const seg of(tr.segments||[])){
+            const s=rotPt(seg.start.x,seg.start.y,cx,cy);
+            const e=rotPt(seg.end.x,seg.end.y,cx,cy);
+            seg.start.x=s.x;seg.start.y=s.y;
+            seg.end.x=e.x;seg.end.y=e.y;
+          }
+        }
+        for(const v of(this.board.vias||[])){
+          if(!grpIds.has(v.groupId))continue;
+          const p=rotPt(v.x,v.y,cx,cy);
+          v.x=p.x;v.y=p.y;
+        }
       }
     }
     this._snapshot();
