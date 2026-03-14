@@ -867,6 +867,11 @@ class SchematicEditor {
   startPlaceGroup(profile) {
     const circ = JSON.parse(JSON.stringify(profile.example_circuit || buildExampleCircuit(profile)));
     if (!circ.components.length) return;
+    // Refresh component values from active version profileCache
+    circ.components.forEach(c => {
+      const pc = (typeof profileCache !== 'undefined') && profileCache[c.slug];
+      if (pc) c.value = pc.value || pc.part_number || c.value;
+    });
     const bboxCx = circ.components.reduce((s, c) => s + c.x, 0) / circ.components.length;
     const bboxCy = circ.components.reduce((s, c) => s + c.y, 0) / circ.components.length;
     this.placeGroupData = { circ, bboxCx, bboxCy, cursor: null, slug: profile.slug || '' };
