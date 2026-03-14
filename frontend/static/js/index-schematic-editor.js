@@ -544,6 +544,14 @@ class SchematicEditor {
               }
             }
           }
+          // Enforce 90° routing on all stretched wires (after all endpoints are set)
+          const _seen = new Set();
+          for (const cw of this.dragState.connectedWires) {
+            if (_seen.has(cw.id)) continue;
+            _seen.add(cw.id);
+            const w = this.project.wires.find(ww => ww.id === cw.id);
+            if (w) this._rerouteWire90(w);
+          }
         }
         this.dirty = true; this._render();
       }
@@ -944,19 +952,35 @@ class SchematicEditor {
     return false;
   }
 
-  // Auto-create a dot-wire when this component's port lands on another port OR on a wire segment body
+  // Reshape a wire so every segment is horizontal or vertical (L-route, horizontal-first).
+  _rerouteWire90(wire) {
+    if (!wire.points || wire.points.length < 2) return;
+    const a = wire.points[0], b = wire.points[wire.points.length - 1];
+    if (a.x === b.x || a.y === b.y) {
+      wire.points = [{x:a.x,y:a.y},{x:b.x,y:b.y}];
+      return;
+    }
+    wire.points = [{x:a.x,y:a.y},{x:b.x,y:a.y},{x:b.x,y:b.y}];
+  }
+
+  // Create a wire when this component's port lands on another port OR on a wire segment body.
+  // Port-to-port creates a real 2-point wire so dragging apart later stretches it naturally.
   _autoConnectPorts(comp) {
     const TOL = this.SNAP * 1.2;
-    const mkDot = (x, y) => {
-      const already = this.project.wires.some(w =>
-        w.points?.length >= 2 &&
-        Math.hypot(w.points[0].x - x, w.points[0].y - y) <= TOL &&
-        Math.hypot(w.points[w.points.length-1].x - x, w.points[w.points.length-1].y - y) <= TOL
-      );
-      if (!already) this.project.wires.push({ id: 'cw' + Date.now().toString(36) + Math.random().toString(36).slice(2,5), points: [{x,y},{x,y}] });
+    const mkWire = (x1, y1, x2, y2) => {
+      const already = this.project.wires.some(w => {
+        if (!w.points?.length) return false;
+        const a = w.points[0], b = w.points[w.points.length - 1];
+        return (Math.hypot(a.x-x1,a.y-y1)<=TOL && Math.hypot(b.x-x2,b.y-y2)<=TOL)
+            || (Math.hypot(a.x-x2,a.y-y2)<=TOL && Math.hypot(b.x-x1,b.y-y1)<=TOL);
+      });
+      if (!already) this.project.wires.push({
+        id: 'cw' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        points: [{x:x1,y:y1},{x:x2,y:y2}]
+      });
     };
     for (const myPort of this._ports(comp)) {
-      // ── Port-to-port coincidence ─────────────────────────────────────────
+      // ── Port-to-port: real 2-point wire so it can stretch when dragged apart ──
       for (const other of this.project.components) {
         if (other.id === comp.id) continue;
         for (const otherPort of this._ports(other)) {
@@ -967,14 +991,13 @@ class SchematicEditor {
             return (Math.hypot(a.x-myPort.x,a.y-myPort.y)<=TOL && Math.hypot(b.x-otherPort.x,b.y-otherPort.y)<=TOL)
                 || (Math.hypot(b.x-myPort.x,b.y-myPort.y)<=TOL && Math.hypot(a.x-otherPort.x,a.y-otherPort.y)<=TOL);
           });
-          if (!connected) mkDot(myPort.x, myPort.y);
+          if (!connected) mkWire(myPort.x, myPort.y, otherPort.x, otherPort.y);
         }
       }
-      // ── Port-on-wire-segment (T-junction) ────────────────────────────────
+      // ── Port-on-wire-segment (T-junction) — dot-wire marker ──────────────
       for (const wire of this.project.wires) {
         if (!wire.points?.length) continue;
         const pts = wire.points;
-        // Skip if port already at an endpoint of this wire
         if (pts.some(p => Math.hypot(p.x - myPort.x, p.y - myPort.y) <= TOL)) continue;
         for (let j = 0; j < pts.length - 1; j++) {
           const a = pts[j], b = pts[j + 1];
@@ -983,7 +1006,7 @@ class SchematicEditor {
                       myPort.x > Math.min(a.x, b.x) + TOL && myPort.x < Math.max(a.x, b.x) - TOL;
           const onV = a.x === b.x && Math.abs(myPort.x - a.x) < TOL &&
                       myPort.y > Math.min(a.y, b.y) + TOL && myPort.y < Math.max(a.y, b.y) - TOL;
-          if (onH || onV) { mkDot(myPort.x, myPort.y); break; }
+          if (onH || onV) { mkWire(myPort.x, myPort.y, myPort.x, myPort.y); break; }
         }
       }
     }
