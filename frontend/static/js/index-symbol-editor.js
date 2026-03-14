@@ -347,6 +347,35 @@ function symEditorUpdatePin(field, value) {
   symEditorRenderList();
 }
 
+// ── Component Parameters save ────────────────────────────────────────────────
+async function symParamsSave() {
+  const slug = symEditor?.slug || selectedSlug;
+  if (!slug) return;
+  const get = id => document.getElementById(id)?.value?.trim() ?? '';
+  const params = {
+    part_number:  get('sym-param-partnum'),
+    manufacturer: get('sym-param-manufacturer'),
+    value:        get('sym-param-value'),
+    designator:   get('sym-param-designator'),
+    description:  get('sym-param-desc'),
+  };
+  const res = await fetch(`/api/library/${slug}/params`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params)
+  });
+  if (res.ok) {
+    // Update local cache
+    if (profileCache[slug]) Object.assign(profileCache[slug], params);
+    if (symEditor?.profile) Object.assign(symEditor.profile, params);
+    // Update symbol canvas part_number label
+    if (symEditor) symEditor._render();
+    const btn = document.querySelector('[onclick="symParamsSave()"]');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✓ Saved!'; setTimeout(() => btn.textContent = orig, 1500); }
+  } else {
+    alert('Save failed');
+  }
+}
+
 // ── Symbol rendering — SVG-based editor ────────────────────────────────────
 function renderSymbolWithEditor(profile) {
   if (selectedSlug && profile) profileCache[selectedSlug] = profile;

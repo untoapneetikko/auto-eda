@@ -328,7 +328,22 @@ async def api_library_symbol_type(slug: str, request: Request):
     if not body.get("symbol_type"):
         raise HTTPException(400, "symbol_type required")
     profile = _read_profile(slug)
+    if profile.get("builtin"):
+        raise HTTPException(403, "Built-in components are read-only")
     profile["symbol_type"] = body["symbol_type"]
+    _write_profile(slug, profile)
+    return {"ok": True}
+
+@router.put("/library/{slug}/params")
+async def api_library_params(slug: str, request: Request):
+    body = await request.json()
+    profile = _read_profile(slug)
+    if profile.get("builtin"):
+        raise HTTPException(403, "Built-in components are read-only")
+    allowed = {"part_number", "manufacturer", "value", "designator", "description"}
+    for key in allowed:
+        if key in body and isinstance(body[key], str):
+            profile[key] = body[key]
     _write_profile(slug, profile)
     return {"ok": True}
 
@@ -338,6 +353,8 @@ async def api_library_pins(slug: str, request: Request):
     if not isinstance(body.get("pins"), list):
         raise HTTPException(400, "pins array required")
     profile = _read_profile(slug)
+    if profile.get("builtin"):
+        raise HTTPException(403, "Built-in components are read-only")
     profile["pins"] = body["pins"]
     _write_profile(slug, profile)
     return {"ok": True}

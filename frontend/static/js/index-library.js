@@ -239,14 +239,49 @@ Then parse this component:
       <div class="profile-body">
         ${p.extraction_note ? `<div class="warning-banner">⚠ ${p.extraction_note} — Verify pin assignments before using in a circuit.</div>` : ''}
 
+        <!-- ── Component Parameters ── -->
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+            <div class="section-title" style="margin-bottom:0;">⚙ Parameters</div>
+            ${p.builtin ? `<span style="font-size:10px;color:#f59e0b;border:1px solid rgba(245,158,11,0.4);border-radius:3px;padding:2px 7px;background:rgba(245,158,11,0.08);">🔒 Built-in — read only</span>` : `<button onclick="symParamsSave()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Save</button>`}
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Part Number</label>
+              <input id="sym-param-partnum" type="text" value="${esc(p.part_number||'')}" ${p.builtin?'disabled':''} placeholder="e.g. LM358"
+                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Manufacturer</label>
+              <input id="sym-param-manufacturer" type="text" value="${esc(p.manufacturer||'')}" ${p.builtin?'disabled':''} placeholder="e.g. Texas Instruments"
+                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Default Value</label>
+              <input id="sym-param-value" type="text" value="${esc(p.value||p.part_number||'')}" ${p.builtin?'disabled':''} placeholder="e.g. 10k, 100nF"
+                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px;">
+              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Designator Prefix</label>
+              <input id="sym-param-designator" type="text" value="${esc(p.designator||'')}" ${p.builtin?'disabled':''} placeholder="e.g. U, R, C"
+                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
+            </div>
+            <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:3px;">
+              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Description</label>
+              <input id="sym-param-desc" type="text" value="${esc(p.description||'')}" ${p.builtin?'disabled':''} placeholder="Short description of the component"
+                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
+            </div>
+          </div>
+        </div>
+
         <div>
           <!-- Symbol Editor toolbar -->
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
             <div class="section-title" style="margin-bottom:0;">🔷 Symbol Editor</div>
             <div style="display:flex;gap:5px;flex-wrap:wrap;">
-              <button onclick="symEditorAddPin('left')" title="Add pin on left side" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 9px;font-size:11px;cursor:pointer;">+ L Pin</button>
+              ${p.builtin ? '' : `<button onclick="symEditorAddPin('left')" title="Add pin on left side" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 9px;font-size:11px;cursor:pointer;">+ L Pin</button>
               <button onclick="symEditorAddPin('right')" title="Add pin on right side" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:3px 9px;font-size:11px;cursor:pointer;">+ R Pin</button>
-              <button onclick="symEditorSave()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Save</button>
+              <button onclick="symEditorSave()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Save</button>`}
             </div>
           </div>
           <!-- Editor area: canvas + right panel (pin list / pin form) -->
@@ -260,34 +295,34 @@ Then parse this component:
 
               <!-- PIN LIST VIEW -->
               <div id="sym-list-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-                <div style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;">Pins — click to edit</div>
+                <div style="padding:7px 12px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;">Pins${p.builtin ? ' — read only' : ' — click to edit'}</div>
                 <div id="sym-pin-list" style="overflow-y:auto;flex:1;"></div>
-                <div id="sym-nonic-hint" style="display:none;padding:8px 10px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);line-height:1.5;">Click a pin in the canvas or list to edit it</div>
+                <div id="sym-nonic-hint" style="display:none;padding:8px 10px;font-size:10px;color:var(--text-muted);border-top:1px solid var(--border);line-height:1.5;">Click a pin in the canvas or list to view it</div>
               </div>
 
               <!-- PIN FORM VIEW (shown on pin click) -->
               <div id="sym-form-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
                 <div style="padding:7px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
                   <button onclick="symEditorBackToList()" style="background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:0;font-weight:600;">← Pins</button>
-                  <button id="sym-remove-btn" onclick="symEditorRemovePin()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:3px;color:#ef4444;padding:2px 7px;font-size:10px;cursor:pointer;">✕ Remove</button>
+                  ${p.builtin ? '' : '<button id="sym-remove-btn" onclick="symEditorRemovePin()" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);border-radius:3px;color:#ef4444;padding:2px 7px;font-size:10px;cursor:pointer;">✕ Remove</button>'}
                 </div>
                 <div style="overflow-y:auto;flex:1;padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
                   <div style="display:flex;gap:7px;">
                     <div style="display:flex;flex-direction:column;gap:3px;">
                       <label style="font-size:10px;color:var(--text-muted);">Pin #</label>
-                      <input id="spe-number" type="number" oninput="symEditorUpdatePin('number',this.value)"
-                        style="width:50px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;font-family:monospace;">
+                      <input id="spe-number" type="number" ${p.builtin?'readonly':''} oninput="symEditorUpdatePin('number',this.value)"
+                        style="width:50px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.6;':''}">
                     </div>
                     <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
                       <label style="font-size:10px;color:var(--text-muted);">Name</label>
-                      <input id="spe-name" type="text" oninput="symEditorUpdatePin('name',this.value)"
-                        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;font-family:monospace;">
+                      <input id="spe-name" type="text" ${p.builtin?'readonly':''} oninput="symEditorUpdatePin('name',this.value)"
+                        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.6;':''}">
                     </div>
                   </div>
                   <div style="display:flex;flex-direction:column;gap:3px;">
                     <label style="font-size:10px;color:var(--text-muted);">Type</label>
-                    <select id="spe-type" onchange="symEditorUpdatePin('type',this.value)"
-                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;width:100%;">
+                    <select id="spe-type" ${p.builtin?'disabled':''} onchange="symEditorUpdatePin('type',this.value)"
+                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;width:100%;${p.builtin?'opacity:0.6;':''}">
                       <option value="input">input</option><option value="output">output</option>
                       <option value="power">power</option><option value="gnd">gnd</option>
                       <option value="passive">passive</option><option value="bidirectional">bidirectional</option>
@@ -296,26 +331,26 @@ Then parse this component:
                   <div style="display:flex;gap:7px;">
                     <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
                       <label style="font-size:10px;color:var(--text-muted);">Active</label>
-                      <select id="spe-active" onchange="symEditorUpdatePin('active',this.value||null)"
-                        style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;width:100%;">
+                      <select id="spe-active" ${p.builtin?'disabled':''} onchange="symEditorUpdatePin('active',this.value||null)"
+                        style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;width:100%;${p.builtin?'opacity:0.6;':''}">
                         <option value="">—</option><option value="high">high</option><option value="low">low</option>
                       </select>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:3px;width:52px;">
                       <label style="font-size:10px;color:var(--text-muted);">DS Page</label>
-                      <input id="spe-page" type="number" oninput="symEditorUpdatePin('datasheet_page',this.value)"
-                        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;">
+                      <input id="spe-page" type="number" ${p.builtin?'readonly':''} oninput="symEditorUpdatePin('datasheet_page',this.value)"
+                        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:12px;${p.builtin?'opacity:0.6;':''}">
                     </div>
                   </div>
                   <div style="display:flex;flex-direction:column;gap:3px;">
                     <label style="font-size:10px;color:var(--text-muted);">Description</label>
-                    <textarea id="spe-desc" rows="3" oninput="symEditorUpdatePin('description',this.value)"
-                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;resize:vertical;width:100%;line-height:1.4;"></textarea>
+                    <textarea id="spe-desc" rows="3" ${p.builtin?'readonly':''} oninput="symEditorUpdatePin('description',this.value)"
+                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;resize:vertical;width:100%;line-height:1.4;${p.builtin?'opacity:0.6;':''}"></textarea>
                   </div>
                   <div style="display:flex;flex-direction:column;gap:3px;">
                     <label style="font-size:10px;color:var(--text-muted);">Requirements</label>
-                    <textarea id="spe-req" rows="2" oninput="symEditorUpdatePin('requirements',this.value)"
-                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;resize:vertical;width:100%;line-height:1.4;"></textarea>
+                    <textarea id="spe-req" rows="2" ${p.builtin?'readonly':''} oninput="symEditorUpdatePin('requirements',this.value)"
+                      style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:4px 6px;font-size:11px;resize:vertical;width:100%;line-height:1.4;${p.builtin?'opacity:0.6;':''}"></textarea>
                   </div>
                 </div>
               </div>
