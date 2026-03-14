@@ -577,7 +577,7 @@ async function renderLayoutExample(slug) {
   // that would wipe out any positions the user has changed since the last save.
   // The iframe already holds the live board state.
   if (_leLoadedSlug === slug && _leBoard) {
-    // Re-extract nets from live schematic example (may have been edited since last load)
+    // Re-extract nets from live schematic example (same source as _leBomData so IDs match)
     const liveCircuit = leGetLiveCircuit();
     if (liveCircuit) _leNetAssign = leExtractNets(liveCircuit, _leProfileMap);
     leRenderBomPanel(_leBomData);
@@ -603,13 +603,14 @@ async function renderLayoutExample(slug) {
     notesEl.textContent = [pts, fpName].filter(Boolean).join(' · ');
   }
 
-  // Resolve BOM from example_circuit for sidebar
+  // Resolve BOM and extract nets from the same circuit source so component IDs match.
+  // Prefer the live appCircuitEditor state (captures wire.net edits not yet saved to server).
   const circuit = profile.example_circuit;
-  const schComps = circuit?.components || [];
-  _leBomData = await leResolveBom(schComps, slug, profile);
-  // Extract nets — prefer live appCircuitEditor state (captures wire.net edits not yet saved)
   const liveCircuit = leGetLiveCircuit();
-  _leNetAssign = (liveCircuit || circuit) ? leExtractNets(liveCircuit || circuit, _leProfileMap) : {};
+  const activeCircuit = liveCircuit || circuit;
+  const schComps = activeCircuit?.components || [];
+  _leBomData = await leResolveBom(schComps, slug, profile);
+  _leNetAssign = activeCircuit ? leExtractNets(activeCircuit, _leProfileMap) : {};
   // Reset added state
   _leBomData.forEach(c => { c._leAdded = false; });
 
