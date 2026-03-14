@@ -55,9 +55,9 @@ function renderSchNets(editorRef, listId, countId) {
     const active = hn === n.name;
     const bg = active ? 'background:rgba(250,204,21,0.13);' : '';
     const border = active ? 'border-left:3px solid #facc15;padding-left:5px;' : 'border-left:3px solid transparent;padding-left:5px;';
-    const nameQ = JSON.stringify(n.name);
     return `<div class="sch-net-row" style="cursor:pointer;${bg}${border}transition:background 0.12s,transform 0.08s,opacity 0.08s;"
-      onclick="_schNetClick('${listId}','${countId}',${nameQ})"
+      data-net="${esc(n.name)}" data-list="${esc(listId)}" data-count="${esc(countId)}"
+      onclick="_schNetClick(this.dataset.list,this.dataset.count,this.dataset.net)"
       onmousedown="this.style.transform='scale(0.96)';this.style.opacity='0.65';"
       onmouseup="this.style.transform='';this.style.opacity='';"
       onmouseleave="this.style.transform='';this.style.opacity='';"
