@@ -1286,20 +1286,31 @@ class SchematicEditor {
   }
 
   _snapPortOrGrid(sx, sy) {
-    const hp = this._hitPort(sx, sy, 16);
-    if (hp) return { x: hp.port.x, y: hp.port.y, isPort: true };
-    const we = this._hitWireEndpoint(sx, sy, 14);
-    if (we) return { x: we.x, y: we.y, isPort: true };
-    // Snap to net label connection points (label's x,y is its pin)
-    const p = this._toW(sx, sy), rd = 16 / this.zoom;
+    // Grid-only snap — no auto-jump to nearby pins.
+    // isPort is set only when the snapped grid position lands exactly on a pin
+    // so the wire auto-completes on intentional placement, not accidental hover.
+    const p = this._toW(sx, sy);
+    const s = this._snapPt(p.x, p.y);
+    // Check snapped position against all component pins
+    for (const c of this.project.components) {
+      for (const pt of this._ports(c)) {
+        if (Math.hypot(s.x - pt.x, s.y - pt.y) < 0.5)
+          return { x: pt.x, y: pt.y, isPort: true };
+      }
+    }
+    // Check snapped position against wire endpoints
+    for (const w of this.project.wires) {
+      if (!w.points?.length) continue;
+      const p0 = w.points[0], pN = w.points[w.points.length - 1];
+      if (Math.hypot(s.x - p0.x, s.y - p0.y) < 0.5) return { x: p0.x, y: p0.y, isPort: true };
+      if (Math.hypot(s.x - pN.x, s.y - pN.y) < 0.5) return { x: pN.x, y: pN.y, isPort: true };
+    }
+    // Check net labels
     for (const lbl of (this.project.labels || [])) {
-      if (Math.hypot(lbl.x - p.x, lbl.y - p.y) <= rd)
+      if (Math.hypot(lbl.x - s.x, lbl.y - s.y) < 0.5)
         return { x: lbl.x, y: lbl.y, isPort: true };
     }
-    // Snap to wire segment body (T-junction)
-    const ws = this._hitWireSegment(sx, sy, 12);
-    if (ws) return { x: ws.x, y: ws.y, isPort: true };
-    const s = this._snapPt(p.x, p.y); return { ...s, isPort: false };
+    return { ...s, isPort: false };
   }
 
   _finishWire() {
