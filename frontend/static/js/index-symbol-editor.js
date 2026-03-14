@@ -929,6 +929,9 @@ function updateAccWireInfoPanel(wire) {
   const emptyEl = document.getElementById('acc-info-empty');
   const contentEl = document.getElementById('acc-info-content');
   if (!wire) { emptyEl.style.display = 'flex'; contentEl.style.display = 'none'; return; }
+  // Don't clobber while user is typing
+  const focused = document.activeElement;
+  if (focused && focused.id === 'acc-wire-net-input' && contentEl?.dataset.selId === wire.id) return;
   emptyEl.style.display = 'none'; contentEl.style.display = 'flex';
   contentEl.dataset.selId = wire.id; contentEl.dataset.selType = 'wire';
 
@@ -941,22 +944,89 @@ function updateAccWireInfoPanel(wire) {
       <text x="91" y="51" text-anchor="middle" font-family="monospace" font-size="9" fill="#4b5563">wire</text>`;
   }
 
-  let netName = '—';
+  let netName = '';
   try {
     const { wireToNet } = computeNetOverlay(appCircuitEditor);
-    netName = wireToNet.get(wire.id) || '—';
+    const n = wireToNet.get(wire.id);
+    if (n) netName = n;
   } catch(e) {}
 
-  const nc = netName !== '—' ? '#c4b5fd' : 'var(--text-muted)';
+  const wireId = wire.id;
+  const inputStyle = 'width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--accent);padding:3px 6px;font-size:11px;font-family:monospace;font-weight:700;box-sizing:border-box;';
   document.getElementById('acc-info-name').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:5px;padding-bottom:4px;">
-      <div>
-        <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Net</div>
-        <div style="font-family:monospace;font-weight:700;font-size:13px;color:${nc};background:rgba(108,99,255,0.12);border-radius:4px;padding:4px 8px;">${esc(netName)}</div>
-      </div>
+    <div>
+      <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Net Name</div>
+      <input id="acc-wire-net-input" value="${esc(netName)}" placeholder="Unnamed net…"
+        style="${inputStyle}"
+        onkeydown="if(event.key==='Enter')this.blur();"
+        onchange="setAccWireNetName('${esc(wireId)}',this.value)">
+      <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">Enter to apply · spreads to all connected wires</div>
     </div>`;
   document.getElementById('acc-info-desc').textContent = `${wire.points?.length || 0}-point wire`;
-  document.getElementById('acc-info-pins').innerHTML = `<div style="font-size:10px;color:var(--text-muted);line-height:1.5;padding:2px 0;">Use the <b style="color:var(--text);">⊳ Label</b> tool to assign a named net to this wire.</div>`;
+
+  // Show connected pins for this net
+  let nets = [];
+  try { ({ nets } = computeNetOverlay(appCircuitEditor)); } catch(e) {}
+  const net = netName ? nets.find(n => n.name === netName) : null;
+  const typeColor = { power:'#fca5a5', gnd:'#94a3b8', input:'#86efac', output:'#93c5fd' };
+  let html = '';
+  if (net) {
+    const pinPorts = net.ports.filter(p => !p.nodeId?.startsWith('wire::'));
+    if (pinPorts.length) {
+      html += `<div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Connected Pins</div>`;
+      for (const port of pinPorts) {
+        const [compId, pinName] = (port.nodeId||'').split('::');
+        const comp = appCircuitEditor.project.components.find(c => c.id === compId);
+        if (!comp) continue;
+        const profile = comp.slug ? (profileCache[comp.slug] || library[comp.slug]) : null;
+        const pin = profile?.pins?.find(pi => pi.name === pinName);
+        html += `<div style="display:flex;gap:4px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(46,50,80,0.4);">
+          <span style="font-family:monospace;font-weight:700;color:var(--accent);font-size:10px;min-width:24px;">${esc(comp.designator||'')}</span>
+          <span style="font-family:monospace;color:${typeColor[pin?.type]||'#fcd34d'};flex:1;font-size:10px;">${esc(pinName||'')}</span>
+          ${pin?.type ? `<span style="font-size:8px;color:${typeColor[pin.type]};background:rgba(0,0,0,0.3);border-radius:3px;padding:1px 3px;">${pin.type}</span>` : ''}
+        </div>`;
+      }
+    }
+  }
+  if (!html) html = `<div style="color:var(--text-muted);font-size:10px;padding:4px 0;">No pins connected yet.</div>`;
+  document.getElementById('acc-info-pins').innerHTML = html;
+}
+
+function setAccWireNetName(wireId, rawName) {
+  const newName = (rawName || '').trim();
+  if (!appCircuitEditor) return;
+  if (!appCircuitEditor.project.labels) appCircuitEditor.project.labels = [];
+
+  const { wireToNet } = computeNetOverlay(appCircuitEditor);
+  const oldName = wireToNet.get(wireId) || '';
+
+  if (newName === oldName) return;
+
+  appCircuitEditor._saveHist();
+
+  if (oldName) {
+    if (newName) {
+      appCircuitEditor.project.labels.forEach(l => { if (l.name === oldName) l.name = newName; });
+    } else {
+      appCircuitEditor.project.labels = appCircuitEditor.project.labels.filter(l => l.name !== oldName);
+    }
+  } else if (newName) {
+    const wire = appCircuitEditor.project.wires.find(w => w.id === wireId);
+    if (wire?.points?.length) {
+      const pt = wire.points[wire.points.length - 1];
+      appCircuitEditor.project.labels.push({
+        id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        name: newName, x: pt.x, y: pt.y, rotation: 0
+      });
+    }
+  }
+
+  appCircuitEditor.dirty = true;
+  appCircuitEditor._render();
+  appCircuitEditor._refreshNetOverlay().then(() => {
+    const wire = appCircuitEditor.project.wires.find(w => w.id === wireId);
+    if (wire && appCircuitEditor.selected?.id === wireId) updateAccWireInfoPanel(wire);
+  });
 }
 
 function accBomPlace(slug, symType, value) {
