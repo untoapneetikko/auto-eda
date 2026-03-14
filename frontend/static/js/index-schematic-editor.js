@@ -433,7 +433,7 @@ class SchematicEditor {
       this.multiSelected.clear();
       this.selected = { type: 'comp', id: comp.id };
       const ports = this._ports(comp);
-      const TOL = this.SNAP; // tight: only capture endpoints that are truly on this port
+      const TOL = 0.5; // exact: only capture endpoints that are on the same coordinate as the port
       const connectedWires = [];
       for (let pi = 0; pi < ports.length; pi++) {
         const port = ports[pi];
@@ -621,7 +621,7 @@ class SchematicEditor {
   }
 
   _buildGroupDragItems() {
-    const items = [], TOL = this.SNAP; // tight tolerance — same reasoning as single-comp drag
+    const items = [], TOL = 0.5; // exact: same-coordinate only
     for (const id of this.multiSelected) {
       const comp = this.project.components.find(c => c.id === id);
       if (comp) {
@@ -718,7 +718,7 @@ class SchematicEditor {
       if (comp) {
         // Snap the "other end" of each stretched wire to the nearest port or label it
         // was touching — this ensures the free endpoint holds precisely to its pin.
-        const TOL = this.SNAP;
+        const TOL = 0.5; // exact: snap only to ports at same coordinate
         for (const cw of cWires) {
           const wire = this.project.wires.find(w => w.id === cw.id);
           if (!wire || !cw.otherPtOrig) continue;
