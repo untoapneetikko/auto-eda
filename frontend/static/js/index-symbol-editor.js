@@ -654,25 +654,15 @@ function _compListRowHtml(c, onclickJs, active) {
 
 function _schSelectComp(id) {
   editor._highlightedComp = editor._highlightedComp === id ? null : id;
-  const comp = editor.project.components.find(c => c.id === id);
-  if (editor._highlightedComp && comp) {
-    editor.panX = editor._W() / 2 - comp.x * editor.zoom;
-    editor.panY = editor._H() / 2 - comp.y * editor.zoom;
-  }
   editor._render();
-  _renderSchCompList(); // refresh row highlight state
+  _renderSchCompList();
 }
 
 function _accSelectComp(id) {
   if (!appCircuitEditor) return;
   appCircuitEditor._highlightedComp = appCircuitEditor._highlightedComp === id ? null : id;
-  const comp = appCircuitEditor.project.components.find(c => c.id === id);
-  if (appCircuitEditor._highlightedComp && comp) {
-    appCircuitEditor.panX = appCircuitEditor._W() / 2 - comp.x * appCircuitEditor.zoom;
-    appCircuitEditor.panY = appCircuitEditor._H() / 2 - comp.y * appCircuitEditor.zoom;
-  }
   appCircuitEditor._render();
-  _renderAccCompList(); // refresh row highlight state
+  _renderAccCompList();
 }
 
 function _renderSchCompList() {
