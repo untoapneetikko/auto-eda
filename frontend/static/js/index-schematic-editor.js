@@ -203,6 +203,8 @@ class SchematicEditor {
   }
   _snap(v) { return Math.round(v / this.SNAP) * this.SNAP; }
   _snapPt(x, y) { return { x: this._snap(x), y: this._snap(y) }; }
+  _snapGrid(v) { return Math.round(v / this.GRID) * this.GRID; }
+  _snapGridPt(x, y) { return { x: this._snapGrid(x), y: this._snapGrid(y) }; }
   _evPos(e) { const r = this.svg.getBoundingClientRect(); return { sx: e.clientX - r.left, sy: e.clientY - r.top }; }
 
   // ── Symbol defs ──────────────────────────────────────────────────────────
@@ -633,10 +635,10 @@ class SchematicEditor {
       this.wireCursor = this._snapPortOrGrid(sx, sy); this._render(); return;
     }
     if (this.tool === 'place') {
-      const w = this._toW(sx, sy); this.placeCursor = this._snapPt(w.x, w.y); this._render(); return;
+      const w = this._toW(sx, sy); this.placeCursor = this._snapGridPt(w.x, w.y); this._render(); return;
     }
     if (this.tool === 'placeGroup' && this.placeGroupData) {
-      const w = this._toW(sx, sy); this.placeGroupData.cursor = this._snapPt(w.x, w.y); this._render(); return;
+      const w = this._toW(sx, sy); this.placeGroupData.cursor = this._snapGridPt(w.x, w.y); this._render(); return;
     }
     if (this.tool === 'label') {
       this.labelCursor = this._snapPortOrGrid(sx, sy); this._render(); return;
@@ -900,7 +902,7 @@ class SchematicEditor {
 
   // ── Component ops ─────────────────────────────────────────────────────────
   _place(sx, sy) {
-    const w = this._toW(sx, sy), s = this._snapPt(w.x, w.y);
+    const w = this._toW(sx, sy), s = this._snapGridPt(w.x, w.y);
     const comp = {
       id: 'c' + Date.now().toString(36),
       slug: this.placeSlug, symType: this.placeSymType,
@@ -917,7 +919,7 @@ class SchematicEditor {
 
   _placeGroup(sx, sy) {
     const { circ, bboxCx, bboxCy } = this.placeGroupData;
-    const w = this._toW(sx, sy), s = this._snapPt(w.x, w.y);
+    const w = this._toW(sx, sy), s = this._snapGridPt(w.x, w.y);
     const dx = s.x - bboxCx, dy = s.y - bboxCy;
     // Deep-copy and tag with example origin BEFORE applying offset
     const placed = JSON.parse(JSON.stringify(circ));
@@ -927,9 +929,9 @@ class SchematicEditor {
       c._exampleGroupId = _egId; c._exampleSlug = _egSlug;
       c._exampleX = c.x; c._exampleY = c.y; // template coords before placement offset
     });
-    placed.components.forEach(c => { c.x += dx; c.y += dy; });
-    placed.wires.forEach(w => { w.points.forEach(p => { p.x += dx; p.y += dy; }); });
-    (placed.labels || []).forEach(l => { l.x += dx; l.y += dy; });
+    placed.components.forEach(c => { c.x = this._snap(c.x + dx); c.y = this._snap(c.y + dy); });
+    placed.wires.forEach(w => { w.points.forEach(p => { p.x = this._snap(p.x + dx); p.y = this._snap(p.y + dy); }); });
+    (placed.labels || []).forEach(l => { l.x = this._snap(l.x + dx); l.y = this._snap(l.y + dy); });
     // Re-assign designators to avoid collisions
     const takenDesigs = new Set(this.project.components.map(c => c.designator));
     placed.components.forEach(c => {
