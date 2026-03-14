@@ -1,15 +1,15 @@
 """
-Placement Optimizer — courtyard overlap checker + net-proximity placer using Polars.
+Placement Optimizer — silkscreen overlap checker + net-proximity placer using Polars.
 
 Two main capabilities:
 
 1. check_package_gaps(placements)
    Post-placement DRC: verifies every pair of components satisfies the minimum
-   package-to-package gap (package gap).
+   silkscreen-to-silkscreen gap (body-edge to body-edge clearance).
 
 2. compute_net_proximity_placement(components, ...)
    Pre-placement algorithm: force-directed, net-proximity optimised placement.
-   Pulls components toward their net-neighbours and enforces the courtyard gap.
+   Pulls components toward their net-neighbours and enforces the silkscreen gap.
 
 Usage:
     from agents.autoplace.placement_optimizer import (
@@ -131,18 +131,13 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
 
 
 # ---------------------------------------------------------------------------
-# Package gap check (minimum 0.25 mm between courtyards)
+# Package gap check (minimum clearance between silkscreen outlines)
 # ---------------------------------------------------------------------------
 
+# Minimum gap between component silkscreen outlines (body-edge to body-edge).
+# Silkscreen = the printed package outline on the PCB.  Components must not be
+# placed so close that their silkscreen lines overlap or merge.
 MIN_CLEARANCE_MM = 0.25
-# Courtyard expansion: added to each side of the package body to form the
-# courtyard boundary (IPC-7351 / KiCad convention: 0.10 mm per side).
-# This matches the footprint_output.json schema which defines
-# courtyard = package outline + 0.10 mm expansion per side.
-COURTYARD_EXPANSION_MM = 0.10
-# Silkscreen gap: minimum body-to-body spacing to guarantee silkscreen labels
-# (which extend beyond the package boundary) never overlap each other.
-SILKSCREEN_GAP_MM = 1.0
 
 
 def _build_dataframe(placements: list[dict[str, Any]]) -> pl.DataFrame:
@@ -154,11 +149,11 @@ def _build_dataframe(placements: list[dict[str, Any]]) -> pl.DataFrame:
         y = float(p.get("y", 0.0))
         fp = p.get("footprint", "")
         w, h = _estimate_footprint_size(fp)
-        # half-extents = courtyard boundary = package body / 2 + courtyard expansion
-        # The courtyard is the package outline expanded by COURTYARD_EXPANSION_MM
-        # per side (IPC-7351 / KiCad convention, matches footprint_output.json schema).
-        half_w = w / 2.0 + COURTYARD_EXPANSION_MM
-        half_h = h / 2.0 + COURTYARD_EXPANSION_MM
+        # half-extents = silkscreen boundary = package body / 2
+        # Silkscreen is drawn at the package body outline; MIN_CLEARANCE_MM is
+        # enforced between these outlines so silkscreen lines never overlap.
+        half_w = w / 2.0
+        half_h = h / 2.0
         rows.append({
             "reference": ref,
             "x": x,
@@ -240,7 +235,7 @@ def check_package_gaps(
                     "component_b": refs[j],
                     "gap_mm": round(gap, 4),
                     "message": (
-                        f"Courtyard violation: {refs[i]} and {refs[j]} have "
+                        f"Silkscreen overlap: {refs[i]} and {refs[j]} have "
                         f"gap {gap:.3f}mm (min {min_clearance_mm}mm)"
                     ),
                 })
@@ -255,7 +250,7 @@ def summarize_violations(result: dict[str, Any]) -> str:
     """Return a human-readable summary suitable for feeding back to the LLM."""
     if result["is_valid"]:
         return "All package gaps OK."
-    lines = [f"Found {len(result['violations'])} courtyard violation(s):"]
+    lines = [f"Found {len(result['violations'])} silkscreen overlap(s):"]
     for v in result["violations"]:
         lines.append(f"  - {v['message']}")
     return "\n".join(lines)
@@ -371,14 +366,14 @@ def compute_net_proximity_placement(
             net_to_idxs.setdefault(net, []).append(i)
 
     # ------------------------------------------------------------------ #
-    # 2. Estimate courtyard half-extents for each component                #
-    #    courtyard = package body / 2 + COURTYARD_EXPANSION_MM per side   #
-    #    This is the boundary that must not violate min_clearance_mm.     #
+    # 2. Estimate silkscreen half-extents for each component               #
+    #    Silkscreen = package body outline.  min_clearance_mm is the gap  #
+    #    that must be kept between any two silkscreen outlines.            #
     # ------------------------------------------------------------------ #
     sizes = [_estimate_footprint_size(c.get("footprint", "")) for c in components]
-    # half-extents = courtyard boundary (package body + guard per side)
-    hw = [s[0] / 2.0 + COURTYARD_EXPANSION_MM for s in sizes]  # courtyard half-width
-    hh = [s[1] / 2.0 + COURTYARD_EXPANSION_MM for s in sizes]  # courtyard half-height
+    # half-extents = silkscreen boundary = package body / 2
+    hw = [s[0] / 2.0 for s in sizes]  # silkscreen half-width
+    hh = [s[1] / 2.0 for s in sizes]  # silkscreen half-height
 
     # ------------------------------------------------------------------ #
     # 3. Classify components                                               #
@@ -432,7 +427,7 @@ def compute_net_proximity_placement(
     # 6. Iterative optimisation  (Fruchterman-Reingold style)              #
     #                                                                      #
     # Each iteration accumulates two forces per component, then applies    #
-    # them simultaneously, then enforces courtyard hard constraints.       #
+    # them simultaneously, then enforces silkscreen hard constraints.      #
     #                                                                      #
     # Force A — NET ATTRACTION (spring toward co-net centroid)             #
     #   Pulls each component toward the centroid of every component it     #
@@ -445,11 +440,11 @@ def compute_net_proximity_placement(
     #   line — the radial direction spreads them in 2D naturally.          #
     #   Strength decreases with the cooling schedule.                      #
     #                                                                      #
-    # Hard constraint — COURTYARD CLEARANCE                                #
-    #   After forces are applied, any pair closer than the package-to-     #
-    #   package gap is pushed apart radially until exactly legal.          #
+    # Hard constraint — SILKSCREEN CLEARANCE                               #
+    #   After forces are applied, any pair closer than min_clearance_mm    #
+    #   (silkscreen-to-silkscreen) is pushed apart until exactly legal.    #
     # ------------------------------------------------------------------ #
-    COURTYARD_PASSES = 10  # hard-constraint enforcement passes per iter
+    SILKSCREEN_PASSES = 10  # hard-constraint enforcement passes per iter
 
     for iteration in range(iterations):
         alpha = 1.0 - (iteration / iterations)        # 1 → 0 as we cool
@@ -573,7 +568,7 @@ def compute_net_proximity_placement(
             pos[i][1] += fy
 
         # ---- Hard constraint: package gap --------------------- #
-        for _ in range(COURTYARD_PASSES):
+        for _ in range(SILKSCREEN_PASSES):
             for i in range(n):
                 for j in range(i + 1, n):
                     ddx = pos[j][0] - pos[i][0]
@@ -710,8 +705,7 @@ def compute_net_proximity_placement(
                 f"'{dominant_net}' ({best_count} shared connection"
                 f"{'s' if best_count != 1 else ''}). "
                 f"Final position ({pos[i][0]:.2f}, {pos[i][1]:.2f}) mm satisfies "
-                f"{min_clearance_mm} mm courtyard clearance "
-                f"(courtyard = package + {COURTYARD_EXPANSION_MM} mm per side)."
+                f"{min_clearance_mm} mm silkscreen-to-silkscreen clearance."
             )
         else:
             rationale = (

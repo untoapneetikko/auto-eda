@@ -14,7 +14,7 @@ get_placement_context()
 
 apply_placement(placement_dict, output_dir=None)
     Validate and write a placement dict produced by the orchestrator.
-    Runs courtyard check (Polars) and external DRC; returns a result summary.
+    Runs silkscreen clearance check (Polars) and external DRC; returns a result summary.
 
 run()
     Not implemented — orchestration belongs to Claude Code.
@@ -158,7 +158,7 @@ def _enrich_placements_with_footprints(
 def _run_drc(placement_path: Path) -> tuple[bool, str]:
     """Run the external DRC checker script. Returns (passed, output_text)."""
     result = subprocess.run(
-        [sys.executable, str(DRC_TOOL), str(placement_path), "--check", "clearance,courtyard"],
+        [sys.executable, str(DRC_TOOL), str(placement_path), "--check", "clearance,silkscreen"],
         capture_output=True,
         text=True,
     )
@@ -205,7 +205,7 @@ def apply_placement(
     -------
     {
         "success": bool,
-        "violations": list[dict],   # courtyard violations (empty if none)
+        "violations": list[dict],   # silkscreen overlap violations (empty if none)
         "drc_passed": bool,
         "drc_output": str,
         "placement_path": str | None,
@@ -290,7 +290,7 @@ def compute_placement(
     board_width_mm, board_height_mm:
         Board dimensions in mm.
     min_clearance_mm:
-        Minimum package-to-package gap (courtyard clearance).  Default 0.25 mm.
+        Minimum silkscreen-to-silkscreen gap.  Default 0.25 mm.
     iterations:
         Force-directed optimisation iterations.  More = tighter packing.
 

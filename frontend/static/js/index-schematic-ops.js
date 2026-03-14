@@ -28,11 +28,13 @@ async function _schNetClick(listId, countId, netName) {
   const ed = listId.startsWith('acc') ? appCircuitEditor : editor;
   if (!ed) return;
   ed._highlightedNet = ed._highlightedNet === netName ? null : netName;
-  // Ensure overlay data exists — it's only built after an edit, so fetch on demand
-  if (ed._highlightedNet && !ed._cachedNetOverlay) {
-    await ed._refreshNetOverlay();
+  // Always ensure overlay is fresh so port coords are available for highlighting
+  if (ed._highlightedNet) {
+    if (!ed._cachedNetOverlay) await ed._refreshNetOverlay();
+    else ed._render(); // render immediately with existing overlay
+  } else {
+    ed._render(); // toggled off
   }
-  ed._render();
   renderSchNets(ed, listId, countId);
 }
 

@@ -1524,6 +1524,7 @@ class SchematicEditor {
     if (dot) { dot.setAttribute('cx', gs); dot.setAttribute('cy', gs); }
     this._vg.setAttribute('transform', `translate(${this.panX},${this.panY}) scale(${this.zoom})`);
     this._hlPortKeysCache = undefined; // invalidate per-render cache
+    this._hlWireSetCache = undefined;
     let h = '';
     for (const grp of (this.project.groups || [])) h += this._groupH(grp);
     for (const w of this.project.wires) h += this._wH(w);
@@ -1562,16 +1563,85 @@ class SchematicEditor {
     return h;
   }
 
+  // Returns a Set of wire IDs on the highlighted net via BFS from net port positions.
+  // Cached per render pass. Does not require _cachedNetOverlay.wireToNet.
+  _highlightedWireSet() {
+    if (this._hlWireSetCache !== undefined) return this._hlWireSetCache;
+    const portKeys = this._hlPortKeys();
+    if (!portKeys) return (this._hlWireSetCache = null);
+    const wires = this.project.wires || [];
+    // Build endpoint → [wireId] map for BFS
+    const endpointMap = new Map(); // "x,y" → Set<wireId>
+    for (const w of wires) {
+      if (!w.points || w.points.length < 2) continue;
+      for (const pt of [w.points[0], w.points[w.points.length - 1]]) {
+        const k = `${Math.round(pt.x)},${Math.round(pt.y)}`;
+        if (!endpointMap.has(k)) endpointMap.set(k, new Set());
+        endpointMap.get(k).add(w.id);
+      }
+    }
+    // BFS starting from all highlighted net port positions
+    const visited = new Set(); // wire IDs
+    const frontier = new Set(portKeys); // coordinate keys to expand
+    const seen = new Set(portKeys);
+    while (frontier.size) {
+      const next = new Set();
+      for (const key of frontier) {
+        const wids = endpointMap.get(key) || [];
+        for (const wid of wids) {
+          if (visited.has(wid)) continue;
+          visited.add(wid);
+          const w = wires.find(w => w.id === wid);
+          if (!w) continue;
+          for (const pt of [w.points[0], w.points[w.points.length - 1]]) {
+            const k = `${Math.round(pt.x)},${Math.round(pt.y)}`;
+            if (!seen.has(k)) { seen.add(k); next.add(k); }
+          }
+        }
+      }
+      frontier.clear();
+      for (const k of next) frontier.add(k);
+    }
+    return (this._hlWireSetCache = visited.size ? visited : null);
+  }
+
   // Returns a Set of "x,y" strings for every port on the highlighted net, or null.
   // Result is cached for the duration of one render pass.
   _hlPortKeys() {
     if (this._hlPortKeysCache !== undefined) return this._hlPortKeysCache;
     const hn = this._highlightedNet;
-    if (!hn || !this._cachedNetOverlay?.nets) return (this._hlPortKeysCache = null);
-    const net = this._cachedNetOverlay.nets.find(n => n.name === hn);
-    if (!net) return (this._hlPortKeysCache = null);
-    // Use Math.round to match integer coords returned by the backend
-    return (this._hlPortKeysCache = new Set(net.ports.map(p => `${Math.round(p.x)},${Math.round(p.y)}`)));
+    if (!hn) return (this._hlPortKeysCache = null);
+    const keys = new Set();
+    if (this._cachedNetOverlay?.nets) {
+      const net = this._cachedNetOverlay.nets.find(n => n.name === hn);
+      if (net) {
+        // Add backend-reported port coords (may use int() truncation)
+        for (const p of net.ports) keys.add(`${Math.round(p.x)},${Math.round(p.y)}`);
+        // Also add exact frontend world-space port coords to handle any int/float mismatch
+        // Find components whose ports are within 2px of a net port position
+        const netPts = net.ports.map(p => ({ x: p.x, y: p.y }));
+        for (const comp of (this.project.components || [])) {
+          for (const fp of this._ports(comp)) {
+            if (netPts.some(np => Math.abs(fp.x - np.x) <= 2 && Math.abs(fp.y - np.y) <= 2)) {
+              keys.add(`${Math.round(fp.x)},${Math.round(fp.y)}`);
+            }
+          }
+        }
+        // Also add label positions with matching net name
+        for (const lbl of (this.project.labels || [])) {
+          if (lbl.name === hn) keys.add(`${Math.round(lbl.x)},${Math.round(lbl.y)}`);
+        }
+      }
+    }
+    // Fallback without overlay: seed from label positions and power symbols
+    if (!keys.size) {
+      for (const lbl of (this.project.labels || []))
+        if (lbl.name === hn) keys.add(`${Math.round(lbl.x)},${Math.round(lbl.y)}`);
+      for (const comp of (this.project.components || []))
+        if ((comp.symType === 'vcc' && hn === 'VCC') || (comp.symType === 'gnd' && hn === 'GND'))
+          for (const fp of this._ports(comp)) keys.add(`${Math.round(fp.x)},${Math.round(fp.y)}`);
+    }
+    return (this._hlPortKeysCache = keys.size ? keys : null);
   }
 
   _lblH(lbl, sel) {
@@ -1692,8 +1762,8 @@ class SchematicEditor {
     if (sel) {
       c = '#818cf8'; sw = 2.5;
     } else if (this._highlightedNet) {
-      const wNet = this._cachedNetOverlay?.wireToNet?.get(wire.id);
-      if (wNet === this._highlightedNet) { c = '#facc15'; sw = 2.8; }
+      const hlWires = this._highlightedWireSet();
+      if (hlWires?.has(wire.id)) { c = '#facc15'; sw = 2.8; }
       else { c = '#4b9cd3'; sw = 1.8; opStr = ' opacity="0.2"'; }
     } else if (this.showNets) {
       // Color each wire by its assigned net so every wire visually shows it has a net
