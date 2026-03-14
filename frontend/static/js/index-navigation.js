@@ -52,31 +52,126 @@ function showView(name) {
 }
 
 // ── Schematic palette ──────────────────────────────────────────────────────
+
+// Category metadata: symType → { label, icon, order }
+const _SCH_CATS = {
+  vcc:          { label: 'Power',       icon: '⚡', order: 0 },
+  gnd:          { label: 'Power',       icon: '⚡', order: 0 },
+  resistor:     { label: 'Passives',    icon: '▭',  order: 1 },
+  capacitor:    { label: 'Passives',    icon: '▭',  order: 1 },
+  capacitor_pol:{ label: 'Passives',    icon: '▭',  order: 1 },
+  inductor:     { label: 'Passives',    icon: '▭',  order: 1 },
+  diode:        { label: 'Diodes',      icon: '▷',  order: 2 },
+  led:          { label: 'Diodes',      icon: '▷',  order: 2 },
+  npn:          { label: 'Transistors', icon: '◈',  order: 3 },
+  pnp:          { label: 'Transistors', icon: '◈',  order: 3 },
+  nmos:         { label: 'Transistors', icon: '◈',  order: 3 },
+  pmos:         { label: 'Transistors', icon: '◈',  order: 3 },
+  opamp:        { label: 'Op-Amps',     icon: '△',  order: 4 },
+  amplifier:    { label: 'Op-Amps',     icon: '△',  order: 4 },
+  ic:           { label: 'ICs',         icon: '▣',  order: 5 },
+};
+
+function _schCatOf(p) {
+  const t = (p.symbol_type || p.symType || 'ic').toLowerCase();
+  return _SCH_CATS[t] || { label: 'ICs', icon: '▣', order: 5 };
+}
+
+// Collapsed-state persisted in localStorage key "schPalCollapsed"
+function _schPalCollapsed() {
+  try { return JSON.parse(localStorage.getItem('schPalCollapsed') || '{}'); } catch(_) { return {}; }
+}
+function _schPalToggle(label) {
+  const s = _schPalCollapsed();
+  s[label] = !s[label];
+  localStorage.setItem('schPalCollapsed', JSON.stringify(s));
+  renderSchPalette(document.getElementById('sch-lib-search')?.value || '');
+}
+
+// Shared palette-item row HTML
+function _paletteItemH(p) {
+  const slug = esc(p.slug);
+  const name = esc(p.part_number || p.slug);
+  const desc = esc(p.description || '');
+  return `<div class="palette-item" style="position:relative;">
+    <div onclick="placeFromPalette('${slug}')" style="cursor:pointer;">
+      <div class="palette-item-name">${name}</div>
+      <div class="palette-item-desc">${desc}</div>
+    </div>
+    <button onclick="event.stopPropagation();loadExampleFromSlug('${slug}')" title="Load example circuit"
+      style="position:absolute;top:4px;right:4px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:4px;width:20px;height:20px;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">⚡</button>
+  </div>`;
+}
+
 function renderSchPalette(filter) {
   const el = document.getElementById('sch-palette');
   if (!el) return;
-  if (!filter || !filter.trim()) {
-    el.innerHTML = '<div style="padding:16px 8px;color:var(--text-muted);font-size:12px;text-align:center;">Type to search components</div>';
+
+  const allParts = Object.values(library);
+
+  // ── Flat search results ────────────────────────────────────────────────────
+  if (filter && filter.trim()) {
+    const q = filter.trim().toLowerCase();
+    const parts = allParts.filter(p =>
+      p.part_number?.toLowerCase().includes(q) ||
+      p.description?.toLowerCase().includes(q) ||
+      p.slug?.toLowerCase().includes(q)
+    );
+    if (!parts.length) {
+      el.innerHTML = '<div style="padding:16px 8px;color:var(--text-muted);font-size:12px;text-align:center;">No components found</div>';
+      return;
+    }
+    el.innerHTML = parts.map(_paletteItemH).join('');
     return;
   }
-  const q = filter.trim().toLowerCase();
-  const parts = Object.values(library).filter(p =>
-    p.part_number?.toLowerCase().includes(q) ||
-    p.description?.toLowerCase().includes(q) ||
-    p.slug?.toLowerCase().includes(q)
-  );
-  if (!parts.length) {
-    el.innerHTML = '<div style="padding:16px 8px;color:var(--text-muted);font-size:12px;text-align:center;">No components found</div>';
+
+  // ── Category tree (no filter) ─────────────────────────────────────────────
+  if (!allParts.length) {
+    el.innerHTML = '<div style="padding:16px 8px;color:var(--text-muted);font-size:12px;text-align:center;">No components in library yet</div>';
     return;
   }
-  el.innerHTML = parts.map(p => `
-    <div class="palette-item" style="position:relative;">
-      <div onclick="placeFromPalette('${p.slug}')" style="cursor:pointer;">
-        <div class="palette-item-name">${p.part_number || p.slug}</div>
-        <div class="palette-item-desc">${p.description || ''}</div>
-      </div>
-      <button onclick="event.stopPropagation();loadExampleFromSlug('${p.slug}')" title="Load example circuit" style="position:absolute;top:4px;right:4px;background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:4px;width:20px;height:20px;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">⚡</button>
-    </div>`).join('');
+
+  // Group parts by category label, preserve insertion order within each group
+  const groups = new Map(); // label → { icon, order, parts[] }
+  for (const p of allParts) {
+    const cat = _schCatOf(p);
+    if (!groups.has(cat.label)) groups.set(cat.label, { icon: cat.icon, order: cat.order, parts: [] });
+    groups.get(cat.label).parts.push(p);
+  }
+  // Sort categories by order, then alphabetically within
+  const sorted = [...groups.entries()].sort((a, b) => a[1].order - b[1].order || a[0].localeCompare(b[0]));
+
+  const collapsed = _schPalCollapsed();
+  let h = '<div style="padding:4px 0 8px;">';
+  for (const [label, { icon, parts }] of sorted) {
+    const isOpen = !collapsed[label];
+    const arrow = isOpen ? '▾' : '▸';
+    const countBadge = `<span style="margin-left:auto;font-size:9px;background:var(--surface3,rgba(255,255,255,0.06));color:var(--text-muted);border-radius:8px;padding:1px 6px;font-weight:600;">${parts.length}</span>`;
+    h += `<div>
+      <div onclick="_schPalToggle('${esc(label)}')"
+        style="display:flex;align-items:center;gap:5px;padding:4px 8px 4px 6px;cursor:pointer;user-select:none;
+               font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+               color:var(--text-dim);background:var(--surface2,rgba(255,255,255,0.04));
+               border-top:1px solid var(--border,rgba(255,255,255,0.08));
+               transition:background 0.1s;"
+        onmouseenter="this.style.background='var(--surface3,rgba(255,255,255,0.08))'"
+        onmouseleave="this.style.background='var(--surface2,rgba(255,255,255,0.04))'">
+        <span style="font-size:9px;opacity:0.6;width:10px;text-align:center;">${arrow}</span>
+        <span style="opacity:0.7;">${esc(icon)}</span>
+        <span>${esc(label)}</span>
+        ${countBadge}
+      </div>`;
+    if (isOpen) {
+      h += `<div style="padding:2px 0 4px;">`;
+      for (const p of parts.sort((a, b) => (a.part_number||a.slug).localeCompare(b.part_number||b.slug))) {
+        h += _paletteItemH(p);
+      }
+      h += `</div>`;
+    }
+    h += `</div>`;
+  }
+  h += '</div>';
+  el.innerHTML = h;
 }
 
 async function loadExampleFromSlug(slug) {
