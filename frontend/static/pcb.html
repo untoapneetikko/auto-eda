@@ -264,9 +264,9 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 </div>
 
 <div class="toolbar">
-  <button class="tbtn save" id="toolbar-save-btn" onclick="saveBoard()">💾 Save</button>
-  <button class="tbtn delete-board" id="toolbar-delete-btn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
-  <script>if(location.search.includes('embedded=1')){document.getElementById('toolbar-save-btn').style.display='none';document.getElementById('toolbar-delete-btn').style.display='none';}</script>
+  <button class="tbtn save" id="toolbar-save-btn" onclick="saveBoard()" style="display:none;">💾 Save</button>
+  <button class="tbtn delete-board" id="toolbar-delete-btn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="display:none;color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
+  <script>if(!location.search.includes('embedded=1')){document.getElementById('toolbar-save-btn').style.display='';document.getElementById('toolbar-delete-btn').style.display='';}</script>
   <div class="tsep"></div>
   <button class="tbtn active" id="tool-select" onclick="setTool('select')" title="S — Select · R rotate · Del delete · Esc deselect">↖ Select</button>
   <button class="tbtn" id="tool-route"  onclick="setTool('route')"  title="W — Draw trace">〰 Trace</button>
