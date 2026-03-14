@@ -404,7 +404,7 @@ def compute_greedy_placement(
         re.IGNORECASE,
     )
     _LOW_WEIGHT = 0.1  # signal nets get weight 1.0, GND/power get 0.1
-    _RF_WEIGHT  = 3.0  # RF nets get extra pull — short traces are critical
+    _RF_WEIGHT  = 5.0  # RF nets get strong pull — short traces are critical for SI
 
     net_members: dict[str, set[int]] = {}
     net_weight: dict[str, float] = {}
@@ -449,21 +449,23 @@ def compute_greedy_placement(
     def _net_anchor(j: int, shared_nets_with_i: list[str]) -> tuple[float, float]:
         """World position of j's connecting pad(s) for shared nets with i.
 
-        Instead of using j's component centre, compute the centroid of j's
-        pads that actually participate in the shared nets.  Falls back to
-        j's centre if no pad-level net info is available.
+        Uses net-weight-weighted centroid so high-priority nets (e.g. RF)
+        dominate over low-priority nets (e.g. GND) in the anchor position.
+        Falls back to j's centre if no pad-level net info is available.
         """
-        pad_positions: list[tuple[float, float]] = []
+        weighted_positions: list[tuple[float, float, float]] = []  # (x, y, weight)
         for net_name in shared_nets_with_i:
+            w = net_weight.get(net_name, 1.0)
             pad_indices = comp_pad_nets[j].get(net_name, [])
             for pi in pad_indices:
                 if pi < len(comp_pads[j]):
                     lx, ly, _, _ = comp_pads[j][pi]
-                    pad_positions.append((pos[j][0] + lx, pos[j][1] + ly))
-        if not pad_positions:
+                    weighted_positions.append((pos[j][0] + lx, pos[j][1] + ly, w))
+        if not weighted_positions:
             return (pos[j][0], pos[j][1])
-        cx = sum(p[0] for p in pad_positions) / len(pad_positions)
-        cy = sum(p[1] for p in pad_positions) / len(pad_positions)
+        total_w = sum(p[2] for p in weighted_positions)
+        cx = sum(p[0] * p[2] for p in weighted_positions) / total_w
+        cy = sum(p[1] * p[2] for p in weighted_positions) / total_w
         return (cx, cy)
 
     def _shared_nets(i: int, j: int) -> list[str]:
@@ -617,29 +619,44 @@ def compute_greedy_placement(
     # No hard clamp — board size is a soft guide.  Components can extend
     # past the board edge to keep net groups tight.
 
-    # Sort by: connectors first → then RF-net components → then by envelope area descending.
-    # RF-connected components are placed early so they cluster tightly around
-    # the anchor IC before other components can occupy nearby positions.
+    # BFS placement order from the anchor IC — each component is placed
+    # right after its strongest net neighbor, so RF-connected parts cluster
+    # tightly around the pins they connect to before others block the space.
     _rf_nets = {net for net, w in net_weight.items() if w >= _RF_WEIGHT}
-    def _has_rf(i: int) -> bool:
-        return any(net in _rf_nets for net in components[i].get("nets", []))
-    order = sorted(
-        range(n),
-        key=lambda i: (
-            0 if _is_connector(components[i]) else 1,    # connectors first
-            0 if _has_rf(i) else 1,                       # RF-connected next
-            -(env_hw[i] * env_hh[i]),                     # then by size descending
-        ),
-    )
 
     placed: list[int] = []
     placed_set: set[int] = set()
 
     # ── Place first (largest non-connector) at board centre ───────────
-    first = next((o for o in order if not _is_connector(components[o])), order[0])
+    _size_order = sorted(range(n), key=lambda i: env_hw[i] * env_hh[i], reverse=True)
+    first = next((o for o in _size_order if not _is_connector(components[o])), _size_order[0])
     pos[first] = [cx_board, cy_board]
     placed.append(first)
     placed_set.add(first)
+
+    # Build BFS order: repeatedly pick the unplaced component with the
+    # strongest weighted net connection to any already-queued component.
+    # This ensures RF-connected parts are placed right next to their
+    # net neighbors before other components can block optimal positions.
+    order: list[int] = []
+    _queued = {first}
+    _remaining = set(range(n)) - {first}
+    while _remaining:
+        best_idx = -1
+        best_w   = -1.0
+        for i in _remaining:
+            w = 0.0
+            for net_name, members in net_members.items():
+                if i in members and (members & _queued):
+                    w += net_weight.get(net_name, 1.0)
+            if w > best_w or (w == best_w and env_hw[i] * env_hh[i] > (env_hw[best_idx] * env_hh[best_idx] if best_idx >= 0 else 0)):
+                best_w = w
+                best_idx = i
+        if best_idx < 0:
+            best_idx = max(_remaining, key=lambda i: env_hw[i] * env_hh[i])
+        order.append(best_idx)
+        _queued.add(best_idx)
+        _remaining.discard(best_idx)
 
     # ── Try all 4 rotations for component i, pick tightest fit ────────
     def _best_rotation_candidates(idx: int, anchor_pool: list[int],

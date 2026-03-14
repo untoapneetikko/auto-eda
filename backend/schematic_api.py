@@ -2925,9 +2925,27 @@ def run_autoroute(board: dict) -> dict:
             occupied.add((gx, gy))                     # left edge
             occupied.add((grid_w - 1 - gx, gy))        # right edge
 
+    # ── Back-fill missing pad.net fields from board.nets[] array ─────────────
+    # Some boards store net→pad mappings only in the nets array, leaving
+    # pad.net empty.  Fill them in before collecting net_pads.
+    _pad_ref_to_net_ar: dict[str, str] = {}  # "L1.1" → "RF_IN"
+    for _net_entry in board.get("nets", []):
+        _nn = (_net_entry.get("name", "") or "").upper()
+        if not _nn:
+            continue
+        for _pr in _net_entry.get("pads", []):
+            _pad_ref_to_net_ar[_pr.upper()] = _nn
+    if _pad_ref_to_net_ar:
+        for comp in board.get("components", []):
+            ref = comp.get("ref", comp.get("id", ""))
+            for pad in comp.get("pads", []):
+                if not (pad.get("net", "") or "").strip():
+                    pnum = pad.get("number", pad.get("name", ""))
+                    pkey = f"{ref}.{pnum}".upper()
+                    if pkey in _pad_ref_to_net_ar:
+                        pad["net"] = _pad_ref_to_net_ar[pkey]
+
     # ── Build net → [(x, y)] map from board.components[].pads[].net ──────────
-    # This is the ONLY authoritative source of net connectivity in the board JSON.
-    # (There is no top-level board.nets[] array.)
     # Pad world position accounts for component rotation.
     # Pads with name "NC" (No Connect) are excluded — they must not be routed.
     # net_pads stores (x, y, layer_index) — layer_index: 0=F.Cu, 1=B.Cu
