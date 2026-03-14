@@ -15,6 +15,7 @@
       "reference": "U1",
       "value": "PMA3-83LNW+",
       "footprint": "MiniCircuits:MCLP_3x3mm_DQ1225",
+      "rotation": 0,
       "position": { "x": 380, "y": 280 },
       "connections": [
         { "pin": 2,  "net": "RF_INT"     },
@@ -34,6 +35,7 @@
       "reference": "C2",
       "value": "10pF",
       "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "rotation": 90,
       "position": { "x": 160, "y": 280 },
       "connections": [
         { "pin": 1, "net": "RF_IN"  },
@@ -44,6 +46,7 @@
       "reference": "L1",
       "value": "18nH",
       "footprint": "Inductor_SMD:L_0402_1005Metric",
+      "rotation": 180,
       "position": { "x": 280, "y": 360 },
       "connections": [
         { "pin": 1, "net": "RF_INT" },
@@ -54,6 +57,7 @@
       "reference": "C3",
       "value": "100pF",
       "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "rotation": 270,
       "position": { "x": 540, "y": 280 },
       "connections": [
         { "pin": 1, "net": "RF_OUT_INT" },
@@ -64,6 +68,7 @@
       "reference": "L2",
       "value": "39nH",
       "footprint": "Inductor_SMD:L_0402_1005Metric",
+      "rotation": 0,
       "position": { "x": 480, "y": 200 },
       "connections": [
         { "pin": 1, "net": "VDD"        },
@@ -74,6 +79,7 @@
       "reference": "C1",
       "value": "0.01µF",
       "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "rotation": 0,
       "position": { "x": 580, "y": 180 },
       "connections": [
         { "pin": 1, "net": "VDD" },
@@ -84,6 +90,7 @@
       "reference": "C4",
       "value": "100nF",
       "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "rotation": 0,
       "position": { "x": 660, "y": 180 },
       "connections": [
         { "pin": 1, "net": "VDD" },

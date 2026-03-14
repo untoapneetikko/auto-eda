@@ -121,6 +121,7 @@ def get_placement_context(
             "reference": ref,
             "value": comp.get("value", ""),
             "footprint": comp.get("footprint", ""),
+            "rotation": comp.get("rotation", 0),   # pass through schematic rotation hint
             "nets": list(dict.fromkeys(comp_nets)),  # deduplicated, order preserved
         })
 

@@ -713,7 +713,7 @@ def compute_net_proximity_placement(
             "reference": ref,
             "x": round(pos[i][0], 3),
             "y": round(pos[i][1], 3),
-            "rotation": 0,
+            "rotation": comp.get("rotation", 0),   # from schematic; 0 if not specified
             "layer": "F.Cu",
             "footprint": comp.get("footprint", ""),
             "rationale": rationale,
