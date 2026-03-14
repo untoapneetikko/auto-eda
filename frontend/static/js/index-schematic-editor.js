@@ -288,6 +288,13 @@ class SchematicEditor {
     const p = this._toW(sx, sy), th = 6 / this.zoom;
     for (let i = this.project.wires.length - 1; i >= 0; i--) {
       const w = this.project.wires[i];
+      if (!w.points?.length) continue;
+      // Dot wire (single point or both endpoints identical) — hit as a point
+      if (w.points.length === 1 || (w.points.length === 2 &&
+          w.points[0].x === w.points[1].x && w.points[0].y === w.points[1].y)) {
+        if (Math.hypot(p.x - w.points[0].x, p.y - w.points[0].y) <= th) return w;
+        continue;
+      }
       for (let j = 0; j < w.points.length - 1; j++) {
         if (this._nearSeg(p, w.points[j], w.points[j + 1], th)) return w;
       }
