@@ -94,9 +94,9 @@ canvas#pcb-canvas{display:block;width:100%;height:100%;}
 .embedded .lpanel{display:none;}
 .embedded .pcb-board-tabs{display:none!important;}
 .embedded #pcb-stale-banner{display:none!important;}
-/* In embedded mode the parent page owns Save — hide the toolbar Save button so
-   the user only uses the "💾 Save" button in the BOM strip (calls leSaveLayout). */
+/* In embedded mode the parent page owns Save/Delete — hide those toolbar buttons. */
 .embedded .tbtn.save{display:none!important;}
+.embedded .tbtn.delete-board{display:none!important;}
 /* Conflict table — visible only in embedded mode */
 #conflict-panel{display:none;flex-shrink:0;max-height:180px;overflow-y:auto;background:var(--surface);border-top:2px solid rgba(239,68,68,0.5);}
 .embedded #conflict-panel{display:block;}
@@ -265,7 +265,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 
 <div class="toolbar">
   <button class="tbtn save" onclick="saveBoard()">💾 Save</button>
-  <button class="tbtn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
+  <button class="tbtn delete-board" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
   <div class="tsep"></div>
   <button class="tbtn active" id="tool-select" onclick="setTool('select')" title="S — Select · R rotate · Del delete · Esc deselect">↖ Select</button>
   <button class="tbtn" id="tool-route"  onclick="setTool('route')"  title="W — Draw trace">〰 Trace</button>
