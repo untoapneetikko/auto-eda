@@ -61,6 +61,8 @@ window.addEventListener('load',()=>{
   }
   if(isEmbedded && !isAppFrame){
     document.body.classList.add('embedded');
+    // Directly hide toolbar buttons that don't belong in embedded (Layout Example) mode
+    document.querySelectorAll('.tbtn.save, .tbtn.delete-board').forEach(b => b.style.display = 'none');
   }
   const cv=document.getElementById('pcb-canvas');
   const wrap=document.getElementById('canvas-wrap');
