@@ -636,11 +636,11 @@ Then parse this component:
               <div id="le-bom-list" style="overflow-x:auto;overflow-y:hidden;display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px 6px;"></div>
             </div>
             <!-- Net mismatch table (shown below BOM when there are mismatches) -->
-            <div id="le-net-warning" style="display:none;flex-shrink:0;background:var(--surface);border-top:1px solid rgba(239,68,68,0.4);max-height:130px;overflow-y:auto;">
-              <div style="padding:3px 10px 2px;display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--surface);z-index:1;">
-                <span style="color:#ef4444;font-size:12px;font-weight:700;">✕ Net mismatch</span>
-                <button onclick="leAutoCorrectAllNets()" style="margin-left:6px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:3px;color:#fca5a5;padding:1px 8px;font-size:10px;cursor:pointer;font-weight:600;">Auto-correct all</button>
-                <span style="font-size:10px;color:var(--text-muted);margin-left:4px;">or fix individually below</span>
+            <div id="le-net-warning" style="display:none;flex-shrink:0;background:var(--surface);border-top:2px solid rgba(239,68,68,0.6);max-height:160px;overflow-y:auto;">
+              <div style="padding:5px 10px 3px;display:flex;align-items:center;gap:8px;position:sticky;top:0;background:var(--surface);z-index:1;flex-wrap:wrap;">
+                <span style="color:#ef4444;font-size:12px;font-weight:700;">⚠ Net mismatch</span>
+                <span id="le-net-mm-count" style="font-size:10px;color:#fca5a5;"></span>
+                <button onclick="leAutoCorrectAllNets()" style="margin-left:auto;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.5);border-radius:4px;color:#a5b4fc;padding:3px 12px;font-size:11px;cursor:pointer;font-weight:700;white-space:nowrap;">Correct nets as per Schematic Example</button>
               </div>
               <table id="le-net-warning-list" style="width:100%;border-collapse:collapse;font-size:11px;font-family:monospace;"></table>
             </div>

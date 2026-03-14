@@ -274,6 +274,9 @@ function leShowNetWarning(mismatches) {
   const table = document.getElementById('le-net-warning-list');
   if (!panel || !table) return;
   if (!mismatches.length) { panel.style.display = 'none'; return; }
+  // Update count badge
+  const countEl = document.getElementById('le-net-mm-count');
+  if (countEl) countEl.textContent = `${mismatches.length} pad${mismatches.length !== 1 ? 's' : ''} have wrong nets`;
   const td = 'padding:2px 6px;border-bottom:1px solid rgba(239,68,68,0.1);white-space:nowrap;';
   const rows = mismatches.slice(0, 60).map((m, i) =>
     `<tr id="le-mm-row-${i}">` +
@@ -364,16 +367,34 @@ function leAutoCorrectAllNets() {
     }
   }
   const mismatches = leValidateNets(_leBoard, _leBomData);
+  let fixed = 0;
   for (const m of mismatches) {
     const comp = _leBoard.components?.find(c => c.ref === m.ref);
     const pad = comp?.pads?.find(p => String(p.number) === String(m.padNum) || p.name === m.padNum);
-    if (pad) pad.net = m.expected;
+    if (pad) { pad.net = m.expected; fixed++; }
   }
+  // Rebuild nets array from corrected pads
+  const netMap = {};
+  (_leBoard.components || []).forEach(c => (c.pads || []).forEach(p => {
+    if (p.net) (netMap[p.net] || (netMap[p.net] = [])).push(`${c.ref}.${p.number}`);
+  }));
+  _leBoard.nets = Object.entries(netMap).map(([name, pads]) => ({ name, pads }));
   leFixTraceNets(_leBoard);
   frame?.contentWindow?.postMessage({ type: 'loadBoard', board: _leBoard, hideBoardOutline: true }, '*');
   const _mmAll = leValidateNets(_leBoard, _leBomData);
   leShowNetWarning(_mmAll);
   leUpdateTabBadge(_mmAll.length);
+  // Brief confirmation in status
+  if (fixed > 0) {
+    const notesEl = document.getElementById('le-notes');
+    if (notesEl) {
+      const prev = notesEl.textContent;
+      notesEl.style.display = 'block';
+      notesEl.style.color = '#86efac';
+      notesEl.textContent = `Corrected ${fixed} net${fixed !== 1 ? 's' : ''} from Schematic Example`;
+      setTimeout(() => { notesEl.textContent = prev; notesEl.style.color = ''; }, 3000);
+    }
+  }
 }
 
 async function leResolveBom(schComponents, mainSlug, mainProfile) {
@@ -688,6 +709,31 @@ async function renderLayoutExample(slug) {
     // Mark each BOM component as added if its ref already appears in the saved layout
     const leRefs = new Set((profile.layout_example.components || []).map(c => c.ref));
     _leBomData.forEach(c => { c._leAdded = leRefs.has(c.designator || c.id || ''); });
+    // ── Inherit nets from Schematic Example ─────────────────────────
+    // Saved layouts may have stale nets from an older schematic version.
+    // Silently correct all pad nets to match the live schematic.
+    if (Object.keys(_leNetAssign).length) {
+      let corrected = 0;
+      for (const comp of board.components || []) {
+        const bom = _leBomData.find(b => (b.designator || b.id) === comp.ref);
+        if (!bom) continue;
+        for (const pad of comp.pads || []) {
+          const expected = leGetPadNet(bom, pad) || '';
+          const actual = (pad.net || '').trim();
+          if (expected && expected !== actual) { pad.net = expected; corrected++; }
+        }
+      }
+      if (corrected) {
+        // Rebuild nets array from corrected pads
+        const netMap = {};
+        (board.components || []).forEach(c => (c.pads || []).forEach(p => {
+          if (p.net) (netMap[p.net] || (netMap[p.net] = [])).push(`${c.ref}.${p.number}`);
+        }));
+        board.nets = Object.entries(netMap).map(([name, pads]) => ({ name, pads }));
+        leFixTraceNets(board);
+        if (notesEl) notesEl.textContent += ` · ${corrected} net${corrected !== 1 ? 's' : ''} corrected from schematic`;
+      }
+    }
   } else if (_leBomData.length > 0) {
     // Build from schematic BOM
     board = leBuildBoard(_leBomData, partNum + ' Layout Example');
