@@ -75,6 +75,15 @@ async function runAutoRoute() {
   const btn = document.getElementById('btn-autoroute');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Routing…'; }
   try {
+    // Embed design rules into board so backend can use them
+    if (editor?.board) {
+      editor.board.designRules = {
+        traceWidth: DR.traceWidth, clearance: DR.clearance,
+        viaSize: DR.viaSize, viaDrill: DR.viaDrill,
+        allowVias: DR.allowVias !== false,
+        powerTraceWidth: DR.powerTraceWidth ?? 0.4,
+      };
+    }
     let res;
     if (boardId) {
       await saveBoard();
@@ -88,13 +97,16 @@ async function runAutoRoute() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || data.error || 'Autoroute failed');
     const traces = data.traces ?? data.board?.traces;
-    if (traces && editor?.board) {
-      editor.board.traces = traces;
+    const vias = data.vias ?? data.board?.vias;
+    if (editor?.board) {
+      if (traces) editor.board.traces = traces;
+      if (vias) editor.board.vias = vias;
       editor._snapshot();
       editor.render(); rebuildCompList(); updateBoardInfo();
     }
-    const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets`;
-    const status = document.getElementById('status-bar') || document.getElementById('route-status');
+    const viasMsg = (data.vias?.length || data.board?.vias?.length) ? `, ${data.vias?.length ?? data.board?.vias?.length} vias` : '';
+    const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets${viasMsg}`;
+    const status = document.getElementById('status-bar') || document.getElementById('route-status') || document.getElementById('auto-status');
     if (status) status.textContent = msg;
     if (btn) { btn.disabled = false; btn.textContent = '⚡ Auto-Route'; }
   } catch(e) {

@@ -1,6 +1,6 @@
 // ── Section switching (matches index.html pattern) ──────────────
 function switchPcbSection(name){
-  ['layout','boards','nets','drc','export','3d'].forEach(s=>{
+  ['layout','auto','boards','nets','drc','export','3d'].forEach(s=>{
     const sec=document.getElementById('pcb-section-'+s);
     const nav=document.getElementById('pcb-nav-'+s);
     if(sec)sec.classList.toggle('hidden',s!==name);
@@ -9,11 +9,26 @@ function switchPcbSection(name){
   if(name==='boards')renderBoardsSection();
   if(name==='nets')renderNetsSection();
   if(name==='layout'&&editor)editor.render();
+  if(name==='auto')_populateAutoTab();
   if(name==='drc'){populateDRTab();runDRCTab();}
   // Pause 3D render loop when leaving the 3D tab, resume when entering
   if(typeof viewer3d!=='undefined'&&viewer3d){
     if(name==='3d') viewer3d.resume(); else viewer3d.pause();
   }
+}
+
+// ── Populate Auto tab inputs from DR object ──
+function _populateAutoTab(){
+  const s=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  s('auto-clearance', DR.packageGap??1.0);
+  s('auto-corner', DR.cornerAngle??90);
+  s('auto-trace-w', DR.traceWidth??0.25);
+  s('auto-cu-clear', DR.clearance??0.2);
+  s('auto-allow-vias', DR.allowVias!==false?'true':'false');
+  s('auto-via-size', DR.viaSize??1.0);
+  s('auto-via-drill', DR.viaDrill??0.6);
+  s('auto-pwr-trace', DR.powerTraceWidth??0.4);
+  s('auto-skip-nc', 'false');
 }
 
 // ── PCB Board Tabs (tied to saved boards, named after schematic projects) ──

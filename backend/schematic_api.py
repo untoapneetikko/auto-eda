@@ -2871,7 +2871,8 @@ def _autoroute_trace_width(net_name: str, dr: dict) -> float:
     power_keywords = ("VCC", "VDD", "VIN", "VBAT", "VBUS", "3V3", "5V", "12V",
                       "24V", "AVCC", "DVCC", "VPW", "VMOT", "VPWR", "PWR")
     if any(kw in upper for kw in power_keywords):
-        return max(default_w, 0.4)
+        pwr_w = float(dr.get("powerTraceWidth", 0.4))
+        return max(default_w, pwr_w)
     return default_w
 
 
@@ -2907,8 +2908,10 @@ def run_autoroute(board: dict) -> dict:
     # Pad world position accounts for component rotation.
     # Pads with name "NC" (No Connect) are excluded — they must not be routed.
     net_pads: dict[str, list[tuple[float, float]]] = {}
-    nc_nets: set[str] = set()  # nets that consist ONLY of NC-named pads
+    nc_pad_positions: list[tuple[float, float]] = []  # blocked zones around NC pins
+    nc_nets: set[str] = set()  # nets that contain at least one NC-named pad
     _net_has_real_pad: set[str] = set()  # nets that have at least one non-NC pad
+    _NC_NAMES = {"NC", "N/C", "N.C.", "NOCONNECT", "NO_CONNECT", "NO CONNECT"}
     for comp in board.get("components", []):
         cx  = float(comp.get("x", 0))
         cy  = float(comp.get("y", 0))
@@ -2916,68 +2919,137 @@ def run_autoroute(board: dict) -> dict:
         cos_r, sin_r = math.cos(rot), math.sin(rot)
         for pad in comp.get("pads", []):
             net = pad.get("net", "") or ""
-            if not net:
-                continue
-            pad_name = (pad.get("name", "") or "").upper().strip()
-            # Track whether this net has any non-NC pads
-            if pad_name == "NC" or pad_name == "N/C" or pad_name == "N.C.":
-                nc_nets.add(net)
-            else:
-                _net_has_real_pad.add(net)
             # Rotate local pad offset into world space
             lx = float(pad.get("x", 0))
             ly = float(pad.get("y", 0))
             px = cx + lx * cos_r - ly * sin_r
             py = cy + lx * sin_r + ly * cos_r
+            pad_name = (pad.get("name", "") or "").upper().strip()
+            is_nc_pad = pad_name in _NC_NAMES
+            if is_nc_pad:
+                # Mark NC pad position as blocked — no trace may pass through
+                nc_pad_positions.append((px, py))
+                if net:
+                    nc_nets.add(net)
+                continue  # NEVER add NC pads to net_pads
+            if not net:
+                continue
+            _net_has_real_pad.add(net)
             net_pads.setdefault(net, []).append((px, py))
     # Nets where ALL pads are NC should be skipped
     nc_only_nets = nc_nets - _net_has_real_pad
 
-    # ── BFS shortest path on the grid ────────────────────────────────────────
-    DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    # ── Block occupancy around ALL pad positions ─────────────────────────────
+    # Traces must not pass through pads of other nets.  For each net being
+    # routed, we temporarily unblock its own pads before calling BFS.
+    pad_clearance = float(dr.get("clearance", 0.2))
+    _pad_block_radius = max(1, int(math.ceil(pad_clearance / GRID)))
 
-    def _bfs(sx: float, sy: float, ex: float, ey: float) -> list[tuple[float, float]] | None:
-        sg = (int(round(sx / GRID)), int(round(sy / GRID)))
-        eg = (int(round(ex / GRID)), int(round(ey / GRID)))
-        if sg == eg:
-            return [(sx, sy), (ex, ey)]
-        dist: dict[tuple, int] = {sg: 0}
-        prev: dict[tuple, tuple] = {}
+    def _pad_cells(px: float, py: float) -> set[tuple[int, int]]:
+        gc_x = int(round(px / GRID))
+        gc_y = int(round(py / GRID))
+        cells: set[tuple[int, int]] = set()
+        for dx in range(-_pad_block_radius, _pad_block_radius + 1):
+            for dy in range(-_pad_block_radius, _pad_block_radius + 1):
+                cells.add((gc_x + dx, gc_y + dy))
+        return cells
+
+    # Block NC pads (permanently — never unblocked)
+    for ncx, ncy in nc_pad_positions:
+        occupied |= _pad_cells(ncx, ncy)
+
+    # Block all routable pads (will be temporarily unblocked per-net)
+    all_pad_cells: dict[str, set[tuple[int, int]]] = {}
+    for net_name_p, pads_p in net_pads.items():
+        cells: set[tuple[int, int]] = set()
+        for px, py in pads_p:
+            cells |= _pad_cells(px, py)
+        all_pad_cells[net_name_p] = cells
+        occupied |= cells
+
+    # ── Multi-layer BFS with via support ─────────────────────────────────────
+    # Layer 0 = F.Cu, Layer 1 = B.Cu.  A via transition costs VIA_PENALTY
+    # extra grid steps to discourage unnecessary layer changes.
+    DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    LAYERS = ("F.Cu", "B.Cu")
+    occupied_b: set[tuple[int, int]] = set()  # B.Cu occupancy (starts empty)
+    _occupied_by_layer = [occupied, occupied_b]
+    via_size_mm = float(dr.get("viaSize", 1.0))
+    via_drill_mm = float(dr.get("viaDrill", 0.6))
+    VIA_PENALTY = max(4, int(via_size_mm / GRID))  # discourage gratuitous vias
+    allow_vias = bool(dr.get("allowVias", True))
+
+    def _bfs(sx: float, sy: float, ex: float, ey: float,
+             ) -> tuple[list[tuple[float, float, int]], bool]:
+        """BFS on 2-layer grid. Returns (path with layer info, used_via).
+
+        Each path element is (world_x, world_y, layer_index).
+        If allow_vias is False, only searches layer 0.
+        """
+        sg = (int(round(sx / GRID)), int(round(sy / GRID)), 0)
+        # End must be reachable on either layer (pads are through-hole or SMD on F.Cu)
+        eg_xy = (int(round(ex / GRID)), int(round(ey / GRID)))
+        if sg[:2] == eg_xy:
+            return [(sx, sy, 0), (ex, ey, 0)], False
+
+        dist: dict[tuple[int, int, int], int] = {sg: 0}
+        prev: dict[tuple[int, int, int], tuple[int, int, int]] = {}
         pq: list = [(0, sg)]
+        n_layers = 2 if allow_vias else 1
+
         while pq:
             d, cur = heapq.heappop(pq)
             if d > dist.get(cur, 10**9):
                 continue
-            if cur == eg:
-                path: list[tuple[float, float]] = []
+            if cur[0] == eg_xy[0] and cur[1] == eg_xy[1]:
+                # Reached target — reconstruct path
+                path: list[tuple[float, float, int]] = []
                 node = cur
                 while node in prev:
-                    path.append((node[0] * GRID, node[1] * GRID))
+                    path.append((node[0] * GRID, node[1] * GRID, node[2]))
                     node = prev[node]
-                path.append((sg[0] * GRID, sg[1] * GRID))
+                path.append((sg[0] * GRID, sg[1] * GRID, sg[2]))
                 path.reverse()
-                # Snap endpoints to the exact pad coordinates
                 if path:
-                    path[0] = (sx, sy)
-                    path.append((ex, ey))
-                return path
+                    path[0] = (sx, sy, path[0][2])
+                    path.append((ex, ey, path[-1][2]))
+                used_via = any(p[2] != 0 for p in path)
+                return path, used_via
+
+            layer = cur[2]
+            occ = _occupied_by_layer[layer]
+
+            # Cardinal moves on same layer
             for dx, dy in DIRS:
-                nxt = (cur[0] + dx, cur[1] + dy)
+                nxt = (cur[0] + dx, cur[1] + dy, layer)
                 if nxt[0] < 0 or nxt[1] < 0 or nxt[0] >= grid_w or nxt[1] >= grid_h:
                     continue
-                if nxt in occupied:
+                if (nxt[0], nxt[1]) in occ:
                     continue
                 nd = d + 1
                 if nd < dist.get(nxt, 10**9):
                     dist[nxt] = nd
                     prev[nxt] = cur
                     heapq.heappush(pq, (nd, nxt))
-        return None  # no path found
+
+            # Via transition to other layer
+            if n_layers > 1:
+                other = 1 - layer
+                nxt_via = (cur[0], cur[1], other)
+                if (cur[0], cur[1]) not in _occupied_by_layer[other]:
+                    nd = d + VIA_PENALTY
+                    if nd < dist.get(nxt_via, 10**9):
+                        dist[nxt_via] = nd
+                        prev[nxt_via] = cur
+                        heapq.heappush(pq, (nd, nxt_via))
+
+        return [], False  # no path found
 
     # ── Route each net with greedy nearest-neighbour MST ─────────────────────
     routed = 0
     total  = 0
     new_traces: list[dict] = list(board.get("traces", []))
+    all_vias: list[dict] = list(board.get("vias", []))
 
     # Sort nets: power first, then alphabetical for determinism
     def _net_priority(name: str) -> int:
@@ -2996,10 +3068,15 @@ def run_autoroute(board: dict) -> dict:
 
         width_mm = _autoroute_trace_width(net_name, dr)
 
+        # Temporarily unblock this net's own pads so BFS can reach them
+        own_cells = all_pad_cells.get(net_name, set())
+        occupied -= own_cells
+
         # Greedy nearest-neighbour MST: always connect closest unconnected pad
         remaining: list[tuple[float, float]] = list(pads_xy)
         connected: list[tuple[float, float]] = [remaining.pop(0)]
-        segments: list[dict] = []
+        per_layer_segs: dict[str, list[dict]] = {}
+        vias_list: list[dict] = []
         all_routed = True
 
         while remaining:
@@ -3017,35 +3094,69 @@ def run_autoroute(board: dict) -> dict:
             dest = remaining.pop(best_i)
             connected.append(dest)
 
-            path = _bfs(best_src[0], best_src[1], dest[0], dest[1])
-            if path is None:
+            path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1])
+            if not path:
                 # BFS blocked — fall back to straight Manhattan segment so the
                 # net is still partially connected rather than lost entirely.
                 all_routed = False
                 mid = (dest[0], best_src[1])  # horizontal-first elbow
-                path = [best_src, mid, dest]
+                path = [(best_src[0], best_src[1], 0), (mid[0], mid[1], 0), (dest[0], dest[1], 0)]
+                used_via = False
 
+            # Split path into per-layer segments and insert vias at transitions
             for j in range(len(path) - 1):
-                x0, y0 = path[j]
-                x1, y1 = path[j + 1]
+                x0, y0, l0 = path[j]
+                x1, y1, l1 = path[j + 1]
+                if l0 != l1:
+                    # Layer transition = via
+                    vias_list.append({
+                        "x": round(x0, 4), "y": round(y0, 4),
+                        "size": via_size_mm, "drill": via_drill_mm,
+                        "net": net_name,
+                    })
+                    # Mark via position as occupied on both layers
+                    vg = (int(round(x0 / GRID)), int(round(y0 / GRID)))
+                    for vdx in range(-1, 2):
+                        for vdy in range(-1, 2):
+                            occupied.add((vg[0] + vdx, vg[1] + vdy))
+                            occupied_b.add((vg[0] + vdx, vg[1] + vdy))
+                    continue  # no segment for the transition itself
                 if abs(x1 - x0) < 0.001 and abs(y1 - y0) < 0.001:
                     continue  # skip zero-length segments
-                segments.append({"start": {"x": round(x0, 4), "y": round(y0, 4)},
-                                  "end":   {"x": round(x1, 4), "y": round(y1, 4)}})
-                _mark_segment(x0, y0, x1, y1)
+                layer_name = LAYERS[l0]
+                per_layer_segs.setdefault(layer_name, []).append({
+                    "start": {"x": round(x0, 4), "y": round(y0, 4)},
+                    "end":   {"x": round(x1, 4), "y": round(y1, 4)},
+                })
+                # Mark on correct layer's occupancy
+                occ_target = _occupied_by_layer[l0]
+                steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
+                for s in range(steps + 1):
+                    t = s / max(steps, 1)
+                    gx = int(round((x0 + t * (x1 - x0)) / GRID))
+                    gy = int(round((y0 + t * (y1 - y0)) / GRID))
+                    occ_target.add((gx, gy))
 
-        if segments:
-            new_traces.append({
-                "net":      net_name,
-                "layer":    "F.Cu",
-                "width":    width_mm,
-                "segments": segments,
-            })
+        # Re-block this net's pads now that routing is done
+        occupied |= own_cells
+
+        # Build trace objects per layer
+        for layer_name, segs in per_layer_segs.items():
+            if segs:
+                new_traces.append({
+                    "net":      net_name,
+                    "layer":    layer_name,
+                    "width":    width_mm,
+                    "segments": segs,
+                })
+        all_vias.extend(vias_list)
+        if per_layer_segs:
             routed += 1
 
     result = dict(board)
     result["traces"] = new_traces
-    return {**result, "_autoroute": {"routed": routed, "total": total}}
+    result["vias"] = all_vias
+    return {**result, "_autoroute": {"routed": routed, "total": total, "vias": len(all_vias)}}
 
 
 # ── POST /api/pcb/{bid}/autoroute ─────────────────────────────────────────────

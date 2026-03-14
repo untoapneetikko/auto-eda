@@ -241,6 +241,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <h1>🔲 PCB Editor</h1>
   <nav style="margin-left:24px;display:flex;gap:4px;">
     <button class="nav-tab active" id="pcb-nav-layout"  onclick="switchPcbSection('layout')">⬛ Layout</button>
+    <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">Auto</button>
     <button class="nav-tab"        id="pcb-nav-nets"    onclick="switchPcbSection('nets')">〰 Nets</button>
     <button class="nav-tab"        id="pcb-nav-drc"     onclick="switchPcbSection('drc')">📐 Design Rules</button>
     <button class="nav-tab"        id="pcb-nav-export"  onclick="switchPcbSection('export')">📦 Export</button>
@@ -416,6 +417,94 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
       </div>
     </div>
     <div id="boards-inline-list"><div style="color:var(--text-muted);font-size:13px;">Loading…</div></div>
+  </div>
+</div>
+
+<!-- ══ AUTO PLACE / ROUTE SECTION ══ -->
+<div id="pcb-section-auto" class="pcb-section hidden">
+  <div class="pcb-section-body" style="display:flex;gap:24px;flex-wrap:wrap;">
+
+    <!-- ── Auto-Place Settings ── -->
+    <div style="flex:1;min-width:280px;">
+      <h2>Auto-Place</h2>
+      <p class="sub">Placement algorithm settings</p>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;margin-top:12px;">
+
+        <label>Min Clearance (mm)</label>
+        <input type="number" step="0.05" min="0" value="1.0" id="auto-clearance"
+               onchange="DR.packageGap=+this.value;_saveDRStorage()" style="width:90px;">
+
+        <label>Corner Angle</label>
+        <select id="auto-corner" onchange="DR.cornerAngle=+this.value;_saveDRStorage()" style="width:90px;">
+          <option value="90">90 (sharp)</option>
+          <option value="45">45 (chamfer)</option>
+        </select>
+
+        <label>Placement Strategy</label>
+        <select id="auto-strategy" style="width:90px;">
+          <option value="net-proximity">Net Proximity</option>
+          <option value="schematic">Schematic Hints</option>
+        </select>
+
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="tbtn primary" onclick="runAutoPlace()" style="flex:1;">Run Auto-Place</button>
+        <button class="tbtn" onclick="runPlaceFromSchematic()" style="flex:1;">Place from Schematic</button>
+      </div>
+    </div>
+
+    <!-- ── Auto-Route Settings ── -->
+    <div style="flex:1;min-width:280px;">
+      <h2>Auto-Route</h2>
+      <p class="sub">Routing algorithm settings</p>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;margin-top:12px;">
+
+        <label>Trace Width (mm)</label>
+        <input type="number" step="0.05" min="0.05" id="auto-trace-w"
+               onchange="DR.traceWidth=+this.value;_saveDRStorage()" style="width:90px;">
+
+        <label>Copper Clearance (mm)</label>
+        <input type="number" step="0.05" min="0.05" id="auto-cu-clear"
+               onchange="DR.clearance=+this.value;_saveDRStorage()" style="width:90px;">
+
+        <label>Allow Vias</label>
+        <select id="auto-allow-vias" onchange="DR.allowVias=this.value==='true';_saveDRStorage()" style="width:90px;">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+
+        <label>Via Size (mm)</label>
+        <input type="number" step="0.1" min="0.3" id="auto-via-size"
+               onchange="DR.viaSize=+this.value;_saveDRStorage()" style="width:90px;">
+
+        <label>Via Drill (mm)</label>
+        <input type="number" step="0.1" min="0.1" id="auto-via-drill"
+               onchange="DR.viaDrill=+this.value;_saveDRStorage()" style="width:90px;">
+
+        <label>Power Trace Width (mm)</label>
+        <input type="number" step="0.05" min="0.1" id="auto-pwr-trace"
+               onchange="DR.powerTraceWidth=+this.value;_saveDRStorage()" style="width:90px;">
+
+        <label>Route NC Pads</label>
+        <select id="auto-skip-nc" style="width:90px;">
+          <option value="false">Skip (default)</option>
+          <option value="true">Route</option>
+        </select>
+
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;">
+        <button class="tbtn primary" onclick="runAutoRoute()" style="flex:1;">Run Auto-Route</button>
+        <button class="tbtn" onclick="if(editor?.board){editor.board.traces=[];editor.board.vias=[];editor._snapshot();editor.render();updateBoardInfo();}" style="flex:1;">Clear All Traces</button>
+      </div>
+    </div>
+
+    <!-- ── Status / Results ── -->
+    <div style="flex-basis:100%;margin-top:8px;">
+      <div id="auto-status" style="font-size:12px;color:var(--text-muted);min-height:20px;"></div>
+    </div>
+
   </div>
 </div>
 

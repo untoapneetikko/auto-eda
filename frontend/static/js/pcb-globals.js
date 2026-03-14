@@ -53,6 +53,9 @@ let DR = {
   cornerAngle: 90,        // Trace corner angle: 90 = sharp, 0 = fully rounded (degrees)
   // Routing constraints
   minTraceAngle: 90,      // Minimum allowed angle between trace segments (degrees); 90 = no acute bends
+  // Auto-route
+  allowVias: true,        // Allow autorouter to use vias for layer transitions
+  powerTraceWidth: 0.4,   // Min trace width for power nets (mm)
 };
 // Persist DR to localStorage
 function _saveDRStorage(){try{localStorage.setItem('pcb_DR',JSON.stringify(DR));}catch(_){}}
