@@ -196,12 +196,15 @@ function accShowPanel(mode) {
 function accHandleSearch(val) {
   const searchPanel = document.getElementById('acc-search-panel');
   if (!searchPanel) return;
-  if (val.trim()) {
-    searchPanel.style.display = 'flex';
-    renderAccPalette(val);
-  } else {
-    searchPanel.style.display = 'none';
-  }
+  searchPanel.style.display = 'flex';
+  renderAccPalette(val);
+}
+
+function accHandleSearchBlur() {
+  const inp = document.getElementById('acc-palette-search');
+  if (inp && inp.value.trim()) return; // keep open if text present
+  const searchPanel = document.getElementById('acc-search-panel');
+  if (searchPanel) searchPanel.style.display = 'none';
 }
 
 // Save the example editor's current circuit back to the server
@@ -278,7 +281,7 @@ function renderAccPalette(filter) {
     return;
   }
   el.innerHTML = parts.map(p => `
-    <div onclick="accPlaceComponent('${p.slug}');accShowPanel('nets')" title="${(p.description||'').slice(0,80)}"
+    <div onclick="accPlaceComponent('${p.slug}');const _i=document.getElementById('acc-palette-search');if(_i)_i.value='';accShowPanel('nets');" title="${(p.description||'').slice(0,80)}"
       style="padding:5px 10px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:1px;"
       onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
       <span style="font-family:monospace;font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.part_number || p.slug}</span>
