@@ -396,8 +396,13 @@ class SchematicEditor {
       for (const w of this.project.wires) {
         if (!w.points || w.points.length < 2) continue;
         const p0 = w.points[0], pN = w.points[w.points.length - 1];
-        if (Math.hypot(p0.x - labelHit.x, p0.y - labelHit.y) < TOL) labelWires.push({ id: w.id, end: 0 });
-        if (Math.hypot(pN.x - labelHit.x, pN.y - labelHit.y) < TOL) labelWires.push({ id: w.id, end: -1 });
+        const isDot = Math.hypot(p0.x - pN.x, p0.y - pN.y) < 0.5;
+        const d1 = Math.hypot(p0.x - labelHit.x, p0.y - labelHit.y);
+        const d2 = Math.hypot(pN.x - labelHit.x, pN.y - labelHit.y);
+        // Dot-wire at label: stretch it into a real wire.
+        if (isDot && d1 < TOL) { labelWires.push({ id: w.id, end: 0, otherPtOrig: { x: pN.x, y: pN.y } }); continue; }
+        if (d1 < TOL) labelWires.push({ id: w.id, end: 0 });
+        if (d2 < TOL) labelWires.push({ id: w.id, end: -1 });
       }
       this.dragState = { id: labelHit.id, sx, sy, origX: labelHit.x, origY: labelHit.y, isLabel: true, labelWires };
       this._render(); return;
@@ -415,11 +420,14 @@ class SchematicEditor {
           const p0 = w.points[0], pN = w.points[w.points.length - 1];
           const d1 = Math.hypot(p0.x - port.x, p0.y - port.y);
           const d2 = Math.hypot(pN.x - port.x, pN.y - port.y);
+          const isDot = Math.hypot(p0.x - pN.x, p0.y - pN.y) < 0.5;
+          // Dot-wire (T-junction marker): stretch it — one end stays, other follows component.
+          if (isDot && d1 < TOL) { connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: 0, dy: 0, otherPtOrig: { x: pN.x, y: pN.y } }); continue; }
           // If BOTH endpoints are within TOL the port is near the wire's midpoint — skip.
           if (d1 < TOL && d2 < TOL) continue;
-          // Skip dot-wires at T-junction interiors, or pass-through bus stubs.
-          if (d1 < TOL && !this._isDotAtInterior(w) && !this._isPassthroughEndpoint(w.id, p0, port, TOL)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
-          if (d2 < TOL && !this._isDotAtInterior(w) && !this._isPassthroughEndpoint(w.id, pN, port, TOL)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
+          // Skip pass-through bus stubs.
+          if (d1 < TOL && !this._isPassthroughEndpoint(w.id, p0, port, TOL)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
+          if (d2 < TOL && !this._isPassthroughEndpoint(w.id, pN, port, TOL)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
         }
       }
       this.dragState = { id: comp.id, sx, sy, origX: comp.x, origY: comp.y, connectedWires };
@@ -487,6 +495,11 @@ class SchematicEditor {
               if (!wire) continue;
               if (cw.end === 0) { wire.points[0].x = lbl.x; wire.points[0].y = lbl.y; }
               else { wire.points[wire.points.length-1].x = lbl.x; wire.points[wire.points.length-1].y = lbl.y; }
+              if (cw.otherPtOrig) {
+                const otherPt = cw.end === 0 ? wire.points[wire.points.length - 1] : wire.points[0];
+                otherPt.x = cw.otherPtOrig.x; otherPt.y = cw.otherPtOrig.y;
+                this._rerouteWire90(wire);
+              }
             }
           } else if (item.type === 'wire') {
             const wire = this.project.wires.find(w => w.id === item.id);
@@ -512,6 +525,12 @@ class SchematicEditor {
             if (!wire) continue;
             if (cw.end === 0) { wire.points[0].x = lbl.x; wire.points[0].y = lbl.y; }
             else { wire.points[wire.points.length - 1].x = lbl.x; wire.points[wire.points.length - 1].y = lbl.y; }
+            // Lock the junction end of a dot-wire so it doesn't drift
+            if (cw.otherPtOrig) {
+              const otherPt = cw.end === 0 ? wire.points[wire.points.length - 1] : wire.points[0];
+              otherPt.x = cw.otherPtOrig.x; otherPt.y = cw.otherPtOrig.y;
+              this._rerouteWire90(wire);
+            }
           }
           this.dirty = true; this._render();
         }
@@ -593,11 +612,14 @@ class SchematicEditor {
             const p0 = w.points[0], pN = w.points[w.points.length - 1];
             const d1 = Math.hypot(p0.x - port.x, p0.y - port.y);
             const d2 = Math.hypot(pN.x - port.x, pN.y - port.y);
+            const isDot = Math.hypot(p0.x - pN.x, p0.y - pN.y) < 0.5;
+            // Dot-wire (T-junction marker): stretch it — one end stays, other follows component.
+            if (isDot && d1 < TOL) { connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: 0, dy: 0, otherPtOrig: { x: pN.x, y: pN.y } }); continue; }
             // If BOTH endpoints are within TOL the port is near the wire's midpoint — skip.
             if (d1 < TOL && d2 < TOL) continue;
-            // Skip dot-wires at T-junction interiors, or pass-through bus stubs.
-            if (d1 < TOL && !this._isDotAtInterior(w) && !this._isPassthroughEndpoint(w.id, p0, port, TOL)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
-            if (d2 < TOL && !this._isDotAtInterior(w) && !this._isPassthroughEndpoint(w.id, pN, port, TOL)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
+            // Skip pass-through bus stubs.
+            if (d1 < TOL && !this._isPassthroughEndpoint(w.id, p0, port, TOL)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
+            if (d2 < TOL && !this._isPassthroughEndpoint(w.id, pN, port, TOL)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
           }
         }
         items.push({ type: 'comp', id, origX: comp.x, origY: comp.y, connectedWires });
@@ -609,8 +631,12 @@ class SchematicEditor {
         for (const w of this.project.wires) {
           if (!w.points || w.points.length < 2) continue;
           const p0 = w.points[0], pN = w.points[w.points.length - 1];
-          if (Math.hypot(p0.x - lbl.x, p0.y - lbl.y) < TOL) labelWires.push({ id: w.id, end: 0 });
-          if (Math.hypot(pN.x - lbl.x, pN.y - lbl.y) < TOL) labelWires.push({ id: w.id, end: -1 });
+          const isDot = Math.hypot(p0.x - pN.x, p0.y - pN.y) < 0.5;
+          const d1 = Math.hypot(p0.x - lbl.x, p0.y - lbl.y);
+          const d2 = Math.hypot(pN.x - lbl.x, pN.y - lbl.y);
+          if (isDot && d1 < TOL) { labelWires.push({ id: w.id, end: 0, otherPtOrig: { x: pN.x, y: pN.y } }); continue; }
+          if (d1 < TOL) labelWires.push({ id: w.id, end: 0 });
+          if (d2 < TOL) labelWires.push({ id: w.id, end: -1 });
         }
         items.push({ type: 'label', id, origX: lbl.x, origY: lbl.y, labelWires });
         continue;
