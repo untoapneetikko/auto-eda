@@ -934,6 +934,7 @@ function updateAccWireInfoPanel(wire) {
 
   // Read net name directly from project.labels (always live, no stale cache)
   const netName = _getWireNetName(appCircuitEditor, wire.id);
+  console.log('[wireNet] updateAccWireInfoPanel: wireId=', wire.id, 'netName=', netName, 'labels:', JSON.stringify(appCircuitEditor?.project?.labels));
 
   const wireId = wire.id;
   const inputStyle = 'width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--accent);padding:3px 6px;font-size:11px;font-family:monospace;font-weight:700;box-sizing:border-box;';
@@ -1242,7 +1243,8 @@ function _getConnectedWireIds(project, wireId) {
 function _applyWireNetName(editorRef, wireId, newName) {
   if (!editorRef.project.labels) editorRef.project.labels = [];
   const oldName = _getWireNetName(editorRef, wireId);
-  if (newName === oldName) return;
+  console.log('[wireNet] _applyWireNetName called:', {wireId, oldName, newName});
+  if (newName === oldName) { console.log('[wireNet] early return: same name'); return; }
 
   editorRef._saveHist();
 
@@ -1276,11 +1278,15 @@ function _applyWireNetName(editorRef, wireId, newName) {
         id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
         name: newName, x: placePt.x, y: placePt.y, rotation: 0
       });
+      console.log('[wireNet] label placed at', placePt, 'labels now:', editorRef.project.labels.length);
+    } else {
+      console.log('[wireNet] WARNING: no placePt found!');
     }
   }
 
   editorRef.dirty = true;
   editorRef._cachedNetOverlay = null;
+  console.log('[wireNet] calling _render, labels:', JSON.stringify(editorRef.project.labels));
   editorRef._render();
   // Refresh overlay — when done, re-render so component pin nets update immediately
   editorRef._refreshNetOverlay();
