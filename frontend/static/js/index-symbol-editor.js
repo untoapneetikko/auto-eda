@@ -914,6 +914,7 @@ function updateAccLabelInfoPanel(label) {
 }
 
 function updateAccWireInfoPanel(wire) {
+  console.log('[wireNet] updateAccWireInfoPanel called, wire:', wire?.id);
   const emptyEl = document.getElementById('acc-info-empty');
   const contentEl = document.getElementById('acc-info-content');
   if (!wire) { emptyEl.style.display = 'flex'; contentEl.style.display = 'none'; return; }
@@ -1293,10 +1294,12 @@ function _applyWireNetName(editorRef, wireId, newName) {
 }
 
 function setWireNetName(wireId, rawName) {
+  console.log('[wireNet] setWireNetName called:', wireId, rawName);
   _applyWireNetName(editor, wireId, (rawName || '').trim());
 }
 
 function setAccWireNetName(wireId, rawName) {
+  console.log('[wireNet] setAccWireNetName called:', wireId, rawName);
   if (appCircuitEditor) _applyWireNetName(appCircuitEditor, wireId, (rawName || '').trim());
 }
 
