@@ -3018,14 +3018,22 @@ def run_autoroute(board: dict) -> dict:
 
     # Block all routable pads (will be temporarily unblocked per-net)
     all_pad_cells: dict[str, set[tuple[int, int]]] = {}
+    # NO-VIA zone: vias must NEVER be placed on any pad (even same-net pads)
+    _no_via_cells: set[tuple[int, int]] = set()
     for net_name_p, pads_p in net_pads.items():
         cells: set[tuple[int, int]] = set()
         for pad_tuple in pads_p:
             px, py = pad_tuple[0], pad_tuple[1]
             hw, hh = _get_pad_hw(px, py)
-            cells |= _pad_cells(px, py, hw, hh)
+            pad_cells = _pad_cells(px, py, hw, hh)
+            cells |= pad_cells
+            _no_via_cells |= pad_cells
         all_pad_cells[net_name_p] = cells
         occupied |= cells
+    # Also block NC pad positions for vias
+    for ncx, ncy in nc_pad_positions:
+        hw, hh = _get_pad_hw(ncx, ncy)
+        _no_via_cells |= _pad_cells(ncx, ncy, hw, hh)
 
     # ── Multi-layer BFS with via support ─────────────────────────────────────
     # Layer 0 = F.Cu, Layer 1 = B.Cu.  A via transition costs VIA_PENALTY
@@ -3095,11 +3103,12 @@ def run_autoroute(board: dict) -> dict:
                     prev[nxt] = cur
                     heapq.heappush(pq, (nd, nxt))
 
-            # Via transition to other layer
+            # Via transition to other layer (NEVER on a pad)
             if n_layers > 1:
                 other = 1 - layer
                 nxt_via = (cur[0], cur[1], other)
-                if (cur[0], cur[1]) not in _occupied_by_layer[other]:
+                if ((cur[0], cur[1]) not in _occupied_by_layer[other]
+                        and (cur[0], cur[1]) not in _no_via_cells):
                     nd = d + VIA_PENALTY
                     if nd < dist.get(nxt_via, 10**9):
                         dist[nxt_via] = nd
