@@ -35,26 +35,30 @@ import polars as pl
 # ---------------------------------------------------------------------------
 
 # Patterns like "0402", "0603", "0805", "1206" → width_mm, height_mm
+# These are pad-inclusive bounding box sizes (pads + 0.4 mm visual margin),
+# matching what the PCB editor draws as the silkscreen outline.
+# Bare chip body would be smaller; using pad-inclusive ensures the optimizer
+# enforces clearance based on the full visible silkscreen, not just the chip body.
 _IMPERIAL_MAP: dict[str, tuple[float, float]] = {
-    "0201": (0.6,  0.3),
-    "0402": (1.0,  0.5),
-    "0603": (1.6,  0.8),
-    "0805": (2.0,  1.25),
-    "1206": (3.2,  1.6),
-    "1210": (3.2,  2.55),
-    "2010": (5.0,  2.55),
-    "2512": (6.35, 3.2),
+    "0201": (1.4,  0.9),
+    "0402": (2.5,  1.5),
+    "0603": (3.5,  1.8),
+    "0805": (4.0,  2.2),
+    "1206": (5.2,  2.4),
+    "1210": (5.2,  3.4),
+    "2010": (7.0,  3.4),
+    "2512": (8.5,  4.2),
 }
 
-# SOT packages
+# SOT packages — pad-inclusive silkscreen bounding box
 _SOT_MAP: dict[str, tuple[float, float]] = {
-    "SOT-23":   (2.9,  1.3),
-    "SOT-23-5": (2.9,  1.6),
-    "SOT-23-6": (2.9,  1.6),
-    "SOT-223":  (6.5,  3.5),
-    "SOT-89":   (4.5,  2.5),
-    "SOT-363":  (2.2,  2.2),
-    "SOT-323":  (2.2,  1.25),
+    "SOT-23":   (3.7,  2.2),
+    "SOT-23-5": (3.7,  2.6),
+    "SOT-23-6": (3.7,  2.6),
+    "SOT-223":  (8.0,  5.0),
+    "SOT-89":   (6.0,  4.0),
+    "SOT-363":  (3.0,  3.0),
+    "SOT-323":  (3.0,  2.2),
 }
 
 # SOIC packages — look for "SOIC-N" where N is pin count
@@ -74,11 +78,13 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
 
     # ── 1. Explicit WxH body-size anywhere in the string ──────────────
     # Matches patterns like "3X3", "3.0X3.0", "4X4", "3.9X4.9"
+    # Add 0.8 mm (0.4 mm each side) as courtyard/pad margin so the optimizer
+    # uses the full visible silkscreen outline, not just the bare chip body.
     m = re.search(r"(\d+(?:\.\d+)?)\s*X\s*(\d+(?:\.\d+)?)", fp)
     if m:
-        w = float(m.group(1))
-        h = float(m.group(2))
-        if 0.5 <= w <= 50 and 0.5 <= h <= 50:  # sanity range
+        w = float(m.group(1)) + 0.8
+        h = float(m.group(2)) + 0.8
+        if 0.5 <= w <= 55 and 0.5 <= h <= 55:  # sanity range
             return (w, h)
 
     # Imperial passive sizes (0402, 0603, etc.)
@@ -91,28 +97,28 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
         if pkg.upper() in fp:
             return size
 
-    # SOIC-N — estimate height from pin count
+    # SOIC-N — estimate height from pin count; add 0.8 mm pad/courtyard margin
     m = re.search(r"SOIC[-_](\d+)", fp)
     if m:
         n_pins = int(m.group(1))
         pins_per_side = n_pins // 2
-        height = (pins_per_side - 1) * _SOIC_PIN_PITCH + 2.0  # body
-        return (_SOIC_BODY_WIDTH, height)
+        height = (pins_per_side - 1) * _SOIC_PIN_PITCH + 2.0 + 0.8  # body + margin
+        return (_SOIC_BODY_WIDTH + 1.6, height)  # width: leads extend ~0.8 mm each side
 
-    # QFN-N or QFP-N — pin-count heuristic (conservative: 0.4mm/pin)
+    # QFN-N or QFP-N — pin-count heuristic; add 0.8 mm courtyard margin
     m = re.search(r"QF[NP][-_](\d+)", fp)
     if m:
         n_pins = int(m.group(1))
-        side = max(3.0, n_pins * 0.4)
+        side = max(3.0, n_pins * 0.4) + 0.8
         return (side, side)
 
-    # DIP-N
+    # DIP-N — add lead/courtyard margin
     m = re.search(r"DIP[-_](\d+)", fp)
     if m:
         n_pins = int(m.group(1))
         pins_per_side = n_pins // 2
-        height = (pins_per_side - 1) * 2.54 + 2.0
-        return (7.62, height)
+        height = (pins_per_side - 1) * 2.54 + 2.0 + 0.8
+        return (9.0, height)  # DIP leads extend well beyond body
 
     # TO-220, TO-92 etc
     if "TO-220" in fp:
