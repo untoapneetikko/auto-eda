@@ -6,11 +6,22 @@ let _leBoard = null; // current board sent to the LE iframe — used for net aut
 let _leLoadedSlug = null; // which slug is currently loaded in the LE iframe
 
 // Cache the board from the LE iframe's leBoardChanged notifications (fired after each drag).
+// Also re-validate nets so the warning panel stays up-to-date after add/delete.
+let _leNetCheckTimer = null;
 window.addEventListener('message', e => {
   if (!e.data || e.data.type !== 'leBoardChanged' || !e.data.board) return;
   const frame = document.getElementById('le-frame');
   if (!frame || e.source !== frame.contentWindow) return;
   _leBoard = e.data.board;
+  // Debounce net check — avoid running on every pixel of a drag
+  clearTimeout(_leNetCheckTimer);
+  _leNetCheckTimer = setTimeout(() => {
+    if (_leBomData?.length && Object.keys(_leNetAssign).length) {
+      const mm = leValidateNets(_leBoard, _leBomData);
+      leShowNetWarning(mm);
+      leUpdateTabBadge(mm.length);
+    }
+  }, 300);
 });
 
 // Toolbar Save button inside the PCB iframe posts leSave — trigger the real save.
@@ -195,14 +206,61 @@ function leUpdateTabBadge(mismatchCount) {
   }
 }
 
+// Build _leNetAssign by calling /api/netlist — same backend the schematic editor uses.
+// Converts the response {nodeId: "compId::portName"} back to the leGetPadNet key format.
+async function leRefreshNetAssign(circuit) {
+  if (!circuit?.components?.length) { _leNetAssign = {}; return; }
+  const labels = [...(circuit.labels || [])];
+  for (const w of (circuit.wires || [])) {
+    if (!w.net) continue;
+    const pt = w.points?.[0];
+    if (pt) labels.push({ id: '_wn_' + w.id, name: w.net, x: pt.x, y: pt.y, rotation: 0 });
+  }
+  try {
+    const res = await fetch('/api/netlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ components: circuit.components, wires: circuit.wires || [], labels, noConnects: circuit.noConnects || [] })
+    });
+    if (!res.ok) throw new Error('netlist error');
+    const data = await res.json();
+    const assign = {};
+    const compMap = {};
+    for (const c of circuit.components) compMap[c.id] = c;
+    for (const net of (data.nets || [])) {
+      for (const port of (net.ports || [])) {
+        if (!port.nodeId) continue;
+        const sep = port.nodeId.indexOf('::');
+        if (sep < 0) continue;
+        const cid = port.nodeId.slice(0, sep);
+        const portName = port.nodeId.slice(sep + 2);
+        const comp = compMap[cid];
+        if (!comp) continue;
+        if (comp.symType === 'ic' || comp.symType === 'amplifier') {
+          const icPins = [...(_leProfileMap[comp.slug]?.pins || [])].sort((a, b) => (a.number || 0) - (b.number || 0));
+          const pi = icPins.findIndex(pin => (pin.name || `P${pin.number}`) === portName);
+          if (pi >= 0) assign[`${cid}.p${pi}`] = net.name;
+        } else {
+          const def = SYMDEFS[comp.symType] || { ports: [] };
+          const pi = def.ports.findIndex(p => p.name === portName);
+          if (pi >= 0) assign[`${cid}.${pi}`] = net.name;
+        }
+      }
+    }
+    _leNetAssign = assign;
+  } catch (e) {
+    _leNetAssign = leExtractNets(circuit, _leProfileMap); // fallback
+  }
+}
+
 // Re-check layout example nets against the live Schematic Example nets.
 // Updates the tab badge and, if the Layout Example tab is open, also refreshes the warning panel.
 // Called after any net rename in appCircuitEditor.
-function leCheckNetsLive() {
+async function leCheckNetsLive() {
   if (!_leBoard || !_leBomData?.length) return;
   if (!window.selectedSlug || _leLoadedSlug !== window.selectedSlug) return;
   const liveCircuit = leGetLiveCircuit();
-  if (liveCircuit) _leNetAssign = leExtractNets(liveCircuit, _leProfileMap);
+  if (liveCircuit) await leRefreshNetAssign(liveCircuit);
   const mismatches = leValidateNets(_leBoard, _leBomData);
   leUpdateTabBadge(mismatches.length);
   if (typeof currentProfileTab !== 'undefined' && currentProfileTab === 'layout-example') {
@@ -585,9 +643,8 @@ async function renderLayoutExample(slug) {
   // that would wipe out any positions the user has changed since the last save.
   // The iframe already holds the live board state.
   if (_leLoadedSlug === slug && _leBoard) {
-    // Re-extract nets from live schematic example (same source as _leBomData so IDs match)
     const liveCircuit = leGetLiveCircuit();
-    if (liveCircuit) _leNetAssign = leExtractNets(liveCircuit, _leProfileMap);
+    if (liveCircuit) await leRefreshNetAssign(liveCircuit);
     leRenderBomPanel(_leBomData);
     const _mmCached = leValidateNets(_leBoard, _leBomData);
     leShowNetWarning(_mmCached);
@@ -618,7 +675,7 @@ async function renderLayoutExample(slug) {
   const activeCircuit = liveCircuit || circuit;
   const schComps = activeCircuit?.components || [];
   _leBomData = await leResolveBom(schComps, slug, profile);
-  _leNetAssign = activeCircuit ? leExtractNets(activeCircuit, _leProfileMap) : {};
+  if (activeCircuit) await leRefreshNetAssign(activeCircuit); else _leNetAssign = {};
   // Reset added state
   _leBomData.forEach(c => { c._leAdded = false; });
 
