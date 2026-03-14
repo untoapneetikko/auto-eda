@@ -459,34 +459,27 @@ async function leSaveLayout() {
     alert('No component selected — open a component from the library first.');
     return;
   }
-  // Guard: iframe must have finished loading THIS component's board.
-  if (_leLoadedSlug !== slug) {
-    alert('Layout not ready yet — please wait a moment and try again.');
-    return;
-  }
   const frame = document.getElementById('le-frame');
   const btn = document.getElementById('le-save-btn-vis') || document.getElementById('le-save-btn');
   if (!frame) { alert('PCB frame not found — try switching away and back to the Layout Example tab.'); return; }
   const origText = btn ? btn.textContent : '💾 Save';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
   try {
-    // Always request the live board state from the iframe via getBoard/boardData.
+    // Request the live board state from the iframe via getBoard/boardData.
     // This reads editor.board directly — guaranteed fresh regardless of whether
     // _snapshot() fired (it won't if the user released the mouse outside the canvas).
     const board = await new Promise((resolve, reject) => {
-      const t = setTimeout(() => {
-        window.removeEventListener('message', _boardDataHandler);
-        // Fallback: cross-frame property access or last cached board
-        resolve(frame.contentWindow?.pcbEditorInstance?.board ?? _leBoard ?? null);
-      }, 1500);
-      function _boardDataHandler(e) {
+      const timer = setTimeout(() => {
+        window.removeEventListener('message', handler);
+        reject(new Error('timeout waiting for board data — try switching away and back to the Layout Example tab'));
+      }, 4000);
+      function handler(e) {
         if (e.data?.type !== 'boardData') return;
-        if (e.source !== frame.contentWindow) return;
-        clearTimeout(t);
-        window.removeEventListener('message', _boardDataHandler);
+        clearTimeout(timer);
+        window.removeEventListener('message', handler);
         resolve(e.data.board);
       }
-      window.addEventListener('message', _boardDataHandler);
+      window.addEventListener('message', handler);
       frame.contentWindow?.postMessage({ type: 'getBoard' }, '*');
     });
     if (!board) throw new Error('PCB editor board not available — try switching away and back to the Layout Example tab');
