@@ -23,6 +23,7 @@ class SchematicEditor {
     this.history = []; this.historyIdx = -1;
     this.showNets = false;
     this._cachedNetOverlay = null;
+    this._highlightedNet = null;
     this._noEvents = !!opts.noEvents;
     this._isEmbedded = !!opts.labelInputId; // true for appCircuitEditor, false for main editor
     this.labelInputId = opts.labelInputId || 'label-name-input';
@@ -1544,8 +1545,17 @@ class SchematicEditor {
     if (wire.points.length < 2) return '';
     const sel = this.selected?.id === wire.id || this.multiSelected.has(wire.id);
     const pts = wire.points.map(p => `${p.x},${p.y}`).join(' ');
-    const c = sel ? '#818cf8' : '#4b9cd3', sw = sel ? 2.5 : 1.8;
-    return `<polyline class="se-wire" data-id="${esc(wire.id)}" points="${pts}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"/>`;
+    let c, sw, opStr = '';
+    if (sel) {
+      c = '#818cf8'; sw = 2.5;
+    } else if (this._highlightedNet) {
+      const wNet = this._cachedNetOverlay?.wireToNet?.get(wire.id);
+      if (wNet === this._highlightedNet) { c = '#facc15'; sw = 2.8; }
+      else { c = '#4b9cd3'; sw = 1.8; opStr = ' opacity="0.2"'; }
+    } else {
+      c = '#4b9cd3'; sw = 1.8;
+    }
+    return `<polyline class="se-wire" data-id="${esc(wire.id)}" points="${pts}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"${opStr}/>`;
   }
 
   _wpH() {

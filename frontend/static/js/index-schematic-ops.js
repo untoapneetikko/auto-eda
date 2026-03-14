@@ -24,6 +24,14 @@ editor._render = function() {
 };
 
 // ── Net listing ───────────────────────────────────────────────────────────
+function _schNetClick(listId, countId, netName) {
+  const ed = listId.startsWith('acc') ? appCircuitEditor : editor;
+  if (!ed) return;
+  ed._highlightedNet = ed._highlightedNet === netName ? null : netName;
+  ed._render();
+  renderSchNets(ed, listId, countId);
+}
+
 function renderSchNets(editorRef, listId, countId) {
   const el = document.getElementById(listId);
   if (!el) return;
@@ -35,9 +43,13 @@ function renderSchNets(editorRef, listId, countId) {
     el.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--text-muted);">No nets yet.</div>';
     return;
   }
+  const hn = editorRef._highlightedNet;
   el.innerHTML = nets.map(n => {
     const col = editorRef._labelColor(n.name);
-    return `<div class="sch-net-row">
+    const active = hn === n.name;
+    const bg = active ? 'background:rgba(250,204,21,0.1);' : '';
+    const border = active ? `border-left:2px solid #facc15;padding-left:6px;` : 'padding-left:8px;';
+    return `<div class="sch-net-row" style="cursor:pointer;${bg}${border}" onclick="_schNetClick('${listId}','${countId}',${JSON.stringify(n.name)})" title="Click to highlight net">
       <div class="sch-net-dot" style="background:${col};"></div>
       <span class="sch-net-name" style="color:${col};" title="${esc(n.name)}">${esc(n.name)}</span>
       <span class="sch-net-pins">${n.ports.length}</span>

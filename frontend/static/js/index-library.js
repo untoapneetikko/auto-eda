@@ -422,8 +422,18 @@ Then parse this component:
       <div id="tab-schematic" class="tab-panel" style="display:none;">
         <div class="profile-body">
           <div style="display:flex;align-items:stretch;">
+            <!-- Nets panel — left side -->
+            <div style="width:148px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;display:flex;flex-direction:column;overflow:hidden;">
+              <div style="padding:7px 10px 5px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+                <span>Nets</span>
+                <span id="acc-nets-count" style="font-size:10px;font-weight:600;"></span>
+              </div>
+              <div id="acc-nets-list" style="overflow-y:auto;flex:1;font-size:10px;">
+                <div style="padding:6px 10px;font-size:10px;color:var(--text-muted);">No nets yet.</div>
+              </div>
+            </div>
             <div style="flex:1;min-width:0;">
-              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px 0 0 8px;overflow:hidden;">
+              <div style="background:var(--surface2);border:1px solid var(--border);border-left:none;border-right:none;border-radius:0;overflow:hidden;">
                 <!-- Toolbar: same tools as main editor -->
                 <div style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;">
                   <button data-acc-tool="select" class="active" onclick="appCircuitEditor?.setTool('select')" title="Select — S" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">▶ Select</button>
@@ -465,16 +475,6 @@ Then parse this component:
                 </div>
                 <div style="padding:0 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:3px;">Pins</div>
                 <div id="acc-info-pins" style="padding:0 8px 8px;font-size:10px;"></div>
-              </div>
-            </div>
-            <!-- Nets section -->
-            <div style="border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;min-height:0;max-height:160px;">
-              <div style="padding:7px 10px 5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
-                <span>Nets</span>
-                <span id="acc-nets-count" style="font-size:10px;font-weight:600;"></span>
-              </div>
-              <div id="acc-nets-list" style="overflow-y:auto;flex:1;">
-                <div style="padding:6px 10px;font-size:10px;color:var(--text-muted);">No nets yet.</div>
               </div>
             </div>
           </div>
