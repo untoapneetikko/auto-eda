@@ -3,6 +3,31 @@
 
 let _agentsTimer = null;
 let _agentsLastLoad = 0;
+// Unread completions: incremented when an agent finishes while the drawer is closed.
+// Persisted in localStorage so a page refresh doesn't lose the indicator.
+let _agentsUnread = parseInt(localStorage.getItem('agents_unread') || '0', 10);
+
+function _agentsMarkUnread(count) {
+  _agentsUnread = count;
+  localStorage.setItem('agents_unread', count);
+  _agentsRefreshBadge();
+}
+
+function _agentsRefreshBadge() {
+  const badge = document.getElementById('agents-toggle-badge');
+  if (!badge) return;
+  const running = Object.values(_paState).filter(a => a.status === 'running').length;
+  if (running > 0) {
+    badge.textContent = running;
+    badge.classList.add('visible');
+    badge.classList.remove('done');
+  } else if (_agentsUnread > 0) {
+    badge.textContent = _agentsUnread;
+    badge.classList.add('visible', 'done');
+  } else {
+    badge.classList.remove('visible', 'done');
+  }
+}
 
 const CAT_ICON = { library:'📚', schematic:'📐', layout:'🔲', other:'⚙' };
 const PRI_STYLE = { urgent:'background:rgba(239,68,68,0.2);color:#ef4444', high:'background:rgba(245,158,11,0.2);color:#f59e0b', medium:'background:rgba(108,99,255,0.2);color:#818cf8', low:'background:rgba(100,116,139,0.2);color:#64748b' };
@@ -54,11 +79,9 @@ async function agentsLoad() {
 
   await pipelineAgentsLoad();
 
-  // Badge = number of running pipeline agents
-  const running = Object.values(_paState).filter(a => a.status === 'running').length;
-  const badge = document.getElementById('agents-toggle-badge');
-  if (badge) { badge.textContent = running; badge.classList.toggle('visible', running > 0); }
+  _agentsRefreshBadge();
 
+  const running = Object.values(_paState).filter(a => a.status === 'running').length;
   const liveEl = document.getElementById('agents-live-indicator');
   if (liveEl) liveEl.style.display = running ? 'flex' : 'none';
   const acEl = document.getElementById('agents-active-count');
@@ -90,6 +113,7 @@ function toggleAgentsDrawer(forceOpen) {
   const navBtn = document.getElementById('nav-agents');
   if (navBtn) navBtn.classList.toggle('active', _drawerOpen);
   if (_drawerOpen) {
+    _agentsMarkUnread(0); // clear unread when drawer opens
     agentsLoad();
     ahLoad();
   } else {
@@ -374,6 +398,7 @@ async function pipelineAgentsLoad() {
     }
     // Poll detected agent finished (SSE was missed) — reload chat pane with full history
     if (prev?.status === 'running' && a.status !== 'running') {
+      if (!_drawerOpen) _agentsMarkUnread(_agentsUnread + 1);
       _paStopPoll();
       if (_activePaAgent === a.name) {
         fetch(`/api/pipeline/agents/${a.name}/history`)
@@ -652,6 +677,8 @@ function _handlePipelineSSE(evt, data) {
     } else if (evt === 'pipeline_agent_done') {
       _paState[name].status = data.status === 'done' ? 'done' : data.status === 'error' ? 'error' : 'idle';
       _paStopTickFor(name);
+      if (!_drawerOpen) _agentsMarkUnread(_agentsUnread + 1);
+      _agentsRefreshBadge();
     }
     const card = document.getElementById('pa-card-' + name);
     if (card) {
