@@ -2935,7 +2935,22 @@ def run_autoroute(board: dict) -> dict:
     nc_pad_positions: list[tuple[float, float]] = []  # blocked zones around NC pins
     nc_nets: set[str] = set()  # nets that contain at least one NC-named pad
     _net_has_real_pad: set[str] = set()  # nets that have at least one non-NC pad
-    _NC_NAMES = {"NC", "N/C", "N.C.", "NOCONNECT", "NO_CONNECT", "NO CONNECT"}
+    _NC_EXACT = {"NC", "N/C", "N.C.", "NOCONNECT", "NO_CONNECT", "NO CONNECT"}
+    _NC_PREFIXES = ("NC", "N/C", "NOCONNECT", "NO_CONNECT")
+    def _is_nc(name: str, net: str) -> bool:
+        """Check if a pad is No-Connect by name or net."""
+        n = name.upper().strip()
+        t = net.upper().strip()
+        if n in _NC_EXACT or t in _NC_EXACT:
+            return True
+        # Also match names like "NC (float!)", "NC_1", etc.
+        for pfx in _NC_PREFIXES:
+            if n.startswith(pfx + " ") or n.startswith(pfx + "(") or n.startswith(pfx + "_"):
+                return True
+            if t.startswith(pfx + " ") or t.startswith(pfx + "(") or t.startswith(pfx + "_"):
+                return True
+        return False
+
     for comp in board.get("components", []):
         cx  = float(comp.get("x", 0))
         cy  = float(comp.get("y", 0))
@@ -2950,7 +2965,7 @@ def run_autoroute(board: dict) -> dict:
             px = cx + lx * cos_r - ly * sin_r
             py = cy + lx * sin_r + ly * cos_r
             pad_name = (pad.get("name", "") or "").upper().strip()
-            is_nc_pad = pad_name in _NC_NAMES
+            is_nc_pad = _is_nc(pad_name, net)
             if is_nc_pad:
                 # Mark NC pad position as blocked — no trace may pass through
                 nc_pad_positions.append((px, py))
@@ -2975,9 +2990,11 @@ def run_autoroute(board: dict) -> dict:
 
     def _pad_cells(px: float, py: float,
                    half_w: float = 0.0, half_h: float = 0.0) -> set[tuple[int, int]]:
-        """Grid cells blocked by a pad at (px,py) with given half-extents + clearance."""
-        rx = max(1, int(math.ceil((half_w + cu_clearance) / GRID)))
-        ry = max(1, int(math.ceil((half_h + cu_clearance) / GRID)))
+        """Grid cells blocked by a pad at (px,py).
+        Expansion = pad half-extent + copper clearance + trace half-width,
+        so the trace EDGE (not just centerline) maintains clearance from the pad EDGE."""
+        rx = max(1, int(math.ceil((half_w + cu_clearance + _default_trace_w / 2) / GRID)))
+        ry = max(1, int(math.ceil((half_h + cu_clearance + _default_trace_w / 2) / GRID)))
         gc_x = int(round(px / GRID))
         gc_y = int(round(py / GRID))
         cells: set[tuple[int, int]] = set()
@@ -3011,10 +3028,13 @@ def run_autoroute(board: dict) -> dict:
     def _get_pad_hw(px: float, py: float) -> tuple[float, float]:
         return _pad_hw_map.get((round(px, 4), round(py, 4)), (0.25, 0.25))
 
-    # Block NC pads (permanently — never unblocked)
+    # Block NC pads on F.Cu (B.Cu blocking added after occupied_b is created)
+    _nc_blocked_cells: set[tuple[int, int]] = set()
     for ncx, ncy in nc_pad_positions:
         hw, hh = _get_pad_hw(ncx, ncy)
-        occupied |= _pad_cells(ncx, ncy, hw, hh)
+        nc_cells = _pad_cells(ncx, ncy, hw, hh)
+        _nc_blocked_cells |= nc_cells
+    occupied |= _nc_blocked_cells
 
     # Block all routable pads (will be temporarily unblocked per-net)
     all_pad_cells: dict[str, set[tuple[int, int]]] = {}
@@ -3041,6 +3061,9 @@ def run_autoroute(board: dict) -> dict:
     DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     LAYERS = ("F.Cu", "B.Cu")
     occupied_b: set[tuple[int, int]] = set()  # B.Cu occupancy (starts empty)
+    # Block NC pads and all routable pads on B.Cu too
+    occupied_b |= _nc_blocked_cells
+    occupied_b |= _no_via_cells  # all pad positions blocked on B.Cu as well
     _occupied_by_layer = [occupied, occupied_b]
     via_size_mm = float(dr.get("viaSize", 1.0))
     via_drill_mm = float(dr.get("viaDrill", 0.6))
