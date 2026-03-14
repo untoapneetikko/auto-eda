@@ -944,12 +944,8 @@ function updateAccWireInfoPanel(wire) {
       <text x="91" y="51" text-anchor="middle" font-family="monospace" font-size="9" fill="#4b5563">wire</text>`;
   }
 
-  let netName = '';
-  try {
-    const { wireToNet } = computeNetOverlay(appCircuitEditor);
-    const n = wireToNet.get(wire.id);
-    if (n) netName = n;
-  } catch(e) {}
+  // Read net name directly from project.labels (always live, no stale cache)
+  const netName = _getWireNetName(appCircuitEditor, wire.id);
 
   const wireId = wire.id;
   const inputStyle = 'width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--accent);padding:3px 6px;font-size:11px;font-family:monospace;font-weight:700;box-sizing:border-box;';
@@ -990,43 +986,6 @@ function updateAccWireInfoPanel(wire) {
   }
   if (!html) html = `<div style="color:var(--text-muted);font-size:10px;padding:4px 0;">No pins connected yet.</div>`;
   document.getElementById('acc-info-pins').innerHTML = html;
-}
-
-function setAccWireNetName(wireId, rawName) {
-  const newName = (rawName || '').trim();
-  if (!appCircuitEditor) return;
-  if (!appCircuitEditor.project.labels) appCircuitEditor.project.labels = [];
-
-  const { wireToNet } = computeNetOverlay(appCircuitEditor);
-  const oldName = wireToNet.get(wireId) || '';
-
-  if (newName === oldName) return;
-
-  appCircuitEditor._saveHist();
-
-  if (oldName) {
-    if (newName) {
-      appCircuitEditor.project.labels.forEach(l => { if (l.name === oldName) l.name = newName; });
-    } else {
-      appCircuitEditor.project.labels = appCircuitEditor.project.labels.filter(l => l.name !== oldName);
-    }
-  } else if (newName) {
-    const wire = appCircuitEditor.project.wires.find(w => w.id === wireId);
-    if (wire?.points?.length) {
-      const pt = wire.points[wire.points.length - 1];
-      appCircuitEditor.project.labels.push({
-        id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-        name: newName, x: pt.x, y: pt.y, rotation: 0
-      });
-    }
-  }
-
-  appCircuitEditor.dirty = true;
-  appCircuitEditor._render();
-  appCircuitEditor._refreshNetOverlay().then(() => {
-    const wire = appCircuitEditor.project.wires.find(w => w.id === wireId);
-    if (wire && appCircuitEditor.selected?.id === wireId) updateAccWireInfoPanel(wire);
-  });
 }
 
 function accBomPlace(slug, symType, value) {
@@ -1095,13 +1054,8 @@ function updateSchWireInfoPanel(wire) {
       <text x="100" y="76" text-anchor="middle" font-family="monospace" font-size="9" fill="#4b5563">wire</text>`;
   }
 
-  // Determine net name using the wire-to-net map
-  let netName = '';
-  try {
-    const { wireToNet } = computeNetOverlay(editor);
-    const n = wireToNet.get(wire.id);
-    if (n) netName = n;
-  } catch(e) {}
+  // Read net name directly from project.labels (always live, no stale cache)
+  const netName = _getWireNetName(editor, wire.id);
 
   const wireId = wire.id;
   const inputStyle = 'width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--accent);padding:4px 8px;font-size:12px;font-family:monospace;font-weight:700;box-sizing:border-box;';
@@ -1232,45 +1186,67 @@ function schLabelUpdate(labelId, field, value) {
   editor._render();
 }
 
-function setWireNetName(wireId, rawName) {
-  const newName = (rawName || '').trim();
-  if (!editor.project.labels) editor.project.labels = [];
+// ── Wire net name helpers ──────────────────────────────────────────────────
+// Read net name directly from project.labels (bypasses stale API cache).
+// Checks labels at wire endpoints first, then falls back to the cached overlay
+// for wires that inherit a name transitively through connected wires/junctions.
+function _getWireNetName(editorRef, wireId) {
+  const wire = (editorRef.project.wires || []).find(w => w.id === wireId);
+  if (wire?.points?.length) {
+    const check = [wire.points[0], wire.points[wire.points.length - 1]];
+    for (const pt of check) {
+      for (const lbl of (editorRef.project.labels || [])) {
+        if (Math.abs(lbl.x - pt.x) < 0.5 && Math.abs(lbl.y - pt.y) < 0.5) return lbl.name;
+      }
+    }
+  }
+  // Fallback to cache for transitively-named wires
+  try { const n = computeNetOverlay(editorRef).wireToNet.get(wireId); if (n) return n; } catch(_) {}
+  return '';
+}
 
-  // Find the current net name for this wire
-  const { wireToNet } = computeNetOverlay(editor);
-  const oldName = wireToNet.get(wireId) || '';
-
-  // No change at all
+// Apply new net name to a wire, spreading rename to all connected labels.
+function _applyWireNetName(editorRef, wireId, newName) {
+  if (!editorRef.project.labels) editorRef.project.labels = [];
+  const oldName = _getWireNetName(editorRef, wireId);
   if (newName === oldName) return;
 
-  editor._saveHist();
+  editorRef._saveHist();
 
   if (oldName) {
-    // Rename or remove all labels that carried the old name (spreads to whole net)
+    // Spread: rename or remove every label sharing the old name across the whole net
     if (newName) {
-      editor.project.labels.forEach(l => { if (l.name === oldName) l.name = newName; });
+      editorRef.project.labels.forEach(l => { if (l.name === oldName) l.name = newName; });
     } else {
-      // Empty → remove all labels for this net
-      editor.project.labels = editor.project.labels.filter(l => l.name !== oldName);
+      editorRef.project.labels = editorRef.project.labels.filter(l => l.name !== oldName);
     }
   } else if (newName) {
-    // No existing label for this wire — place one at the wire's last endpoint
-    const wire = editor.project.wires.find(w => w.id === wireId);
+    // No label on this wire yet — find a free endpoint and place one there
+    const wire = editorRef.project.wires.find(w => w.id === wireId);
     if (wire?.points?.length) {
-      const pt = wire.points[wire.points.length - 1];
-      editor.project.labels.push({
+      // Prefer an endpoint that is NOT already occupied by another label
+      const pts = [wire.points[wire.points.length - 1], wire.points[0]];
+      const taken = new Set((editorRef.project.labels || []).map(l => `${l.x},${l.y}`));
+      const pt = pts.find(p => !taken.has(`${p.x},${p.y}`)) || pts[0];
+      editorRef.project.labels.push({
         id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
         name: newName, x: pt.x, y: pt.y, rotation: 0
       });
     }
   }
 
-  editor.dirty = true;
-  editor._render();
-  // Refresh net overlay then re-show the panel so net name + connections update
-  editor._refreshNetOverlay().then(() => {
-    const wire = editor.project.wires.find(w => w.id === wireId);
-    if (wire && editor.selected?.id === wireId) updateSchWireInfoPanel(wire);
-  });
+  editorRef.dirty = true;
+  // Invalidate cached overlay so the next render reads fresh data
+  editorRef._cachedNetOverlay = null;
+  editorRef._render();
+  editorRef._refreshNetOverlay();
+}
+
+function setWireNetName(wireId, rawName) {
+  _applyWireNetName(editor, wireId, (rawName || '').trim());
+}
+
+function setAccWireNetName(wireId, rawName) {
+  if (appCircuitEditor) _applyWireNetName(appCircuitEditor, wireId, (rawName || '').trim());
 }
 
