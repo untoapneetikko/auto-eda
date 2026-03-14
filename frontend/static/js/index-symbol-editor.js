@@ -992,6 +992,10 @@ function updateSchWireInfoPanel(wire) {
   const proj = document.getElementById('sch-info-project');
   const content = document.getElementById('sch-info-content');
   if (!wire) { _showSchProjectPanel(); return; }
+  // Don't clobber panel while user is typing in the net input for this wire
+  const focused = document.activeElement;
+  if (focused && focused.id === 'wire-net-input' && content?.dataset.selId === wire.id) return;
+  content.dataset.selId = wire.id; content.dataset.selType = 'wire';
   _schInfoTitle('Wire');
   if (proj) proj.style.display = 'none'; content.style.display = 'flex';
   _infoSlug = null;
@@ -1007,28 +1011,55 @@ function updateSchWireInfoPanel(wire) {
   }
 
   // Determine net name using the wire-to-net map
-  let netName = '—';
+  let netName = '';
   try {
     const { wireToNet } = computeNetOverlay(editor);
-    netName = wireToNet.get(wire.id) || '—';
+    const n = wireToNet.get(wire.id);
+    if (n) netName = n;
   } catch(e) {}
 
-  const nc = netName !== '—' ? '#c4b5fd' : 'var(--text-muted)';
+  const wireId = wire.id;
+  const inputStyle = 'width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--accent);padding:4px 8px;font-size:12px;font-family:monospace;font-weight:700;box-sizing:border-box;';
   document.getElementById('sch-info-name').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:5px;">
       <div>
-        <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;">Net</div>
-        <div style="font-family:monospace;font-weight:700;font-size:13px;color:${nc};background:rgba(108,99,255,0.12);border-radius:4px;padding:4px 8px;">${esc(netName)}</div>
+        <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Net Name</div>
+        <input id="wire-net-input" value="${esc(netName)}" placeholder="Unnamed net…"
+          style="${inputStyle}"
+          onkeydown="if(event.key==='Enter'){setWireNetName('${esc(wireId)}',this.value);this.blur();}"
+          onchange="setWireNetName('${esc(wireId)}',this.value)">
+        <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">Enter to apply · spreads to all connected wires</div>
       </div>
     </div>`;
   document.getElementById('sch-info-desc').textContent = `${wire.points?.length || 0} points`;
   document.getElementById('sch-info-goto-btn').style.display = 'none';
 
-  const wireId = wire.id;
-  document.getElementById('sch-info-pins').innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;padding:4px 0;">
-    <div style="font-size:10px;color:var(--text-muted);line-height:1.4;">Assign a net label to an endpoint to name this net.</div>
-    <button onclick="assignNetToWire('${esc(wireId)}')" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:5px;padding:5px 8px;font-size:11px;cursor:pointer;font-weight:700;">+ Assign Net Label</button>
-  </div>`;
+  // Show connected pins for this net
+  let nets = [];
+  try { ({ nets } = computeNetOverlay(editor)); } catch(e) {}
+  const net = netName ? nets.find(n => n.name === netName) : null;
+  const typeColor = { power:'#fca5a5', gnd:'#94a3b8', input:'#86efac', output:'#93c5fd' };
+  let html = '';
+  if (net) {
+    const pinPorts = net.ports.filter(p => !p.nodeId?.startsWith('wire::'));
+    if (pinPorts.length) {
+      html += `<div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Connected Pins</div>`;
+      for (const port of pinPorts) {
+        const [compId, pinName] = (port.nodeId||'').split('::');
+        const comp = editor.project.components.find(c => c.id === compId);
+        if (!comp) continue;
+        const profile = comp.slug ? (profileCache[comp.slug] || library[comp.slug]) : null;
+        const pin = profile?.pins?.find(pi => pi.name === pinName);
+        html += `<div style="display:flex;gap:4px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(46,50,80,0.4);">
+          <span style="font-family:monospace;font-weight:700;color:var(--accent);font-size:10px;min-width:28px;">${esc(comp.designator||'')}</span>
+          <span style="font-family:monospace;font-weight:700;color:${typeColor[pin?.type]||'#fcd34d'};flex:1;font-size:10px;">${esc(pinName||'')}</span>
+          ${pin?.type ? `<span style="font-size:8px;color:${typeColor[pin.type]};background:rgba(0,0,0,0.3);border-radius:3px;padding:1px 3px;">${pin.type}</span>` : ''}
+        </div>`;
+      }
+    }
+  }
+  if (!html) html = `<div style="color:var(--text-muted);font-size:10px;padding:4px 0;">No pins connected yet.</div>`;
+  document.getElementById('sch-info-pins').innerHTML = html;
 }
 
 function updateSchLabelInfoPanel(label) {
@@ -1116,17 +1147,45 @@ function schLabelUpdate(labelId, field, value) {
   editor._render();
 }
 
-function assignNetToWire(wireId) {
-  const wire = editor.project.wires.find(w => w.id === wireId);
-  if (!wire || !wire.points?.length) return;
-  // Find endpoint that has no label yet, prompt for a name, then place a label there
-  const pts = wire.points;
-  const pt = pts[pts.length - 1]; // use the last endpoint
-  const name = prompt('Net label name:', '');
-  if (!name?.trim()) return;
-  editor._saveHist();
+function setWireNetName(wireId, rawName) {
+  const newName = (rawName || '').trim();
   if (!editor.project.labels) editor.project.labels = [];
-  editor.project.labels.push({ id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5), name: name.trim(), x: pt.x, y: pt.y, rotation: 0 });
-  editor.dirty = true; editor._render();
+
+  // Find the current net name for this wire
+  const { wireToNet } = computeNetOverlay(editor);
+  const oldName = wireToNet.get(wireId) || '';
+
+  // No change at all
+  if (newName === oldName) return;
+
+  editor._saveHist();
+
+  if (oldName) {
+    // Rename or remove all labels that carried the old name (spreads to whole net)
+    if (newName) {
+      editor.project.labels.forEach(l => { if (l.name === oldName) l.name = newName; });
+    } else {
+      // Empty → remove all labels for this net
+      editor.project.labels = editor.project.labels.filter(l => l.name !== oldName);
+    }
+  } else if (newName) {
+    // No existing label for this wire — place one at the wire's last endpoint
+    const wire = editor.project.wires.find(w => w.id === wireId);
+    if (wire?.points?.length) {
+      const pt = wire.points[wire.points.length - 1];
+      editor.project.labels.push({
+        id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+        name: newName, x: pt.x, y: pt.y, rotation: 0
+      });
+    }
+  }
+
+  editor.dirty = true;
+  editor._render();
+  // Refresh net overlay then re-show the panel so net name + connections update
+  editor._refreshNetOverlay().then(() => {
+    const wire = editor.project.wires.find(w => w.id === wireId);
+    if (wire && editor.selected?.id === wireId) updateSchWireInfoPanel(wire);
+  });
 }
 
