@@ -2342,7 +2342,7 @@ def _rotate_offset(dx: int, dy: int, r: int) -> tuple[int, int]:
 
 _POWER_NAMES = {"VCC", "VDD", "GND", "GND", "3V3", "5V", "12V", "AGND", "DGND", "PGND", "VSS"}
 
-def build_netlist(components: list, wires: list, labels: list) -> dict:
+def build_netlist(components: list, wires: list, labels: list, no_connects: list | None = None) -> dict:
     """Extract netlist from schematic JSON using union-find."""
 
     # Union-Find
@@ -2577,6 +2577,15 @@ def build_netlist(components: list, wires: list, labels: list) -> dict:
         if root not in root_to_net and lname:
             _assign(root, lname)
 
+    # Priority 3b: No-Connect markers — force these ports to net "NC"
+    if no_connects:
+        nc_positions: set[str] = {_pt_key(nc.get("x", 0), nc.get("y", 0)) for nc in no_connects}
+        for node_id, wx, wy in portNodes:
+            if _pt_key(wx, wy) in nc_positions:
+                r = find(node_id)
+                if r not in root_to_net:
+                    _assign(r, "NC")
+
     # Priority 4: NC check (single port, name NC or pin type nc)
     for root, ports_in in root_to_ports.items():
         if root in root_to_net:
@@ -2678,10 +2687,11 @@ def build_netlist(components: list, wires: list, labels: list) -> dict:
 @router.post("/netlist")
 async def extract_netlist(request: Request):
     body = await request.json()
-    components = body.get("components", [])
-    wires      = body.get("wires", [])
-    labels     = body.get("labels", [])
-    result = build_netlist(components, wires, labels)
+    components  = body.get("components", [])
+    wires       = body.get("wires", [])
+    labels      = body.get("labels", [])
+    no_connects = body.get("noConnects", [])
+    result = build_netlist(components, wires, labels, no_connects)
     return result
 
 

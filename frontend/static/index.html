@@ -827,6 +827,7 @@
       <button class="tool-btn" id="btn-undo" onclick="editor._undo()" title="Undo — Ctrl+Z" disabled style="opacity:0.35;cursor:default;">&#8630; Undo</button>
       <button class="tool-btn" id="btn-redo" onclick="editor._redo()" title="Redo — Ctrl+Y / Ctrl+Shift+Z" disabled style="opacity:0.35;cursor:default;">&#8631; Redo</button>
       <button class="tool-btn" data-tool="label" onclick="editor.setTool('label')" title="Net Label — L">&#9657; Label</button>
+      <button class="tool-btn" data-tool="nc" onclick="editor.setTool('nc')" title="No Connect — X · Mark unused pins so DRC ignores them">&#10005; NC</button>
       <input id="label-name-input" type="text" placeholder="Net name…" title="Net label name" style="width:80px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:11px;font-family:monospace;" onkeydown="if(event.key==='Enter'){event.target.blur();editor.setTool('label');}" />
       <div class="toolbar-sep"></div>
       <button class="tool-btn" id="btn-group" onclick="editor.groupSelected()" title="Group selection — Ctrl+G">&#9681; Group</button>

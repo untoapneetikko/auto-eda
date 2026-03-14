@@ -20,6 +20,7 @@ class SchematicEditor {
     this.placeSlug = null; this.placeSymType = null; this.placeCursor = null; this.placeRotation = 0;
     this.placeGroupData = null; // { circ, bboxCx, bboxCy, cursor } for example-circuit placement
     this.labelCursor = null;
+    this.ncCursor = null;
     this.history = []; this.historyIdx = -1;
     this.showNets = false;
     this._cachedNetOverlay = null;
@@ -76,7 +77,7 @@ class SchematicEditor {
 
   // ── Project ───────────────────────────────────────────────────────────────
   newProject(name) {
-    this.project = { id: null, name: name || 'Untitled', components: [], wires: [], labels: [], groups: [] };
+    this.project = { id: null, name: name || 'Untitled', components: [], wires: [], labels: [], groups: [], noConnects: [] };
     this.dirty = false; this.selected = null;
     this._saveHist(); this._resetView(); this._render(); this._status();
   }
@@ -85,6 +86,7 @@ class SchematicEditor {
     this.project = data;
     if (!this.project.labels) this.project.labels = [];
     if (!this.project.groups) this.project.groups = [];
+    if (!this.project.noConnects) this.project.noConnects = [];
     this.dirty = false; this.selected = null;
     this._autoConnectAll();
     this._saveHist(); this._fit(); this._render(); this._status();
@@ -313,6 +315,8 @@ class SchematicEditor {
 
     if (this.tool === 'label') { this._placeLabel(sx, sy); return; }
 
+    if (this.tool === 'nc') { this._placeNC(sx, sy); return; }
+
     if (this.tool === 'wire') {
       const snap = this._snapPortOrGrid(sx, sy);
       if (this.wirePoints.length === 0) {
@@ -326,6 +330,7 @@ class SchematicEditor {
     }
 
     if (this.tool === 'delete') {
+      const nc = this._hitNC(sx, sy); if (nc) { this._delNC(nc.id); return; }
       const c = this._hitComp(sx, sy); if (c) { this._delComp(c.id); return; }
       const l = this._hitLabel(sx, sy); if (l) { this._delLabel(l.id); return; }
       const w = this._hitWire(sx, sy); if (w) { this._delWire(w.id); return; }
@@ -345,6 +350,14 @@ class SchematicEditor {
           this._render(); return;
         }
       }
+    }
+
+    // NC marker: click selects it so Delete key can remove it
+    const ncHit = this._hitNC(sx, sy);
+    if (ncHit && this.tool === 'select') {
+      this.multiSelected.clear();
+      this.selected = { type: 'nc', id: ncHit.id };
+      this._render(); return;
     }
 
     // Hit resolution: wire precision (6px) beats loose component bbox, EXCEPT when
@@ -613,6 +626,9 @@ class SchematicEditor {
     if (this.tool === 'label') {
       const w = this._toW(sx, sy); this.labelCursor = this._snapPt(w.x, w.y); this._render(); return;
     }
+    if (this.tool === 'nc') {
+      const w = this._toW(sx, sy); this.ncCursor = this._snapNearPort(w.x, w.y); this._render(); return;
+    }
     const prevHC = this.hoveredComp, prevHP = this.hoveredPort;
     this.hoveredComp = this._hitComp(sx, sy);
     this.hoveredPort = this._hitPort(sx, sy);
@@ -798,6 +814,7 @@ class SchematicEditor {
     else if (k === 'w' || k === 'W') this.setTool('wire');
     else if (k === 'd' || k === 'D') this.setTool('delete');
     else if (k === 'l' || k === 'L') this.setTool('label');
+    else if (k === 'x' || k === 'X') this.setTool('nc');
     else if (k === 'r' || k === 'R') {
       if (this.tool === 'place') { this.placeRotation = (this.placeRotation + 1) % 4; this._render(); }
       else this._rotateSelected();
@@ -820,9 +837,10 @@ class SchematicEditor {
     if (t !== 'place') { this.placeSlug = null; this.placeCursor = null; this.placeValue = null; }
     if (t !== 'placeGroup') { this.placeGroupData = null; }
     if (t !== 'label') { this.labelCursor = null; }
+    if (t !== 'nc') { this.ncCursor = null; }
     this.multiSelected.clear(); this.rubberState = null;
     this.tool = t;
-    const cursors = { select: 'default', boxselect: 'crosshair', wire: 'crosshair', delete: 'not-allowed', place: 'copy', placeGroup: 'copy', label: 'crosshair' };
+    const cursors = { select: 'default', boxselect: 'crosshair', wire: 'crosshair', delete: 'not-allowed', place: 'copy', placeGroup: 'copy', label: 'crosshair', nc: 'crosshair' };
     this.svg.style.cursor = cursors[t] || 'default';
     if (this._isEmbedded) {
       document.querySelectorAll('[data-acc-tool]').forEach(b => b.classList.toggle('active', b.dataset.accTool === t));
@@ -852,6 +870,7 @@ class SchematicEditor {
     this.placeSlug = null; this.placeCursor = null;
     this.placeGroupData = null;
     this.labelCursor = null;
+    this.ncCursor = null;
     this.multiSelected.clear(); this.rubberState = null;
     this.selected = null;
     this._hideContextMenu();
@@ -1164,6 +1183,7 @@ class SchematicEditor {
       this.project.components = this.project.components.filter(c => !this.multiSelected.has(c.id));
       this.project.labels = (this.project.labels || []).filter(l => !this.multiSelected.has(l.id));
       this.project.wires = this.project.wires.filter(w => !this.multiSelected.has(w.id));
+      this.project.noConnects = (this.project.noConnects || []).filter(nc => !this.multiSelected.has(nc.id));
       this.multiSelected.clear(); this.selected = null;
       // Clean up groups whose members were deleted
       if (this.project.groups) {
@@ -1181,6 +1201,7 @@ class SchematicEditor {
     if (!this.selected) return;
     if (this.selected.type === 'comp') this._delComp(this.selected.id);
     else if (this.selected.type === 'label') this._delLabel(this.selected.id);
+    else if (this.selected.type === 'nc') this._delNC(this.selected.id);
     else this._delWire(this.selected.id);
   }
 
@@ -1344,7 +1365,7 @@ class SchematicEditor {
     // drags / edits don't flood /api/netlist and freeze the UI.
     clearTimeout(this._netRefreshTimer);
     this._netRefreshTimer = setTimeout(() => this._refreshNetOverlay(), 600);
-    const s = JSON.stringify({ c: this.project.components, w: this.project.wires, l: this.project.labels || [], g: this.project.groups || [] });
+    const s = JSON.stringify({ c: this.project.components, w: this.project.wires, l: this.project.labels || [], g: this.project.groups || [], n: this.project.noConnects || [] });
     this.history = this.history.slice(0, this.historyIdx + 1);
     this.history.push(s);
     if (this.history.length > 60) this.history.shift();
@@ -1360,7 +1381,8 @@ class SchematicEditor {
         body: JSON.stringify({
           components: this.project.components,
           wires: this.project.wires,
-          labels: this.project.labels || []
+          labels: this.project.labels || [],
+          noConnects: this.project.noConnects || []
         })
       });
       const data = await res.json();
@@ -1375,7 +1397,7 @@ class SchematicEditor {
     if (this.historyIdx <= 0) return;
     this.historyIdx--;
     const s = JSON.parse(this.history[this.historyIdx]);
-    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || []; this.project.groups = s.g || [];
+    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || []; this.project.groups = s.g || []; this.project.noConnects = s.n || [];
     this.selected = null; this.multiSelected?.clear();
     this._autoConnectAll();
     this._render(); this._status(); this._updateUndoRedo();
@@ -1389,7 +1411,7 @@ class SchematicEditor {
     if (this.historyIdx >= this.history.length - 1) return;
     this.historyIdx++;
     const s = JSON.parse(this.history[this.historyIdx]);
-    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || []; this.project.groups = s.g || [];
+    this.project.components = s.c; this.project.wires = s.w; this.project.labels = s.l || []; this.project.groups = s.g || []; this.project.noConnects = s.n || [];
     this.selected = null; this.multiSelected?.clear();
     this._autoConnectAll();
     this._render(); this._status(); this._updateUndoRedo();
@@ -1496,6 +1518,8 @@ class SchematicEditor {
     if (this.tool === 'place' && this.placeCursor) h += this._ghH();
     if (this.tool === 'placeGroup' && this.placeGroupData?.cursor) h += this._groupGhostH();
     if (this.tool === 'label' && this.labelCursor) h += this._lblGhostH();
+    if (this.tool === 'nc' && this.ncCursor) h += this._ncGhostH();
+    h += this._ncH();
     h += this._jH();
     h += this._drcH();
     if (this.dragState?.connectedWires?.length) h += this._dragAnchorH();
@@ -1563,6 +1587,68 @@ class SchematicEditor {
       <circle cx="${x}" cy="${y}" r="3" fill="${nc}"/>
       <text x="${x + 6}" y="${y + 4}" font-family="monospace" font-size="9" font-weight="bold" fill="${nc}">${esc(name)}</text>
     </g>`;
+  }
+
+  // ── No-Connect (NC) marker helpers ────────────────────────────────────────
+  // Snap to nearest component port within tolerance; fallback to grid snap
+  _snapNearPort(wx, wy) {
+    const TOL = this.SNAP * 2.5;
+    let best = null, bestD = TOL;
+    for (const comp of this.project.components) {
+      for (const port of this._ports(comp)) {
+        const d = Math.hypot(port.x - wx, port.y - wy);
+        if (d < bestD) { bestD = d; best = { x: port.x, y: port.y }; }
+      }
+    }
+    return best || this._snapPt(wx, wy);
+  }
+
+  _placeNC(sx, sy) {
+    const w = this._toW(sx, sy);
+    const pos = this._snapNearPort(w.x, w.y);
+    if (!this.project.noConnects) this.project.noConnects = [];
+    // Avoid placing duplicate NC on same position
+    if (this.project.noConnects.some(nc => Math.hypot(nc.x - pos.x, nc.y - pos.y) < this.SNAP * 0.5)) return;
+    this._saveHist();
+    this.project.noConnects.push({ id: 'nc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), x: pos.x, y: pos.y });
+    this.dirty = true; this._render(); this._status();
+  }
+
+  _ncXPath(x, y, r, sw) {
+    return `<line x1="${x-r}" y1="${y-r}" x2="${x+r}" y2="${y+r}" stroke="#ef4444" stroke-width="${sw}" stroke-linecap="round" pointer-events="none"/>` +
+           `<line x1="${x+r}" y1="${y-r}" x2="${x-r}" y2="${y+r}" stroke="#ef4444" stroke-width="${sw}" stroke-linecap="round" pointer-events="none"/>`;
+  }
+
+  _ncH() {
+    if (!this.project.noConnects?.length) return '';
+    const r = 5 / this.zoom;
+    const sw = 1.8 / this.zoom;
+    const selId = this.selected?.type === 'nc' ? this.selected.id : null;
+    return this.project.noConnects.map(nc => {
+      const ring = nc.id === selId
+        ? `<circle cx="${nc.x}" cy="${nc.y}" r="${8/this.zoom}" fill="none" stroke="#818cf8" stroke-width="${1/this.zoom}" opacity="0.7"/>`
+        : '';
+      return `<g class="se-nc" data-id="${esc(nc.id)}" style="cursor:pointer;">${ring}${this._ncXPath(nc.x, nc.y, r, sw)}</g>`;
+    }).join('');
+  }
+
+  _ncGhostH() {
+    const { x, y } = this.ncCursor;
+    const r = 5 / this.zoom;
+    const sw = 1.8 / this.zoom;
+    return `<g opacity="0.55">${this._ncXPath(x, y, r, sw)}</g>`;
+  }
+
+  _hitNC(sx, sy) {
+    const w = this._toW(sx, sy);
+    const TOL = 8 / this.zoom;
+    return (this.project.noConnects || []).find(nc => Math.hypot(nc.x - w.x, nc.y - w.y) < TOL) || null;
+  }
+
+  _delNC(id) {
+    this._saveHist();
+    this.project.noConnects = (this.project.noConnects || []).filter(nc => nc.id !== id);
+    this.dirty = true; this._render(); this._status();
   }
 
   _rubberH() {
@@ -1934,10 +2020,14 @@ class SchematicEditor {
   // DRC: highlight unconnected pins with a small orange marker
   _drcH() {
     const TOL = this.SNAP * 1.5;
+    // Build a set of NC-marked port positions for fast lookup
+    const ncPositions = new Set((this.project.noConnects || []).map(nc => `${nc.x},${nc.y}`));
     let h = '';
     for (const comp of this.project.components) {
       if (comp.symType === 'vcc' || comp.symType === 'gnd') continue;
       for (const port of this._ports(comp)) {
+        // Skip ports that have a No-Connect marker
+        if (ncPositions.has(`${Math.round(port.x)},${Math.round(port.y)}`)) continue;
         // Check if any wire endpoint lands on this port
         const connected = this.project.wires.some(w => {
           if (!w.points?.length) return false;

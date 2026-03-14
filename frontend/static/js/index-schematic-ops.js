@@ -137,7 +137,8 @@ async function buildNetlist() {
     body: JSON.stringify({
       components: editor.project.components,
       wires: editor.project.wires,
-      labels: editor.project.labels || []
+      labels: editor.project.labels || [],
+      noConnects: editor.project.noConnects || []
     })
   });
   return await res.json();
