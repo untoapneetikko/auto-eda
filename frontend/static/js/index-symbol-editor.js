@@ -626,12 +626,81 @@ function _schInfoTitle(t) {
   if (el) el.textContent = t;
 }
 
+// ── Component list (shown when nothing is selected) ────────────────────────
+const _compTypeColors = {
+  ic:'#6c63ff', amplifier:'#6c63ff', resistor:'#c87533', capacitor:'#3b82f6',
+  capacitor_pol:'#3b82f6', inductor:'#a78bfa', led:'#22c55e', diode:'#f59e0b',
+  npn:'#f59e0b', pnp:'#f59e0b', nmos:'#f59e0b', pmos:'#f59e0b',
+  vcc:'#ef4444', gnd:'#6b7280'
+};
+const _compTypeLabels = {
+  ic:'IC', amplifier:'AMP', resistor:'R', capacitor:'C', capacitor_pol:'C+',
+  inductor:'L', led:'LED', diode:'D', npn:'NPN', pnp:'PNP', nmos:'FET', pmos:'FET',
+  vcc:'VCC', gnd:'GND'
+};
+
+function _compListRowHtml(c, onclickJs) {
+  const col = _compTypeColors[c.symType] || '#6c63ff';
+  const lbl = _compTypeLabels[c.symType] || (c.symType||'IC').slice(0,4).toUpperCase();
+  const des = esc(c.designator || c.id || '?');
+  const val = esc(c.value || c.slug || '');
+  return `<div onclick="${onclickJs}" style="display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+    <span style="font-size:10px;font-weight:700;color:var(--text);font-family:monospace;min-width:26px;">${des}</span>
+    <span style="font-size:9px;font-weight:700;color:${col};background:${col}22;border-radius:3px;padding:1px 4px;flex-shrink:0;">${lbl}</span>
+    <span style="font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;" title="${val}">${val}</span>
+  </div>`;
+}
+
+function _schSelectComp(id) {
+  editor.selected = { type: 'comp', id };
+  const comp = editor.project.components.find(c => c.id === id);
+  if (comp) {
+    editor.panX = editor._W() / 2 - comp.x * editor.zoom;
+    editor.panY = editor._H() / 2 - comp.y * editor.zoom;
+  }
+  editor._render();
+}
+
+function _accSelectComp(id) {
+  if (!appCircuitEditor) return;
+  appCircuitEditor.selected = { type: 'comp', id };
+  const comp = appCircuitEditor.project.components.find(c => c.id === id);
+  if (comp) {
+    appCircuitEditor.panX = appCircuitEditor._W() / 2 - comp.x * appCircuitEditor.zoom;
+    appCircuitEditor.panY = appCircuitEditor._H() / 2 - comp.y * appCircuitEditor.zoom;
+  }
+  appCircuitEditor._render();
+}
+
+function _renderSchCompList() {
+  const el = document.getElementById('sch-comp-list');
+  if (!el) return;
+  const comps = editor.project.components || [];
+  if (!comps.length) {
+    el.innerHTML = '<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">No components yet.</div>';
+    return;
+  }
+  el.innerHTML = comps.map(c => _compListRowHtml(c, `_schSelectComp('${c.id}')`)).join('');
+}
+
+function _renderAccCompList() {
+  const el = document.getElementById('acc-info-empty');
+  if (!el || !appCircuitEditor) return;
+  const comps = appCircuitEditor.project.components || [];
+  if (!comps.length) {
+    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:10px;text-align:center;padding:12px;line-height:1.5;">Click a component<br>to see details</div>';
+    return;
+  }
+  el.innerHTML = comps.map(c => _compListRowHtml(c, `_accSelectComp('${c.id}')`)).join('');
+}
+
 function _showSchProjectPanel() {
   const proj = document.getElementById('sch-info-project');
   const content = document.getElementById('sch-info-content');
   if (proj) { proj.style.display = 'flex'; const inp = document.getElementById('sch-proj-name'); if (inp && document.activeElement !== inp) inp.value = editor.project.name || ''; }
   if (content) content.style.display = 'none';
   _schInfoTitle('Project');
+  _renderSchCompList();
 }
 
 function updateSchInfoPanel(comp) {
@@ -813,7 +882,9 @@ function updateAccInfoPanel(comp) {
   const contentEl = document.getElementById('acc-info-content');
   if (!emptyEl || !contentEl) return;
   if (!comp) {
-    emptyEl.style.display = 'flex'; contentEl.style.display = 'none'; return;
+    emptyEl.style.display = 'flex'; contentEl.style.display = 'none';
+    _renderAccCompList();
+    return;
   }
   // Only skip re-render if showing THIS SAME component and user is typing in it
   const focused = document.activeElement;
