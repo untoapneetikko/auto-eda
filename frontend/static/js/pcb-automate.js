@@ -106,8 +106,7 @@ async function runAutoRoute() {
 // ── Auto Place ───────────────────────────────────────────────
 async function runAutoPlace() {
   const btn = document.getElementById('btn-autoplace');
-  const hasTraces = (editor?.board?.traces || []).some(t => (t.segments || []).length > 0);
-  if (btn) { btn.disabled = true; btn.textContent = hasTraces ? '⏳ Optimizing…' : '⏳ Placing…'; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Placing…'; }
   try {
     const boardId = editor?.board?.id || _activeBoardId;
     let res;
@@ -125,23 +124,8 @@ async function runAutoPlace() {
     if (!res.ok) throw new Error(data.detail || data.error || 'Auto-place failed');
     if (data.components && editor?.board) {
       editor.board.components = data.components;
-      // Trace-aware mode: backend also returns updated traces with
-      // endpoints snapped to the new component positions.
-      if (data.traces) {
-        editor.board.traces = data.traces;
-      }
       editor._snapshot();
       editor.render(); rebuildCompList(); updateBoardInfo();
-      // Show trace reduction stats
-      if (data.trace_reduction_pct != null && data.trace_reduction_pct > 0) {
-        const sb = document.getElementById('status-bar');
-        if (sb) {
-          const prev = sb.textContent;
-          sb.style.color = 'var(--accent)';
-          sb.textContent = `Traces optimized: ${data.trace_original_mm.toFixed(1)}mm → ${data.trace_optimized_mm.toFixed(1)}mm (${data.trace_reduction_pct.toFixed(1)}% shorter)`;
-          setTimeout(() => { sb.style.color = ''; sb.textContent = prev; }, 5000);
-        }
-      }
     }
   } catch(e) {
     alert('Auto-place failed: ' + e.message);
