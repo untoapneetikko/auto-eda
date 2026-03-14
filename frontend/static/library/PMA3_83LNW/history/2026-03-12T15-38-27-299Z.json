@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-03-13T13:47:36.063513+00:00",
+  "saved_at": "2026-03-14T11:23:41.726402+00:00",
   "label": "working baseline",
   "profile": {
     "part_number": "PMA3-83LNW+",
@@ -286,7 +286,7 @@
           "x": 300,
           "y": 270,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 300,
           "_exampleY": 270
@@ -300,7 +300,7 @@
           "x": 130,
           "y": 240,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 130,
           "_exampleY": 240
@@ -314,7 +314,7 @@
           "x": 170,
           "y": 280,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
           "_exampleY": 280
@@ -328,7 +328,7 @@
           "x": 500,
           "y": 280,
           "rotation": 3,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 500,
           "_exampleY": 280
@@ -342,7 +342,7 @@
           "x": 440,
           "y": 240,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
           "_exampleY": 240
@@ -356,7 +356,7 @@
           "x": 440,
           "y": 90,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
           "_exampleY": 90
@@ -370,7 +370,7 @@
           "x": 170,
           "y": 350,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
           "_exampleY": 350
@@ -384,7 +384,7 @@
           "x": 150,
           "y": 200,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 150,
           "_exampleY": 200
@@ -398,7 +398,7 @@
           "x": 460,
           "y": 180,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 460,
           "_exampleY": 180
@@ -412,7 +412,7 @@
           "x": 460,
           "y": 140,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 460,
           "_exampleY": 140
@@ -426,7 +426,7 @@
           "x": 480,
           "y": 210,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmoybguqu6",
+          "_exampleGroupId": "eg_mmq8m3arke",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 480,
           "_exampleY": 210
@@ -535,12 +535,12 @@
           "points": [
             {
               "x": 600,
-              "y": 200,
+              "y": 280,
               "isPort": true
             },
             {
               "x": 600,
-              "y": 200
+              "y": 280
             }
           ]
         },
@@ -589,12 +589,12 @@
           "points": [
             {
               "x": 600,
-              "y": 200,
+              "y": 280,
               "isPort": true
             },
             {
               "x": 600,
-              "y": 200
+              "y": 280
             }
           ]
         },
@@ -608,7 +608,7 @@
             },
             {
               "x": 600,
-              "y": 200
+              "y": 280
             }
           ]
         },
@@ -679,7 +679,7 @@
           "id": "lmmjcw7li",
           "name": "RFOUT",
           "x": 600,
-          "y": 200,
+          "y": 280,
           "rotation": 0
         }
       ]
@@ -956,8 +956,8 @@
           "ref": "L1",
           "value": "18nH 0402",
           "footprint": "0402",
-          "x": 2.325,
-          "y": 8.5,
+          "x": -1.5,
+          "y": 10.5,
           "rotation": 90,
           "layer": "F",
           "pads": [
@@ -990,8 +990,8 @@
           "ref": "C2",
           "value": "10pF 0402",
           "footprint": "0402",
-          "x": 3.675,
-          "y": 8.5,
+          "x": 3.5,
+          "y": 10.5,
           "rotation": 90,
           "layer": "F",
           "pads": [
@@ -1016,6 +1016,38 @@
               "size_x": 0.6,
               "size_y": 0.6,
               "net": "N3"
+            }
+          ]
+        },
+        {
+          "id": "C4_1773487417924",
+          "ref": "C4",
+          "value": "1uF",
+          "footprint": "0402",
+          "x": 8,
+          "y": 12,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "x": -0.5,
+              "y": 0,
+              "type": "smd",
+              "shape": "rect",
+              "size_x": 0.6,
+              "size_y": 0.6,
+              "net": "N17"
+            },
+            {
+              "number": "2",
+              "x": 0.5,
+              "y": 0,
+              "type": "smd",
+              "shape": "rect",
+              "size_x": 0.6,
+              "size_y": 0.6,
+              "net": "GND"
             }
           ]
         }
@@ -1128,8 +1160,8 @@
                 "y": 8
               },
               "end": {
-                "x": 2.325,
-                "y": 8
+                "x": -1.5,
+                "y": 10
               }
             },
             {
@@ -1138,8 +1170,8 @@
                 "y": 8
               },
               "end": {
-                "x": 3.675,
-                "y": 8
+                "x": 3.5,
+                "y": 10
               }
             }
           ]

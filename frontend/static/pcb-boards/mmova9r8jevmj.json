@@ -336,6 +336,41 @@
         }
       ],
       "groupId": "grp_jqeooui"
+    },
+    {
+      "id": "C4",
+      "ref": "C4",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 90,
+      "y": 5,
+      "rotation": 1,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmov9lrmih"
     }
   ],
   "nets": [
@@ -521,7 +556,7 @@
   "areas": [],
   "projectId": "219f21b5b061",
   "id": "mmova9r8jevmj",
-  "updated_at": "2026-03-13T15:09:21.782820+00:00",
+  "updated_at": "2026-03-14T11:07:52.381195+00:00",
   "groups": [
     {
       "id": "grp_jqeooui",
@@ -860,7 +895,7 @@
       "value": "1uF",
       "footprint": "0402",
       "x": 34.5,
-      "y": 33.21,
+      "y": 31.21,
       "rotation": 90,
       "layer": "F",
       "pads": [

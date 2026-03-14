@@ -1,1 +1,19 @@
-{"session_id": "127de866-b9e7-46af-8005-5725d3331183", "messages": [{"id": 82, "role": "user", "content": "This is on schematic, Layout doesnt even save that.", "ts": "2026-03-13T07:46:47.774834+00:00"}, {"id": 83, "role": "assistant", "content": "\nI don't have the context of what \"this\" refers to — could you clarify what specific property or data you're seeing on the schematic that isn't being saved to the layout?\n\nFor example, are you talking about:\n- **Component values** (resistance, capacitance, etc.)\n- **Net names / labels**\n- **Pin annotations**\n- **Footprint assignments**\n- Something else in the schematic JSON?\n\nIf you can share what field or element you're seeing, I can track down where it gets dropped and fix it.", "ts": "2026-03-13T07:46:47.777912+00:00", "streaming": false}], "msg_counter": 83}
+{
+  "session_id": null,
+  "messages": [
+    {
+      "id": 82,
+      "role": "user",
+      "content": "This is on schematic, Layout doesnt even save that.",
+      "ts": "2026-03-13T07:46:47.774834+00:00"
+    },
+    {
+      "id": 83,
+      "role": "assistant",
+      "content": "\nI don't have the context of what \"this\" refers to \u2014 could you clarify what specific property or data you're seeing on the schematic that isn't being saved to the layout?\n\nFor example, are you talking about:\n- **Component values** (resistance, capacitance, etc.)\n- **Net names / labels**\n- **Pin annotations**\n- **Footprint assignments**\n- Something else in the schematic JSON?\n\nIf you can share what field or element you're seeing, I can track down where it gets dropped and fix it.",
+      "ts": "2026-03-13T07:46:47.777912+00:00",
+      "streaming": false
+    }
+  ],
+  "msg_counter": 83
+}
