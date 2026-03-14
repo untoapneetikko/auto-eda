@@ -470,13 +470,25 @@ async function leSaveLayout() {
   const origText = btn ? btn.textContent : '💾 Save';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
   try {
-    // Prefer _leBoard which is kept up-to-date by leBoardChanged messages fired from
-    // the iframe after every drag/edit — this is a structured clone captured at the
-    // moment of the mutation, so it always reflects the latest positions.
-    // Fall back to direct cross-frame property access if no leBoardChanged has fired yet.
-    const pcbInst = frame.contentWindow?.pcbEditorInstance;
-    const liveBoard = pcbInst?.board ?? null;
-    const board = _leBoard || liveBoard;
+    // Always request the live board state from the iframe via getBoard/boardData.
+    // This reads editor.board directly — guaranteed fresh regardless of whether
+    // _snapshot() fired (it won't if the user released the mouse outside the canvas).
+    const board = await new Promise((resolve, reject) => {
+      const t = setTimeout(() => {
+        window.removeEventListener('message', _boardDataHandler);
+        // Fallback: cross-frame property access or last cached board
+        resolve(frame.contentWindow?.pcbEditorInstance?.board ?? _leBoard ?? null);
+      }, 1500);
+      function _boardDataHandler(e) {
+        if (e.data?.type !== 'boardData') return;
+        if (e.source !== frame.contentWindow) return;
+        clearTimeout(t);
+        window.removeEventListener('message', _boardDataHandler);
+        resolve(e.data.board);
+      }
+      window.addEventListener('message', _boardDataHandler);
+      frame.contentWindow?.postMessage({ type: 'getBoard' }, '*');
+    });
     if (!board) throw new Error('PCB editor board not available — try switching away and back to the Layout Example tab');
     const bodyStr = JSON.stringify(board);
     // Show positions being saved in the button so user can verify without DevTools
