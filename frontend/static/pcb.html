@@ -94,6 +94,9 @@ canvas#pcb-canvas{display:block;width:100%;height:100%;}
 .embedded .lpanel{display:none;}
 .embedded .pcb-board-tabs{display:none!important;}
 .embedded #pcb-stale-banner{display:none!important;}
+/* In embedded mode the parent page owns Save — hide the toolbar Save button so
+   the user only uses the "💾 Save" button in the BOM strip (calls leSaveLayout). */
+.embedded .tbtn.save{display:none!important;}
 /* Conflict table — visible only in embedded mode */
 #conflict-panel{display:none;flex-shrink:0;max-height:180px;overflow-y:auto;background:var(--surface);border-top:2px solid rgba(239,68,68,0.5);}
 .embedded #conflict-panel{display:block;}
