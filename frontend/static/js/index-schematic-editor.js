@@ -340,9 +340,11 @@ class SchematicEditor {
       }
     }
 
-    // select
+    // select — check wire before component so wires under components are selectable;
+    // a precise 6px wire hit takes priority over a loose bounding-box component hit.
     const labelHit = this._hitLabel(sx, sy);
-    const comp = !labelHit ? this._hitComp(sx, sy) : null;
+    const wireFirst = !labelHit ? this._hitWire(sx, sy) : null;
+    const comp = !labelHit && !wireFirst ? this._hitComp(sx, sy) : null;
     const hitId = labelHit?.id || comp?.id;
 
     // Shift+click: toggle item in/out of multi-select
@@ -724,7 +726,7 @@ class SchematicEditor {
             }
           }
         }
-        this._autoConnectPorts(comp);
+        this._autoConnectPorts(comp, true); // fromDrag=true: create port-to-port wires
       }
       this._saveHist();
       return;
@@ -845,7 +847,7 @@ class SchematicEditor {
     };
     this._saveHist();
     this.project.components.push(comp);
-    this._autoConnectPorts(comp);
+    this._autoConnectPorts(comp, true); // fromDrag=true: create port-to-port wires on placement
     this.selected = { type: 'comp', id: comp.id };
     this.dirty = true; this._render(); this._status();
   }
@@ -1001,8 +1003,10 @@ class SchematicEditor {
   }
 
   // Create a wire when this component's port lands on another port OR on a wire segment body.
-  // Port-to-port creates a real 2-point wire so dragging apart later stretches it naturally.
-  _autoConnectPorts(comp) {
+  // fromDrag=true  → port was explicitly dragged/placed onto another port → create real wire.
+  // fromDrag=false → called on load/undo/redo → only add T-junction dots, never create
+  //                  port-to-port wires (avoids spurious connections between nearby symbols).
+  _autoConnectPorts(comp, fromDrag = false) {
     const TOL = this.SNAP * 1.2;
     const mkWire = (x1, y1, x2, y2) => {
       const already = this.project.wires.some(w => {
@@ -1017,18 +1021,20 @@ class SchematicEditor {
       });
     };
     for (const myPort of this._ports(comp)) {
-      // ── Port-to-port: real 2-point wire so it can stretch when dragged apart ──
-      for (const other of this.project.components) {
-        if (other.id === comp.id) continue;
-        for (const otherPort of this._ports(other)) {
-          if (Math.hypot(myPort.x - otherPort.x, myPort.y - otherPort.y) > TOL) continue;
-          const connected = this.project.wires.some(w => {
-            if (!w.points?.length) return false;
-            const a = w.points[0], b = w.points[w.points.length - 1];
-            return (Math.hypot(a.x-myPort.x,a.y-myPort.y)<=TOL && Math.hypot(b.x-otherPort.x,b.y-otherPort.y)<=TOL)
-                || (Math.hypot(b.x-myPort.x,b.y-myPort.y)<=TOL && Math.hypot(a.x-otherPort.x,a.y-otherPort.y)<=TOL);
-          });
-          if (!connected) mkWire(myPort.x, myPort.y, otherPort.x, otherPort.y);
+      // ── Port-to-port: real 2-point wire — only when explicitly dragged/placed ──
+      if (fromDrag) {
+        for (const other of this.project.components) {
+          if (other.id === comp.id) continue;
+          for (const otherPort of this._ports(other)) {
+            if (Math.hypot(myPort.x - otherPort.x, myPort.y - otherPort.y) > TOL) continue;
+            const connected = this.project.wires.some(w => {
+              if (!w.points?.length) return false;
+              const a = w.points[0], b = w.points[w.points.length - 1];
+              return (Math.hypot(a.x-myPort.x,a.y-myPort.y)<=TOL && Math.hypot(b.x-otherPort.x,b.y-otherPort.y)<=TOL)
+                  || (Math.hypot(b.x-myPort.x,b.y-myPort.y)<=TOL && Math.hypot(a.x-otherPort.x,a.y-otherPort.y)<=TOL);
+            });
+            if (!connected) mkWire(myPort.x, myPort.y, otherPort.x, otherPort.y);
+          }
         }
       }
       // ── Port-on-wire-segment (T-junction) — dot-wire marker ──────────────
