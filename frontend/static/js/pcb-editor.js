@@ -1098,9 +1098,10 @@ class PCBEditor {
       ? this.selectedComps
       : (this.selectedComp ? [this.selectedComp] : []);
     if(!comps.length)return;
-    this._snapshot();
+    // Mutate first, then snapshot — ensures the embedded leBoardChanged
+    // notification (fired inside _snapshot) carries the post-rotation board.
     if(comps.length===1){
-      // Single component — rotate in place (classic behaviour)
+      // Single component — rotate in place
       comps[0].rotation=((comps[0].rotation||0)+deg)%360;
     } else {
       // Multi-selection — rotate positions around the group centroid
@@ -1115,6 +1116,7 @@ class PCBEditor {
         c.rotation=((c.rotation||0)+deg)%360;
       }
     }
+    this._snapshot();
     this.render();
     if(typeof updateInfoPanel==='function')updateInfoPanel();
   }
@@ -1296,6 +1298,8 @@ class PCBEditor {
           }});
         }
       } else {
+        items.push({label:`Rotate ${selComps.length} components 90° CW`, kbd:'R', action:()=>this.rotateSelGroup(90)});
+        items.push({sep:true});
         items.push({label:`Group ${selComps.length} components`, kbd:'Ctrl+G', action:()=>this.groupSelected()});
         if(grpIds.size>0)
           items.push({label:'Ungroup', kbd:'Ctrl+\u21e7+G', action:()=>this.ungroupSelected()});

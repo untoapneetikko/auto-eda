@@ -245,6 +245,22 @@ function updateInfoPanel(){
   const c=editor.selectedComp, tr=editor.selectedTrace, ar=editor.selectedArea, v=editor.selectedVia;
   const sp=editor.selectedPad;
 
+  // Multi-selection (box-select or Ctrl+click, no single primary comp shown)
+  const mc=editor.selectedComps||[];
+  if(mc.length>1&&!c&&!tr&&!ar&&!v&&!sp){
+    panel.innerHTML=`
+      <div style="margin-bottom:10px;">
+        <div style="font-family:monospace;font-size:14px;font-weight:700;color:var(--accent);">${mc.length} components</div>
+        <div style="font-size:11px;color:var(--text-muted);">Multi-selection</div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="btn" onclick="rotSel()" title="Rotate group 90° CW (R)">↻ Rotate</button>
+        <button class="btn" style="color:var(--red)" onclick="editor.selectedComps.forEach(c=>{const i=(editor.board.components||[]).indexOf(c);if(i!==-1)editor.board.components.splice(i,1);});editor.selectedComps=[];editor.selectedComp=null;editor._snapshot();editor.render();rebuildCompList&&rebuildCompList();updateInfoPanel();">✕ Del all</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:7px;line-height:1.6;">R to rotate • Del to delete • Drag to move</div>`;
+    return;
+  }
+
   // Pad selected — show pin parameters
   if(sp&&!c&&!tr&&!ar&&!v){
     const{comp,pad}=sp;
