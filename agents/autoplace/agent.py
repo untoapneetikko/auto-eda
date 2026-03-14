@@ -217,21 +217,21 @@ def apply_placement(
 
     placements = placement_dict.get("placements", [])
 
-    # --- Courtyard check via Polars optimizer ---
+    # --- Silkscreen gap check via Polars optimizer ---
     # Footprints may or may not be in the placement dict; pass what we have.
     opt_result = check_package_gaps(placements)
     violations = opt_result.get("violations", [])
 
     if not opt_result["is_valid"]:
         summary = summarize_violations(opt_result)
-        log.warning("Courtyard violations:\n%s", summary)
+        log.warning("Silkscreen gap violations:\n%s", summary)
         return {
             "success": False,
             "violations": violations,
             "drc_passed": False,
             "drc_output": "",
             "placement_path": None,
-            "message": f"Courtyard check failed: {summary}",
+            "message": f"Silkscreen gap check failed: {summary}",
         }
 
     # --- Write to disk ---
@@ -269,7 +269,7 @@ def compute_placement(
     connectivity_path: str | Path | None = None,
     board_width_mm: float = BOARD_WIDTH_MM,
     board_height_mm: float = BOARD_HEIGHT_MM,
-    min_clearance_mm: float = 0.25,
+    min_clearance_mm: float = 1.0,
     iterations: int = 250,
 ) -> dict[str, Any]:
     """
@@ -278,7 +278,7 @@ def compute_placement(
 
     This uses the force-directed net-proximity algorithm in placement_optimizer:
       - Components are pulled toward the centroid of their net-neighbours.
-      - Courtyard clearances (package-to-package gap) are enforced iteratively.
+      - Silkscreen clearances (package-to-package gap) are enforced iteratively.
       - Connectors are pinned to the board top edge.
 
     Parameters
@@ -290,7 +290,7 @@ def compute_placement(
     board_width_mm, board_height_mm:
         Board dimensions in mm.
     min_clearance_mm:
-        Minimum silkscreen-to-silkscreen gap.  Default 0.25 mm.
+        Minimum silkscreen-to-silkscreen gap.  Default 1.0 mm.
     iterations:
         Force-directed optimisation iterations.  More = tighter packing.
 

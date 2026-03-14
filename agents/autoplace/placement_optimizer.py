@@ -137,7 +137,7 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
 # Minimum gap between component silkscreen outlines (body-edge to body-edge).
 # Silkscreen = the printed package outline on the PCB.  Components must not be
 # placed so close that their silkscreen lines overlap or merge.
-MIN_CLEARANCE_MM = 0.25
+MIN_CLEARANCE_MM = 1.0  # silkscreen-to-silkscreen gap (body edge to body edge)
 
 
 def _build_dataframe(placements: list[dict[str, Any]]) -> pl.DataFrame:
@@ -329,7 +329,7 @@ def compute_net_proximity_placement(
     board_width_mm, board_height_mm:
         PCB board dimensions in mm.
     min_clearance_mm:
-        Package-to-package minimum gap (package gap).  Default 0.25 mm.
+        Package-to-package minimum gap (package gap).  Default 1.0 mm.
     iterations:
         Number of attraction+repulsion cycles.  More iterations → tighter
         packing but longer runtime.
@@ -444,7 +444,7 @@ def compute_net_proximity_placement(
     #   After forces are applied, any pair closer than min_clearance_mm    #
     #   (silkscreen-to-silkscreen) is pushed apart until exactly legal.    #
     # ------------------------------------------------------------------ #
-    SILKSCREEN_PASSES = 10  # hard-constraint enforcement passes per iter
+    SILKSCREEN_PASSES = 20  # hard-constraint enforcement passes per iter
 
     for iteration in range(iterations):
         alpha = 1.0 - (iteration / iterations)        # 1 → 0 as we cool

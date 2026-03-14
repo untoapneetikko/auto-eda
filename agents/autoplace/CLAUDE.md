@@ -26,7 +26,7 @@ placement_dict = compute_placement(
     connectivity_path="data/outputs/connectivity.json",   # optional but preferred
     board_width_mm=100.0,
     board_height_mm=80.0,
-    min_clearance_mm=0.25,   # silkscreen-to-silkscreen gap
+    min_clearance_mm=1.0,    # silkscreen-to-silkscreen gap
     iterations=250,
 )
 ```
@@ -64,10 +64,10 @@ The `compute_placement()` algorithm already follows these rules:
    1 mm margin.
 
 ## Design Rule: Silkscreen Clearance
-- **Minimum silkscreen-to-silkscreen clearance = 0.25 mm** between any two component body outlines.
+- **Minimum silkscreen-to-silkscreen clearance = 1.0 mm** between any two component body outlines.
 - Silkscreen = the printed package body outline on the PCB (no extra expansion).
 - Components must never be placed so close that their silkscreen lines overlap or merge.
-- This is the `min_clearance_mm` parameter — do not set it lower than 0.25.
+- This is the `min_clearance_mm` parameter — do not set it lower than 1.0.
 
 ## PCB Placement Rules (reviewed after compute_placement)
 - Keep analog and digital grounds separate until single-point join.
