@@ -1309,6 +1309,10 @@ function _applyWireNetName(editorRef, wireId, newName) {
   editorRef._cachedNetOverlay = null;
   editorRef._render();
   editorRef._refreshNetOverlay();
+  // If the edited editor is the Schematic Example, re-check Layout Example net sync
+  if (window.appCircuitEditor && editorRef === window.appCircuitEditor) {
+    if (typeof leCheckNetsLive === 'function') leCheckNetsLive();
+  }
 }
 
 function setWireNetName(wireId, rawName) {

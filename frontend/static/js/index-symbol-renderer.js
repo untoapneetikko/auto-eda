@@ -160,6 +160,48 @@ function leValidateNets(board, bomData) {
   return mismatches;
 }
 
+// Get the live circuit from appCircuitEditor with wire.net injected as virtual labels.
+// Returns null if the editor isn't ready or has no content.
+function leGetLiveCircuit() {
+  if (!window.appCircuitEditor) return null;
+  const p = appCircuitEditor.project;
+  if (!p?.components?.length && !p?.wires?.length) return null;
+  const labels = [...(p.labels || [])];
+  for (const w of (p.wires || [])) {
+    if (!w.net) continue;
+    const pt = w.points?.[0];
+    if (pt) labels.push({ id: '_wn_' + w.id, name: w.net, x: pt.x, y: pt.y, rotation: 0 });
+  }
+  return { components: p.components || [], wires: p.wires || [], labels };
+}
+
+// Update the Layout Example tab button badge to reflect net mismatch count.
+function leUpdateTabBadge(mismatchCount) {
+  const btn = document.getElementById('tab-btn-layout-example');
+  if (!btn) return;
+  if (mismatchCount > 0) {
+    btn.innerHTML = `Layout Example <span style="color:#f59e0b;font-size:10px;vertical-align:middle;" title="${mismatchCount} net mismatch${mismatchCount !== 1 ? 'es' : ''} — open to fix">⚠ ${mismatchCount}</span>`;
+  } else {
+    btn.textContent = 'Layout Example';
+    btn.title = '';
+  }
+}
+
+// Re-check layout example nets against the live Schematic Example nets.
+// Updates the tab badge and, if the Layout Example tab is open, also refreshes the warning panel.
+// Called after any net rename in appCircuitEditor.
+function leCheckNetsLive() {
+  if (!_leBoard || !_leBomData?.length) return;
+  if (!window.selectedSlug || _leLoadedSlug !== window.selectedSlug) return;
+  const liveCircuit = leGetLiveCircuit();
+  if (liveCircuit) _leNetAssign = leExtractNets(liveCircuit, _leProfileMap);
+  const mismatches = leValidateNets(_leBoard, _leBomData);
+  leUpdateTabBadge(mismatches.length);
+  if (typeof currentProfileTab !== 'undefined' && currentProfileTab === 'layout-example') {
+    leShowNetWarning(mismatches);
+  }
+}
+
 // Show or clear the net-mismatch table below the BOM strip
 function leShowNetWarning(mismatches) {
   const panel = document.getElementById('le-net-warning');
@@ -263,7 +305,9 @@ function leAutoCorrectAllNets() {
   }
   leFixTraceNets(_leBoard);
   frame?.contentWindow?.postMessage({ type: 'loadBoard', board: _leBoard, hideBoardOutline: true }, '*');
-  leShowNetWarning(leValidateNets(_leBoard, _leBomData));
+  const _mmAll = leValidateNets(_leBoard, _leBomData);
+  leShowNetWarning(_mmAll);
+  leUpdateTabBadge(_mmAll.length);
 }
 
 async function leResolveBom(schComponents, mainSlug, mainProfile) {
@@ -533,8 +577,13 @@ async function renderLayoutExample(slug) {
   // that would wipe out any positions the user has changed since the last save.
   // The iframe already holds the live board state.
   if (_leLoadedSlug === slug && _leBoard) {
+    // Re-extract nets from live schematic example (may have been edited since last load)
+    const liveCircuit = leGetLiveCircuit();
+    if (liveCircuit) _leNetAssign = leExtractNets(liveCircuit, _leProfileMap);
     leRenderBomPanel(_leBomData);
-    leShowNetWarning(leValidateNets(_leBoard, _leBomData));
+    const _mmCached = leValidateNets(_leBoard, _leBomData);
+    leShowNetWarning(_mmCached);
+    leUpdateTabBadge(_mmCached.length);
     return;
   }
 
@@ -558,8 +607,9 @@ async function renderLayoutExample(slug) {
   const circuit = profile.example_circuit;
   const schComps = circuit?.components || [];
   _leBomData = await leResolveBom(schComps, slug, profile);
-  // Extract schematic nets (wires → union-find → pad assignments)
-  _leNetAssign = circuit ? leExtractNets(circuit, _leProfileMap) : {};
+  // Extract nets — prefer live appCircuitEditor state (captures wire.net edits not yet saved)
+  const liveCircuit = leGetLiveCircuit();
+  _leNetAssign = (liveCircuit || circuit) ? leExtractNets(liveCircuit || circuit, _leProfileMap) : {};
   // Reset added state
   _leBomData.forEach(c => { c._leAdded = false; });
 
@@ -591,7 +641,9 @@ async function renderLayoutExample(slug) {
   leRenderBomPanel(_leBomData);
 
   // Validate nets: layout example must match example schematic
-  leShowNetWarning(leValidateNets(board, _leBomData));
+  const _mmNew = leValidateNets(board, _leBomData);
+  leShowNetWarning(_mmNew);
+  leUpdateTabBadge(_mmNew.length);
 
   // Re-fetch the current frame reference AFTER all awaits — if renderProfile() ran
   // during the async fetch it will have replaced the le-frame with a new element, so
