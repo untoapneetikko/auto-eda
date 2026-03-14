@@ -56,6 +56,13 @@ let DR = {
   // Auto-route
   allowVias: true,        // Allow autorouter to use vias for layer transitions
   powerTraceWidth: 0.4,   // Min trace width for power nets (mm)
+  tracePadClearance: 0.2, // Min trace-to-pad clearance (mm)
+  routeEdgeClearance: 0.5,// Min trace-to-board-edge clearance (mm)
+  routingGrid: 0.25,      // Pathfinding grid resolution (mm)
+  // Placement rules
+  silkscreenGap: 0.15,    // Min gap between silkscreen outlines (mm)
+  courtyardExpansion: 0.25,// Extra courtyard margin (mm)
+  thermalGap: 2.0,        // Extra clearance around thermal/power components (mm)
 };
 // Persist DR to localStorage
 function _saveDRStorage(){try{localStorage.setItem('pcb_DR',JSON.stringify(DR));}catch(_){}}

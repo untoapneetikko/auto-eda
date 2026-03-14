@@ -2877,23 +2877,35 @@ def _autoroute_trace_width(net_name: str, dr: dict) -> float:
 
 
 def run_autoroute(board: dict) -> dict:
-    GRID = 0.25  # mm routing grid
+    dr   = board.get("designRules", {})
+    GRID = max(0.1, float(dr.get("routingGrid", 0.25)))  # mm routing grid
     bw   = float(board.get("board", {}).get("width",  board.get("width",  200)))
     bh   = float(board.get("board", {}).get("height", board.get("height", 200)))
-    dr   = board.get("designRules", {})
+    cu_clearance = float(dr.get("clearance", 0.2))  # copper-to-copper clearance
+    edge_clearance = float(dr.get("routeEdgeClearance", dr.get("edgeClearance", 0.5)))
 
     # ── Occupancy grid: mark cells covered by existing traces ────────────────
     grid_w = int(bw / GRID) + 2
     grid_h = int(bh / GRID) + 2
     occupied: set[tuple[int, int]] = set()
 
-    def _mark_segment(x0: float, y0: float, x1: float, y1: float) -> None:
+    # Trace clearance expansion: each trace line is expanded by
+    # half-trace-width + copper clearance on each side.
+    _default_trace_w = float(dr.get("traceWidth", 0.25))
+    _trace_expand = max(1, int(math.ceil((_default_trace_w / 2 + cu_clearance) / GRID)))
+
+    def _mark_segment(x0: float, y0: float, x1: float, y1: float,
+                      occ: set[tuple[int, int]] | None = None) -> None:
+        """Mark grid cells along a segment, expanded by trace clearance."""
+        target = occ if occ is not None else occupied
         steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
         for s in range(steps + 1):
             t = s / max(steps, 1)
             gx = int(round((x0 + t * (x1 - x0)) / GRID))
             gy = int(round((y0 + t * (y1 - y0)) / GRID))
-            occupied.add((gx, gy))
+            for ex in range(-_trace_expand, _trace_expand + 1):
+                for ey in range(-_trace_expand, _trace_expand + 1):
+                    target.add((gx + ex, gy + ey))
 
     for trace in board.get("traces", []):
         for seg in trace.get("segments", []):
@@ -2901,6 +2913,17 @@ def run_autoroute(board: dict) -> dict:
                 seg.get("start", {}).get("x", 0), seg.get("start", {}).get("y", 0),
                 seg.get("end",   {}).get("x", 0), seg.get("end",   {}).get("y", 0),
             )
+
+    # ── Block board edges (route edge clearance) ──────────────────────────────
+    edge_cells = max(1, int(math.ceil(edge_clearance / GRID)))
+    for gx in range(grid_w):
+        for gy in range(edge_cells):
+            occupied.add((gx, gy))                     # top edge
+            occupied.add((gx, grid_h - 1 - gy))        # bottom edge
+    for gy in range(grid_h):
+        for gx in range(edge_cells):
+            occupied.add((gx, gy))                     # left edge
+            occupied.add((grid_w - 1 - gx, gy))        # right edge
 
     # ── Build net → [(x, y)] map from board.components[].pads[].net ──────────
     # This is the ONLY authoritative source of net connectivity in the board JSON.
@@ -2942,28 +2965,58 @@ def run_autoroute(board: dict) -> dict:
     # ── Block occupancy around ALL pad positions ─────────────────────────────
     # Traces must not pass through pads of other nets.  For each net being
     # routed, we temporarily unblock its own pads before calling BFS.
-    pad_clearance = float(dr.get("clearance", 0.2))
-    _pad_block_radius = max(1, int(math.ceil(pad_clearance / GRID)))
+    # Block zone = pad physical extent + copper clearance.
 
-    def _pad_cells(px: float, py: float) -> set[tuple[int, int]]:
+    def _pad_cells(px: float, py: float,
+                   half_w: float = 0.0, half_h: float = 0.0) -> set[tuple[int, int]]:
+        """Grid cells blocked by a pad at (px,py) with given half-extents + clearance."""
+        rx = max(1, int(math.ceil((half_w + cu_clearance) / GRID)))
+        ry = max(1, int(math.ceil((half_h + cu_clearance) / GRID)))
         gc_x = int(round(px / GRID))
         gc_y = int(round(py / GRID))
         cells: set[tuple[int, int]] = set()
-        for dx in range(-_pad_block_radius, _pad_block_radius + 1):
-            for dy in range(-_pad_block_radius, _pad_block_radius + 1):
+        for dx in range(-rx, rx + 1):
+            for dy in range(-ry, ry + 1):
                 cells.add((gc_x + dx, gc_y + dy))
         return cells
 
+    # Collect pad sizes for accurate blocking
+    _pad_hw_map: dict[tuple[float, float], tuple[float, float]] = {}  # (px,py) -> (hw, hh)
+    for comp in board.get("components", []):
+        cx  = float(comp.get("x", 0))
+        cy  = float(comp.get("y", 0))
+        rot = float(comp.get("rotation", 0)) * math.pi / 180
+        cos_r, sin_r = math.cos(rot), math.sin(rot)
+        for pad in comp.get("pads", []):
+            lx = float(pad.get("x", 0))
+            ly = float(pad.get("y", 0))
+            px = cx + lx * cos_r - ly * sin_r
+            py = cy + lx * sin_r + ly * cos_r
+            sx = float(pad.get("size_x", pad.get("sizeX", 0.5)))
+            sy = float(pad.get("size_y", pad.get("sizeY", 0.5)))
+            # Rotate pad extents
+            if abs(rot) > 0.01:
+                hw = max(abs(sx * cos_r), abs(sy * sin_r)) / 2
+                hh = max(abs(sx * sin_r), abs(sy * cos_r)) / 2
+            else:
+                hw, hh = sx / 2, sy / 2
+            _pad_hw_map[(round(px, 4), round(py, 4))] = (hw, hh)
+
+    def _get_pad_hw(px: float, py: float) -> tuple[float, float]:
+        return _pad_hw_map.get((round(px, 4), round(py, 4)), (0.25, 0.25))
+
     # Block NC pads (permanently — never unblocked)
     for ncx, ncy in nc_pad_positions:
-        occupied |= _pad_cells(ncx, ncy)
+        hw, hh = _get_pad_hw(ncx, ncy)
+        occupied |= _pad_cells(ncx, ncy, hw, hh)
 
     # Block all routable pads (will be temporarily unblocked per-net)
     all_pad_cells: dict[str, set[tuple[int, int]]] = {}
     for net_name_p, pads_p in net_pads.items():
         cells: set[tuple[int, int]] = set()
         for px, py in pads_p:
-            cells |= _pad_cells(px, py)
+            hw, hh = _get_pad_hw(px, py)
+            cells |= _pad_cells(px, py, hw, hh)
         all_pad_cells[net_name_p] = cells
         occupied |= cells
 
@@ -3114,10 +3167,11 @@ def run_autoroute(board: dict) -> dict:
                         "size": via_size_mm, "drill": via_drill_mm,
                         "net": net_name,
                     })
-                    # Mark via position as occupied on both layers
+                    # Mark via position as occupied on both layers (via size/2 + clearance)
+                    via_r = max(1, int(math.ceil((via_size_mm / 2 + cu_clearance) / GRID)))
                     vg = (int(round(x0 / GRID)), int(round(y0 / GRID)))
-                    for vdx in range(-1, 2):
-                        for vdy in range(-1, 2):
+                    for vdx in range(-via_r, via_r + 1):
+                        for vdy in range(-via_r, via_r + 1):
                             occupied.add((vg[0] + vdx, vg[1] + vdy))
                             occupied_b.add((vg[0] + vdx, vg[1] + vdy))
                     continue  # no segment for the transition itself
@@ -3128,14 +3182,8 @@ def run_autoroute(board: dict) -> dict:
                     "start": {"x": round(x0, 4), "y": round(y0, 4)},
                     "end":   {"x": round(x1, 4), "y": round(y1, 4)},
                 })
-                # Mark on correct layer's occupancy
-                occ_target = _occupied_by_layer[l0]
-                steps = max(int(abs(x1 - x0) / GRID), int(abs(y1 - y0) / GRID)) + 1
-                for s in range(steps + 1):
-                    t = s / max(steps, 1)
-                    gx = int(round((x0 + t * (x1 - x0)) / GRID))
-                    gy = int(round((y0 + t * (y1 - y0)) / GRID))
-                    occ_target.add((gx, gy))
+                # Mark on correct layer's occupancy (with clearance expansion)
+                _mark_segment(x0, y0, x1, y1, occ=_occupied_by_layer[l0])
 
         # Re-block this net's pads now that routing is done
         occupied |= own_cells

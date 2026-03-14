@@ -20,15 +20,36 @@ function switchPcbSection(name){
 // ── Populate Auto tab inputs from DR object ──
 function _populateAutoTab(){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  // Place
   s('auto-clearance', DR.packageGap??1.0);
-  s('auto-corner', DR.cornerAngle??90);
+  s('auto-edge-clear', DR.edgeClearance??0.5);
+  s('auto-no-overlap', 'true');
+  s('auto-no-silk-overlap', 'true');
+  s('auto-silk-gap', DR.silkscreenGap??0.15);
+  s('auto-courtyard', DR.courtyardExpansion??0.25);
+  s('auto-thermal-gap', DR.thermalGap??2.0);
+  // Route — traces
   s('auto-trace-w', DR.traceWidth??0.25);
+  s('auto-min-trace', DR.minTraceWidth??0.15);
+  s('auto-pwr-trace', DR.powerTraceWidth??0.4);
+  s('auto-corner', DR.cornerAngle??90);
+  // Route — clearances
   s('auto-cu-clear', DR.clearance??0.2);
+  s('auto-trace-pad-clear', DR.tracePadClearance??DR.clearance??0.2);
+  s('auto-via-clear', DR.viaClearance??0.25);
+  s('auto-route-edge', DR.routeEdgeClearance??DR.edgeClearance??0.5);
+  // Route — vias
   s('auto-allow-vias', DR.allowVias!==false?'true':'false');
   s('auto-via-size', DR.viaSize??1.0);
   s('auto-via-drill', DR.viaDrill??0.6);
-  s('auto-pwr-trace', DR.powerTraceWidth??0.4);
+  s('auto-ann-ring', DR.minAnnularRing??0.15);
+  s('auto-tented', DR.tentedVias!==false?'true':'false');
+  s('auto-via-in-pad', DR.viaInPad===true?'true':'false');
+  // Route — net handling
   s('auto-skip-nc', 'false');
+  s('auto-gnd', 'pour');
+  s('auto-grid', DR.routingGrid??0.25);
+  s('auto-net-priority', 'power-first');
 }
 
 // ── PCB Board Tabs (tied to saved boards, named after schematic projects) ──

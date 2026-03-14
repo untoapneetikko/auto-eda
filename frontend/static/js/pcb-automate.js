@@ -78,10 +78,18 @@ async function runAutoRoute() {
     // Embed design rules into board so backend can use them
     if (editor?.board) {
       editor.board.designRules = {
-        traceWidth: DR.traceWidth, clearance: DR.clearance,
-        viaSize: DR.viaSize, viaDrill: DR.viaDrill,
+        traceWidth: DR.traceWidth,
+        minTraceWidth: DR.minTraceWidth,
+        clearance: DR.clearance,
+        tracePadClearance: DR.tracePadClearance ?? DR.clearance,
+        viaClearance: DR.viaClearance,
+        routeEdgeClearance: DR.routeEdgeClearance ?? DR.edgeClearance,
+        viaSize: DR.viaSize,
+        viaDrill: DR.viaDrill,
+        minAnnularRing: DR.minAnnularRing,
         allowVias: DR.allowVias !== false,
         powerTraceWidth: DR.powerTraceWidth ?? 0.4,
+        routingGrid: DR.routingGrid ?? 0.25,
       };
     }
     let res;

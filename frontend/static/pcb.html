@@ -427,24 +427,70 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <!-- ── Auto-Place Settings ── -->
     <div style="flex:1;min-width:280px;">
       <h2>Auto-Place</h2>
-      <p class="sub">Placement algorithm settings</p>
+      <p class="sub">Component placement algorithm</p>
       <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;margin-top:12px;">
 
-        <label>Min Clearance (mm)</label>
+        <label>Package Gap (mm)</label>
         <input type="number" step="0.05" min="0" value="1.0" id="auto-clearance"
-               onchange="DR.packageGap=+this.value;_saveDRStorage()" style="width:90px;">
+               onchange="DR.packageGap=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min silkscreen-to-silkscreen clearance between component bodies">
 
-        <label>Corner Angle</label>
-        <select id="auto-corner" onchange="DR.cornerAngle=+this.value;_saveDRStorage()" style="width:90px;">
-          <option value="90">90 (sharp)</option>
-          <option value="45">45 (chamfer)</option>
-        </select>
+        <label>Edge Clearance (mm)</label>
+        <input type="number" step="0.1" min="0" id="auto-edge-clear"
+               onchange="DR.edgeClearance=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min clearance from board edge to component body">
 
         <label>Placement Strategy</label>
-        <select id="auto-strategy" style="width:90px;">
+        <select id="auto-strategy" style="width:90px;" title="Algorithm used for initial component placement">
           <option value="net-proximity">Net Proximity</option>
           <option value="schematic">Schematic Hints</option>
         </select>
+
+        <label>Auto-Rotate</label>
+        <select id="auto-rotate" style="width:90px;" title="Allow placer to try 0/90/180/270 rotations">
+          <option value="true">Enabled</option>
+          <option value="false">Locked</option>
+        </select>
+
+        <label>Connector Placement</label>
+        <select id="auto-conn-place" style="width:90px;" title="Where connectors are placed on the board">
+          <option value="top">Top Edge</option>
+          <option value="bottom">Bottom Edge</option>
+          <option value="left">Left Edge</option>
+          <option value="right">Right Edge</option>
+        </select>
+
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Placement Rules</div>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;">
+
+        <label>No Package Overlap</label>
+        <select id="auto-no-overlap" style="width:90px;" title="Packages (copper pads) must not overlap">
+          <option value="true">Enforced</option>
+          <option value="false">Off</option>
+        </select>
+
+        <label>No Silkscreen Overlap</label>
+        <select id="auto-no-silk-overlap" style="width:90px;" title="Component silkscreen outlines must not overlap">
+          <option value="true">Enforced</option>
+          <option value="false">Off</option>
+        </select>
+
+        <label>Silkscreen Gap (mm)</label>
+        <input type="number" step="0.05" min="0" id="auto-silk-gap"
+               onchange="DR.silkscreenGap=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min gap between silkscreen outlines of adjacent components">
+
+        <label>Courtyard Expansion (mm)</label>
+        <input type="number" step="0.05" min="0" id="auto-courtyard"
+               onchange="DR.courtyardExpansion=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Extra margin around component courtyard for keep-out">
+
+        <label>Thermal Relief Gap (mm)</label>
+        <input type="number" step="0.5" min="0" id="auto-thermal-gap"
+               onchange="DR.thermalGap=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Extra clearance around power/thermal components">
 
       </div>
 
@@ -457,46 +503,134 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <!-- ── Auto-Route Settings ── -->
     <div style="flex:1;min-width:280px;">
       <h2>Auto-Route</h2>
-      <p class="sub">Routing algorithm settings</p>
-      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;margin-top:12px;">
+      <p class="sub">Trace routing algorithm</p>
 
-        <label>Trace Width (mm)</label>
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Traces</div>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;">
+
+        <label>Default Trace Width (mm)</label>
         <input type="number" step="0.05" min="0.05" id="auto-trace-w"
-               onchange="DR.traceWidth=+this.value;_saveDRStorage()" style="width:90px;">
+               onchange="DR.traceWidth=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Default copper trace width for signal nets">
+
+        <label>Min Trace Width (mm)</label>
+        <input type="number" step="0.01" min="0.05" id="auto-min-trace"
+               onchange="DR.minTraceWidth=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Absolute minimum trace width (manufacturing limit)">
+
+        <label>Power Trace Width (mm)</label>
+        <input type="number" step="0.05" min="0.1" id="auto-pwr-trace"
+               onchange="DR.powerTraceWidth=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Minimum trace width for VCC/VDD/power nets">
+
+        <label>Corner Style</label>
+        <select id="auto-corner" onchange="DR.cornerAngle=+this.value;_saveDRStorage()" style="width:90px;"
+                title="Angle for trace corners">
+          <option value="90">90 (orthogonal)</option>
+          <option value="45">45 (chamfer)</option>
+        </select>
+
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Clearances</div>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;">
 
         <label>Copper Clearance (mm)</label>
         <input type="number" step="0.05" min="0.05" id="auto-cu-clear"
-               onchange="DR.clearance=+this.value;_saveDRStorage()" style="width:90px;">
+               onchange="DR.clearance=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min gap between trace/pad/via copper and any other copper">
+
+        <label>Trace-to-Pad (mm)</label>
+        <input type="number" step="0.05" min="0.05" id="auto-trace-pad-clear"
+               onchange="DR.tracePadClearance=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min gap between a trace and a pad it is not connected to">
+
+        <label>Via Clearance (mm)</label>
+        <input type="number" step="0.05" min="0.05" id="auto-via-clear"
+               onchange="DR.viaClearance=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min gap between a via and other copper">
+
+        <label>Board Edge Clearance (mm)</label>
+        <input type="number" step="0.1" min="0" id="auto-route-edge"
+               onchange="DR.routeEdgeClearance=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min gap between traces and board edge">
+
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Vias</div>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;">
 
         <label>Allow Vias</label>
-        <select id="auto-allow-vias" onchange="DR.allowVias=this.value==='true';_saveDRStorage()" style="width:90px;">
+        <select id="auto-allow-vias" onchange="DR.allowVias=this.value==='true';_saveDRStorage()" style="width:90px;"
+                title="Allow router to use vias for layer transitions">
           <option value="true">Yes</option>
           <option value="false">No</option>
         </select>
 
         <label>Via Size (mm)</label>
         <input type="number" step="0.1" min="0.3" id="auto-via-size"
-               onchange="DR.viaSize=+this.value;_saveDRStorage()" style="width:90px;">
+               onchange="DR.viaSize=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Via pad outer diameter">
 
         <label>Via Drill (mm)</label>
         <input type="number" step="0.1" min="0.1" id="auto-via-drill"
-               onchange="DR.viaDrill=+this.value;_saveDRStorage()" style="width:90px;">
+               onchange="DR.viaDrill=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Via hole drill diameter">
 
-        <label>Power Trace Width (mm)</label>
-        <input type="number" step="0.05" min="0.1" id="auto-pwr-trace"
-               onchange="DR.powerTraceWidth=+this.value;_saveDRStorage()" style="width:90px;">
+        <label>Min Annular Ring (mm)</label>
+        <input type="number" step="0.05" min="0.05" id="auto-ann-ring"
+               onchange="DR.minAnnularRing=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Min copper ring width around via drill hole">
 
-        <label>Route NC Pads</label>
-        <select id="auto-skip-nc" style="width:90px;">
-          <option value="false">Skip (default)</option>
-          <option value="true">Route</option>
+        <label>Tented Vias</label>
+        <select id="auto-tented" onchange="DR.tentedVias=this.value==='true';_saveDRStorage()" style="width:90px;"
+                title="Cover vias with solder mask">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+
+        <label>Via-in-Pad</label>
+        <select id="auto-via-in-pad" onchange="DR.viaInPad=this.value==='true';_saveDRStorage()" style="width:90px;"
+                title="Allow placing vias inside component pads">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
         </select>
 
       </div>
 
-      <div style="margin-top:16px;display:flex;gap:8px;">
-        <button class="tbtn primary" onclick="runAutoRoute()" style="flex:1;">Run Auto-Route</button>
-        <button class="tbtn" onclick="if(editor?.board){editor.board.traces=[];editor.board.vias=[];editor._snapshot();editor.render();updateBoardInfo();}" style="flex:1;">Clear All Traces</button>
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Net Handling</div>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;">
+
+        <label>Route NC Pads</label>
+        <select id="auto-skip-nc" style="width:90px;" title="Whether to route No-Connect marked pads">
+          <option value="false">Skip (default)</option>
+          <option value="true">Route</option>
+        </select>
+
+        <label>GND Handling</label>
+        <select id="auto-gnd" style="width:90px;" title="GND is typically handled by copper pour, not traces">
+          <option value="pour">Copper Pour</option>
+          <option value="trace">Route as Trace</option>
+        </select>
+
+        <label>Routing Grid (mm)</label>
+        <input type="number" step="0.05" min="0.1" id="auto-grid"
+               onchange="DR.routingGrid=+this.value;_saveDRStorage()" style="width:90px;"
+               title="Grid resolution for pathfinding (smaller = finer but slower)">
+
+        <label>Net Priority</label>
+        <select id="auto-net-priority" style="width:90px;" title="Order in which nets are routed">
+          <option value="power-first">Power First</option>
+          <option value="shortest-first">Shortest First</option>
+          <option value="alpha">Alphabetical</option>
+        </select>
+
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="tbtn primary" onclick="runAutoRoute()" style="flex:1;min-width:120px;">Run Auto-Route</button>
+        <button class="tbtn" onclick="if(editor?.board){editor.board.traces=[];editor.board.vias=[];editor._snapshot();editor.render();updateBoardInfo();}" style="flex:1;min-width:120px;">Clear All Traces</button>
+        <button class="tbtn" onclick="if(editor?.board){editor.board.vias=[];editor._snapshot();editor.render();updateBoardInfo();}" style="flex:1;min-width:100px;">Clear Vias</button>
       </div>
     </div>
 
