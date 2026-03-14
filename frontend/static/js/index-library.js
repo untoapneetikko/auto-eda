@@ -589,7 +589,7 @@ Then parse this component:
           <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
             <!-- PCB editor iframe -->
             <div style="flex:1;min-height:0;overflow:hidden;">
-              <iframe id="le-frame" src="/pcb.html?embedded=1" style="display:block;width:100%;height:100%;border:none;"></iframe>
+              <iframe id="le-frame" src="/pcb.html?embedded=1&_v=4" style="display:block;width:100%;height:100%;border:none;"></iframe>
             </div>
             <!-- BOM strip below canvas -->
             <div style="flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;max-height:140px;">
