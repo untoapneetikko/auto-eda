@@ -303,22 +303,27 @@ def compute_greedy_placement(
     min_clearance_mm: float = MIN_CLEARANCE_MM,
     seed: int = 42,
 ) -> list[dict[str, Any]]:
-    """Greedy component placement algorithm.
+    """Greedy component placement — "colored Tetris" algorithm.
 
-    1. Sort components by footprint area (largest first).
-    2. Place the largest component at the board centre.
-    3. For each remaining component in size order:
-       a. Find the already-placed component(s) sharing nets — the "net group".
-       b. Compute the group centroid (weighted by shared-net count).
-       c. Try 16 angles around the group centroid; at each angle compute the
-          exact centre-to-centre distance that separates silkscreen outlines
-          by exactly min_clearance_mm (AUTO PLACE GAP).
-       d. Pick the angle with the fewest clearance violations against all
-          already-placed components.  Among ties prefer the direction that
-          minimises total distance to all net-connected neighbours (whole group
-          moves together).
-       e. Legalise: push the new component away from any remaining overlaps.
-    4. Connectors are pinned to the top edge of the board.
+    Same net = same color. Each component slides toward its color group and
+    snaps in place the moment its silkscreen outline just clears the group
+    + AUTO PLACE GAP. Groups move together.
+
+    Algorithm
+    ---------
+    1. Sort by footprint area (largest first).
+    2. Place the largest non-connector at the board centre.
+    3. For each remaining component:
+       a. Find placed components sharing ≥1 net (the "color group").
+       b. For every net neighbor, generate 8 axis-aligned candidate positions:
+          right / left / above / below and the 4 diagonal corners.
+          Each candidate is offset by exactly (hw_i + hw_j + gap) on that axis,
+          guaranteeing zero overlap with that neighbor by construction.
+       c. Score candidates: (violation count vs all placed, sum of distances
+          to net neighbors). Pick the best.
+       d. Legalise remaining overlaps with axis-aligned AABB push — always push
+          on whichever axis requires the smaller nudge.
+    4. Connectors pinned to top edge.
     """
     n = len(components)
     if n == 0:
@@ -338,18 +343,14 @@ def compute_greedy_placement(
     def _shared(i: int, j: int) -> int:
         return sum(1 for m in net_members.values() if i in m and j in m)
 
-    # Min centre-to-centre distance in direction (nx, ny) for gap clearance
-    def _req_dist(i: int, j: int, nx: float, ny: float) -> float:
-        tx = (hw[i] + hw[j] + min_clearance_mm) / abs(nx) if abs(nx) > 1e-9 else math.inf
-        ty = (hh[i] + hh[j] + min_clearance_mm) / abs(ny) if abs(ny) > 1e-9 else math.inf
-        return min(tx, ty)
-
     pos: list[list[float]] = [[0.0, 0.0] for _ in range(n)]
 
     def _violates(i: int, j: int) -> bool:
+        """True when silkscreen outlines of i and j overlap or are closer than gap."""
         gx = abs(pos[j][0] - pos[i][0]) - (hw[i] + hw[j])
         gy = abs(pos[j][1] - pos[i][1]) - (hh[i] + hh[j])
-        return max(gx, gy) < min_clearance_mm
+        # Both axes must have at least min_clearance_mm gap for the pair to be legal.
+        return gx < min_clearance_mm or gy < min_clearance_mm
 
     rng = random.Random(seed)
     EDGE = 1.0
@@ -372,16 +373,15 @@ def compute_greedy_placement(
     placed_set.add(first)
 
     # ── Place each remaining component ────────────────────────────────────
-    N_DIRS = 16
 
     for idx in order:
         if idx in placed_set:
             continue
 
-        # ── Connectors: top edge, no net-pull ─────────────────────────────
+        # ── Connectors: top edge, spread horizontally ─────────────────────
         if _is_connector(components[idx]):
             pos[idx] = [cx_board, hh[idx] + EDGE]
-            for _ in range(40):
+            for _ in range(60):
                 moved = False
                 for j in placed:
                     if not _is_connector(components[j]):
@@ -403,35 +403,45 @@ def compute_greedy_placement(
             if s > 0:
                 net_neighbors[j] = s
 
-        if net_neighbors:
-            total_w = sum(net_neighbors.values())
-            gx = sum(pos[j][0] * w for j, w in net_neighbors.items()) / total_w
-            gy = sum(pos[j][1] * w for j, w in net_neighbors.items()) / total_w
-            # Find closest member of the net group to anchor the gap distance
-            anchor = min(net_neighbors, key=lambda j: math.hypot(pos[j][0] - gx, pos[j][1] - gy))
-        else:
-            # No net connection — place near already-placed centroid
-            gx = sum(pos[j][0] for j in placed) / len(placed)
-            gy = sum(pos[j][1] for j in placed) / len(placed)
-            anchor = placed[0]
+        # Build candidate positions from every net neighbor (axis-aligned AABB)
+        # Each candidate guarantees clearance with the anchor neighbor by construction.
+        candidates: list[tuple[float, float]] = []
 
-        ax, ay = pos[anchor]
+        anchor_pool = list(net_neighbors.keys()) if net_neighbors else placed[:1]
+        for j in anchor_pool:
+            bx, by = pos[j]
+            dx = hw[idx] + hw[j] + min_clearance_mm   # exact X separation (edge-to-edge)
+            dy = hh[idx] + hh[j] + min_clearance_mm   # exact Y separation
+            # 4 axis-aligned positions — snaps flush on one axis
+            candidates += [
+                (bx + dx, by),       # right
+                (bx - dx, by),       # left
+                (bx,      by + dy),  # below
+                (bx,      by - dy),  # above
+            ]
+            # 4 diagonal positions — guaranteed clear on BOTH axes simultaneously
+            candidates += [
+                (bx + dx, by + dy),
+                (bx + dx, by - dy),
+                (bx - dx, by + dy),
+                (bx - dx, by - dy),
+            ]
 
-        # ── Try N_DIRS angles, pick best position ─────────────────────────
+        # Fallback: place directly to the right of the placed centroid
+        if not candidates:
+            cx_placed = sum(pos[j][0] for j in placed) / len(placed)
+            cy_placed = sum(pos[j][1] for j in placed) / len(placed)
+            ref_j = placed[0]
+            candidates = [(cx_placed + hw[idx] + hw[ref_j] + min_clearance_mm, cy_placed)]
+
         best_pos = None
-        best_score = (math.inf, math.inf)
+        best_score: tuple[float, float] = (math.inf, math.inf)
 
-        for k in range(N_DIRS):
-            angle = k * 2 * math.pi / N_DIRS
-            nx, ny = math.cos(angle), math.sin(angle)
-            dist = _req_dist(idx, anchor, nx, ny)
-            cx = ax + nx * dist
-            cy = ay + ny * dist
-            pos[idx] = [cx, cy]
+        for cx_cand, cy_cand in candidates:
+            pos[idx] = [cx_cand, cy_cand]
             _clamp(idx)
 
             violations = sum(1 for j in placed if _violates(idx, j))
-            # Secondary: sum of distances to ALL net-connected placed neighbours
             net_dist = sum(
                 math.hypot(pos[idx][0] - pos[j][0], pos[idx][1] - pos[j][1])
                 for j in net_neighbors
@@ -442,30 +452,39 @@ def compute_greedy_placement(
                 best_score = score
                 best_pos = [pos[idx][0], pos[idx][1]]
 
-        pos[idx] = best_pos or [ax + hw[idx] + hw[anchor] + min_clearance_mm, ay]
+        pos[idx] = best_pos or list(candidates[0])
         _clamp(idx)
 
-        # ── Legalise: push away from remaining overlaps ───────────────────
-        for _ in range(80):
-            moved = False
-            xi, yi = pos[idx]
+        # ── Legalise: axis-aligned push (smaller-axis nudge wins) ─────────
+        # For each violation, compare how much we need to push on X vs Y and
+        # choose the axis requiring the smaller movement. This guarantees
+        # clearance on BOTH axes after the push, unlike the old min(tx,ty)
+        # diagonal approach which only cleared one axis.
+        for _ in range(120):
+            any_violation = False
             for j in placed:
                 if not _violates(idx, j):
                     continue
-                ddx = xi - pos[j][0]
-                ddy = yi - pos[j][1]
-                dist = math.hypot(ddx, ddy)
-                if dist < 1e-6:
+                any_violation = True
+                ddx = pos[idx][0] - pos[j][0]
+                ddy = pos[idx][1] - pos[j][1]
+
+                # If exactly coincident, nudge randomly to break symmetry
+                if abs(ddx) < 1e-6 and abs(ddy) < 1e-6:
                     angle = rng.uniform(0, 2 * math.pi)
-                    ddx, ddy = math.cos(angle), math.sin(angle)
-                    dist = 1.0
-                nx, ny = ddx / dist, ddy / dist
-                push = _req_dist(idx, j, nx, ny) - dist + 1e-3
-                pos[idx][0] += nx * push
-                pos[idx][1] += ny * push
-                xi, yi = pos[idx]
-                moved = True
-            if not moved:
+                    ddx = math.cos(angle) * 0.1
+                    ddy = math.sin(angle) * 0.1
+
+                push_x = (hw[idx] + hw[j] + min_clearance_mm) - abs(ddx)
+                push_y = (hh[idx] + hh[j] + min_clearance_mm) - abs(ddy)
+
+                # Push on the axis needing less movement (greedy minimum-move)
+                _EPS = 1e-3
+                if push_x <= push_y:
+                    pos[idx][0] += math.copysign(max(push_x, 0.0) + _EPS, ddx if ddx != 0 else 1.0)
+                else:
+                    pos[idx][1] += math.copysign(max(push_y, 0.0) + _EPS, ddy if ddy != 0 else 1.0)
+            if not any_violation:
                 break
         _clamp(idx)
 
