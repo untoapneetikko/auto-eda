@@ -404,6 +404,7 @@ def compute_greedy_placement(
         re.IGNORECASE,
     )
     _LOW_WEIGHT = 0.1  # signal nets get weight 1.0, GND/power get 0.1
+    _RF_WEIGHT  = 3.0  # RF nets get extra pull — short traces are critical
 
     net_members: dict[str, set[int]] = {}
     net_weight: dict[str, float] = {}
@@ -412,7 +413,12 @@ def compute_greedy_placement(
             if net:
                 net_members.setdefault(net, set()).add(i)
                 if net not in net_weight:
-                    net_weight[net] = _LOW_WEIGHT if _LOW_PRIORITY_NETS.match(net) else 1.0
+                    if _LOW_PRIORITY_NETS.match(net):
+                        net_weight[net] = _LOW_WEIGHT
+                    elif net.upper().startswith("RF"):
+                        net_weight[net] = _RF_WEIGHT
+                    else:
+                        net_weight[net] = 1.0
 
     def _shared(i: int, j: int) -> int:
         """Weighted count of shared nets (signal nets >> GND/power)."""
@@ -611,8 +617,20 @@ def compute_greedy_placement(
     # No hard clamp — board size is a soft guide.  Components can extend
     # past the board edge to keep net groups tight.
 
-    # Sort by envelope area descending (big Tetris pieces first)
-    order = sorted(range(n), key=lambda i: env_hw[i] * env_hh[i], reverse=True)
+    # Sort by: connectors first → then RF-net components → then by envelope area descending.
+    # RF-connected components are placed early so they cluster tightly around
+    # the anchor IC before other components can occupy nearby positions.
+    _rf_nets = {net for net, w in net_weight.items() if w >= _RF_WEIGHT}
+    def _has_rf(i: int) -> bool:
+        return any(net in _rf_nets for net in components[i].get("nets", []))
+    order = sorted(
+        range(n),
+        key=lambda i: (
+            0 if _is_connector(components[i]) else 1,    # connectors first
+            0 if _has_rf(i) else 1,                       # RF-connected next
+            -(env_hw[i] * env_hh[i]),                     # then by size descending
+        ),
+    )
 
     placed: list[int] = []
     placed_set: set[int] = set()
