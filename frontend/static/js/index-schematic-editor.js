@@ -229,10 +229,14 @@ class SchematicEditor {
   }
 
   _rotPt(dx, dy, rot) {
+    // Must match SVG rotate(rot*90): new_px = px·cosθ − py·sinθ, new_py = px·sinθ + py·cosθ
+    // θ=90°  → (−py, px)  i.e. { dx: −dy, dy:  dx }
+    // θ=180° → (−px,−py)  i.e. { dx: −dx, dy: −dy }
+    // θ=270° → ( py,−px)  i.e. { dx:  dy, dy: −dx }
     switch ((rot || 0) % 4) {
-      case 1: return { dx: dy, dy: -dx };
+      case 1: return { dx: -dy, dy:  dx };
       case 2: return { dx: -dx, dy: -dy };
-      case 3: return { dx: -dy, dy: dx };
+      case 3: return { dx:  dy, dy: -dx };
       default: return { dx, dy };
     }
   }
