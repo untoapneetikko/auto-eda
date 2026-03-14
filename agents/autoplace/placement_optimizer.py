@@ -361,10 +361,14 @@ def compute_greedy_placement(
     The collision shape is the actual copper pads, not a bounding box.
     Components slide toward their net group (same net = same colour) and
     lock in the moment their pads just clear + AUTO PLACE GAP.
+    Groups of components sharing nets move together.
 
-    For each net neighbor, exact axis-aligned "snap" positions are computed
-    analytically from pad geometry so the new piece locks as tightly as
-    possible without any copper overlap.
+    The board size is used as a *soft* guide (centre placement) but never
+    limits where components land — tight packing near net neighbours is
+    always preferred over fitting inside the board outline.
+
+    The autoplacer may rotate components (0/90/180/270°) to find the
+    tightest fit against their net group.
     """
     n = len(components)
     if n == 0:
@@ -372,11 +376,23 @@ def compute_greedy_placement(
 
     gap = min_clearance_mm
 
-    # ── Pad geometry per component ─────────────────────────────────────
-    comp_pads: list[list[_Pad]] = [_extract_pads(c) for c in components]
-    env = [_pad_envelope(p) for p in comp_pads]
-    env_hw = [e[0] for e in env]   # envelope half-width
-    env_hh = [e[1] for e in env]   # envelope half-height
+    # ── Per-component mutable rotation + pad geometry ──────────────────
+    rotations: list[int] = [c.get("rotation", 0) for c in components]
+
+    def _rebuild_pads(i: int) -> None:
+        """Recompute pads & envelope for component i at its current rotation."""
+        c = dict(components[i])
+        c["rotation"] = rotations[i]
+        comp_pads[i] = _extract_pads(c)
+        e = _pad_envelope(comp_pads[i])
+        env_hw[i] = e[0]
+        env_hh[i] = e[1]
+
+    comp_pads: list[list[_Pad]] = [[] for _ in range(n)]
+    env_hw: list[float] = [0.0] * n
+    env_hh: list[float] = [0.0] * n
+    for i in range(n):
+        _rebuild_pads(i)
 
     # ── Net membership ─────────────────────────────────────────────────
     net_members: dict[str, set[int]] = {}
@@ -410,8 +426,6 @@ def compute_greedy_placement(
         return False
 
     # ── Exact Tetris snap positions ────────────────────────────────────
-    # For each axis direction, analytically compute the MINIMUM offset
-    # where no pads collide.  This is how tight a piece can fit.
     def _snap_positions(i: int, j: int) -> list[tuple[float, float]]:
         """Candidate positions where i locks adjacent to j with zero gap waste."""
         cx_j, cy_j = pos[j]
@@ -423,7 +437,7 @@ def compute_greedy_placement(
         constrained = False
         for (lxi, lyi, hwi, hhi) in pads_i:
             for (lxj, lyj, hwj, hhj) in pads_j:
-                if abs(lyi - lyj) < hhi + hhj + gap:   # Y-ranges overlap
+                if abs(lyi - lyj) < hhi + hhj + gap:
                     constrained = True
                     req = cx_j + lxj - lxi + hwi + hwj + gap
                     if req > min_cx:
@@ -449,7 +463,7 @@ def compute_greedy_placement(
         constrained = False
         for (lxi, lyi, hwi, hhi) in pads_i:
             for (lxj, lyj, hwj, hhj) in pads_j:
-                if abs(lxi - lxj) < hwi + hwj + gap:   # X-ranges overlap
+                if abs(lxi - lxj) < hwi + hwj + gap:
                     constrained = True
                     req = cy_j + lyj - lyi + hhi + hhj + gap
                     if req > min_cy:
@@ -481,13 +495,11 @@ def compute_greedy_placement(
 
     # ── Utility ────────────────────────────────────────────────────────
     rng = random.Random(seed)
-    EDGE = 1.0
     cx_board = board_width_mm / 2.0
     cy_board = board_height_mm / 2.0
 
-    def _clamp(i: int) -> None:
-        pos[i][0] = max(env_hw[i] + EDGE, min(board_width_mm  - env_hw[i] - EDGE, pos[i][0]))
-        pos[i][1] = max(env_hh[i] + EDGE, min(board_height_mm - env_hh[i] - EDGE, pos[i][1]))
+    # No hard clamp — board size is a soft guide.  Components can extend
+    # past the board edge to keep net groups tight.
 
     # Sort by envelope area descending (big Tetris pieces first)
     order = sorted(range(n), key=lambda i: env_hw[i] * env_hh[i], reverse=True)
@@ -501,6 +513,41 @@ def compute_greedy_placement(
     placed.append(first)
     placed_set.add(first)
 
+    # ── Try all 4 rotations for component i, pick tightest fit ────────
+    def _best_rotation_candidates(idx: int, anchor_pool: list[int],
+                                  net_neighbors: dict[int, int]) -> tuple[list[tuple[float, float]], int]:
+        """Try rotations 0/90/180/270°.  Return (best candidates, best rotation)."""
+        orig_rot = rotations[idx]
+        best_rot = orig_rot
+        best_cands: list[tuple[float, float]] = []
+        best_net_dist = math.inf
+
+        for rot in (0, 90, 180, 270):
+            rotations[idx] = rot
+            _rebuild_pads(idx)
+            cands: list[tuple[float, float]] = []
+            for j in anchor_pool:
+                cands.extend(_snap_positions(idx, j))
+            if not cands:
+                continue
+            # Evaluate: pick the candidate closest to net group centroid
+            if net_neighbors:
+                total_w = sum(net_neighbors.values())
+                gcx = sum(pos[j][0] * w for j, w in net_neighbors.items()) / total_w
+                gcy = sum(pos[j][1] * w for j, w in net_neighbors.items()) / total_w
+                min_d = min(math.hypot(cx - gcx, cy - gcy) for cx, cy in cands)
+            else:
+                min_d = min(math.hypot(cx - cx_board, cy - cy_board) for cx, cy in cands)
+            if min_d < best_net_dist:
+                best_net_dist = min_d
+                best_cands = cands
+                best_rot = rot
+
+        # Restore the winning rotation
+        rotations[idx] = best_rot
+        _rebuild_pads(idx)
+        return best_cands, best_rot
+
     # ── Place each remaining component ────────────────────────────────
     for idx in order:
         if idx in placed_set:
@@ -508,7 +555,7 @@ def compute_greedy_placement(
 
         # Connectors → pin to top edge, spread horizontally
         if _is_connector(components[idx]):
-            pos[idx] = [cx_board, env_hh[idx] + EDGE]
+            pos[idx] = [cx_board, env_hh[idx] + 1.0]
             for _ in range(60):
                 moved = False
                 for j in placed:
@@ -517,7 +564,6 @@ def compute_greedy_placement(
                         moved = True
                 if not moved:
                     break
-            _clamp(idx)
             placed.append(idx)
             placed_set.add(idx)
             continue
@@ -529,11 +575,10 @@ def compute_greedy_placement(
             if s > 0:
                 net_neighbors[j] = s
 
-        # ── Generate Tetris snap candidates from pad geometry ─────────
-        candidates: list[tuple[float, float]] = []
         anchor_pool = list(net_neighbors.keys()) if net_neighbors else placed[:1]
-        for j in anchor_pool:
-            candidates.extend(_snap_positions(idx, j))
+
+        # ── Try all rotations, pick tightest ──────────────────────────
+        candidates, _best_rot = _best_rotation_candidates(idx, anchor_pool, net_neighbors)
 
         if not candidates:
             cx_p = sum(pos[j][0] for j in placed) / len(placed)
@@ -546,7 +591,6 @@ def compute_greedy_placement(
 
         for cx_c, cy_c in candidates:
             pos[idx] = [cx_c, cy_c]
-            _clamp(idx)
 
             violations = sum(1 for j in placed if _collides(idx, j))
             net_dist = sum(
@@ -560,52 +604,121 @@ def compute_greedy_placement(
                 best_pos = [pos[idx][0], pos[idx][1]]
 
         pos[idx] = best_pos or [candidates[0][0], candidates[0][1]]
-        _clamp(idx)
 
-        # ── Legalise: push apart any remaining pad collisions ─────────
-        # Find the worst colliding pad pair, push on the axis that needs
-        # the least movement (like sliding a Tetris piece sideways).
-        for _ in range(150):
-            any_push = False
+        # ── Legalise: re-snap to clear worst violator ────────────────
+        for _leg in range(80):
+            worst_j = None
+            worst_sev = 0
             for j in placed:
                 if not _collides(idx, j):
                     continue
-                any_push = True
+                sev = 0
                 xi, yi = pos[idx]
                 xj, yj = pos[j]
-
-                # Collect worst push needed across all colliding pad pairs
-                max_push_x = 0.0
-                max_push_y = 0.0
                 for (lxi, lyi, hwi, hhi) in comp_pads[idx]:
-                    pix, piy = xi + lxi, yi + lyi
                     for (lxj, lyj, hwj, hhj) in comp_pads[j]:
-                        pjx, pjy = xj + lxj, yj + lyj
-                        pgx = abs(pix - pjx) - (hwi + hwj)
-                        pgy = abs(piy - pjy) - (hhi + hhj)
-                        if pgx < gap and pgy < gap:
-                            max_push_x = max(max_push_x, gap - pgx)
-                            max_push_y = max(max_push_y, gap - pgy)
-
-                # Direction: push idx away from j (centre-to-centre)
-                ddx = xi - xj
-                ddy = yi - yj
-                if abs(ddx) < 1e-6 and abs(ddy) < 1e-6:
-                    angle = rng.uniform(0, 2 * math.pi)
-                    ddx, ddy = math.cos(angle), math.sin(angle)
-
-                EPS = 1e-3
-                if max_push_x <= max_push_y:
-                    pos[idx][0] += math.copysign(max_push_x + EPS, ddx)
-                else:
-                    pos[idx][1] += math.copysign(max_push_y + EPS, ddy)
-
-            if not any_push:
+                        if (abs(xi + lxi - xj - lxj) < hwi + hwj + gap and
+                                abs(yi + lyi - yj - lyj) < hhi + hhj + gap):
+                            sev += 1
+                if sev > worst_sev:
+                    worst_sev = sev
+                    worst_j = j
+            if worst_j is None:
                 break
-        _clamp(idx)
+
+            snaps = _snap_positions(idx, worst_j)
+            if not snaps:
+                ddx = pos[idx][0] - pos[worst_j][0]
+                ddy = pos[idx][1] - pos[worst_j][1]
+                if abs(ddx) < 1e-6 and abs(ddy) < 1e-6:
+                    ddx, ddy = rng.choice([-1, 1]), 0.0
+                px = (env_hw[idx] + env_hw[worst_j] + gap) - abs(ddx)
+                py = (env_hh[idx] + env_hh[worst_j] + gap) - abs(ddy)
+                if px <= py:
+                    pos[idx][0] += math.copysign(max(px, 0) + 1e-3, ddx)
+                else:
+                    pos[idx][1] += math.copysign(max(py, 0) + 1e-3, ddy)
+                continue
+
+            cur_x, cur_y = pos[idx]
+            cur_violations = sum(1 for k in placed if _collides(idx, k))
+            best_snap = None
+            best_snap_score: tuple[float, float] = (cur_violations, 0.0)
+            for sx, sy in snaps:
+                pos[idx] = [sx, sy]
+                v = sum(1 for k in placed if _collides(idx, k))
+                d = math.hypot(pos[idx][0] - cur_x, pos[idx][1] - cur_y)
+                if (v, d) < best_snap_score:
+                    best_snap_score = (v, d)
+                    best_snap = [pos[idx][0], pos[idx][1]]
+            if best_snap:
+                pos[idx] = best_snap
+            else:
+                pos[idx] = [cur_x, cur_y]
 
         placed.append(idx)
         placed_set.add(idx)
+
+    # ── Global final pass: clear ALL remaining pad collisions ─────────
+    for _gpass in range(60):
+        changed = False
+        for i in range(n):
+            for j in range(i + 1, n):
+                if not _collides(i, j):
+                    continue
+                changed = True
+                ddx = pos[i][0] - pos[j][0]
+                ddy = pos[i][1] - pos[j][1]
+                if abs(ddx) < 1e-6 and abs(ddy) < 1e-6:
+                    ddx = rng.choice([-1.0, 1.0])
+                    ddy = 0.0
+                push_x = (env_hw[i] + env_hw[j] + gap) - abs(ddx)
+                push_y = (env_hh[i] + env_hh[j] + gap) - abs(ddy)
+                EPS = 2e-3
+                if 0 < push_x <= push_y:
+                    half = push_x / 2.0 + EPS
+                    sign = 1.0 if ddx >= 0 else -1.0
+                    if _is_connector(components[i]):
+                        pos[j][0] -= sign * half * 2
+                    elif _is_connector(components[j]):
+                        pos[i][0] += sign * half * 2
+                    else:
+                        pos[i][0] += sign * half
+                        pos[j][0] -= sign * half
+                elif push_y > 0:
+                    half = push_y / 2.0 + EPS
+                    sign = 1.0 if ddy >= 0 else -1.0
+                    if _is_connector(components[i]):
+                        pos[j][1] -= sign * half * 2
+                    elif _is_connector(components[j]):
+                        pos[i][1] += sign * half * 2
+                    else:
+                        pos[i][1] += sign * half
+                        pos[j][1] -= sign * half
+                else:
+                    ex = env_hw[i] + env_hw[j] + gap
+                    ey = env_hh[i] + env_hh[j] + gap
+                    if abs(ddx) <= abs(ddy):
+                        sign = 1.0 if ddx >= 0 else -1.0
+                        pos[i][0] += sign * (ex / 2 + EPS)
+                        pos[j][0] -= sign * (ex / 2 + EPS)
+                    else:
+                        sign = 1.0 if ddy >= 0 else -1.0
+                        pos[i][1] += sign * (ey / 2 + EPS)
+                        pos[j][1] -= sign * (ey / 2 + EPS)
+        if not changed:
+            break
+
+    # ── Re-centre cluster on the board ────────────────────────────────
+    # The algorithm ignores board boundaries for tight packing.  Now shift
+    # the entire cluster so its centroid sits at the board centre.
+    avg_x = sum(p[0] for p in pos) / n
+    avg_y = sum(p[1] for p in pos) / n
+    dx_shift = cx_board - avg_x
+    dy_shift = cy_board - avg_y
+    for i in range(n):
+        pos[i][0] += dx_shift
+        pos[i][1] += dy_shift
 
     # ── Build output ──────────────────────────────────────────────────────
     result: list[dict[str, Any]] = []
@@ -628,7 +741,7 @@ def compute_greedy_placement(
             "reference": comp.get("reference", "?"),
             "x": round(pos[i][0], 3),
             "y": round(pos[i][1], 3),
-            "rotation": comp.get("rotation", 0),
+            "rotation": rotations[i],
             "layer": comp.get("layer", "F.Cu"),
             "footprint": comp.get("footprint", ""),
             "rationale": rationale,
