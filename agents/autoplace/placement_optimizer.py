@@ -263,7 +263,7 @@ def summarize_violations(result: dict[str, Any]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Net-proximity placement algorithm
+# Greedy silkscreen-aware placement (primary algorithm)
 # ---------------------------------------------------------------------------
 
 _CONNECTOR_KEYWORDS = ("CONN", "USB", "JACK", "HDR", "HEADER", "TERMINAL")
@@ -294,6 +294,211 @@ def _is_power(comp: dict[str, Any]) -> bool:
     ref = comp.get("reference", "").upper()
     fp = comp.get("footprint", "").upper()
     return any(k in val or k in fp for k in _POWER_KEYWORDS) or ref.startswith("PWR") or ref.startswith("VCC") or ref.startswith("VDD") or ref.startswith("GND")
+
+
+def compute_greedy_placement(
+    components: list[dict[str, Any]],
+    board_width_mm: float = 100.0,
+    board_height_mm: float = 80.0,
+    min_clearance_mm: float = MIN_CLEARANCE_MM,
+    seed: int = 42,
+) -> list[dict[str, Any]]:
+    """Greedy component placement algorithm.
+
+    1. Sort components by footprint area (largest first).
+    2. Place the largest component at the board centre.
+    3. For each remaining component in size order:
+       a. Find the already-placed component(s) sharing nets — the "net group".
+       b. Compute the group centroid (weighted by shared-net count).
+       c. Try 16 angles around the group centroid; at each angle compute the
+          exact centre-to-centre distance that separates silkscreen outlines
+          by exactly min_clearance_mm (AUTO PLACE GAP).
+       d. Pick the angle with the fewest clearance violations against all
+          already-placed components.  Among ties prefer the direction that
+          minimises total distance to all net-connected neighbours (whole group
+          moves together).
+       e. Legalise: push the new component away from any remaining overlaps.
+    4. Connectors are pinned to the top edge of the board.
+    """
+    n = len(components)
+    if n == 0:
+        return []
+
+    sizes = [_estimate_footprint_size(c.get("footprint", "")) for c in components]
+    hw = [s[0] / 2.0 for s in sizes]
+    hh = [s[1] / 2.0 for s in sizes]
+
+    # net_name → set of component indices
+    net_members: dict[str, set[int]] = {}
+    for i, comp in enumerate(components):
+        for net in comp.get("nets", []):
+            if net:
+                net_members.setdefault(net, set()).add(i)
+
+    def _shared(i: int, j: int) -> int:
+        return sum(1 for m in net_members.values() if i in m and j in m)
+
+    # Min centre-to-centre distance in direction (nx, ny) for gap clearance
+    def _req_dist(i: int, j: int, nx: float, ny: float) -> float:
+        tx = (hw[i] + hw[j] + min_clearance_mm) / abs(nx) if abs(nx) > 1e-9 else math.inf
+        ty = (hh[i] + hh[j] + min_clearance_mm) / abs(ny) if abs(ny) > 1e-9 else math.inf
+        return min(tx, ty)
+
+    pos: list[list[float]] = [[0.0, 0.0] for _ in range(n)]
+
+    def _violates(i: int, j: int) -> bool:
+        gx = abs(pos[j][0] - pos[i][0]) - (hw[i] + hw[j])
+        gy = abs(pos[j][1] - pos[i][1]) - (hh[i] + hh[j])
+        return max(gx, gy) < min_clearance_mm
+
+    rng = random.Random(seed)
+    EDGE = 1.0
+    cx_board, cy_board = board_width_mm / 2.0, board_height_mm / 2.0
+
+    def _clamp(i: int) -> None:
+        pos[i][0] = max(hw[i] + EDGE, min(board_width_mm  - hw[i] - EDGE, pos[i][0]))
+        pos[i][1] = max(hh[i] + EDGE, min(board_height_mm - hh[i] - EDGE, pos[i][1]))
+
+    # Sort by footprint area descending
+    order = sorted(range(n), key=lambda i: hw[i] * hh[i], reverse=True)
+
+    placed: list[int] = []
+    placed_set: set[int] = set()
+
+    # ── Place first (largest) component at board centre ───────────────────
+    first = next((o for o in order if not _is_connector(components[o])), order[0])
+    pos[first] = [cx_board, cy_board]
+    placed.append(first)
+    placed_set.add(first)
+
+    # ── Place each remaining component ────────────────────────────────────
+    N_DIRS = 16
+
+    for idx in order:
+        if idx in placed_set:
+            continue
+
+        # ── Connectors: top edge, no net-pull ─────────────────────────────
+        if _is_connector(components[idx]):
+            pos[idx] = [cx_board, hh[idx] + EDGE]
+            for _ in range(40):
+                moved = False
+                for j in placed:
+                    if not _is_connector(components[j]):
+                        continue
+                    if _violates(idx, j):
+                        pos[idx][0] += hw[idx] + hw[j] + min_clearance_mm
+                        moved = True
+                if not moved:
+                    break
+            _clamp(idx)
+            placed.append(idx)
+            placed_set.add(idx)
+            continue
+
+        # ── Find net group: all placed components sharing ≥1 net ──────────
+        net_neighbors: dict[int, int] = {}   # j → shared-net count
+        for j in placed:
+            s = _shared(idx, j)
+            if s > 0:
+                net_neighbors[j] = s
+
+        if net_neighbors:
+            total_w = sum(net_neighbors.values())
+            gx = sum(pos[j][0] * w for j, w in net_neighbors.items()) / total_w
+            gy = sum(pos[j][1] * w for j, w in net_neighbors.items()) / total_w
+            # Find closest member of the net group to anchor the gap distance
+            anchor = min(net_neighbors, key=lambda j: math.hypot(pos[j][0] - gx, pos[j][1] - gy))
+        else:
+            # No net connection — place near already-placed centroid
+            gx = sum(pos[j][0] for j in placed) / len(placed)
+            gy = sum(pos[j][1] for j in placed) / len(placed)
+            anchor = placed[0]
+
+        ax, ay = pos[anchor]
+
+        # ── Try N_DIRS angles, pick best position ─────────────────────────
+        best_pos = None
+        best_score = (math.inf, math.inf)
+
+        for k in range(N_DIRS):
+            angle = k * 2 * math.pi / N_DIRS
+            nx, ny = math.cos(angle), math.sin(angle)
+            dist = _req_dist(idx, anchor, nx, ny)
+            cx = ax + nx * dist
+            cy = ay + ny * dist
+            pos[idx] = [cx, cy]
+            _clamp(idx)
+
+            violations = sum(1 for j in placed if _violates(idx, j))
+            # Secondary: sum of distances to ALL net-connected placed neighbours
+            net_dist = sum(
+                math.hypot(pos[idx][0] - pos[j][0], pos[idx][1] - pos[j][1])
+                for j in net_neighbors
+            ) if net_neighbors else 0.0
+
+            score = (violations, net_dist)
+            if score < best_score:
+                best_score = score
+                best_pos = [pos[idx][0], pos[idx][1]]
+
+        pos[idx] = best_pos or [ax + hw[idx] + hw[anchor] + min_clearance_mm, ay]
+        _clamp(idx)
+
+        # ── Legalise: push away from remaining overlaps ───────────────────
+        for _ in range(80):
+            moved = False
+            xi, yi = pos[idx]
+            for j in placed:
+                if not _violates(idx, j):
+                    continue
+                ddx = xi - pos[j][0]
+                ddy = yi - pos[j][1]
+                dist = math.hypot(ddx, ddy)
+                if dist < 1e-6:
+                    angle = rng.uniform(0, 2 * math.pi)
+                    ddx, ddy = math.cos(angle), math.sin(angle)
+                    dist = 1.0
+                nx, ny = ddx / dist, ddy / dist
+                push = _req_dist(idx, j, nx, ny) - dist + 1e-3
+                pos[idx][0] += nx * push
+                pos[idx][1] += ny * push
+                xi, yi = pos[idx]
+                moved = True
+            if not moved:
+                break
+        _clamp(idx)
+
+        placed.append(idx)
+        placed_set.add(idx)
+
+    # ── Build output ──────────────────────────────────────────────────────
+    result: list[dict[str, Any]] = []
+    for i, comp in enumerate(components):
+        # Find best net neighbour for rationale
+        best_j, best_s = None, -1
+        for j in range(n):
+            if j == i:
+                continue
+            s = _shared(i, j)
+            if s > best_s:
+                best_s, best_j = s, j
+        neighbour_ref = components[best_j]["reference"] if best_j is not None else "board"
+        rationale = (
+            f"{comp.get('reference','?')} placed adjacent to {neighbour_ref} "
+            f"({best_s} shared net{'s' if best_s != 1 else ''}); "
+            f"gap={min_clearance_mm}mm."
+        )
+        result.append({
+            "reference": comp.get("reference", "?"),
+            "x": round(pos[i][0], 3),
+            "y": round(pos[i][1], 3),
+            "rotation": comp.get("rotation", 0),
+            "layer": comp.get("layer", "F.Cu"),
+            "footprint": comp.get("footprint", ""),
+            "rationale": rationale,
+        })
+    return result
 
 
 def compute_net_proximity_placement(

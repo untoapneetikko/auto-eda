@@ -3155,7 +3155,7 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
        boards get the full net-proximity algorithm from scratch.
     4. Runs the Fruchterman-Reingold force-directed algorithm.
     """
-    from agents.autoplace.placement_optimizer import compute_net_proximity_placement  # noqa: PLC0415
+    from agents.autoplace.placement_optimizer import compute_greedy_placement  # noqa: PLC0415
 
     bw = float(board.get("board", {}).get("width", 100))
     bh = float(board.get("board", {}).get("height", 100))
@@ -3282,14 +3282,10 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
         hw = 0.0
 
     # ── Run placement ────────────────────────────────────────────────────
-    placements = compute_net_proximity_placement(
+    placements = compute_greedy_placement(
         components=opt_components,
         board_width_mm=bw,
         board_height_mm=bh,
-        schematic_hints=schematic_hints if schematic_hints else None,
-        # When preserving existing board positions, use strong hint gravity
-        # so the algorithm refines rather than rearranges.
-        hint_weight=hw,
         min_clearance_mm=min_clearance_mm,
     )
 
