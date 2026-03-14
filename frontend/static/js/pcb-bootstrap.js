@@ -2,6 +2,14 @@
 // ═══════════════════════════════════════════════════════════════
 // App bootstrap
 // ═══════════════════════════════════════════════════════════════
+
+// Apply embedded class immediately (before window.load) so the CSS rule
+// .embedded .tbtn.save{display:none} hides the toolbar Save button right away
+// instead of showing it briefly before JS kicks in.
+if(location.search.includes('embedded=1') && !location.search.includes('app=1')){
+  document.body.classList.add('embedded');
+}
+
 let editor;
 // Expose editor for same-origin parent frames (e.g. leSaveLayout reads board directly
 // via frame.contentWindow.pcbEditorInstance.board — avoids async postMessage round-trip).
