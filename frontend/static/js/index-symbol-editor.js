@@ -942,7 +942,7 @@ function updateAccWireInfoPanel(wire) {
       <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Net Name</div>
       <input id="acc-wire-net-input" value="${esc(netName)}" placeholder="Unnamed net…"
         style="${inputStyle}"
-        onkeydown="if(event.key==='Enter'){setAccWireNetName('${esc(wireId)}',this.value.trim());this.blur();}"
+        onkeydown="if(event.key==='Enter')this.blur();"
         onblur="var _v=this.value.trim();if(_v!=='${esc(netName)}')setAccWireNetName('${esc(wireId)}',_v);">
       <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">Enter to apply · spreads to all connected wires</div>
     </div>`;
@@ -1053,7 +1053,7 @@ function updateSchWireInfoPanel(wire) {
         <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Net Name</div>
         <input id="wire-net-input" value="${esc(netName)}" placeholder="Unnamed net…"
           style="${inputStyle}"
-          onkeydown="if(event.key==='Enter'){setWireNetName('${esc(wireId)}',this.value.trim());this.blur();}"
+          onkeydown="if(event.key==='Enter')this.blur();"
           onblur="var _v=this.value.trim();if(_v!=='${esc(netName)}')setWireNetName('${esc(wireId)}',_v);">
         <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">Enter to apply · spreads to all connected wires</div>
       </div>
