@@ -688,9 +688,20 @@ function _renderAccCompList() {
   if (!el || !appCircuitEditor) return;
   const comps = appCircuitEditor.project.components || [];
   if (!comps.length) {
-    el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:10px;text-align:center;padding:12px;line-height:1.5;">Click a component<br>to see details</div>';
+    el.style.alignItems = 'center';
+    el.style.justifyContent = 'center';
+    el.style.flexDirection = '';
+    el.style.padding = '12px';
+    el.style.overflowY = '';
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:10px;text-align:center;line-height:1.5;">Click a component<br>to see details</div>';
     return;
   }
+  // Override centering styles so rows stack from top
+  el.style.alignItems = 'stretch';
+  el.style.justifyContent = 'flex-start';
+  el.style.flexDirection = 'column';
+  el.style.padding = '0';
+  el.style.overflowY = 'auto';
   el.innerHTML = comps.map(c => _compListRowHtml(c, `_accSelectComp('${c.id}')`)).join('');
 }
 
