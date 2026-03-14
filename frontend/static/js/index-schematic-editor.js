@@ -1489,6 +1489,7 @@ class SchematicEditor {
     const dot = this._gp.querySelector('circle');
     if (dot) { dot.setAttribute('cx', gs); dot.setAttribute('cy', gs); }
     this._vg.setAttribute('transform', `translate(${this.panX},${this.panY}) scale(${this.zoom})`);
+    this._hlPortKeysCache = undefined; // invalidate per-render cache
     let h = '';
     for (const grp of (this.project.groups || [])) h += this._groupH(grp);
     for (const w of this.project.wires) h += this._wH(w);
@@ -1526,12 +1527,15 @@ class SchematicEditor {
   }
 
   // Returns a Set of "x,y" strings for every port on the highlighted net, or null.
+  // Result is cached for the duration of one render pass.
   _hlPortKeys() {
+    if (this._hlPortKeysCache !== undefined) return this._hlPortKeysCache;
     const hn = this._highlightedNet;
-    if (!hn || !this._cachedNetOverlay?.nets) return null;
+    if (!hn || !this._cachedNetOverlay?.nets) return (this._hlPortKeysCache = null);
     const net = this._cachedNetOverlay.nets.find(n => n.name === hn);
-    if (!net) return null;
-    return new Set(net.ports.map(p => `${p.x},${p.y}`));
+    if (!net) return (this._hlPortKeysCache = null);
+    // Use Math.round to match integer coords returned by the backend
+    return (this._hlPortKeysCache = new Set(net.ports.map(p => `${Math.round(p.x)},${Math.round(p.y)}`)));
   }
 
   _lblH(lbl, sel) {
@@ -1539,7 +1543,7 @@ class SchematicEditor {
     const nc = this._labelColor(name);
     const hn = this._highlightedNet;
     const hlKeys = hn ? this._hlPortKeys() : null;
-    const onNet = hn && (name === hn || hlKeys?.has(`${lbl.x},${lbl.y}`));
+    const onNet = hn && (name === hn || hlKeys?.has(`${Math.round(lbl.x)},${Math.round(lbl.y)}`));
     const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"' : '';
     const r = (sel || onNet) ? 4 : 3;
     const ring = sel
@@ -1621,7 +1625,7 @@ class SchematicEditor {
     let onNet = false;
     if (hn && !sel) {
       const hlKeys = this._hlPortKeys();
-      if (hlKeys) onNet = this._ports(comp).some(p => hlKeys.has(`${p.x},${p.y}`));
+      if (hlKeys) onNet = this._ports(comp).some(p => hlKeys.has(`${Math.round(p.x)},${Math.round(p.y)}`));
     }
     const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"' : '';
 

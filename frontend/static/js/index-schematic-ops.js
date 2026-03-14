@@ -24,10 +24,14 @@ editor._render = function() {
 };
 
 // ── Net listing ───────────────────────────────────────────────────────────
-function _schNetClick(listId, countId, netName) {
+async function _schNetClick(listId, countId, netName) {
   const ed = listId.startsWith('acc') ? appCircuitEditor : editor;
   if (!ed) return;
   ed._highlightedNet = ed._highlightedNet === netName ? null : netName;
+  // Ensure overlay data exists — it's only built after an edit, so fetch on demand
+  if (ed._highlightedNet && !ed._cachedNetOverlay) {
+    await ed._refreshNetOverlay();
+  }
   ed._render();
   renderSchNets(ed, listId, countId);
 }
@@ -47,10 +51,16 @@ function renderSchNets(editorRef, listId, countId) {
   el.innerHTML = nets.map(n => {
     const col = editorRef._labelColor(n.name);
     const active = hn === n.name;
-    const bg = active ? 'background:rgba(250,204,21,0.1);' : '';
-    const border = active ? `border-left:2px solid #facc15;padding-left:6px;` : 'padding-left:8px;';
-    return `<div class="sch-net-row" style="cursor:pointer;${bg}${border}" onclick="_schNetClick('${listId}','${countId}',${JSON.stringify(n.name)})" title="Click to highlight net">
-      <div class="sch-net-dot" style="background:${col};"></div>
+    const bg = active ? 'background:rgba(250,204,21,0.13);' : '';
+    const border = active ? 'border-left:3px solid #facc15;padding-left:5px;' : 'border-left:3px solid transparent;padding-left:5px;';
+    const nameQ = JSON.stringify(n.name);
+    return `<div class="sch-net-row" style="cursor:pointer;${bg}${border}transition:background 0.12s,transform 0.08s,opacity 0.08s;"
+      onclick="_schNetClick('${listId}','${countId}',${nameQ})"
+      onmousedown="this.style.transform='scale(0.96)';this.style.opacity='0.65';"
+      onmouseup="this.style.transform='';this.style.opacity='';"
+      onmouseleave="this.style.transform='';this.style.opacity='';"
+      title="Click to highlight net on schematic">
+      <div class="sch-net-dot" style="background:${col};flex-shrink:0;"></div>
       <span class="sch-net-name" style="color:${col};" title="${esc(n.name)}">${esc(n.name)}</span>
       <span class="sch-net-pins">${n.ports.length}</span>
     </div>`;
