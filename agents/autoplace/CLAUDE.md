@@ -26,14 +26,14 @@ placement_dict = compute_placement(
     connectivity_path="data/outputs/connectivity.json",   # optional but preferred
     board_width_mm=100.0,
     board_height_mm=80.0,
-    min_clearance_mm=0.25,   # package-to-package gap (courtyard clearance)
+    min_clearance_mm=0.25,   # silkscreen-to-silkscreen gap
     iterations=250,
 )
 ```
 
 `compute_placement()` runs a **force-directed, net-proximity algorithm**:
 - Pulls every component toward the centroid of its net-neighbours.
-- Enforces the 0.25 mm courtyard (package-to-package) gap.
+- Enforces the 0.25 mm silkscreen-to-silkscreen gap.
 - Pins connectors to the board top edge automatically.
 - Returns a `placement_dict` with `rationale` strings already filled.
 
@@ -45,7 +45,7 @@ result = apply_placement(placement_dict)
 
 ### Step 3 — If DRC fails, push components apart and retry
 If `apply_placement` returns violations, increase `iterations` or call
-`check_courtyard_clearances` to diagnose, fix, and rerun.
+`check_silkscreen_clearances` to diagnose, fix, and rerun.
 
 ---
 
@@ -63,9 +63,10 @@ The `compute_placement()` algorithm already follows these rules:
 4. **Board-boundary clamping** — no component may go outside the board minus a
    1 mm margin.
 
-## Design Rule: Package-to-Package Gap
-- **Minimum courtyard clearance = 0.25 mm** between any two component courtyards.
-- Courtyard = 3D package boundary + 0.1 mm expansion per side.
+## Design Rule: Silkscreen Clearance
+- **Minimum silkscreen-to-silkscreen clearance = 0.25 mm** between any two component body outlines.
+- Silkscreen = the printed package body outline on the PCB (no extra expansion).
+- Components must never be placed so close that their silkscreen lines overlap or merge.
 - This is the `min_clearance_mm` parameter — do not set it lower than 0.25.
 
 ## PCB Placement Rules (reviewed after compute_placement)
@@ -193,7 +194,7 @@ Y↓  X→    15    17    19    21    23
 ## Validation
 ```bash
 python backend/tools/schema_validator.py data/outputs/placement.json shared/schemas/placement_output.json
-python backend/tools/drc_checker.py data/outputs/placement.json --check clearance,courtyard
+python backend/tools/drc_checker.py data/outputs/placement.json --check clearance,silkscreen
 ```
 
 ## Updating Your Own Code
