@@ -135,6 +135,11 @@ def _estimate_footprint_size(footprint: str) -> tuple[float, float]:
 # ---------------------------------------------------------------------------
 
 MIN_CLEARANCE_MM = 0.25
+# Courtyard expansion: added to each side of the package body to form the
+# courtyard boundary (IPC-7351 / KiCad convention: 0.10 mm per side).
+# This matches the footprint_output.json schema which defines
+# courtyard = package outline + 0.10 mm expansion per side.
+COURTYARD_EXPANSION_MM = 0.10
 # Silkscreen gap: minimum body-to-body spacing to guarantee silkscreen labels
 # (which extend beyond the package boundary) never overlap each other.
 SILKSCREEN_GAP_MM = 1.0
@@ -149,9 +154,11 @@ def _build_dataframe(placements: list[dict[str, Any]]) -> pl.DataFrame:
         y = float(p.get("y", 0.0))
         fp = p.get("footprint", "")
         w, h = _estimate_footprint_size(fp)
-        # half-extents = actual 3D package boundary (no extra expansion)
-        half_w = w / 2.0
-        half_h = h / 2.0
+        # half-extents = courtyard boundary = package body / 2 + courtyard expansion
+        # The courtyard is the package outline expanded by COURTYARD_EXPANSION_MM
+        # per side (IPC-7351 / KiCad convention, matches footprint_output.json schema).
+        half_w = w / 2.0 + COURTYARD_EXPANSION_MM
+        half_h = h / 2.0 + COURTYARD_EXPANSION_MM
         rows.append({
             "reference": ref,
             "x": x,
@@ -365,11 +372,13 @@ def compute_net_proximity_placement(
 
     # ------------------------------------------------------------------ #
     # 2. Estimate courtyard half-extents for each component                #
+    #    courtyard = package body / 2 + COURTYARD_EXPANSION_MM per side   #
+    #    This is the boundary that must not violate min_clearance_mm.     #
     # ------------------------------------------------------------------ #
     sizes = [_estimate_footprint_size(c.get("footprint", "")) for c in components]
-    # half-extents = actual 3D package boundary (package-to-package gap)
-    hw = [s[0] / 2.0 for s in sizes]  # package half-width
-    hh = [s[1] / 2.0 for s in sizes]  # package half-height
+    # half-extents = courtyard boundary (package body + guard per side)
+    hw = [s[0] / 2.0 + COURTYARD_EXPANSION_MM for s in sizes]  # courtyard half-width
+    hh = [s[1] / 2.0 + COURTYARD_EXPANSION_MM for s in sizes]  # courtyard half-height
 
     # ------------------------------------------------------------------ #
     # 3. Classify components                                               #
@@ -701,7 +710,8 @@ def compute_net_proximity_placement(
                 f"'{dominant_net}' ({best_count} shared connection"
                 f"{'s' if best_count != 1 else ''}). "
                 f"Final position ({pos[i][0]:.2f}, {pos[i][1]:.2f}) mm satisfies "
-                f"{min_clearance_mm} mm package gap."
+                f"{min_clearance_mm} mm courtyard clearance "
+                f"(courtyard = package + {COURTYARD_EXPANSION_MM} mm per side)."
             )
         else:
             rationale = (
