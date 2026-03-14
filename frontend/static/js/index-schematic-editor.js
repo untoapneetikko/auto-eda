@@ -787,6 +787,8 @@ class SchematicEditor {
     else if (k === 'y' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this._redo(); }
     else if ((k === 'g' || k === 'G') && (e.ctrlKey || e.metaKey) && e.shiftKey) { e.preventDefault(); this.ungroupSelected(); }
     else if ((k === 'g' || k === 'G') && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.groupSelected(); }
+    else if (k === 'c' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this._copySelected(); }
+    else if (k === 'v' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this._pasteClipboard(); }
   }
 
   // ── Tools ─────────────────────────────────────────────────────────────────
@@ -1080,6 +1082,56 @@ class SchematicEditor {
     this._saveHist();
     this.project.wires = this.project.wires.filter(w => w.id !== id);
     if (this.selected?.id === id) this.selected = null;
+    this.dirty = true; this._render(); this._status();
+  }
+
+  _copySelected() {
+    const ids = this.multiSelected.size > 0 ? this.multiSelected
+      : this.selected ? new Set([this.selected.id]) : new Set();
+    if (!ids.size) return;
+    const comps  = this.project.components.filter(c => ids.has(c.id));
+    const labels = (this.project.labels || []).filter(l => ids.has(l.id));
+    const wires  = this.project.wires.filter(w => ids.has(w.id));
+    if (!comps.length && !labels.length && !wires.length) return;
+    this._schClipboard = JSON.parse(JSON.stringify({ comps, labels, wires }));
+  }
+
+  _pasteClipboard() {
+    if (!this._schClipboard) return;
+    const { comps, labels, wires } = this._schClipboard;
+    if (!comps.length && !labels.length && !wires.length) return;
+    this._saveHist();
+    const OFFSET = this.GRID * 4; // paste offset so it doesn't land on top
+    const idMap = {};
+    const newComps = comps.map(c => {
+      const nc = JSON.parse(JSON.stringify(c));
+      nc.id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      idMap[c.id] = nc.id;
+      nc.x += OFFSET; nc.y += OFFSET;
+      return nc;
+    });
+    const newLabels = labels.map(l => {
+      const nl = JSON.parse(JSON.stringify(l));
+      nl.id = 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      idMap[l.id] = nl.id;
+      nl.x += OFFSET; nl.y += OFFSET;
+      return nl;
+    });
+    const newWires = wires.map(w => {
+      const nw = JSON.parse(JSON.stringify(w));
+      nw.id = 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      idMap[w.id] = nw.id;
+      nw.points = nw.points.map(p => ({ x: p.x + OFFSET, y: p.y + OFFSET }));
+      return nw;
+    });
+    this.project.components.push(...newComps);
+    this.project.labels = (this.project.labels || []);
+    this.project.labels.push(...newLabels);
+    this.project.wires.push(...newWires);
+    // Select the pasted items
+    this.multiSelected.clear();
+    [...newComps, ...newLabels, ...newWires].forEach(x => this.multiSelected.add(x.id));
+    this.selected = null;
     this.dirty = true; this._render(); this._status();
   }
 
