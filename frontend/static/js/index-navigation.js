@@ -1,3 +1,17 @@
+// ── Fetch profile respecting active version snapshot ─────────────────────────
+// Always use this instead of fetch('/api/library/{slug}') directly so the user
+// gets their activated version (V2 etc.) rather than the raw profile.json.
+async function fetchProfile(slug) {
+  try {
+    const av = await fetch(`/api/library/${slug}/active_version`).then(r => r.json()).catch(() => null);
+    if (av?.id) {
+      const snap = await fetch(`/api/library/${slug}/history/${av.id}`).then(r => r.json()).catch(() => null);
+      if (snap?.profile) return snap.profile;
+    }
+  } catch(_) {}
+  return fetch(`/api/library/${slug}`, { cache: 'no-store' }).then(r => r.json());
+}
+
 // ── Section switching ──────────────────────────────────────────────────────
 function switchSection(name) {
   ['library','schematic','pcb','build'].forEach(s => {
@@ -68,23 +82,21 @@ function renderSchPalette(filter) {
 }
 
 async function loadExampleFromSlug(slug) {
-  const res = await fetch(`/api/library/${slug}`);
-  const p = await res.json();
+  const p = await fetchProfile(slug);
   profileCache[slug] = p;
   switchSection('schematic');
   requestAnimationFrame(() => editor.startPlaceGroup(p));
 }
 
 async function placeFromPalette(slug) {
-  const res = await fetch(`/api/library/${slug}`);
-  const p = await res.json();
-  profileCache[slug] = p; // populate cache so IC symbols render correctly
+  const p = await fetchProfile(slug);
+  profileCache[slug] = p;
   editor.startPlace(slug, detectSymbolType(p));
 }
 
 function importExampleCircuit() {
   if (!selectedSlug) { alert('Select a component in the Datasheets tab first.'); return; }
-  fetch(`/api/library/${selectedSlug}`).then(r => r.json()).then(p => {
+  fetchProfile(selectedSlug).then(p => {
     profileCache[selectedSlug] = p;
     switchSection('schematic');
     requestAnimationFrame(() => editor.startPlaceGroup(p));
@@ -93,7 +105,7 @@ function importExampleCircuit() {
 
 function importComponentOnly() {
   if (!selectedSlug) { alert('Select a component in the Datasheets tab first.'); return; }
-  fetch(`/api/library/${selectedSlug}`).then(r => r.json()).then(p => {
+  fetchProfile(selectedSlug).then(p => {
     profileCache[selectedSlug] = p;
     const st = detectSymbolType(p);
     editor.startPlace(selectedSlug, st);
@@ -103,7 +115,7 @@ function importComponentOnly() {
 // Place the currently selected datasheet component into the example schematic
 async function addCurrentToExample() {
   if (!selectedSlug) return;
-  const p = await fetch(`/api/library/${selectedSlug}`).then(r => r.json());
+  const p = await fetchProfile(selectedSlug);
   profileCache[selectedSlug] = p;
   const st = detectSymbolType(p);
   // Switch tab manually (avoids the async re-fetch inside switchTab)
@@ -195,7 +207,7 @@ function renderAccPalette(filter) {
 }
 
 async function accPlaceComponent(slug) {
-  const p = await fetch(`/api/library/${slug}`).then(r => r.json());
+  const p = await fetchProfile(slug);
   profileCache[slug] = p;
   if (appCircuitEditor) appCircuitEditor.startPlace(slug, detectSymbolType(p));
 }
