@@ -410,7 +410,7 @@ function updateInfoPanel(){
     <div style="font-size:10px;color:var(--text-muted);margin-top:7px;line-height:1.6;">Drag to move • G rotate<br>Del to delete</div>`;
 }
 
-function rotSel(){if(editor.selectedComp){editor.selectedComp.rotation=((editor.selectedComp.rotation||0)+90)%360;updateInfoPanel();editor.render();}}
+function rotSel(){editor.rotateSelGroup(90);}
 function flipSel(){if(editor.selectedComp){editor.selectedComp.layer=editor.selectedComp.layer==='B'?'F':'B';updateInfoPanel();editor.render();}}
 function _notifyParentRefs(){
   const src=window.parent!==window?window.parent:null;

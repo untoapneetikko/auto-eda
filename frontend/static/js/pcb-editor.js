@@ -1091,6 +1091,34 @@ class PCBEditor {
       }
   }
 
+  // Rotate all selected components as a group by `deg` degrees CW around their collective centroid.
+  // Falls back to rotating just selectedComp if no multi-selection exists.
+  rotateSelGroup(deg=90){
+    const comps=this.selectedComps.length>1
+      ? this.selectedComps
+      : (this.selectedComp ? [this.selectedComp] : []);
+    if(!comps.length)return;
+    this._snapshot();
+    if(comps.length===1){
+      // Single component — rotate in place (classic behaviour)
+      comps[0].rotation=((comps[0].rotation||0)+deg)%360;
+    } else {
+      // Multi-selection — rotate positions around the group centroid
+      const cx=comps.reduce((s,c)=>s+c.x,0)/comps.length;
+      const cy=comps.reduce((s,c)=>s+c.y,0)/comps.length;
+      const rad=deg*Math.PI/180;
+      const cos=Math.cos(rad), sin=Math.sin(rad);
+      for(const c of comps){
+        const dx=c.x-cx, dy=c.y-cy;
+        c.x=cx+(dx*cos-dy*sin);
+        c.y=cy+(dx*sin+dy*cos);
+        c.rotation=((c.rotation||0)+deg)%360;
+      }
+    }
+    this.render();
+    if(typeof updateInfoPanel==='function')updateInfoPanel();
+  }
+
   _drawSel(comp){
     const bb=this._compBBox(comp); if(!bb)return;
     const m=1,ctx=this.ctx;
@@ -2042,8 +2070,8 @@ class PCBEditor {
       const k=e.key.toLowerCase();
       if(k==='s')setTool('select');
       else if(k==='w')setTool('route');   // W = trace
-      else if(k==='r'&&(editor.selectedComp||editor.selectedVia)){  // R = rotate selected
-        if(editor.selectedComp){editor.selectedComp.rotation=((editor.selectedComp.rotation||0)+90)%360;editor.render();updateInfoPanel();}
+      else if(k==='r'&&(editor.selectedComp||editor.selectedComps?.length)){  // R = rotate selected (group-aware)
+        editor.rotateSelGroup(90);
       }
       else if(k==='v')setTool('via');
       else if(k==='z'&&!e.ctrlKey&&!e.metaKey)setTool('zone');
@@ -2080,9 +2108,8 @@ class PCBEditor {
           editor.render();updateInfoPanel();
         }
       }
-      else if(k==='g'&&editor.selectedComp){
-        editor.selectedComp.rotation=((editor.selectedComp.rotation||0)+90)%360;
-        editor._snapshot(); editor.render();updateInfoPanel();
+      else if(k==='g'&&(editor.selectedComp||editor.selectedComps?.length)){
+        editor.rotateSelGroup(90);
       }
       else if((k==='delete'||k==='backspace')&&(editor.selectedComp||editor.selectedTrace||editor.selectedArea||editor.selectedVia||editor.selectedDrawing)){
         if(editor.selectedComp){
