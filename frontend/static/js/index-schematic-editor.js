@@ -556,8 +556,14 @@ class SchematicEditor {
       if (this.dragState.isLabel) {
         const lbl = (this.project.labels || []).find(l => l.id === this.dragState.id);
         if (lbl) {
-          lbl.x = this._snap(this.dragState.origX + w1.x - w0.x);
-          lbl.y = this._snap(this.dragState.origY + w1.y - w0.y);
+          const rawX = this.dragState.origX + w1.x - w0.x;
+          const rawY = this.dragState.origY + w1.y - w0.y;
+          const snapped = this._snapPortOrGrid(
+            (rawX * this.zoom) + this.panX,
+            (rawY * this.zoom) + this.panY
+          );
+          lbl.x = snapped.x;
+          lbl.y = snapped.y;
           // Move connected wire endpoints to follow the label's pin
           for (const cw of (this.dragState.labelWires || [])) {
             const wire = this.project.wires.find(w => w.id === cw.id);
@@ -626,7 +632,7 @@ class SchematicEditor {
       const w = this._toW(sx, sy); this.placeGroupData.cursor = this._snapPt(w.x, w.y); this._render(); return;
     }
     if (this.tool === 'label') {
-      const w = this._toW(sx, sy); this.labelCursor = this._snapPt(w.x, w.y); this._render(); return;
+      this.labelCursor = this._snapPortOrGrid(sx, sy); this._render(); return;
     }
     if (this.tool === 'nc') {
       const w = this._toW(sx, sy); this.ncCursor = this._snapNearPort(w.x, w.y); this._render(); return;
@@ -1209,7 +1215,7 @@ class SchematicEditor {
 
   _placeLabel(sx, sy) {
     const name = document.getElementById(this.labelInputId)?.value?.trim() || 'NET';
-    const w = this._toW(sx, sy), s = this._snapPt(w.x, w.y);
+    const s = this._snapPortOrGrid(sx, sy);
     const lbl = { id: 'l' + Date.now().toString(36), name, x: s.x, y: s.y, rotation: 0 };
     this._saveHist();
     if (!this.project.labels) this.project.labels = [];
@@ -1584,10 +1590,14 @@ class SchematicEditor {
   }
 
   _lblGhostH() {
-    const { x, y } = this.labelCursor;
+    const { x, y, isPort } = this.labelCursor;
     const name = document.getElementById(this.labelInputId)?.value || 'NET';
     const nc = this._labelColor(name);
-    return `<g opacity="0.5">
+    const snapRing = isPort
+      ? `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="${nc}" stroke-width="1.5" opacity="0.7"/>`
+      : '';
+    return `<g opacity="0.6">
+      ${snapRing}
       <circle cx="${x}" cy="${y}" r="3" fill="${nc}"/>
       <text x="${x + 6}" y="${y + 4}" font-family="monospace" font-size="9" font-weight="bold" fill="${nc}">${esc(name)}</text>
     </g>`;

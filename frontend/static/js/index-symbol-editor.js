@@ -1042,7 +1042,7 @@ function updateSchWireInfoPanel(wire) {
         <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Net Name</div>
         <input id="wire-net-input" value="${esc(netName)}" placeholder="Unnamed net…"
           style="${inputStyle}"
-          onkeydown="if(event.key==='Enter'){setWireNetName('${esc(wireId)}',this.value);this.blur();}"
+          onkeydown="if(event.key==='Enter')this.blur();"
           onchange="setWireNetName('${esc(wireId)}',this.value)">
         <div style="font-size:9px;color:var(--text-muted);margin-top:3px;">Enter to apply · spreads to all connected wires</div>
       </div>
