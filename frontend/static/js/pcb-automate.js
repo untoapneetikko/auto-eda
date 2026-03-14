@@ -110,6 +110,7 @@ async function runAutoRoute() {
       if (traces) editor.board.traces = traces;
       if (vias) editor.board.vias = vias;
       editor._snapshot();
+      editor.fitBoard();
       editor.render(); rebuildCompList(); updateBoardInfo();
     }
     const viasMsg = (data.vias?.length || data.board?.vias?.length) ? `, ${data.vias?.length ?? data.board?.vias?.length} vias` : '';

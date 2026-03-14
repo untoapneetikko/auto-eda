@@ -134,30 +134,33 @@ class PCBEditor {
     const otherSide=wSide==='F'?'B':'F';
     const otherSilk=wSide==='F'?'B.SilkS':'F.SilkS';
     const workSilk=wSide==='F'?'F.SilkS':'B.SilkS';
+    const _safe=(fn)=>{try{fn();}catch(e){console.error('[PCBEditor render]',e);}};
     if(wIsCu){
       // Draw non-work copper + pads + silk at reduced alpha
       this.ctx.globalAlpha=0.45;
-      if(this.layers[otherCu].visible) this._drawTraces(otherCu);
-      if(this.layers[otherSilk].visible) this._drawSilk(otherSide);
-      this._drawPads(otherSide);
+      _safe(()=>{if(this.layers[otherCu].visible) this._drawTraces(otherCu);});
+      _safe(()=>{if(this.layers[otherSilk].visible) this._drawSilk(otherSide);});
+      _safe(()=>this._drawPads(otherSide));
       this.ctx.globalAlpha=1.0;
       // Zones & areas (board-wide)
-      this._drawZones();
-      this._drawAreas();
+      _safe(()=>this._drawZones());
+      _safe(()=>this._drawAreas());
       // Vias always fully visible
-      this._drawVias();
+      _safe(()=>this._drawVias());
       // Work layer copper + pads + silk on top at full alpha
-      if(this.layers[wl].visible) this._drawTraces(wl);
-      this._drawPads(wSide);
-      if(this.layers[workSilk].visible) this._drawSilk(wSide);
+      this.ctx.globalAlpha=1.0;
+      _safe(()=>{if(this.layers[wl].visible) this._drawTraces(wl);});
+      _safe(()=>this._drawPads(wSide));
+      _safe(()=>{if(this.layers[workSilk].visible) this._drawSilk(wSide);});
     } else {
       // Non-copper work layer: draw everything normally, work layer content is on top by draw order
-      if(this.layers['B.Cu'].visible) this._drawTraces('B.Cu');
-      if(this.layers['F.Cu'].visible) this._drawTraces('F.Cu');
-      this._drawZones(); this._drawAreas(); this._drawVias();
-      this._drawPads();
-      if(this.layers['B.SilkS'].visible) this._drawSilk('B');
-      if(this.layers['F.SilkS'].visible) this._drawSilk('F');
+      _safe(()=>{if(this.layers['B.Cu'].visible) this._drawTraces('B.Cu');});
+      _safe(()=>{if(this.layers['F.Cu'].visible) this._drawTraces('F.Cu');});
+      _safe(()=>this._drawZones()); _safe(()=>this._drawAreas()); _safe(()=>this._drawVias());
+      this.ctx.globalAlpha=1.0;
+      _safe(()=>this._drawPads());
+      _safe(()=>{if(this.layers['B.SilkS'].visible) this._drawSilk('B');});
+      _safe(()=>{if(this.layers['F.SilkS'].visible) this._drawSilk('F');});
     }
     if(this.layers['Ratsnest'].visible) this._drawRatsnest();
     this._drawGroups();
@@ -549,6 +552,7 @@ class PCBEditor {
 
   _drawPads(sideFilter){
     const ctx=this.ctx;
+    ctx.beginPath(); // reset any stale path from prior draw calls
     for(const comp of(this.board.components||[])){
       const side=comp.layer==='B'?'B':'F';
       if(sideFilter&&side!==sideFilter)continue;
