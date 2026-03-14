@@ -2941,7 +2941,7 @@ def run_autoroute(board: dict) -> dict:
         rot = float(comp.get("rotation", 0)) * math.pi / 180
         cos_r, sin_r = math.cos(rot), math.sin(rot)
         for pad in comp.get("pads", []):
-            net = pad.get("net", "") or ""
+            net = (pad.get("net", "") or "").upper()
             # Rotate local pad offset into world space
             lx = float(pad.get("x", 0))
             ly = float(pad.get("y", 0))
@@ -3033,11 +3033,12 @@ def run_autoroute(board: dict) -> dict:
     allow_vias = bool(dr.get("allowVias", True))
 
     def _bfs(sx: float, sy: float, ex: float, ey: float,
+             force_single_layer: bool = False,
              ) -> tuple[list[tuple[float, float, int]], bool]:
         """BFS on 2-layer grid. Returns (path with layer info, used_via).
 
         Each path element is (world_x, world_y, layer_index).
-        If allow_vias is False, only searches layer 0.
+        If allow_vias is False or force_single_layer is True, only searches layer 0.
         """
         sg = (int(round(sx / GRID)), int(round(sy / GRID)), 0)
         # End must be reachable on either layer (pads are through-hole or SMD on F.Cu)
@@ -3048,7 +3049,7 @@ def run_autoroute(board: dict) -> dict:
         dist: dict[tuple[int, int, int], int] = {sg: 0}
         prev: dict[tuple[int, int, int], tuple[int, int, int]] = {}
         pq: list = [(0, sg)]
-        n_layers = 2 if allow_vias else 1
+        n_layers = 2 if (allow_vias and not force_single_layer) else 1
 
         while pq:
             d, cur = heapq.heappop(pq)
@@ -3147,7 +3148,10 @@ def run_autoroute(board: dict) -> dict:
             dest = remaining.pop(best_i)
             connected.append(dest)
 
-            path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1])
+            # RF nets must stay on a single layer — no vias allowed
+            _is_rf_net = net_name.upper().startswith("RF") or net_name.upper().startswith("RF_")
+            path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
+                                  force_single_layer=_is_rf_net)
             if not path:
                 # BFS blocked — fall back to straight Manhattan segment so the
                 # net is still partially connected rather than lost entirely.
@@ -3202,6 +3206,14 @@ def run_autoroute(board: dict) -> dict:
             routed += 1
 
     result = dict(board)
+    # Normalize all net names to UPPERCASE for consistency
+    for comp in result.get("components", []):
+        for pad in comp.get("pads", []):
+            if pad.get("net"):
+                pad["net"] = pad["net"].upper()
+    for net_obj in result.get("nets", []):
+        if net_obj.get("name"):
+            net_obj["name"] = net_obj["name"].upper()
     result["traces"] = new_traces
     result["vias"] = all_vias
     return {**result, "_autoroute": {"routed": routed, "total": total, "vias": len(all_vias)}}
