@@ -3144,7 +3144,7 @@ def _positions_are_spread(components: list[dict]) -> bool:
     return True
 
 
-def run_autoplace(board: dict) -> dict:
+def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
     """Force-directed net-proximity autoplacer.
 
     1. Filters out pure power/GND symbols (no footprint = no physical placement).
@@ -3290,6 +3290,7 @@ def run_autoplace(board: dict) -> dict:
         # When preserving existing board positions, use strong hint gravity
         # so the algorithm refines rather than rearranges.
         hint_weight=hw,
+        min_clearance_mm=min_clearance_mm,
     )
 
     # ── Write x/y and rotation back ──────────────────────────────────────
@@ -3322,12 +3323,12 @@ def run_autoplace(board: dict) -> dict:
 
 
 @router.post("/pcb/{bid}/autoplace")
-async def autoplace_board_id(bid: str):
+async def autoplace_board_id(bid: str, clearance_mm: float = 1.0):
     fpath = PCB_BOARDS_DIR / f"{bid}.json"
     if not fpath.exists():
         raise HTTPException(404, "Board not found")
     board = json.loads(fpath.read_text("utf-8"))
-    result = run_autoplace(board)
+    result = run_autoplace(board, min_clearance_mm=max(0.0, clearance_mm))
     fpath.write_text(json.dumps(result, indent=2), "utf-8")
     return {"components": result.get("components", []), "placed": len(result.get("components", []))}
 
@@ -3336,7 +3337,8 @@ async def autoplace_board_id(bid: str):
 async def autoplace_direct(request: Request):
     body = await request.json()
     board = body.get("board", body)
-    result = run_autoplace(board)
+    clearance_mm = float(body.get("clearance_mm", 1.0))
+    result = run_autoplace(board, min_clearance_mm=max(0.0, clearance_mm))
     return {"components": result.get("components", []), "placed": len(result.get("components", []))}
 
 

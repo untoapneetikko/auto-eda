@@ -110,13 +110,14 @@ async function runAutoPlace() {
   try {
     const boardId = editor?.board?.id || _activeBoardId;
     let res;
+    const clearance = DR.packageGap ?? 1.0;
     if (boardId) {
       await saveBoard();
-      res = await fetch(`/api/pcb/${boardId}/autoplace`, { method: 'POST' });
+      res = await fetch(`/api/pcb/${boardId}/autoplace?clearance_mm=${clearance}`, { method: 'POST' });
     } else {
       res = await fetch('/api/pcb/autoplace', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ board: editor?.board || {} })
+        body: JSON.stringify({ board: editor?.board || {}, clearance_mm: clearance })
       });
     }
     const data = await res.json();
