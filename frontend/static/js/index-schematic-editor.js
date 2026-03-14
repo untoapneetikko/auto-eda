@@ -415,9 +415,10 @@ class SchematicEditor {
           const p0 = w.points[0], pN = w.points[w.points.length - 1];
           const d1 = Math.hypot(p0.x - port.x, p0.y - port.y);
           const d2 = Math.hypot(pN.x - port.x, pN.y - port.y);
-          // Skip dot-wires that sit on the interior of another wire (T-junction markers)
-          if (d1 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
-          if (d2 < TOL && !this._isDotAtInterior(w)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
+          // Skip dot-wires at T-junction interiors, and skip wire stubs that form a
+          // pass-through bus (another wire at the same port points the opposite direction).
+          if (d1 < TOL && !this._isDotAtInterior(w) && !this._isPassthroughEndpoint(w, p0, port, TOL)) connectedWires.push({ id: w.id, end: 0, portIdx: pi, dx: p0.x - port.x, dy: p0.y - port.y, otherPtOrig: { x: pN.x, y: pN.y } });
+          if (d2 < TOL && !this._isDotAtInterior(w) && !this._isPassthroughEndpoint(w, pN, port, TOL)) connectedWires.push({ id: w.id, end: -1, portIdx: pi, dx: pN.x - port.x, dy: pN.y - port.y, otherPtOrig: { x: p0.x, y: p0.y } });
         }
       }
       this.dragState = { id: comp.id, sx, sy, origX: comp.x, origY: comp.y, connectedWires };
@@ -911,6 +912,34 @@ class SchematicEditor {
                     y > Math.min(a.y, b.y) + TOL && y < Math.max(a.y, b.y) - TOL;
         if (onH || onV) return true;
       }
+    }
+    return false;
+  }
+
+  // Returns true when the endpoint `endPt` of `wire` is part of a pass-through bus at `port`.
+  // A pass-through bus means another wire also has an endpoint at `port` and extends in the
+  // OPPOSITE direction — i.e. together the two stubs form a straight wire through the component.
+  // In that case the component is sitting on the wire's center, not at a true terminus,
+  // so the stubs should NOT be dragged with the component.
+  _isPassthroughEndpoint(wire, endPt, port, TOL) {
+    // Direction this wire extends away from the port (port → far end)
+    const farPt = (endPt === wire.points[0]) ? wire.points[wire.points.length - 1] : wire.points[0];
+    const dx = farPt.x - port.x, dy = farPt.y - port.y;
+    const len = Math.hypot(dx, dy);
+    if (len < TOL) return false; // zero-length (dot-wire) — handled by _isDotAtInterior
+    for (const w of this.project.wires) {
+      if (w.id === wire.id) continue;
+      if (!w.points || w.points.length < 2) continue;
+      const p0 = w.points[0], pN = w.points[w.points.length - 1];
+      let otherFar = null;
+      if (Math.hypot(p0.x - port.x, p0.y - port.y) < TOL) otherFar = pN;
+      else if (Math.hypot(pN.x - port.x, pN.y - port.y) < TOL) otherFar = p0;
+      if (!otherFar) continue;
+      const odx = otherFar.x - port.x, ody = otherFar.y - port.y;
+      const olen = Math.hypot(odx, ody);
+      if (olen < TOL) continue;
+      // Dot product < -0.9 means the two wires point in opposite directions → pass-through
+      if ((dx * odx + dy * ody) / (len * olen) < -0.9) return true;
     }
     return false;
   }
