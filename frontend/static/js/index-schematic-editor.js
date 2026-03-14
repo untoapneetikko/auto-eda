@@ -1395,13 +1395,20 @@ class SchematicEditor {
 
   async _refreshNetOverlay() {
     try {
+      // Include wire.net assignments as virtual labels so the API nets them correctly
+      const labels = [...(this.project.labels || [])];
+      for (const w of (this.project.wires || [])) {
+        if (!w.net) continue;
+        const pt = w.points?.[0];
+        if (pt) labels.push({ id: '_wn_' + w.id, name: w.net, x: pt.x, y: pt.y, rotation: 0 });
+      }
       const res = await fetch('/api/netlist', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           components: this.project.components,
           wires: this.project.wires,
-          labels: this.project.labels || [],
+          labels,
           noConnects: this.project.noConnects || []
         })
       });

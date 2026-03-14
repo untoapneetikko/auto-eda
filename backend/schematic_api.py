@@ -2681,10 +2681,12 @@ def build_netlist(components: list, wires: list, labels: list, no_connects: list
         parts = node_id.split("::")
         cid = parts[1] if len(parts) > 1 else ""
         comp = comp_map.get(cid, {})
+        port_name = parts[2] if len(parts) > 2 else ""
         root_to_port_coords.setdefault(r, []).append({
             "x": int(wx), "y": int(wy),
             "symType": comp.get("symType", "ic"),
-            "portName": parts[2] if len(parts) > 2 else "",
+            "portName": port_name,
+            "nodeId": f"{cid}::{port_name}",
         })
 
     nets_out: list[dict] = []

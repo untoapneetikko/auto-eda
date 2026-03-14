@@ -1209,8 +1209,7 @@ function _buildWireEpMap(project) {
 }
 
 // Find the net name for a wire by BFS-traversing the connected wire graph.
-// Checks labels at every reachable endpoint, so it works even when the label
-// is on a different wire segment (e.g. connected via T-junction or another wire).
+// Checks wire.net property first, then labels at endpoints, then cache fallback.
 function _getWireNetName(editorRef, wireId) {
   const project = editorRef.project;
   const lblMap = new Map();
@@ -1223,6 +1222,8 @@ function _getWireNetName(editorRef, wireId) {
     const wid = queue.shift();
     const w = (project.wires || []).find(ww => ww.id === wid);
     if (!w?.points?.length) continue;
+    // wire.net (set by the net name input) takes highest priority
+    if (w.net) return w.net;
     for (const pt of [w.points[0], w.points[w.points.length - 1]]) {
       const k = `${pt.x},${pt.y}`;
       if (lblMap.has(k)) return lblMap.get(k);
@@ -1285,48 +1286,28 @@ function _applyWireNetName(editorRef, wireId, newName) {
 
   editorRef._saveHist();
 
-  // Only use the rename/remove path if there's an actual label with oldName in project.labels.
-  // oldName can also come from _cachedNetOverlay (pin connectivity via API) — in that case
-  // there's no label to rename, so we fall through to placing a new one.
-  const hasOldLabel = oldName && editorRef.project.labels.some(l => l.name === oldName);
+  // Store net name directly on wire objects (no visible label placed on canvas).
+  // _refreshNetOverlay sends these as virtual labels so the API can net them.
+  const connectedIds = _getConnectedWireIds(editorRef.project, wireId);
+  for (const wid of connectedIds) {
+    const w = (editorRef.project.wires || []).find(ww => ww.id === wid);
+    if (!w) continue;
+    if (newName) w.net = newName;
+    else delete w.net;
+  }
 
-  if (hasOldLabel) {
-    // Rename or remove every label with the old name (spreads to whole net)
+  // Also rename/remove any explicit labels placed manually via the label tool
+  if (oldName && editorRef.project.labels.some(l => l.name === oldName)) {
     if (newName) {
       editorRef.project.labels.forEach(l => { if (l.name === oldName) l.name = newName; });
     } else {
       editorRef.project.labels = editorRef.project.labels.filter(l => l.name !== oldName);
-    }
-  } else if (newName) {
-    // No real label for this net (name came from pin connectivity or no name at all).
-    // Place a new label at a free endpoint of the connected wire group.
-    const connectedIds = _getConnectedWireIds(editorRef.project, wireId);
-    const taken = new Set((editorRef.project.labels || []).map(l => `${l.x},${l.y}`));
-    let placePt = null;
-    outer: for (const wid of connectedIds) {
-      const w = (editorRef.project.wires || []).find(ww => ww.id === wid);
-      if (!w?.points?.length) continue;
-      for (const pt of [w.points[w.points.length - 1], w.points[0]]) {
-        if (!taken.has(`${pt.x},${pt.y}`)) { placePt = pt; break outer; }
-      }
-    }
-    // Fallback: use the clicked wire's last endpoint even if taken
-    if (!placePt) {
-      const w = editorRef.project.wires.find(ww => ww.id === wireId);
-      placePt = w?.points?.[w.points.length - 1] || w?.points?.[0];
-    }
-    if (placePt) {
-      editorRef.project.labels.push({
-        id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
-        name: newName, x: placePt.x, y: placePt.y, rotation: 0
-      });
     }
   }
 
   editorRef.dirty = true;
   editorRef._cachedNetOverlay = null;
   editorRef._render();
-  // Refresh overlay — when done, re-render so component pin nets update immediately
   editorRef._refreshNetOverlay();
 }
 
