@@ -519,11 +519,12 @@ Then parse this component:
               ? ecComps.map(c => {
                   const typeLabel = c.symType === 'ic' ? 'IC' : (c.symType || 'passive');
                   const typeCls = c.symType === 'ic' ? 'type-output' : 'type-passive';
+                  const dispVal = profileCache[c.slug]?.value || profileCache[c.slug]?.part_number || c.value || c.slug || '';
                   return `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;" title="Place ${c.designator||''} in schematic"
-                      data-slug="${esc(c.slug)}" data-st="${esc(c.symType||'ic')}" data-val="${esc(c.value||'')}">
+                      data-slug="${esc(c.slug)}" data-st="${esc(c.symType||'ic')}" data-val="">
                     <td class="pin-num">${c.designator||''}</td>
                     <td><span class="pin-type ${typeCls}">${typeLabel}</span></td>
-                    <td class="pin-name">${c.value||c.slug||''}</td>
+                    <td class="pin-name">${dispVal}</td>
                     <td style="font-size:11px;color:var(--text-muted);">${c.slug||''}</td>
                   </tr>`;
                 }).join('')

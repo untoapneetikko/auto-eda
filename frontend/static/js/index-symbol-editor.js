@@ -1033,17 +1033,15 @@ function accBomPlace(slug, symType, value) {
   const doPlace = () => {
     const ed = appCircuitEditor;
     if (!ed) return;
-    // Ensure IC profile is cached so its symbol renders during placement
-    if (symType === 'ic' && slug && !profileCache[slug]) {
-      fetch(`/api/library/${slug}`).then(r => r.json()).then(p => {
-        profileCache[slug] = p;
-        ed.placeValue = value || null;
-        ed.startPlace(slug, symType);
-      }).catch(() => { ed.placeValue = value || null; ed.startPlace(slug, symType); });
-    } else {
+    // Always use fetchProfile so active version value is in profileCache; ignore baked-in value
+    fetchProfile(slug).then(p => {
+      profileCache[slug] = p;
+      ed.placeValue = null; // let _place() use profileCache active version value
+      ed.startPlace(slug, symType);
+    }).catch(() => {
       ed.placeValue = value || null;
       ed.startPlace(slug, symType);
-    }
+    });
   };
 
   if (currentProfileTab !== 'schematic') {
@@ -1055,7 +1053,8 @@ function accBomPlace(slug, symType, value) {
     };
     requestAnimationFrame(() => waitForEditor(30));
   } else if (!appCircuitEditor) {
-    fetch(`/api/library/${selectedSlug}`).then(r => r.json()).then(p => {
+    fetchProfile(selectedSlug).then(p => {
+      profileCache[selectedSlug] = p;
       renderAppCircuitWithEditor(p);
       requestAnimationFrame(doPlace);
     });
