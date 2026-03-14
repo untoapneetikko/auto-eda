@@ -252,6 +252,11 @@
   .pin-table tbody tr { cursor:pointer; }
   .pin-table tbody tr:hover td { background:rgba(108,99,255,0.06); }
   .pin-table tbody tr.ref-selected td { background:rgba(108,99,255,0.12); }
+  /* ── Schematic Example BOM — placed component state ── */
+  .pin-table tbody tr.acc-bom-placed td { background:rgba(34,197,94,0.07); color:var(--text-dim); }
+  .pin-table tbody tr.acc-bom-placed:hover td { background:rgba(34,197,94,0.14); }
+  .pin-table tbody tr.acc-bom-placed .acc-bom-icon { color:#22c55e; font-weight:700; }
+  .acc-bom-icon { font-size:13px; color:var(--text-muted); text-align:center; }
   .passive-item { cursor:pointer; }
   .passive-item:hover { border-left-color:#fbbf24; }
   .passive-item.ref-selected { background:rgba(108,99,255,0.1); border-left-color:var(--accent); }

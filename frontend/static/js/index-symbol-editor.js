@@ -472,6 +472,32 @@ async function symEditorSaveType() {
 
 // ── App circuit using SchematicEditor ───────────────────────────────────────
 let appCircuitEditor = null;
+
+// ── Schematic Example BOM placement tracking ────────────────────────────────
+function refreshAccBomRows() {
+  const tbody = document.getElementById('acc-bom-tbody');
+  if (!tbody) return;
+  const comps = appCircuitEditor?.project?.components || [];
+  // Count how many of each slug are present on the schematic
+  const slugCounts = {};
+  for (const c of comps) {
+    const key = c.slug || '';
+    if (key) slugCounts[key] = (slugCounts[key] || 0) + 1;
+  }
+  // Walk rows top-to-bottom, consuming one instance per matching slug
+  const slugConsumed = {};
+  for (const row of tbody.querySelectorAll('tr[data-slug]')) {
+    const slug = row.dataset.slug;
+    if (!slug) continue;
+    slugConsumed[slug] = slugConsumed[slug] || 0;
+    const placed = slugConsumed[slug] < (slugCounts[slug] || 0);
+    if (placed) slugConsumed[slug]++;
+    row.classList.toggle('acc-bom-placed', placed);
+    const icon = row.querySelector('.acc-bom-icon');
+    if (icon) icon.textContent = placed ? '✓' : '+';
+  }
+}
+
 function renderAppCircuitWithEditor(profile) {
   if (selectedSlug && profile) profileCache[selectedSlug] = profile;
   const svgEl = document.getElementById('app-circuit-canvas');
@@ -498,11 +524,14 @@ function renderAppCircuitWithEditor(profile) {
         updateAccInfoPanel(null);
       }
       if (typeof renderSchNets === 'function') renderSchNets(appCircuitEditor, 'acc-nets-list', 'acc-nets-count');
+      refreshAccBomRows();
     };
   } else {
     appCircuitEditor._render();
   }
   appCircuitEditor.loadExample(profile);
+  // Sync BOM placed-state after the example loads
+  setTimeout(refreshAccBomRows, 50);
 }
 
 // ── PDF panel (right side) ──────────────────────────────────────────────────
