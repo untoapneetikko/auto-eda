@@ -144,7 +144,8 @@ function leExtractNets(circuit, profileMap) {
 // Look up net for a given BOM component + footprint pad
 function leGetPadNet(comp, pad) {
   if (comp.symType === 'ic' || comp.symType === 'amplifier') {
-    const icPins = (_leProfileMap[comp.slug])?.pins || [];
+    // Must sort pins the same way leRefreshNetAssign and leExtractNets do
+    const icPins = [...((_leProfileMap[comp.slug])?.pins || [])].sort((a, b) => (a.number || 0) - (b.number || 0));
     const pi = icPins.findIndex(pin => String(pin.number) === String(pad.number));
     if (pi >= 0 && _leNetAssign[`${comp.id}.p${pi}`]) return _leNetAssign[`${comp.id}.p${pi}`];
     const pi2 = icPins.findIndex(pin => pin.name === pad.name);
