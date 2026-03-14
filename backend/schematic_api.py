@@ -3161,14 +3161,16 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
     """Force-directed net-proximity autoplacer.
 
     1. Filters out pure power/GND symbols (no footprint = no physical placement).
-    2. Loads schematic positions from the linked project (if projectId present)
+    2. **If traces exist**: optimise positions to minimise total trace length
+       while keeping tracks and avoiding pad collisions.
+    3. Loads schematic positions from the linked project (if projectId present)
        and normalises them to board-mm space as initial-position hints.
-    3. Falls back to existing board positions as hints only when they are already
+    4. Falls back to existing board positions as hints only when they are already
        spread out (i.e. the board has been laid out before).  Stacked/unplaced
        boards get the full net-proximity algorithm from scratch.
-    4. Runs the Fruchterman-Reingold force-directed algorithm.
+    5. Runs the Fruchterman-Reingold force-directed algorithm.
     """
-    from agents.autoplace.placement_optimizer import compute_greedy_placement  # noqa: PLC0415
+    from agents.autoplace.placement_optimizer import compute_greedy_placement, optimize_placement_for_traces  # noqa: PLC0415
 
     bw = float(board.get("board", {}).get("width", 100))
     bh = float(board.get("board", {}).get("height", 100))
@@ -3185,6 +3187,53 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
     ]
     if not components:
         return {**board}
+
+    # ── Trace-aware mode: if board has routed traces, optimise for shorter
+    #    trace lengths instead of re-placing from scratch.
+    existing_traces = board.get("traces", [])
+    has_traces = any(
+        len(tr.get("segments", [])) > 0 for tr in existing_traces
+    )
+    if has_traces and _positions_are_spread(components):
+        opt_comps = [
+            {
+                "reference": c.get("ref", c.get("id", "?")),
+                "value": c.get("value", ""),
+                "footprint": c.get("footprint", ""),
+                "rotation": c.get("rotation", 0),
+                "nets": [],  # not needed for trace optimisation
+                "pads": c.get("pads", []),
+                "x": c.get("x", 0),
+                "y": c.get("y", 0),
+            }
+            for c in components
+        ]
+        # Deep-copy traces so the optimizer can mutate endpoints
+        import copy
+        traces_copy = copy.deepcopy(existing_traces)
+        bw = float(board.get("board", {}).get("width", 100))
+        bh = float(board.get("board", {}).get("height", 100))
+        opt_result = optimize_placement_for_traces(
+            components=opt_comps,
+            traces=traces_copy,
+            board_width_mm=bw,
+            board_height_mm=bh,
+            min_clearance_mm=min_clearance_mm,
+        )
+        # Write back
+        placed_map = {c["reference"]: c for c in opt_result["components"]}
+        for comp in components:
+            ref = comp.get("ref", comp.get("id", ""))
+            if ref in placed_map:
+                comp["x"] = placed_map[ref]["x"]
+                comp["y"] = placed_map[ref]["y"]
+                comp["rotation"] = placed_map[ref].get("rotation", comp.get("rotation", 0))
+        all_placed = {c["ref"]: c for c in components}
+        merged = [all_placed.get(orig.get("ref", ""), orig) for orig in all_components]
+        result = dict(board)
+        result["components"] = merged
+        result["traces"] = opt_result["traces"]
+        return result
 
     # ── Build comp_ref → list[net_name] ─────────────────────────────────
     nets = board.get("nets", [])

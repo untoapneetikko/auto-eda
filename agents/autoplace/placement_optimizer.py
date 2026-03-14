@@ -850,6 +850,191 @@ def compute_greedy_placement(
     return result
 
 
+def optimize_placement_for_traces(
+    components: list[dict[str, Any]],
+    traces: list[dict[str, Any]],
+    board_width_mm: float = 100.0,
+    board_height_mm: float = 80.0,
+    min_clearance_mm: float = MIN_CLEARANCE_MM,
+    iterations: int = 120,
+    seed: int = 42,
+) -> dict[str, Any]:
+    """Optimize component positions to minimize total routed trace length.
+
+    Called when the user runs Auto-Place on a board that already has traces.
+    Components are nudged toward shorter traces while keeping pads from
+    colliding.  Trace endpoints are updated to follow their connected pads.
+
+    Returns ``{"components": [...], "traces": [...]}``.
+    """
+    n = len(components)
+    if n == 0:
+        return {"components": [], "traces": traces}
+
+    gap = min_clearance_mm
+
+    # ── Per-component pads & envelopes ────────────────────────────────
+    rotations: list[int] = [c.get("rotation", 0) for c in components]
+    comp_pads: list[list[_Pad]] = [[] for _ in range(n)]
+    env_hw: list[float] = [0.0] * n
+    env_hh: list[float] = [0.0] * n
+
+    def _rebuild(i: int) -> None:
+        c = dict(components[i])
+        c["rotation"] = rotations[i]
+        comp_pads[i] = _extract_pads(c)
+        e = _pad_envelope(comp_pads[i])
+        env_hw[i] = e[0]
+        env_hh[i] = e[1]
+
+    for i in range(n):
+        _rebuild(i)
+
+    # ── Position state ────────────────────────────────────────────────
+    pos: list[list[float]] = [
+        [float(c.get("x", 0)), float(c.get("y", 0))] for c in components
+    ]
+    ref_to_idx = {c.get("reference", ""): i for i, c in enumerate(components)}
+
+    # ── Pad-level collision detection (same as greedy placer) ─────────
+    def _collides(i: int, j: int) -> bool:
+        xi, yi = pos[i]
+        xj, yj = pos[j]
+        if abs(xi - xj) - (env_hw[i] + env_hw[j]) >= gap:
+            return False
+        if abs(yi - yj) - (env_hh[i] + env_hh[j]) >= gap:
+            return False
+        for (lxi, lyi, hwi, hhi) in comp_pads[i]:
+            pix, piy = xi + lxi, yi + lyi
+            for (lxj, lyj, hwj, hhj) in comp_pads[j]:
+                if (abs(pix - xj - lxj) < hwi + hwj + gap and
+                        abs(piy - yj - lyj) < hhi + hhj + gap):
+                    return True
+        return False
+
+    # ── Build pad world-position map ──────────────────────────────────
+    # "REF.PADNUM" → (comp_idx, pad_local_idx)
+    pad_lookup: dict[str, tuple[int, int]] = {}
+    for i, comp in enumerate(components):
+        ref = comp.get("reference", "")
+        for pi, pad in enumerate(comp.get("pads", [])):
+            key = f"{ref}.{pad.get('number', pi+1)}"
+            pad_lookup[key] = (i, pi)
+
+    def _pad_world(ci: int, pi: int) -> tuple[float, float]:
+        """World position of pad pi of component ci."""
+        lx, ly, _, _ = comp_pads[ci][pi] if pi < len(comp_pads[ci]) else (0, 0, 0, 0)
+        return (pos[ci][0] + lx, pos[ci][1] + ly)
+
+    # ── Map each trace to the components it connects ──────────────────
+    # For each trace, find which component pads are at its endpoints.
+    # trace_connections[t] = list of (comp_idx, pad_idx, "start"|"end", seg_idx)
+    EPS = 0.5  # mm snap tolerance
+
+    def _build_trace_connections() -> list[list[tuple[int, int, str, int]]]:
+        conns: list[list[tuple[int, int, str, int]]] = []
+        for tr in traces:
+            tc: list[tuple[int, int, str, int]] = []
+            for si, seg in enumerate(tr.get("segments", [])):
+                for end_key in ("start", "end"):
+                    pt = seg.get(end_key, {})
+                    px, py = float(pt.get("x", 0)), float(pt.get("y", 0))
+                    for pad_key, (ci, pi) in pad_lookup.items():
+                        wx, wy = _pad_world(ci, pi)
+                        if math.hypot(px - wx, py - wy) < EPS:
+                            tc.append((ci, pi, end_key, si))
+                            break
+            conns.append(tc)
+        return conns
+
+    # ── Total trace length ────────────────────────────────────────────
+    def _total_trace_length() -> float:
+        total = 0.0
+        for tr in traces:
+            for seg in tr.get("segments", []):
+                s = seg.get("start", {})
+                e = seg.get("end", {})
+                total += math.hypot(
+                    float(e.get("x", 0)) - float(s.get("x", 0)),
+                    float(e.get("y", 0)) - float(s.get("y", 0)),
+                )
+        return total
+
+    # ── Update trace endpoints to follow moved pads ───────────────────
+    def _snap_traces(trace_conns: list[list[tuple[int, int, str, int]]]) -> None:
+        for ti, tc in enumerate(trace_conns):
+            for ci, pi, end_key, si in tc:
+                wx, wy = _pad_world(ci, pi)
+                seg = traces[ti].get("segments", [])[si] if si < len(traces[ti].get("segments", [])) else None
+                if seg:
+                    seg[end_key] = {"x": round(wx, 4), "y": round(wy, 4)}
+
+    # ── Simulated annealing: try small moves to reduce trace length ───
+    rng = random.Random(seed)
+    trace_conns = _build_trace_connections()
+    best_length = _total_trace_length()
+
+    # Step sizes: start large (2mm), cool down
+    for iteration in range(iterations):
+        t = 1.0 - iteration / max(iterations, 1)
+        step = max(0.25, 2.0 * t)  # mm
+
+        for i in range(n):
+            if _is_connector(components[i]):
+                continue  # don't move connectors
+
+            orig_x, orig_y = pos[i][0], pos[i][1]
+
+            # Try 4 cardinal + 4 diagonal nudges
+            candidates = [
+                (orig_x + step, orig_y),
+                (orig_x - step, orig_y),
+                (orig_x, orig_y + step),
+                (orig_x, orig_y - step),
+                (orig_x + step * 0.7, orig_y + step * 0.7),
+                (orig_x + step * 0.7, orig_y - step * 0.7),
+                (orig_x - step * 0.7, orig_y + step * 0.7),
+                (orig_x - step * 0.7, orig_y - step * 0.7),
+            ]
+
+            best_cand = None
+            best_cand_len = best_length
+
+            for cx, cy in candidates:
+                pos[i] = [cx, cy]
+
+                # Check for pad collisions
+                if any(_collides(i, j) for j in range(n) if j != i):
+                    continue
+
+                # Snap traces and measure
+                _snap_traces(trace_conns)
+                new_len = _total_trace_length()
+
+                if new_len < best_cand_len - 1e-4:
+                    best_cand_len = new_len
+                    best_cand = [cx, cy]
+
+            if best_cand:
+                pos[i] = best_cand
+                _snap_traces(trace_conns)
+                best_length = best_cand_len
+            else:
+                pos[i] = [orig_x, orig_y]
+                _snap_traces(trace_conns)
+
+    # ── Build output ──────────────────────────────────────────────────
+    result_components: list[dict[str, Any]] = []
+    for i, comp in enumerate(components):
+        result_components.append({
+            **comp,
+            "x": round(pos[i][0], 3),
+            "y": round(pos[i][1], 3),
+            "rotation": rotations[i],
+        })
+    return {"components": result_components, "traces": traces}
+
+
 def compute_net_proximity_placement(
     components: list[dict[str, Any]],
     board_width_mm: float = 100.0,
