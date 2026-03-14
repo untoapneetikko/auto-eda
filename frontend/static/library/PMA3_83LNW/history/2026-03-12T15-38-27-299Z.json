@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-03-14T11:23:41.726402+00:00",
+  "saved_at": "2026-03-14T14:31:18.433730+00:00",
   "label": "working baseline",
   "profile": {
     "part_number": "PMA3-83LNW+",
@@ -286,10 +286,11 @@
           "x": 300,
           "y": 270,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 300,
-          "_exampleY": 270
+          "_exampleY": 270,
+          "partNumber": "PMA3_83LNW+"
         },
         {
           "id": "c2",
@@ -297,12 +298,12 @@
           "symType": "capacitor",
           "designator": "C2",
           "value": "10pF",
-          "x": 130,
+          "x": 110,
           "y": 240,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
-          "_exampleX": 130,
+          "_exampleX": 110,
           "_exampleY": 240
         },
         {
@@ -314,7 +315,7 @@
           "x": 170,
           "y": 280,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
           "_exampleY": 280
@@ -328,7 +329,7 @@
           "x": 500,
           "y": 280,
           "rotation": 3,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 500,
           "_exampleY": 280
@@ -342,7 +343,7 @@
           "x": 440,
           "y": 240,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
           "_exampleY": 240
@@ -354,12 +355,12 @@
           "designator": "VDD",
           "value": "5V/6V",
           "x": 440,
-          "y": 90,
+          "y": 60,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
-          "_exampleY": 90
+          "_exampleY": 60
         },
         {
           "id": "gnd1",
@@ -368,26 +369,12 @@
           "designator": "GND",
           "value": "",
           "x": 170,
-          "y": 350,
+          "y": 360,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
-          "_exampleY": 350
-        },
-        {
-          "id": "cmmjcfob9",
-          "slug": "GND",
-          "symType": "gnd",
-          "designator": "GND1",
-          "value": "GND",
-          "x": 150,
-          "y": 200,
-          "rotation": 1,
-          "_exampleGroupId": "eg_mmq8m3arke",
-          "_exampleSlug": "PMA3_83LNW",
-          "_exampleX": 150,
-          "_exampleY": 200
+          "_exampleY": 360
         },
         {
           "id": "cmml33s4b",
@@ -398,7 +385,7 @@
           "x": 460,
           "y": 180,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 460,
           "_exampleY": 180
@@ -412,7 +399,7 @@
           "x": 460,
           "y": 140,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 460,
           "_exampleY": 140
@@ -423,91 +410,36 @@
           "symType": "gnd",
           "designator": "GND2",
           "value": "GND",
-          "x": 480,
-          "y": 210,
+          "x": 490,
+          "y": 230,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmq8m3arke",
+          "_exampleGroupId": "eg_mmqepapzrm",
           "_exampleSlug": "PMA3_83LNW",
-          "_exampleX": 480,
-          "_exampleY": 210
+          "_exampleX": 490,
+          "_exampleY": 230
+        },
+        {
+          "id": "cmmq9z05s",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND1",
+          "value": "GND",
+          "x": 140,
+          "y": 180,
+          "rotation": 2,
+          "_exampleGroupId": "eg_mmqepapzrm",
+          "_exampleSlug": "PMA3_83LNW",
+          "_exampleX": 140,
+          "_exampleY": 180
         }
       ],
       "wires": [
-        {
-          "id": "w_rfin",
-          "points": [
-            {
-              "x": 30,
-              "y": 240
-            },
-            {
-              "x": 110,
-              "y": 240
-            }
-          ]
-        },
-        {
-          "id": "wmmj8oll6",
-          "points": [
-            {
-              "x": 170,
-              "y": 320,
-              "isPort": true
-            },
-            {
-              "x": 170,
-              "y": 335,
-              "isPort": true
-            }
-          ]
-        },
-        {
-          "id": "wmmj8oo7v",
-          "points": [
-            {
-              "x": 150,
-              "y": 240,
-              "isPort": true
-            },
-            {
-              "x": 200,
-              "y": 240
-            }
-          ]
-        },
-        {
-          "id": "cwmmjc04bp3k6",
-          "points": [
-            {
-              "x": 440,
-              "y": 110
-            },
-            {
-              "x": 440,
-              "y": 110
-            }
-          ]
-        },
-        {
-          "id": "cwmmjc1iv6vqy",
-          "points": [
-            {
-              "x": 440,
-              "y": 110
-            },
-            {
-              "x": 440,
-              "y": 110
-            }
-          ]
-        },
         {
           "id": "wmmjc2h5l",
           "points": [
             {
               "x": 400,
-              "y": 280,
-              "isPort": true
+              "y": 280
             },
             {
               "x": 480,
@@ -520,41 +452,11 @@
           "points": [
             {
               "x": 440,
-              "y": 200,
-              "isPort": true
+              "y": 200
             },
             {
               "x": 440,
-              "y": 110,
-              "isPort": true
-            }
-          ]
-        },
-        {
-          "id": "wmmjcevfa",
-          "points": [
-            {
-              "x": 600,
-              "y": 280,
-              "isPort": true
-            },
-            {
-              "x": 600,
-              "y": 280
-            }
-          ]
-        },
-        {
-          "id": "wmmjcftix",
-          "points": [
-            {
-              "x": 170,
-              "y": 200,
-              "isPort": false
-            },
-            {
-              "x": 200,
-              "y": 200
+              "y": 80
             }
           ]
         },
@@ -576,24 +478,10 @@
           "points": [
             {
               "x": 440,
-              "y": 280
+              "y": 270
             },
             {
               "x": 440,
-              "y": 280
-            }
-          ]
-        },
-        {
-          "id": "wmmjcwduv",
-          "points": [
-            {
-              "x": 600,
-              "y": 280,
-              "isPort": true
-            },
-            {
-              "x": 600,
               "y": 280
             }
           ]
@@ -603,25 +491,11 @@
           "points": [
             {
               "x": 520,
-              "y": 280,
-              "isPort": true
+              "y": 280
             },
             {
               "x": 600,
               "y": 280
-            }
-          ]
-        },
-        {
-          "id": "cwmml33upa799",
-          "points": [
-            {
-              "x": 440,
-              "y": 180
-            },
-            {
-              "x": 440,
-              "y": 180
             }
           ]
         },
@@ -639,30 +513,113 @@
           ]
         },
         {
-          "id": "cwmml34ifei9w",
+          "id": "cwmmq9xbttdns",
           "points": [
             {
-              "x": 480,
-              "y": 190
+              "x": 440,
+              "y": 180
             },
             {
-              "x": 480,
-              "y": 190
+              "x": 440,
+              "y": 180
             }
           ]
         },
         {
-          "id": "wmml34jez",
+          "id": "wmmq9xeu9",
           "points": [
             {
               "x": 480,
-              "y": 190,
+              "y": 140
+            },
+            {
+              "x": 490,
+              "y": 140
+            },
+            {
+              "x": 490,
+              "y": 210
+            }
+          ]
+        },
+        {
+          "id": "wmmq9xkqo",
+          "points": [
+            {
+              "x": 480,
+              "y": 180,
               "isPort": true
             },
             {
-              "x": 480,
-              "y": 140,
+              "x": 490,
+              "y": 180
+            }
+          ]
+        },
+        {
+          "id": "cwmmq9y9w2eog",
+          "points": [
+            {
+              "x": 170,
+              "y": 340
+            },
+            {
+              "x": 170,
+              "y": 320
+            }
+          ]
+        },
+        {
+          "id": "wmmqdzts9",
+          "points": [
+            {
+              "x": 130,
+              "y": 240
+            },
+            {
+              "x": 200,
+              "y": 240
+            }
+          ]
+        },
+        {
+          "id": "wmmqe00rf",
+          "points": [
+            {
+              "x": 90,
+              "y": 240,
               "isPort": true
+            },
+            {
+              "x": 30,
+              "y": 240
+            }
+          ]
+        },
+        {
+          "id": "cwmmqebgw7nzd",
+          "points": [
+            {
+              "x": 440,
+              "y": 280
+            },
+            {
+              "x": 440,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "wmmqeo6ax",
+          "points": [
+            {
+              "x": 200,
+              "y": 200,
+              "isPort": true
+            },
+            {
+              "x": 140,
+              "y": 200
             }
           ]
         }
@@ -673,7 +630,7 @@
           "name": "RFIN",
           "x": 30,
           "y": 240,
-          "rotation": 2
+          "rotation": 0
         },
         {
           "id": "lmmjcw7li",
@@ -1179,6 +1136,7 @@
       ],
       "vias": []
     },
-    "slug": "PMA3_83LNW"
+    "slug": "PMA3_83LNW",
+    "value": "PMA3-83LNW+1"
   }
 }

@@ -893,7 +893,7 @@ class SchematicEditor {
       id: 'c' + Date.now().toString(36),
       slug: this.placeSlug, symType: this.placeSymType,
       designator: this._autoRef(this.placeSymType),
-      value: this.placeValue != null ? this.placeValue : (library[this.placeSlug]?.part_number || ''),
+      value: this.placeValue != null ? this.placeValue : (profileCache[this.placeSlug]?.value || profileCache[this.placeSlug]?.part_number || library[this.placeSlug]?.part_number || ''),
       x: s.x, y: s.y, rotation: this.placeRotation
     };
     this._saveHist();
@@ -1758,7 +1758,7 @@ class SchematicEditor {
 
   _ghH() {
     const { x, y } = this.placeCursor;
-    const fc = { slug:this.placeSlug, symType:this.placeSymType, designator:'?', value:library[this.placeSlug]?.part_number||'', rotation: this.placeRotation };
+    const fc = { slug:this.placeSlug, symType:this.placeSymType, designator:'?', value: profileCache[this.placeSlug]?.value || profileCache[this.placeSlug]?.part_number || library[this.placeSlug]?.part_number || '', rotation: this.placeRotation };
     const rot = this.placeRotation * 90;
     return `<g transform="translate(${x},${y}) rotate(${rot})" opacity="0.45">${this._symH(fc,false,false)}</g>`;
   }

@@ -281,12 +281,12 @@
         "designator": "U1",
         "value": "PMA3-83LNW+",
         "x": 300,
-        "y": 270,
+        "y": 260,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 300,
-        "_exampleY": 270
+        "_exampleY": 260
       },
       {
         "id": "c2",
@@ -295,12 +295,12 @@
         "designator": "C2",
         "value": "10pF",
         "x": 130,
-        "y": 240,
+        "y": 230,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 130,
-        "_exampleY": 240
+        "_exampleY": 230
       },
       {
         "id": "l1",
@@ -309,12 +309,14 @@
         "designator": "L1",
         "value": "18nH",
         "x": 170,
-        "y": 280,
+        "y": 270,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 170,
-        "_exampleY": 280
+        "_exampleY": 270,
+        "labelOffsetX": 7.432792192709428,
+        "labelOffsetY": -3.0969967469622754
       },
       {
         "id": "c3",
@@ -323,12 +325,12 @@
         "designator": "C3",
         "value": "100pF",
         "x": 500,
-        "y": 280,
+        "y": 270,
         "rotation": 3,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 500,
-        "_exampleY": 280
+        "_exampleY": 270
       },
       {
         "id": "l2",
@@ -337,12 +339,12 @@
         "designator": "L2",
         "value": "39nH",
         "x": 440,
-        "y": 240,
+        "y": 230,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 440,
-        "_exampleY": 240
+        "_exampleY": 230
       },
       {
         "id": "vdd1",
@@ -353,7 +355,7 @@
         "x": 440,
         "y": 90,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 440,
         "_exampleY": 90
@@ -367,7 +369,7 @@
         "x": 170,
         "y": 350,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 170,
         "_exampleY": 350
@@ -379,12 +381,12 @@
         "designator": "GND1",
         "value": "GND",
         "x": 150,
-        "y": 200,
+        "y": 190,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 150,
-        "_exampleY": 200
+        "_exampleY": 190
       },
       {
         "id": "cmml33s4b",
@@ -395,7 +397,7 @@
         "x": 460,
         "y": 180,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 460,
         "_exampleY": 180
@@ -409,7 +411,7 @@
         "x": 460,
         "y": 140,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 460,
         "_exampleY": 140
@@ -423,7 +425,7 @@
         "x": 480,
         "y": 210,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmq8m3arke",
+        "_exampleGroupId": "eg_mmq8kfyk2h",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 480,
         "_exampleY": 210
@@ -434,41 +436,12 @@
         "id": "w_rfin",
         "points": [
           {
-            "x": 30,
-            "y": 240
+            "x": 40,
+            "y": 230
           },
           {
             "x": 110,
-            "y": 240
-          }
-        ]
-      },
-      {
-        "id": "wmmj8oll6",
-        "points": [
-          {
-            "x": 170,
-            "y": 320,
-            "isPort": true
-          },
-          {
-            "x": 170,
-            "y": 335,
-            "isPort": true
-          }
-        ]
-      },
-      {
-        "id": "wmmj8oo7v",
-        "points": [
-          {
-            "x": 150,
-            "y": 240,
-            "isPort": true
-          },
-          {
-            "x": 200,
-            "y": 240
+            "y": 230
           }
         ]
       },
@@ -503,12 +476,12 @@
         "points": [
           {
             "x": 400,
-            "y": 280,
+            "y": 270,
             "isPort": true
           },
           {
             "x": 480,
-            "y": 280
+            "y": 270
           }
         ]
       },
@@ -517,7 +490,7 @@
         "points": [
           {
             "x": 440,
-            "y": 200,
+            "y": 190,
             "isPort": true
           },
           {
@@ -531,40 +504,13 @@
         "id": "wmmjcevfa",
         "points": [
           {
-            "x": 600,
-            "y": 280,
+            "x": 570,
+            "y": 270,
             "isPort": true
           },
           {
-            "x": 600,
-            "y": 280
-          }
-        ]
-      },
-      {
-        "id": "wmmjcftix",
-        "points": [
-          {
-            "x": 170,
-            "y": 200,
-            "isPort": false
-          },
-          {
-            "x": 200,
-            "y": 200
-          }
-        ]
-      },
-      {
-        "id": "cwmmjcv5zaaqg",
-        "points": [
-          {
-            "x": 170,
-            "y": 240
-          },
-          {
-            "x": 170,
-            "y": 240
+            "x": 570,
+            "y": 270
           }
         ]
       },
@@ -573,11 +519,11 @@
         "points": [
           {
             "x": 440,
-            "y": 280
+            "y": 270
           },
           {
             "x": 440,
-            "y": 280
+            "y": 270
           }
         ]
       },
@@ -585,13 +531,13 @@
         "id": "wmmjcwduv",
         "points": [
           {
-            "x": 600,
-            "y": 280,
+            "x": 570,
+            "y": 270,
             "isPort": true
           },
           {
-            "x": 600,
-            "y": 280
+            "x": 570,
+            "y": 270
           }
         ]
       },
@@ -600,12 +546,12 @@
         "points": [
           {
             "x": 520,
-            "y": 280,
+            "y": 270,
             "isPort": true
           },
           {
-            "x": 600,
-            "y": 280
+            "x": 570,
+            "y": 270
           }
         ]
       },
@@ -614,11 +560,11 @@
         "points": [
           {
             "x": 440,
-            "y": 180
+            "y": 170
           },
           {
             "x": 440,
-            "y": 180
+            "y": 170
           }
         ]
       },
@@ -662,21 +608,103 @@
             "isPort": true
           }
         ]
+      },
+      {
+        "id": "wmmov5fxk",
+        "points": [
+          {
+            "x": 170,
+            "y": 190,
+            "isPort": false
+          },
+          {
+            "x": 200,
+            "y": 190
+          }
+        ]
+      },
+      {
+        "id": "wmmov6sel",
+        "points": [
+          {
+            "x": 150,
+            "y": 230,
+            "isPort": true
+          },
+          {
+            "x": 200,
+            "y": 230
+          }
+        ]
+      },
+      {
+        "id": "cwmmov7qjzeo9",
+        "points": [
+          {
+            "x": 170,
+            "y": 230
+          },
+          {
+            "x": 170,
+            "y": 230
+          }
+        ]
+      },
+      {
+        "id": "cwmmov7xx4zos",
+        "points": [
+          {
+            "x": 170,
+            "y": 330
+          },
+          {
+            "x": 170,
+            "y": 330
+          }
+        ]
+      },
+      {
+        "id": "wmmov8082",
+        "points": [
+          {
+            "x": 170,
+            "y": 310,
+            "isPort": true
+          },
+          {
+            "x": 170,
+            "y": 330,
+            "isPort": true
+          }
+        ]
+      },
+      {
+        "id": "cwmmov8567fr3",
+        "points": [
+          {
+            "x": 440,
+            "y": 190
+          },
+          {
+            "x": 440,
+            "y": 190
+          }
+        ]
       }
     ],
     "labels": [
       {
         "id": "lmmjcvrul",
         "name": "RFIN",
-        "x": 30,
-        "y": 240,
+        "x": 40,
+        "y": 230,
         "rotation": 2
       },
       {
         "id": "lmmjcw7li",
         "name": "RFOUT",
-        "x": 600,
-        "y": 280,
+        "x": 570,
+        "y": 270,
         "rotation": 0
       }
     ]
@@ -697,7 +725,7 @@
         "value": "PMA3-83LNW+",
         "footprint": "QFN-12-3x3",
         "x": 3,
-        "y": 5.25,
+        "y": 5,
         "rotation": 0,
         "layer": "F",
         "pads": [
@@ -844,16 +872,17 @@
             "size_y": 1.7,
             "net": "N3"
           }
-        ]
+        ],
+        "groupId": "grp_g6otx1o"
       },
       {
         "id": "L2",
         "ref": "L2",
         "value": "39nH 0402",
         "footprint": "0402",
-        "x": 1.65,
-        "y": 2,
-        "rotation": 90,
+        "x": 1.5340000000000003,
+        "y": 2.0500000000000003,
+        "rotation": 0,
         "layer": "F",
         "pads": [
           {
@@ -878,16 +907,17 @@
             "size_y": 0.6,
             "net": "5V/6V"
           }
-        ]
+        ],
+        "groupId": "grp_g6otx1o"
       },
       {
         "id": "C1",
         "ref": "C1",
         "value": "0.01\u00b5F 0402",
         "footprint": "0402",
-        "x": 3,
-        "y": 2,
-        "rotation": 90,
+        "x": 2.6140000000000003,
+        "y": 1.0980000000000003,
+        "rotation": 0,
         "layer": "F",
         "pads": [
           {
@@ -899,7 +929,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "N16"
+            "net": "5V/6V"
           },
           {
             "number": "2",
@@ -912,16 +942,17 @@
             "size_y": 0.6,
             "net": "GND"
           }
-        ]
+        ],
+        "groupId": "grp_g6otx1o"
       },
       {
         "id": "C3",
         "ref": "C3",
         "value": "100pF 0402",
         "footprint": "0402",
-        "x": 4.35,
-        "y": 2,
-        "rotation": 90,
+        "x": 4.3340000000000005,
+        "y": 2.8000000000000003,
+        "rotation": 270,
         "layer": "F",
         "pads": [
           {
@@ -946,16 +977,17 @@
             "size_y": 0.6,
             "net": "N12"
           }
-        ]
+        ],
+        "groupId": "grp_g6otx1o"
       },
       {
         "id": "L1",
         "ref": "L1",
         "value": "18nH 0402",
         "footprint": "0402",
-        "x": -1.5,
-        "y": 10.5,
-        "rotation": 90,
+        "x": 1.5340000000000003,
+        "y": 7.9479999999999995,
+        "rotation": 0,
         "layer": "F",
         "pads": [
           {
@@ -980,15 +1012,16 @@
             "size_y": 0.6,
             "net": "N14"
           }
-        ]
+        ],
+        "groupId": "grp_g6otx1o"
       },
       {
         "id": "C2",
         "ref": "C2",
         "value": "10pF 0402",
         "footprint": "0402",
-        "x": 3.5,
-        "y": 10.5,
+        "x": 4.3340000000000005,
+        "y": 8.007000000000001,
         "rotation": 90,
         "layer": "F",
         "pads": [
@@ -1014,15 +1047,16 @@
             "size_y": 0.6,
             "net": "N3"
           }
-        ]
+        ],
+        "groupId": "grp_g6otx1o"
       },
       {
-        "id": "C4_1773487417924",
+        "id": "C4_1773487200940",
         "ref": "C4",
         "value": "1uF",
         "footprint": "0402",
-        "x": 8,
-        "y": 12,
+        "x": 4.3340000000000005,
+        "y": 1.0980000000000003,
         "rotation": 0,
         "layer": "F",
         "pads": [
@@ -1034,7 +1068,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "N17"
+            "net": "N16"
           },
           {
             "number": "2",
@@ -1046,7 +1080,8 @@
             "size_y": 0.6,
             "net": "GND"
           }
-        ]
+        ],
+        "groupId": "grp_g6otx1o"
       }
     ],
     "nets": [
@@ -1108,32 +1143,32 @@
         "segments": [
           {
             "start": {
-              "x": 3,
-              "y": 3.5
+              "x": 1.35,
+              "y": 1.75
             },
             "end": {
               "x": 3,
-              "y": 2.5
+              "y": 0.5
             }
           },
           {
             "start": {
               "x": 3,
-              "y": 2.5
+              "y": 0.5
             },
             "end": {
-              "x": 1.65,
-              "y": 2.5
+              "x": -3,
+              "y": 1
             }
           },
           {
             "start": {
               "x": 3,
-              "y": 2.5
+              "y": 0.5
             },
             "end": {
-              "x": 4.35,
-              "y": 2.5
+              "x": 8.5,
+              "y": 4
             }
           }
         ]
@@ -1143,8 +1178,8 @@
         "segments": [
           {
             "start": {
-              "x": 3,
-              "y": 7
+              "x": 2,
+              "y": 5.25
             },
             "end": {
               "x": 3,
@@ -1157,8 +1192,8 @@
               "y": 8
             },
             "end": {
-              "x": -1.5,
-              "y": 10
+              "x": 2.325,
+              "y": 8
             }
           },
           {
@@ -1167,14 +1202,30 @@
               "y": 8
             },
             "end": {
-              "x": 3.5,
-              "y": 10
+              "x": 7,
+              "y": 9
             }
           }
         ]
       }
     ],
-    "vias": []
+    "vias": [],
+    "groups": [
+      {
+        "id": "grp_g6otx1o",
+        "name": "Group 1",
+        "members": [
+          "U1",
+          "L2",
+          "C1",
+          "C3",
+          "L1",
+          "C2",
+          "C4_1773487200940"
+        ]
+      }
+    ]
   },
-  "slug": "PMA3_83LNW"
+  "slug": "PMA3_83LNW",
+  "value": "PMA3-83LNW+_V2"
 }

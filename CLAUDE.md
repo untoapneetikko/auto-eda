@@ -39,6 +39,28 @@ The system produces: component symbol, footprint, schematic, placement, and rout
 - Storage: Redis (agent state), local filesystem (files)
 - Output formats: KiCad (.kicad_sym, .kicad_mod, .kicad_sch, .kicad_pcb)
 
+## Docker — rebuilding and restarting
+
+The app runs inside Docker. You are already inside the container at `/app`.
+Docker CLI and `docker compose` are available. Use these commands when needed:
+
+```bash
+# Rebuild and restart after Dockerfile or docker-compose.yml changes:
+cd /app && docker compose up -d --build app worker
+
+# Restart without rebuild (picks up any Python/code changes not yet reloaded):
+cd /app && docker compose restart app worker
+
+# Check running containers:
+cd /app && docker compose ps
+```
+
+The server auto-reloads on changes to `backend/` and `agents/` Python files
+(uvicorn `--reload` is active), so a rebuild is only needed when:
+- `Dockerfile` changes (new packages, system deps)
+- `docker-compose.yml` changes (env vars, volume mounts, ports)
+- `requirements.txt` changes (new Python packages)
+
 ## Do Not
 - Do not skip schema validation
 - Do not hardcode file paths — always use environment variables from `.env`
