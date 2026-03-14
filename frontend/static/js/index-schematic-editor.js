@@ -340,11 +340,11 @@ class SchematicEditor {
       }
     }
 
-    // select — check wire before component so wires under components are selectable;
-    // a precise 6px wire hit takes priority over a loose bounding-box component hit.
+    // Component/label takes priority over wire — prevents wire-endpoint hits
+    // from blocking GND/VCC symbols whose ports sit right on wire endpoints.
     const labelHit = this._hitLabel(sx, sy);
-    const wireFirst = !labelHit ? this._hitWire(sx, sy) : null;
-    const comp = !labelHit && !wireFirst ? this._hitComp(sx, sy) : null;
+    const comp = !labelHit ? this._hitComp(sx, sy) : null;
+    const wireFirst = !labelHit && !comp ? this._hitWire(sx, sy) : null;
     const hitId = labelHit?.id || comp?.id;
 
     // Shift+click: toggle item in/out of multi-select

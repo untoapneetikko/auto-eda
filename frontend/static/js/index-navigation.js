@@ -453,7 +453,7 @@ const SYMDEFS = {
   capacitor_pol:{ w:40,  h:40, ports:[{dx:0,dy:-20,name:'+'},{dx:0,dy:20,name:'-'}] },
   inductor:     { w:80,  h:20, ports:[{dx:-40,dy:0,name:'P1'},{dx:40,dy:0,name:'P2'}] },
   vcc:          { w:30,  h:40, ports:[{dx:0,dy:20,name:'VCC'}] },
-  gnd:          { w:30,  h:30, ports:[{dx:0,dy:-20,name:'GND'}] },
+  gnd:          { w:30,  h:44, ports:[{dx:0,dy:-20,name:'GND'}] },
   amplifier:    { w:100, h:80, ports:[{dx:-50,dy:0,name:'IN'},{dx:50,dy:0,name:'OUT'},{dx:0,dy:40,name:'GND'}] },
   opamp:        { w:100, h:80, ports:[{dx:-50,dy:-20,name:'+'},{dx:-50,dy:20,name:'-'},{dx:50,dy:0,name:'OUT'}] },
   diode:        { w:60,  h:20, ports:[{dx:-30,dy:0,name:'A'},{dx:30,dy:0,name:'K'}] },
