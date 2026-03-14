@@ -136,8 +136,12 @@ function _symParamField(id, label, value, placeholder, fontFamily, readonly) {
   </div>`;
 }
 
+// Track the active version ID so params/pin saves can sync the snapshot
+let _symActiveVersionId = null;
+
 // ── Profile Render ─────────────────────────────────────────────────────────
 function renderProfile(p, activeVersion) {
+  _symActiveVersionId = activeVersion?.id || null;
   showView('library');
   // Rebuilding innerHTML destroys the le-frame iframe — mark it as unloaded so
   // leSaveLayout won't try to getBoard from a blank frame.

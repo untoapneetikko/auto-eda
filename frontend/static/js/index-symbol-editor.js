@@ -335,6 +335,10 @@ async function symEditorSave() {
     if (selectedSlug && profileCache[selectedSlug]) {
       profileCache[selectedSlug].pins = symEditor.profile.pins;
     }
+    // Sync active version snapshot so reload shows updated pins
+    const avId = typeof _symActiveVersionId !== 'undefined' ? _symActiveVersionId : null;
+    const slug = symEditor.slug || selectedSlug;
+    if (avId && slug) await fetch(`/api/library/${slug}/history/${avId}`, { method: 'PUT' }).catch(() => {});
   } else {
     alert('Save failed');
   }
@@ -377,6 +381,9 @@ async function _symParamFlush() {
     if (profileCache[slug]) Object.assign(profileCache[slug], params);
     if (symEditor?.profile) Object.assign(symEditor.profile, params);
     if (symEditor) symEditor._render();
+    // Sync active version snapshot so reload shows the updated params
+    const avId = typeof _symActiveVersionId !== 'undefined' ? _symActiveVersionId : null;
+    if (avId) await fetch(`/api/library/${slug}/history/${avId}`, { method: 'PUT' }).catch(() => {});
     if (st) { st.textContent = '✓'; st.style.color = '#22c55e'; st.style.opacity = '1'; setTimeout(() => { st.style.opacity = '0'; }, 1200); }
   } else {
     if (st) { st.textContent = '✗'; st.style.color = '#ef4444'; st.style.opacity = '1'; }
