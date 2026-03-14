@@ -589,14 +589,13 @@ Then parse this component:
           <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
             <!-- PCB editor iframe -->
             <div style="flex:1;min-height:0;overflow:hidden;">
-              <iframe id="le-frame" src="/pcb.html?embedded=1&_v=4" style="display:block;width:100%;height:100%;border:none;"></iframe>
+              <iframe id="le-frame" src="/pcb.html?embedded=1&_v=5" style="display:block;width:100%;height:100%;border:none;"></iframe>
             </div>
             <!-- BOM strip below canvas -->
             <div style="flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);display:flex;flex-direction:column;max-height:140px;">
               <div style="padding:4px 10px 2px;display:flex;align-items:center;gap:8px;">
                 <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);">Components</div>
                 <div id="le-bom-count" style="font-size:10px;color:var(--text-muted);flex:1;">Click to add to layout</div>
-                <button id="le-save-btn-vis" onclick="leSaveLayout()" style="background:#16a34a;border:none;border-radius:4px;color:#fff;padding:3px 14px;font-size:11px;cursor:pointer;font-weight:700;">💾 Save</button>
               </div>
               <div id="le-bom-list" style="overflow-x:auto;overflow-y:hidden;display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px 6px;"></div>
             </div>

@@ -6,13 +6,17 @@ let _leBoard = null; // current board sent to the LE iframe — used for net aut
 let _leLoadedSlug = null; // which slug is currently loaded in the LE iframe
 
 // Cache the board from the LE iframe's leBoardChanged notifications (fired after each drag).
-// This is more reliable than cross-frame property access because it's sent through the
-// browser's structured-clone message queue at the exact moment the board is mutated.
 window.addEventListener('message', e => {
   if (!e.data || e.data.type !== 'leBoardChanged' || !e.data.board) return;
   const frame = document.getElementById('le-frame');
   if (!frame || e.source !== frame.contentWindow) return;
-  _leBoard = e.data.board; // update with the live-cloned board after each component move
+  _leBoard = e.data.board;
+});
+
+// Toolbar Save button inside the PCB iframe posts leSave — trigger the real save.
+window.addEventListener('message', e => {
+  if (!e.data || e.data.type !== 'leSave') return;
+  if (typeof leSaveLayout === 'function') leSaveLayout();
 });
 
 // Component → PCB footprint name.  Accepts either a slug string (legacy) or a component object.
@@ -457,14 +461,14 @@ async function leSaveLayout() {
   const slug = selectedSlug;
   if (!slug) { alert('No component selected.'); return; }
 
-  const btn = document.getElementById('le-save-btn-vis') || document.getElementById('le-save-btn');
+  const frame = document.getElementById('le-frame');
+  const leBtn = frame?.contentWindow?.document?.getElementById('toolbar-le-save-btn');
+  const btn = leBtn || document.getElementById('le-save-btn');
   const origText = btn ? btn.textContent : '💾 Save';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
 
   try {
     // ── Step 1: get the live board JSON ──────────────────────────────────────
-    // Primary: direct same-origin property access — synchronous, always fresh.
-    const frame = document.getElementById('le-frame');
     if (!frame) throw new Error('Layout Example iframe not found — switch to the Layout Example tab first.');
 
     let board = frame.contentWindow?.pcbEditorInstance?.board ?? null;
