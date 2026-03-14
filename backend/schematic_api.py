@@ -3028,6 +3028,65 @@ def run_autoroute(board: dict) -> dict:
     def _get_pad_hw(px: float, py: float) -> tuple[float, float]:
         return _pad_hw_map.get((round(px, 4), round(py, 4)), (0.25, 0.25))
 
+    # ── Block component bodies (the rectangle spanning all pads of each part) ──
+    # Traces must not route through the body area between pads of a component.
+    # For each component, compute the bounding box of all its pads (+ clearance)
+    # and block those cells.  Cells are added to a per-net dict so they can be
+    # temporarily unblocked when routing that net (same logic as individual pads).
+    _comp_body_cells: dict[str, set[tuple[int, int]]] = {}  # net_name → cells from comp bodies
+    for comp in board.get("components", []):
+        cx  = float(comp.get("x", 0))
+        cy  = float(comp.get("y", 0))
+        rot = float(comp.get("rotation", 0)) * math.pi / 180
+        cos_r, sin_r = math.cos(rot), math.sin(rot)
+        comp_pads = comp.get("pads", [])
+        if len(comp_pads) < 2:
+            continue
+        # Compute world positions + extents of all pads
+        pad_positions: list[tuple[float, float, float, float]] = []  # (wx, wy, hw, hh)
+        comp_net_names: set[str] = set()
+        for pad in comp_pads:
+            lx = float(pad.get("x", 0))
+            ly = float(pad.get("y", 0))
+            wx = cx + lx * cos_r - ly * sin_r
+            wy = cy + lx * sin_r + ly * cos_r
+            sx = float(pad.get("size_x", pad.get("sizeX", 0.5)))
+            sy = float(pad.get("size_y", pad.get("sizeY", 0.5)))
+            if abs(rot) > 0.01:
+                hw = max(abs(sx * cos_r), abs(sy * sin_r)) / 2
+                hh = max(abs(sx * sin_r), abs(sy * cos_r)) / 2
+            else:
+                hw, hh = sx / 2, sy / 2
+            pad_positions.append((wx, wy, hw, hh))
+            net = (pad.get("net", "") or "").upper()
+            if net:
+                comp_net_names.add(net)
+        # Bounding box of all pad edges
+        min_x = min(wx - hw for wx, wy, hw, hh in pad_positions)
+        max_x = max(wx + hw for wx, wy, hw, hh in pad_positions)
+        min_y = min(wy - hh for wx, wy, hw, hh in pad_positions)
+        max_y = max(wy + hh for wx, wy, hw, hh in pad_positions)
+        # Expand by clearance + trace half-width
+        exp = cu_clearance + _default_trace_w / 2
+        min_x -= exp; max_x += exp; min_y -= exp; max_y += exp
+        # Convert to grid cells
+        gx0 = int(math.floor(min_x / GRID))
+        gx1 = int(math.ceil(max_x / GRID))
+        gy0 = int(math.floor(min_y / GRID))
+        gy1 = int(math.ceil(max_y / GRID))
+        body_cells: set[tuple[int, int]] = set()
+        for gx in range(gx0, gx1 + 1):
+            for gy in range(gy0, gy1 + 1):
+                body_cells.add((gx, gy))
+        # Add body cells to each net this component touches, so they get
+        # unblocked when routing that net (BFS needs to reach the pads)
+        for net in comp_net_names:
+            _comp_body_cells.setdefault(net, set()).update(body_cells)
+        # Block on F.Cu occupancy
+        occupied |= body_cells
+        # Also block for no-via
+        _no_via_cells |= body_cells
+
     # Block NC pads on F.Cu (B.Cu blocking added after occupied_b is created)
     _nc_blocked_cells: set[tuple[int, int]] = set()
     for ncx, ncy in nc_pad_positions:
@@ -3163,9 +3222,13 @@ def run_autoroute(board: dict) -> dict:
 
         width_mm = _autoroute_trace_width(net_name, dr)
 
-        # Temporarily unblock this net's own pads so BFS can reach them
+        # Temporarily unblock this net's own pads + component bodies so BFS can reach them
         own_cells = all_pad_cells.get(net_name, set())
+        own_body  = _comp_body_cells.get(net_name, set())
         occupied -= own_cells
+        occupied -= own_body
+        occupied_b -= own_cells
+        occupied_b -= own_body
 
         # Greedy nearest-neighbour MST: always connect closest unconnected pad
         # pads_xy are (x, y, layer_index) tuples
@@ -3235,8 +3298,11 @@ def run_autoroute(board: dict) -> dict:
                 # Mark on correct layer's occupancy (with clearance expansion)
                 _mark_segment(x0, y0, x1, y1, occ=_occupied_by_layer[l0])
 
-        # Re-block this net's pads now that routing is done
+        # Re-block this net's pads + component bodies now that routing is done
         occupied |= own_cells
+        occupied |= own_body
+        occupied_b |= own_cells
+        occupied_b |= own_body
 
         # Build trace objects per layer
         for layer_name, segs in per_layer_segs.items():
