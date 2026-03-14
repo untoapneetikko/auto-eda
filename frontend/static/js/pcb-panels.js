@@ -63,6 +63,7 @@ function buildLayerPanel(){
     d.appendChild(dot); d.appendChild(star); d.appendChild(nm); d.appendChild(eye);
     d.onclick=()=>{
       if(nm.contentEditable==='true')return;
+      if(name==='Vias'){lyr.visible=!lyr.visible;buildLayerPanel();editor.render();return;} // Vias: click toggles visibility only
       _setWorkLayer(name);
     };
     ul.appendChild(d);

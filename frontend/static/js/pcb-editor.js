@@ -42,6 +42,7 @@ class PCBEditor {
       'B.Paste':   { color:'#888888', visible:true, active:false, displayName:'Bottom Solder Paste' },
       'F.SilkS':   { color:'#cccccc', visible:true, active:false, displayName:'Top Silk' },
       'B.SilkS':   { color:'#777777', visible:true, active:false, displayName:'Bottom Silk' },
+      'Vias':      { color:'#88aacc', visible:true, active:false, displayName:'Vias (Multi-layer)' },
       'Edge.Cuts': { color:'#ffee00', visible:true, active:false, displayName:'Board Outline' },
       'Ratsnest':  { color:'#337733', visible:true, active:false, displayName:'Ratsnest' },
     };
@@ -532,19 +533,34 @@ class PCBEditor {
   }
 
   _drawVias(){
+    if(this.layers['Vias']&&!this.layers['Vias'].visible)return;
     const ctx=this.ctx;
     for(const v of(this.board.vias||[])){
       const cx=this.mmX(v.x),cy=this.mmY(v.y);
-      const or=Math.max(2,(v.size||1.0)/2*this.scale);
-      const ir=Math.max(0.5,(v.drill||0.6)/2*this.scale);
+      const or=Math.max(3,(v.size||DR.viaSize||1.0)/2*this.scale);
+      const ir=Math.max(1,(v.drill||DR.viaDrill||0.6)/2*this.scale);
       const sel=this.selectedVia===v;
-      if(sel){ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,or+3,0,Math.PI*2);ctx.stroke();}
-      ctx.fillStyle=sel?'#aabbcc':'#778899'; ctx.beginPath();
+      const netCol=v.net?this._netCol(v.net):'#88aacc';
+      // Selection halo
+      if(sel){ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,or+4,0,Math.PI*2);ctx.stroke();}
+      // Outer copper ring (net-colored)
+      ctx.fillStyle=sel?'#ccddee':netCol; ctx.beginPath();
       ctx.arc(cx,cy,or,0,Math.PI*2); ctx.fill();
+      // Border ring for contrast
+      ctx.strokeStyle='rgba(255,255,255,0.35)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,or,0,Math.PI*2);ctx.stroke();
+      // Drill hole
       ctx.fillStyle='#0a0a0a'; ctx.beginPath();
       ctx.arc(cx,cy,ir,0,Math.PI*2); ctx.fill();
-      if(sel&&v.net&&this.scale>=10){
-        ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font=`${Math.min(11,this.scale*0.6)}px monospace`;
+      // Cross-hair inside drill to mark via
+      if(or>=4){
+        ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=0.5;
+        ctx.beginPath();ctx.moveTo(cx-ir*0.6,cy);ctx.lineTo(cx+ir*0.6,cy);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(cx,cy-ir*0.6);ctx.lineTo(cx,cy+ir*0.6);ctx.stroke();
+      }
+      // Net label
+      if(v.net&&(sel||this.scale>=10)){
+        const fs=Math.max(7,Math.min(11,this.scale*0.6));
+        ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font=`bold ${fs}px monospace`;
         ctx.textAlign='center';ctx.fillText(v.net,cx,cy-or-3);ctx.textAlign='left';
       }
     }
