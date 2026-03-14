@@ -54,7 +54,15 @@ async function leFetchFp(fpName) {
 // Extract net assignments from example_circuit wires using union-find (mirrors SchematicImporter.convert)
 function leExtractNets(circuit, profileMap) {
   const SNAP = 12, PIN_STUB = 40, ROW_H = 20, BOX_W = 120, PAD_Y = 16;
-  const comps = circuit.components || [], wires = circuit.wires || [], labels = circuit.labels || [];
+  const comps = circuit.components || [], wires = circuit.wires || [];
+  // Inject wire.net properties as virtual labels (mirrors _refreshNetOverlay) so
+  // nets set via the wire net input are recognised by the union-find below.
+  const labels = [...(circuit.labels || [])];
+  for (const w of wires) {
+    if (!w.net) continue;
+    const pt = w.points?.[0];
+    if (pt) labels.push({ id: '_wn_' + w.id, name: w.net, x: pt.x, y: pt.y });
+  }
   const rotPort = (dx, dy, r) => r===1?[dy,-dx]:r===2?[-dx,-dy]:r===3?[-dy,dx]:[dx,dy];
   const ports = [];
   for (const c of comps) {
