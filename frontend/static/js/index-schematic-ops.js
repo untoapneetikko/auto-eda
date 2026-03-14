@@ -127,11 +127,6 @@ function exportBOM() {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
-async function getBOM(projectId) {
-  return fetch(`/api/projects/${projectId}/bom`).then(r=>r.json());
-}
-
-// ── PCB JSON Export ────────────────────────────────────────────────────────
 async function buildNetlist() {
   const res = await fetch('/api/netlist', {
     method: 'POST',
@@ -146,99 +141,8 @@ async function buildNetlist() {
   return await res.json();
 }
 
-// ── Net names overlay (IMP-027) ────────────────────────────────────────────
-function toggleShowNets() {
-  editor.showNets = !editor.showNets;
-  const btn = document.getElementById('nets-toggle-btn');
-  if (btn) btn.classList.toggle('active', !!editor.showNets);
-  editor._render();
-}
-
 function computeNetOverlay(editorRef) {
   return editorRef._cachedNetOverlay || { nets: [], wireToNet: new Map() };
-}
-
-function exportPCBJson() {
-  const { components } = editor.project;
-  if (!components.length) {
-    alert('Schematic is empty — place some components first.');
-    return;
-  }
-
-  const { namedNets } = buildNetlist();
-
-  // Build designator+portName → netName lookup
-  const pinNetMap = new Map();
-  for (const net of namedNets) {
-    for (const pinRef of net.pins) {
-      const dot = pinRef.indexOf('.');
-      const des = pinRef.slice(0, dot), portName = pinRef.slice(dot + 1);
-      const comp = components.find(c => c.designator === des);
-      if (comp) pinNetMap.set(`${comp.id}::${portName}`, net.name);
-    }
-  }
-
-  // Build output component list with per-pin net assignments
-  const outComponents = components.map(comp => {
-    const profile = profileCache[comp.slug] || {};
-    const profilePins = profile.pins || [];
-    const ports = editor._ports(comp);
-    const pins = ports.map(port => {
-      const pin = profilePins.find(p => (p.name || `P${p.number}`) === port.name);
-      return {
-        name: port.name,
-        number: pin?.number ?? null,
-        type: pin?.type ?? null,
-        net: pinNetMap.get(`${comp.id}::${port.name}`) || null
-      };
-    });
-    return {
-      designator: comp.designator,
-      slug: comp.slug,
-      symbol_type: comp.symType,
-      value: comp.value || '',
-      part_number: profile.part_number || comp.slug,
-      package: (profile.package_types || [])[0] || null,
-      description: profile.description || null,
-      pins,
-      position: { x: comp.x, y: comp.y },
-      rotation_quarters: comp.rotation || 0
-    };
-  });
-
-  // Unconnected pins: non-power, non-gnd components with pins missing a net
-  const unconnected = [];
-  for (const c of outComponents) {
-    if (c.symbol_type === 'vcc' || c.symbol_type === 'gnd') continue;
-    for (const pin of c.pins) {
-      if (!pin.net) unconnected.push(`${c.designator}.${pin.name}`);
-    }
-  }
-
-  const pcbJson = {
-    format: 'schematic-designer-pcb-v1',
-    project_name: editor.project.name,
-    generated_at: new Date().toISOString(),
-    grid_units: editor.GRID,
-    components: outComponents,
-    nets: namedNets,
-    unconnected_pins: unconnected,
-    stats: {
-      component_count: outComponents.length,
-      net_count: namedNets.length,
-      unconnected_count: unconnected.length
-    }
-  };
-
-  const blob = new Blob([JSON.stringify(pcbJson, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (editor.project.name || 'schematic').replace(/[^a-z0-9_\-]/gi, '_') + '_pcb.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 // ── PCB sync notification ────────────────────────────────────────────────────

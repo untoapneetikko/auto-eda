@@ -6,13 +6,6 @@ const profileCache = {};
 function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 window._icLayoutCache = {};
-async function prefetchICLayout(slug) {
-  if (window._icLayoutCache[slug]) return;
-  try {
-    const data = await fetch(`/api/library/${slug}/layout`).then(r=>r.json());
-    if (data && data.BOX_W) window._icLayoutCache[slug] = data;
-  } catch(e) {}
-}
 
 // ── SSE live updates ───────────────────────────────────────────────────────
 const evtSource = new EventSource('/api/events');

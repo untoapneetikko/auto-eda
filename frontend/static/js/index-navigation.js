@@ -51,8 +51,6 @@ function showView(name) {
   if (name === 'library') switchSection('library');
 }
 
-function closeEditor() { switchSection('library'); }
-
 // ── Schematic palette ──────────────────────────────────────────────────────
 function renderSchPalette(filter) {
   const el = document.getElementById('sch-palette');
@@ -92,44 +90,6 @@ async function placeFromPalette(slug) {
   const p = await fetchProfile(slug);
   profileCache[slug] = p;
   editor.startPlace(slug, detectSymbolType(p));
-}
-
-function importExampleCircuit() {
-  if (!selectedSlug) { alert('Select a component in the Datasheets tab first.'); return; }
-  fetchProfile(selectedSlug).then(p => {
-    profileCache[selectedSlug] = p;
-    switchSection('schematic');
-    requestAnimationFrame(() => editor.startPlaceGroup(p));
-  });
-}
-
-function importComponentOnly() {
-  if (!selectedSlug) { alert('Select a component in the Datasheets tab first.'); return; }
-  fetchProfile(selectedSlug).then(p => {
-    profileCache[selectedSlug] = p;
-    const st = detectSymbolType(p);
-    editor.startPlace(selectedSlug, st);
-  });
-}
-
-// Place the currently selected datasheet component into the example schematic
-async function addCurrentToExample() {
-  if (!selectedSlug) return;
-  const p = await fetchProfile(selectedSlug);
-  profileCache[selectedSlug] = p;
-  const st = detectSymbolType(p);
-  // Switch tab manually (avoids the async re-fetch inside switchTab)
-  currentProfileTab = 'schematic';
-  document.querySelectorAll('.tab-panel').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.profile-tab').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-schematic').style.display = 'block';
-  document.getElementById('tab-btn-schematic')?.classList.add('active');
-  renderAccPalette('');
-  // Init editor synchronously with the profile we already have, then place
-  requestAnimationFrame(() => {
-    renderAppCircuitWithEditor(p);
-    requestAnimationFrame(() => appCircuitEditor?.startPlace(selectedSlug, st));
-  });
 }
 
 // Save the example editor's current circuit back to the server

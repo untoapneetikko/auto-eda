@@ -565,7 +565,6 @@ async function renderLayoutExample(slug) {
 
   // Decide what board to show
   let board;
-  console.log('[LE-RENDER] slug=', slug, 'has layout_example:', !!(profile.layout_example?.components?.length), 'components:', (profile.layout_example?.components || []).map(c => `${c.ref}:(${c.x},${c.y})`).join(', '));
   if (profile.layout_example && profile.layout_example.components?.length) {
     // Saved layout takes priority
     board = profile.layout_example;
@@ -623,34 +622,6 @@ async function renderLayoutExample(slug) {
     const onLoad = () => { liveFrame.removeEventListener('load', onLoad); send(); };
     liveFrame.addEventListener('load', onLoad);
   }
-}
-
-// ── Application Circuit Renderer ───────────────────────────────────────────
-function drawAppCircuit(p) {
-  const canvas = document.getElementById('app-circuit-canvas');
-  if (!canvas || !canvas.getContext) return; // SVG element — use renderAppCircuitWithEditor instead
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-
-  const passives = p.required_passives || [];
-  const pins = p.pins || [];
-  const type = detectSymbolType(p);
-
-  // For the PMA3-83LNW+ (amplifier) draw the actual app circuit
-  if (type === 'amplifier') {
-    drawAmplifierAppCircuit(ctx, W, H, p);
-    return;
-  }
-
-  // For passives — show the component with typical usage context
-  if (['resistor','capacitor','capacitor_pol','inductor','vcc','gnd'].includes(type)) {
-    drawPassiveUsage(ctx, W, H, p, type);
-    return;
-  }
-
-  // Generic IC — draw IC with all required passives attached
-  drawGenericAppCircuit(ctx, W, H, p);
 }
 
 function drawAmplifierAppCircuit(ctx, W, H, p) {
@@ -811,27 +782,6 @@ function drawGenericAppCircuit(ctx, W, H, p) {
 
   ctx.fillStyle = '#64748b'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
   ctx.fillText('Application circuit — see datasheet for full detail', W/2, H-10);
-}
-
-// ── Symbol Renderer ────────────────────────────────────────────────────────
-function drawSymbol(profile) {
-  const canvas = document.getElementById('symbol-canvas');
-  if (!canvas || !canvas.getContext) return; // SVG element — use renderSymbolWithEditor instead
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-
-  const type = detectSymbolType(profile);
-
-  if      (type === 'resistor')      drawResistor(ctx, W, H, profile);
-  else if (type === 'capacitor')     drawCapacitor(ctx, W, H, profile, false);
-  else if (type === 'capacitor_pol') drawCapacitor(ctx, W, H, profile, true);
-  else if (type === 'inductor')      drawInductor(ctx, W, H, profile);
-  else if (type === 'vcc')           drawVcc(ctx, W, H, profile);
-  else if (type === 'gnd')           drawGndStandalone(ctx, W, H, profile);
-  else if (type === 'amplifier')     drawAmplifier(ctx, W, H, profile);
-  else if (type === 'opamp')         drawOpAmp(ctx, W, H, profile);
-  else                               drawIC(ctx, W, H, profile);
 }
 
 function detectSymbolType(p) {

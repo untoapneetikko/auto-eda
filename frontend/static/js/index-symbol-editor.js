@@ -390,8 +390,6 @@ async function _symParamFlush() {
   }
 }
 
-async function symParamsSave() { await _symParamFlush(); }
-
 // ── Symbol rendering — SVG-based editor ────────────────────────────────────
 function renderSymbolWithEditor(profile) {
   if (selectedSlug && profile) profileCache[selectedSlug] = profile;
@@ -531,16 +529,6 @@ function closePdfPanel() {
 }
 
 // ── Pin Editor ─────────────────────────────────────────────────────────────
-function openPinEditor() {
-  if (!selectedSlug) return;
-  const profile = profileCache[selectedSlug];
-  if (!profile) return;
-  const modal = document.getElementById('pin-editor-modal');
-  if (!modal) return;
-  renderPinEditorRows(profile.pins || []);
-  modal.style.display = 'flex';
-}
-
 function closePinEditor() {
   const modal = document.getElementById('pin-editor-modal');
   if (modal) modal.style.display = 'none';
