@@ -88,6 +88,8 @@ class SchematicEditor {
     this.dirty = false; this.selected = null;
     this._autoConnectAll();
     this._saveHist(); this._fit(); this._render(); this._status();
+    // Eagerly populate the net overlay so net panel/labels work immediately on load
+    this._refreshNetOverlay();
   }
 
   async saveProject() {
@@ -1378,6 +1380,9 @@ class SchematicEditor {
     this._autoConnectAll();
     this._render(); this._status(); this._updateUndoRedo();
     this._histFlash('Undo');
+    // Refresh net overlay after undo so net labels/colours stay in sync
+    clearTimeout(this._netRefreshTimer);
+    this._netRefreshTimer = setTimeout(() => this._refreshNetOverlay(), 600);
   }
 
   _redo() {
@@ -1389,6 +1394,9 @@ class SchematicEditor {
     this._autoConnectAll();
     this._render(); this._status(); this._updateUndoRedo();
     this._histFlash('Redo');
+    // Refresh net overlay after redo so net labels/colours stay in sync
+    clearTimeout(this._netRefreshTimer);
+    this._netRefreshTimer = setTimeout(() => this._refreshNetOverlay(), 600);
   }
 
   _updateUndoRedo() {
@@ -1582,6 +1590,10 @@ class SchematicEditor {
       const wNet = this._cachedNetOverlay?.wireToNet?.get(wire.id);
       if (wNet === this._highlightedNet) { c = '#facc15'; sw = 2.8; }
       else { c = '#4b9cd3'; sw = 1.8; opStr = ' opacity="0.2"'; }
+    } else if (this.showNets) {
+      // Color each wire by its assigned net so every wire visually shows it has a net
+      const wNet = this._cachedNetOverlay?.wireToNet?.get(wire.id);
+      c = wNet ? this._labelColor(wNet) : '#4b9cd3'; sw = 1.8;
     } else {
       c = '#4b9cd3'; sw = 1.8;
     }
@@ -1690,17 +1702,37 @@ class SchematicEditor {
 
   // ── Net overlay (IMP-027) ─────────────────────────────────────────────────
   _netOverlayH() {
-    let nets = [];
-    try { ({ nets } = computeNetOverlay(this)); } catch(e) { return ''; }
+    const overlay = computeNetOverlay(this);
+    const { nets, wireToNet } = overlay;
+    if (!nets.length && !wireToNet?.size) return '';
     const POWER_SYM = new Set(['vcc','gnd']);
     let h = '';
+    const labeledNets = new Set();
+
+    // Label each net — prefer a non-power port anchor; fall back to any port
+    // (this ensures VCC/GND-only nets still get a label)
     for (const net of nets) {
-      // Find first non-power port to anchor the label
-      const anchor = net.ports.find(p => !POWER_SYM.has(p.symType));
-      if (!anchor) continue;
+      const anchor = net.ports.find(p => !POWER_SYM.has(p.symType)) || net.ports[0];
+      if (!anchor) continue; // wire-only net — handled below via wireToNet
       const nc = this._labelColor(net.name);
       h += `<text x="${anchor.x+4}" y="${anchor.y-6}" font-family="monospace" font-size="7" fill="${nc}" opacity="0.85" pointer-events="none">${esc(net.name)}</text>`;
+      labeledNets.add(net.name);
     }
+
+    // Wire-only clusters: label once at wire midpoint if net not yet shown
+    if (wireToNet?.size) {
+      for (const wire of this.project.wires) {
+        const netName = wireToNet.get(wire.id);
+        if (!netName || labeledNets.has(netName)) continue;
+        const pts = wire.points || [];
+        if (!pts.length) continue;
+        const mid = pts[Math.floor((pts.length - 1) / 2)];
+        const nc = this._labelColor(netName);
+        h += `<text x="${mid.x+4}" y="${mid.y-6}" font-family="monospace" font-size="7" fill="${nc}" opacity="0.85" pointer-events="none">${esc(netName)}</text>`;
+        labeledNets.add(netName);
+      }
+    }
+
     return h;
   }
 

@@ -2317,20 +2317,22 @@ def _pt_key(x, y) -> str:
 
 # SYMDEFS port offsets (dx, dy) for each symbol type at rotation 0
 _SYMDEFS: dict[str, list[tuple[str, int, int]]] = {
-    "resistor":    [("P1", -30, 0), ("P2", 30, 0)],
-    "capacitor":   [("P1", 0, -20), ("P2", 0, 20)],
-    "capacitor_pol": [("P1", 0, -20), ("P2", 0, 20)],
-    "inductor":    [("P1", -40, 0), ("P2", 40, 0)],
-    "vcc":         [("1", 0, 20)],
-    "gnd":         [("1", 0, -20)],
-    "diode":       [("anode", -30, 0), ("cathode", 30, 0)],
-    "led":         [("anode", -30, 0), ("cathode", 30, 0)],
-    "npn":         [("base", -30, 0), ("collector", 20, -25), ("emitter", 20, 25)],
-    "pnp":         [("base", -30, 0), ("collector", 20, -25), ("emitter", 20, 25)],
-    "nmos":        [("gate", -30, 0), ("drain", 20, -25), ("source", 20, 25)],
-    "pmos":        [("gate", -30, 0), ("drain", 20, -25), ("source", 20, 25)],
-    "amplifier":   [("IN", -50, 0), ("OUT", 50, 0), ("GND", 0, 40)],
-    "opamp":       [("in_pos", -50, -20), ("in_neg", -50, 20), ("out", 50, 0)],
+    # Port names MUST match the frontend SYMDEFS in index-navigation.js exactly so
+    # that netlist pin references are consistent with what the canvas displays.
+    "resistor":      [("P1", -30, 0), ("P2", 30, 0)],
+    "capacitor":     [("P1", 0, -20), ("P2", 0, 20)],
+    "capacitor_pol": [("+"  , 0, -20), ("-"  , 0, 20)],
+    "inductor":      [("P1", -40, 0), ("P2", 40, 0)],
+    "vcc":           [("VCC", 0, 20)],
+    "gnd":           [("GND", 0, -20)],
+    "diode":         [("A", -30, 0), ("K", 30, 0)],
+    "led":           [("A", -30, 0), ("K", 30, 0)],
+    "npn":           [("B", -30, 0), ("C", 20, -25), ("E", 20, 25)],
+    "pnp":           [("B", -30, 0), ("E", 20, -25), ("C", 20, 25)],
+    "nmos":          [("G", -30, 0), ("D", 20, -25), ("S", 20, 25)],
+    "pmos":          [("G", -30, 0), ("D", 20, -25), ("S", 20, 25)],
+    "amplifier":     [("IN", -50, 0), ("OUT", 50, 0), ("GND", 0, 40)],
+    "opamp":         [("+"  , -50, -20), ("-"  , -50, 20), ("OUT", 50, 0)],
 }
 
 def _rotate_offset(dx: int, dy: int, r: int) -> tuple[int, int]:
@@ -2542,16 +2544,18 @@ def build_netlist(components: list, wires: list, labels: list) -> dict:
         used_names.add(name)
 
     # Priority 1: VCC/GND symbol types
+    # Port names come from _SYMDEFS["vcc"] = [("VCC", …)] and _SYMDEFS["gnd"] = [("GND", …)]
     for comp in components:
         sym = comp.get("symType", "")
         cid = comp.get("id", "")
         if sym == "vcc":
-            ports_in_net = root_to_ports.get(find(f"port::{cid}::1"), [])
-            r = find(f"port::{cid}::1") if f"port::{cid}::1" in parent else None
+            r = find(f"port::{cid}::VCC") if f"port::{cid}::VCC" in parent else None
             if r and r not in root_to_net:
-                _assign(r, "VCC")
+                # Use comp value (e.g. "3V3", "5V") if set, otherwise "VCC"
+                net_label = comp.get("value") or "VCC"
+                _assign(r, net_label)
         elif sym == "gnd":
-            r = find(f"port::{cid}::1") if f"port::{cid}::1" in parent else None
+            r = find(f"port::{cid}::GND") if f"port::{cid}::GND" in parent else None
             if r and r not in root_to_net:
                 _assign(r, "GND")
 
