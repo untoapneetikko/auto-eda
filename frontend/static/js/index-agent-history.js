@@ -95,8 +95,8 @@ async function loadActiveVersionBadge(slug) {
   const av = await fetch(`/api/library/${slug}/active_version`).then(r => r.json()).catch(() => null);
   if (av) {
     const name = av.label || `v${av.vNum}`;
-    badge.textContent = `Active: ${name}`;
-    badge.style.display = '';
+    badge.textContent = `● ${name}`;
+    badge.style.cssText = 'display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:rgba(139,92,246,0.18);border:1.5px solid rgba(139,92,246,0.55);border-radius:5px;padding:2px 10px;color:#c4b5fd;font-family:monospace;letter-spacing:.04em;white-space:nowrap;';
   } else {
     badge.style.display = 'none';
   }

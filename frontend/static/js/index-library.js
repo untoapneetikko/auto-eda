@@ -105,14 +105,26 @@ async function selectPart(slug) {
 
 async function loadProfile(slug) {
   if (!slug || slug === 'undefined' || slug === 'null') return;
-  const res = await fetch(`/api/library/${slug}`, { cache: 'no-store' });
-  const profile = await res.json();
-  renderProfile(profile);
-  loadActiveVersionBadge(slug);
+  // Load from the active version snapshot so the user always sees their last
+  // explicitly saved state (not a potentially-drifted profile.json from Generate).
+  let profile = null;
+  let activeVersion = null;
+  try {
+    activeVersion = await fetch(`/api/library/${slug}/active_version`).then(r => r.json()).catch(() => null);
+    if (activeVersion && activeVersion.id) {
+      const snap = await fetch(`/api/library/${slug}/history/${activeVersion.id}`).then(r => r.json()).catch(() => null);
+      if (snap && snap.profile) profile = snap.profile;
+    }
+  } catch(_) {}
+  if (!profile) {
+    const res = await fetch(`/api/library/${slug}`, { cache: 'no-store' });
+    profile = await res.json();
+  }
+  renderProfile(profile, activeVersion);
 }
 
 // ── Profile Render ─────────────────────────────────────────────────────────
-function renderProfile(p) {
+function renderProfile(p, activeVersion) {
   showView('library');
   // Rebuilding innerHTML destroys the le-frame iframe — mark it as unloaded so
   // leSaveLayout won't try to getBoard from a blank frame.
@@ -151,11 +163,16 @@ Then parse this component:
   const corrections = p.human_corrections || [];
   const confColor = { HIGH: 'var(--green)', MEDIUM: 'var(--yellow)', LOW: 'var(--red)', FAILED: 'var(--red)' };
 
+  const _avLabel = activeVersion ? (activeVersion.label || `v${activeVersion.vNum}`) : null;
+  const _avBadgeHtml = _avLabel
+    ? `<span id="active-version-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:rgba(139,92,246,0.18);border:1.5px solid rgba(139,92,246,0.55);border-radius:5px;padding:2px 10px;color:#c4b5fd;font-family:monospace;letter-spacing:.04em;white-space:nowrap;">● ${_avLabel}</span>`
+    : `<span id="active-version-badge" style="display:none;"></span>`;
+
   main.innerHTML = `
     <div class="profile-card" id="profile-card-root">
       <div class="profile-header">
         <div style="min-width:0;">
-          <div class="profile-part" style="display:flex;align-items:center;gap:8px;">${p.part_number || p.slug}<span id="active-version-badge" style="display:none;font-size:10px;font-weight:600;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);border-radius:4px;padding:1px 7px;color:#a78bfa;font-family:monospace;letter-spacing:.03em;"></span></div>
+          <div class="profile-part" style="display:flex;align-items:center;gap:8px;">${p.part_number || p.slug}${_avBadgeHtml}</div>
           <div class="profile-desc">${p.description || ''}</div>
           <div class="profile-meta">
             ${p.manufacturer ? `<span class="meta-tag">${p.manufacturer}</span>` : ''}

@@ -1484,6 +1484,15 @@ def api_history_update(slug: str, hid: str):
     }, indent=2), encoding="utf-8")
     return {"ok": True, "id": hid}
 
+@router.get("/library/{slug}/history/{hid}")
+def api_history_get(slug: str, hid: str):
+    """Return a single history snapshot (including its full profile)."""
+    snap_path = _history_dir(slug) / (hid + ".json")
+    if not snap_path.exists():
+        raise HTTPException(404, "Not found")
+    snap = json.loads(snap_path.read_text(encoding="utf-8"))
+    return {"id": hid, "saved_at": snap.get("saved_at"), "label": snap.get("label", ""), "profile": snap.get("profile")}
+
 @router.delete("/library/{slug}/history/{hid}")
 def api_history_delete(slug: str, hid: str):
     snap_path = _history_dir(slug) / (hid + ".json")
