@@ -3247,6 +3247,7 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
                              orig_rotations.get(c.get("ref", c.get("id", "")), 0)
                          ),
             "nets":      comp_nets.get(c.get("ref", c.get("id", "")), []),
+            "pads":      c.get("pads", []),
         }
         for c in components
     ]
