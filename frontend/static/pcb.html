@@ -241,7 +241,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <h1>🔲 PCB Editor</h1>
   <nav style="margin-left:24px;display:flex;gap:4px;">
     <button class="nav-tab active" id="pcb-nav-layout"  onclick="switchPcbSection('layout')">⬛ Layout</button>
-    <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">Auto</button>
+    <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">&#9881; Auto</button>
     <button class="nav-tab"        id="pcb-nav-nets"    onclick="switchPcbSection('nets')">〰 Nets</button>
     <button class="nav-tab"        id="pcb-nav-drc"     onclick="switchPcbSection('drc')">📐 Design Rules</button>
     <button class="nav-tab"        id="pcb-nav-export"  onclick="switchPcbSection('export')">📦 Export</button>
@@ -911,14 +911,14 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 
 <input type="file" id="file-input" accept=".json" style="display:none" onchange="onFileChosen(event)">
 
-<script src="/static/js/pcb-globals.js"></script>
+<script src="/static/js/pcb-globals.js?v=2"></script>
 <script src="/static/js/pcb-editor.js"></script>
 <script src="/static/js/pcb-api.js"></script>
 <script src="/static/js/pcb-bootstrap.js"></script>
-<script src="/static/js/pcb-board-tabs.js"></script>
+<script src="/static/js/pcb-board-tabs.js?v=2"></script>
 <script src="/static/js/pcb-tools.js"></script>
 <script src="/static/js/pcb-panels.js"></script>
-<script src="/static/js/pcb-automate.js"></script>
+<script src="/static/js/pcb-automate.js?v=2"></script>
 <script src="/static/js/pcb-drc.js"></script>
 <script src="/static/js/pcb-3d.js"></script>
 </body>
