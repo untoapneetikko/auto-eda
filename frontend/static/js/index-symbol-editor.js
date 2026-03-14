@@ -943,7 +943,6 @@ function updateAccLabelInfoPanel(label) {
 }
 
 function updateAccWireInfoPanel(wire) {
-  console.log('[wireNet] updateAccWireInfoPanel called, wire:', wire?.id);
   const emptyEl = document.getElementById('acc-info-empty');
   const contentEl = document.getElementById('acc-info-content');
   if (!wire) { emptyEl.style.display = 'flex'; contentEl.style.display = 'none'; return; }
@@ -964,8 +963,6 @@ function updateAccWireInfoPanel(wire) {
 
   // Read net name directly from project.labels (always live, no stale cache)
   const netName = _getWireNetName(appCircuitEditor, wire.id);
-  console.log('[wireNet] updateAccWireInfoPanel: wireId=', wire.id, 'netName=', netName, 'labels:', JSON.stringify(appCircuitEditor?.project?.labels));
-
   const wireId = wire.id;
   const inputStyle = 'width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--accent);padding:3px 6px;font-size:11px;font-family:monospace;font-weight:700;box-sizing:border-box;';
   document.getElementById('acc-info-name').innerHTML = `
@@ -979,30 +976,24 @@ function updateAccWireInfoPanel(wire) {
     </div>`;
   document.getElementById('acc-info-desc').textContent = `${wire.points?.length || 0}-point wire`;
 
-  // Show connected pins for this net
-  let nets = [];
-  try { ({ nets } = computeNetOverlay(appCircuitEditor)); } catch(e) {}
-  const net = netName ? nets.find(n => n.name === netName) : null;
+  // Show connected pins — computed locally (no API needed) so it's always current
   const typeColor = { power:'#fca5a5', gnd:'#94a3b8', input:'#86efac', output:'#93c5fd' };
   let html = '';
-  if (net) {
-    const pinPorts = net.ports.filter(p => !p.nodeId?.startsWith('wire::'));
-    if (pinPorts.length) {
+  try {
+    const connPins = _getConnectedPins(appCircuitEditor, wire.id);
+    if (connPins.length) {
       html += `<div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Connected Pins</div>`;
-      for (const port of pinPorts) {
-        const [compId, pinName] = (port.nodeId||'').split('::');
-        const comp = appCircuitEditor.project.components.find(c => c.id === compId);
-        if (!comp) continue;
+      for (const { comp, portName } of connPins) {
         const profile = comp.slug ? (profileCache[comp.slug] || library[comp.slug]) : null;
-        const pin = profile?.pins?.find(pi => pi.name === pinName);
+        const pin = profile?.pins?.find(pi => pi.name === portName);
         html += `<div style="display:flex;gap:4px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(46,50,80,0.4);">
           <span style="font-family:monospace;font-weight:700;color:var(--accent);font-size:10px;min-width:24px;">${esc(comp.designator||'')}</span>
-          <span style="font-family:monospace;color:${typeColor[pin?.type]||'#fcd34d'};flex:1;font-size:10px;">${esc(pinName||'')}</span>
+          <span style="font-family:monospace;color:${typeColor[pin?.type]||'#fcd34d'};flex:1;font-size:10px;">${esc(portName||'')}</span>
           ${pin?.type ? `<span style="font-size:8px;color:${typeColor[pin.type]};background:rgba(0,0,0,0.3);border-radius:3px;padding:1px 3px;">${pin.type}</span>` : ''}
         </div>`;
       }
     }
-  }
+  } catch(e) {}
   if (!html) html = `<div style="color:var(--text-muted);font-size:10px;padding:4px 0;">No pins connected yet.</div>`;
   document.getElementById('acc-info-pins').innerHTML = html;
 }
@@ -1092,30 +1083,24 @@ function updateSchWireInfoPanel(wire) {
   document.getElementById('sch-info-desc').textContent = `${wire.points?.length || 0} points`;
   document.getElementById('sch-info-goto-btn').style.display = 'none';
 
-  // Show connected pins for this net
-  let nets = [];
-  try { ({ nets } = computeNetOverlay(editor)); } catch(e) {}
-  const net = netName ? nets.find(n => n.name === netName) : null;
+  // Show connected pins — computed locally (no API needed) so it's always current
   const typeColor = { power:'#fca5a5', gnd:'#94a3b8', input:'#86efac', output:'#93c5fd' };
   let html = '';
-  if (net) {
-    const pinPorts = net.ports.filter(p => !p.nodeId?.startsWith('wire::'));
-    if (pinPorts.length) {
+  try {
+    const connPins = _getConnectedPins(editor, wireId);
+    if (connPins.length) {
       html += `<div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;margin-bottom:4px;">Connected Pins</div>`;
-      for (const port of pinPorts) {
-        const [compId, pinName] = (port.nodeId||'').split('::');
-        const comp = editor.project.components.find(c => c.id === compId);
-        if (!comp) continue;
+      for (const { comp, portName } of connPins) {
         const profile = comp.slug ? (profileCache[comp.slug] || library[comp.slug]) : null;
-        const pin = profile?.pins?.find(pi => pi.name === pinName);
+        const pin = profile?.pins?.find(pi => pi.name === portName);
         html += `<div style="display:flex;gap:4px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(46,50,80,0.4);">
           <span style="font-family:monospace;font-weight:700;color:var(--accent);font-size:10px;min-width:28px;">${esc(comp.designator||'')}</span>
-          <span style="font-family:monospace;font-weight:700;color:${typeColor[pin?.type]||'#fcd34d'};flex:1;font-size:10px;">${esc(pinName||'')}</span>
+          <span style="font-family:monospace;font-weight:700;color:${typeColor[pin?.type]||'#fcd34d'};flex:1;font-size:10px;">${esc(portName||'')}</span>
           ${pin?.type ? `<span style="font-size:8px;color:${typeColor[pin.type]};background:rgba(0,0,0,0.3);border-radius:3px;padding:1px 3px;">${pin.type}</span>` : ''}
         </div>`;
       }
     }
-  }
+  } catch(e) {}
   if (!html) html = `<div style="color:var(--text-muted);font-size:10px;padding:4px 0;">No pins connected yet.</div>`;
   document.getElementById('sch-info-pins').innerHTML = html;
 }
@@ -1251,6 +1236,29 @@ function _getWireNetName(editorRef, wireId) {
   return '';
 }
 
+// Return component pins (array of {comp, portName, portX, portY}) connected to any
+// wire in the group reachable from wireId. Uses coordinate matching — no API needed.
+function _getConnectedPins(editorRef, wireId) {
+  const connectedIds = _getConnectedWireIds(editorRef.project, wireId);
+  // Collect all points of connected wires
+  const ptSet = new Set();
+  for (const wid of connectedIds) {
+    const w = (editorRef.project.wires || []).find(ww => ww.id === wid);
+    if (!w?.points?.length) continue;
+    for (const pt of w.points) ptSet.add(`${pt.x},${pt.y}`);
+  }
+  const result = [];
+  for (const comp of (editorRef.project.components || [])) {
+    const ports = editorRef._ports(comp);
+    for (const port of ports) {
+      if (ptSet.has(`${port.x},${port.y}`)) {
+        result.push({ comp, portName: port.name });
+      }
+    }
+  }
+  return result;
+}
+
 // Return all wire IDs reachable from wireId through shared endpoints.
 function _getConnectedWireIds(project, wireId) {
   const epMap = _buildWireEpMap(project);
@@ -1273,8 +1281,7 @@ function _getConnectedWireIds(project, wireId) {
 function _applyWireNetName(editorRef, wireId, newName) {
   if (!editorRef.project.labels) editorRef.project.labels = [];
   const oldName = _getWireNetName(editorRef, wireId);
-  console.log('[wireNet] _applyWireNetName called:', {wireId, oldName, newName});
-  if (newName === oldName) { console.log('[wireNet] early return: same name'); return; }
+  if (newName === oldName) return;
 
   editorRef._saveHist();
 
@@ -1313,27 +1320,21 @@ function _applyWireNetName(editorRef, wireId, newName) {
         id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
         name: newName, x: placePt.x, y: placePt.y, rotation: 0
       });
-      console.log('[wireNet] label placed at', placePt, 'labels now:', editorRef.project.labels.length);
-    } else {
-      console.log('[wireNet] WARNING: no placePt found!');
     }
   }
 
   editorRef.dirty = true;
   editorRef._cachedNetOverlay = null;
-  console.log('[wireNet] calling _render, labels:', JSON.stringify(editorRef.project.labels));
   editorRef._render();
   // Refresh overlay — when done, re-render so component pin nets update immediately
   editorRef._refreshNetOverlay();
 }
 
 function setWireNetName(wireId, rawName) {
-  console.log('[wireNet] setWireNetName called:', wireId, rawName);
   _applyWireNetName(editor, wireId, (rawName || '').trim());
 }
 
 function setAccWireNetName(wireId, rawName) {
-  console.log('[wireNet] setAccWireNetName called:', wireId, rawName);
   if (appCircuitEditor) _applyWireNetName(appCircuitEditor, wireId, (rawName || '').trim());
 }
 
