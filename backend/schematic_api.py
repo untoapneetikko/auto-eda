@@ -2905,7 +2905,10 @@ def run_autoroute(board: dict) -> dict:
     # This is the ONLY authoritative source of net connectivity in the board JSON.
     # (There is no top-level board.nets[] array.)
     # Pad world position accounts for component rotation.
+    # Pads with name "NC" (No Connect) are excluded — they must not be routed.
     net_pads: dict[str, list[tuple[float, float]]] = {}
+    nc_nets: set[str] = set()  # nets that consist ONLY of NC-named pads
+    _net_has_real_pad: set[str] = set()  # nets that have at least one non-NC pad
     for comp in board.get("components", []):
         cx  = float(comp.get("x", 0))
         cy  = float(comp.get("y", 0))
@@ -2915,12 +2918,20 @@ def run_autoroute(board: dict) -> dict:
             net = pad.get("net", "") or ""
             if not net:
                 continue
+            pad_name = (pad.get("name", "") or "").upper().strip()
+            # Track whether this net has any non-NC pads
+            if pad_name == "NC" or pad_name == "N/C" or pad_name == "N.C.":
+                nc_nets.add(net)
+            else:
+                _net_has_real_pad.add(net)
             # Rotate local pad offset into world space
             lx = float(pad.get("x", 0))
             ly = float(pad.get("y", 0))
             px = cx + lx * cos_r - ly * sin_r
             py = cy + lx * sin_r + ly * cos_r
             net_pads.setdefault(net, []).append((px, py))
+    # Nets where ALL pads are NC should be skipped
+    nc_only_nets = nc_nets - _net_has_real_pad
 
     # ── BFS shortest path on the grid ────────────────────────────────────────
     DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -2976,7 +2987,7 @@ def run_autoroute(board: dict) -> dict:
         return 0 if any(kw in upper for kw in power_keywords) else 1
 
     for net_name in sorted(net_pads.keys(), key=lambda n: (_net_priority(n), n)):
-        if _autoroute_skip_net(net_name):
+        if _autoroute_skip_net(net_name) or net_name in nc_only_nets:
             continue
         pads_xy = net_pads[net_name]
         if len(pads_xy) < 2:

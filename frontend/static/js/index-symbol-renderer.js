@@ -124,11 +124,32 @@ function leExtractNets(circuit, profileMap) {
     for (const p of ports) if (Math.hypot(p.x-lbl.x, p.y-lbl.y) <= SNAP) union(ln, p.id);
     if (!lblNodes[lbl.name]) lblNodes[lbl.name] = ln; else union(ln, lblNodes[lbl.name]);
   }
+  // No Connect markers — ports at NC positions get net "NC"
+  const ncSet = new Set();
+  for (const nc of (circuit.noConnects || [])) {
+    ncSet.add(`${nc.x},${nc.y}`);
+  }
+  const ncPortIds = new Set();
+  if (ncSet.size > 0) {
+    for (const p of ports) {
+      for (const ncKey of ncSet) {
+        const [nx, ny] = ncKey.split(',').map(Number);
+        if (Math.hypot(p.x - nx, p.y - ny) <= SNAP * 1.5) { ncPortIds.add(p.id); break; }
+      }
+    }
+  }
+
   const groups = {};
   for (const p of ports) { const r = find(p.id); (groups[r] || (groups[r]=[])).push(p); }
   const assign = {}; let auto = 1;
   for (const grp of Object.values(groups)) {
     if (!grp.length) continue;
+    // If ALL ports in this group are NC-marked, assign "NC"
+    const allNC = grp.every(p => ncPortIds.has(p.id));
+    if (allNC && ncPortIds.size > 0) {
+      for (const p of grp) { if (p.stype==='vcc'||p.stype==='gnd') continue; assign[p.id]='NC'; }
+      continue;
+    }
     let name = null;
     for (const p of grp) {
       if (p.stype === 'vcc') { const c = comps.find(x => x.id===p.compId); name = c?.value?.trim()||'VCC'; }
@@ -136,7 +157,11 @@ function leExtractNets(circuit, profileMap) {
     }
     if (!name) for (const lbl of labels) { const ln=`lbl_${lbl.id}`; if (par[ln]&&find(ln)===find(grp[0].id)){name=lbl.name;break;} }
     if (!name) name=`N${auto++}`;
-    for (const p of grp) { if (p.stype==='vcc'||p.stype==='gnd') continue; assign[p.id]=name; }
+    for (const p of grp) {
+      if (p.stype==='vcc'||p.stype==='gnd') continue;
+      // Individual NC-marked ports get "NC" even if they share a group with non-NC ports
+      assign[p.id] = ncPortIds.has(p.id) ? 'NC' : name;
+    }
   }
   return assign;
 }
@@ -192,7 +217,7 @@ function leGetLiveCircuit() {
     const pt = w.points?.[0];
     if (pt) labels.push({ id: '_wn_' + w.id, name: w.net, x: pt.x, y: pt.y, rotation: 0 });
   }
-  return { components: p.components || [], wires: p.wires || [], labels };
+  return { components: p.components || [], wires: p.wires || [], labels, noConnects: p.noConnects || [] };
 }
 
 // Update the Layout Example tab button badge to reflect net mismatch count.

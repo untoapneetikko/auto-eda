@@ -124,6 +124,7 @@ class SchematicEditor {
     this.project.components = circ.components;
     this.project.wires = circ.wires;
     this.project.labels = circ.labels || [];
+    this.project.noConnects = circ.noConnects || [];
     this.project.name = (profile.part_number || 'Component') + ' — Application Circuit';
     this._autoConnectAll();
     this.dirty = true; this._saveHist(); this._fit(); this._render(); this._status();

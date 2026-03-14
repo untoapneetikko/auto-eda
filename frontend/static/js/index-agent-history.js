@@ -204,7 +204,8 @@ async function _flushEditorsToProfile() {
         body: JSON.stringify({
           components: appCircuitEditor.project.components,
           wires:      appCircuitEditor.project.wires,
-          labels:     appCircuitEditor.project.labels || []
+          labels:     appCircuitEditor.project.labels || [],
+          noConnects: appCircuitEditor.project.noConnects || []
         })
       }).catch(() => {});
     }

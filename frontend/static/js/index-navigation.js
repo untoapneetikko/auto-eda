@@ -214,7 +214,8 @@ async function accSaveExample(btn) {
   const circuit = {
     components: appCircuitEditor.project.components,
     wires: appCircuitEditor.project.wires,
-    labels: appCircuitEditor.project.labels || []
+    labels: appCircuitEditor.project.labels || [],
+    noConnects: appCircuitEditor.project.noConnects || []
   };
   // Guard: don't overwrite a non-empty saved circuit with an empty canvas.
   // This can happen if the editor re-initialises before the circuit is loaded.
