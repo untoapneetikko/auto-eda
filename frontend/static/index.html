@@ -477,8 +477,8 @@
   .pa-modal-status.running { background:rgba(108,99,255,0.2); color:#818cf8; }
   .pa-modal-status.done    { background:rgba(22,163,74,0.2); color:#4ade80; }
   .pa-modal-status.error   { background:rgba(239,68,68,0.2); color:#f87171; }
-  .pa-modal-close { background:none; border:none; color:#6b7280; font-size:18px; cursor:pointer; line-height:1; padding:0 2px; }
-  .pa-modal-close:hover { color:#e2e8f0; }
+  .pa-modal-close { display:inline-flex; align-items:center; gap:5px; background:#1e2130; border:1px solid #2a2d3a; color:#a0aec0; font-size:13px; font-weight:500; cursor:pointer; line-height:1; padding:5px 10px; border-radius:6px; transition:all .15s; }
+  .pa-modal-close:hover { background:#2a2d3a; border-color:#6c63ff; color:#e2e8f0; }
   .pa-modal-toolbar { display:flex; align-items:center; gap:8px; padding:6px 14px; border-bottom:1px solid #1e2130; background:#0f1120; flex-shrink:0; }
   .pa-modal-tool-btn { font-size:10px; background:none; border:1px solid #2a2d3a; color:#6b7280; border-radius:4px; padding:2px 8px; cursor:pointer; transition:all .12s; }
   .pa-modal-tool-btn:hover { border-color:#6c63ff; color:#818cf8; }
@@ -686,7 +686,7 @@
   <!-- ── Inline Agent Chat Pane (slides over drawer content) ── -->
   <div id="pa-chat-pane">
     <div class="pa-modal-hdr">
-      <button class="pa-modal-close" onclick="paChatClose()" title="Back to agents" style="font-size:14px;margin-right:4px;">←</button>
+      <button class="pa-modal-close" onclick="paChatClose()" title="Back to agents">‹ Back</button>
       <span id="pa-modal-icon" style="font-size:15px;flex-shrink:0;">🤖</span>
       <span class="pa-modal-title" id="pa-modal-title">Agent</span>
       <span class="pa-modal-session" id="pa-modal-session"></span>
