@@ -566,8 +566,12 @@ Then parse this component:
 
       <div id="tab-layout-example" class="tab-panel" style="display:none;">
         <div style="display:flex;flex-direction:column;height:calc(100vh - 160px);min-height:400px;">
-          <div id="le-notes" style="display:none;"></div>
-          <button id="le-save-btn" onclick="leSaveLayout()" style="display:none;"></button>
+          <!-- Toolbar -->
+          <div style="flex-shrink:0;display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--surface);border-bottom:1px solid var(--border);">
+            <button id="le-save-btn-vis" onclick="leSaveLayout()" style="background:#16a34a;border:none;border-radius:4px;color:#fff;padding:4px 16px;font-size:12px;cursor:pointer;font-weight:700;">💾 Save</button>
+            <button id="le-save-btn" onclick="leSaveLayout()" style="display:none;"></button>
+            <div id="le-notes" style="font-size:10px;color:var(--text-muted);"></div>
+          </div>
           <!-- body: PCB iframe on top, BOM strip below -->
           <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
             <!-- PCB editor iframe -->
@@ -579,7 +583,6 @@ Then parse this component:
               <div style="padding:4px 10px 2px;display:flex;align-items:center;gap:8px;">
                 <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);">Components</div>
                 <div id="le-bom-count" style="font-size:10px;color:var(--text-muted);flex:1;">Click to add to layout</div>
-                <button id="le-save-btn-vis" onclick="leSaveLayout()" style="background:#16a34a;border:none;border-radius:4px;color:#fff;padding:3px 14px;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.03em;">💾 Save</button>
               </div>
               <div id="le-bom-list" style="overflow-x:auto;overflow-y:hidden;display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px 6px;"></div>
             </div>
