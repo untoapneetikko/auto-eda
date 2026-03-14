@@ -126,6 +126,8 @@ class SchematicEditor {
     this.project.name = (profile.part_number || 'Component') + ' — Application Circuit';
     this._autoConnectAll();
     this.dirty = true; this._saveHist(); this._fit(); this._render(); this._status();
+    // Eagerly populate the net overlay so net list and highlights work immediately on open
+    this._refreshNetOverlay();
   }
 
   importExample(profile) {
@@ -1390,6 +1392,8 @@ class SchematicEditor {
         nets: data.nets || [],
         wireToNet: new Map(Object.entries(data.wireToNet || {}))
       };
+      // Re-render so the net list panel and any active highlight update immediately.
+      this._render();
     } catch(e) {}
   }
 
