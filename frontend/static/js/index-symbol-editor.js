@@ -347,34 +347,43 @@ function symEditorUpdatePin(field, value) {
   symEditorRenderList();
 }
 
-// ── Component Parameters save ────────────────────────────────────────────────
-async function symParamsSave() {
+// ── Component Parameters auto-save (debounced) ──────────────────────────────
+let _symParamTimer = null;
+
+function symParamAutoSave() {
+  clearTimeout(_symParamTimer);
+  _symParamTimer = setTimeout(_symParamFlush, 700);
+  const st = document.getElementById('sym-param-status');
+  if (st) { st.textContent = '…'; st.style.opacity = '1'; st.style.color = 'var(--text-muted)'; }
+}
+
+async function _symParamFlush() {
   const slug = symEditor?.slug || selectedSlug;
   if (!slug) return;
   const get = id => document.getElementById(id)?.value?.trim() ?? '';
   const params = {
     part_number:  get('sym-param-partnum'),
-    manufacturer: get('sym-param-manufacturer'),
+    manufacturer: get('sym-param-mfr'),
     value:        get('sym-param-value'),
-    designator:   get('sym-param-designator'),
+    designator:   get('sym-param-des'),
     description:  get('sym-param-desc'),
   };
+  const st = document.getElementById('sym-param-status');
   const res = await fetch(`/api/library/${slug}/params`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params)
   });
   if (res.ok) {
-    // Update local cache
     if (profileCache[slug]) Object.assign(profileCache[slug], params);
     if (symEditor?.profile) Object.assign(symEditor.profile, params);
-    // Update symbol canvas part_number label
     if (symEditor) symEditor._render();
-    const btn = document.querySelector('[onclick="symParamsSave()"]');
-    if (btn) { const orig = btn.textContent; btn.textContent = '✓ Saved!'; setTimeout(() => btn.textContent = orig, 1500); }
+    if (st) { st.textContent = '✓'; st.style.color = '#22c55e'; st.style.opacity = '1'; setTimeout(() => { st.style.opacity = '0'; }, 1200); }
   } else {
-    alert('Save failed');
+    if (st) { st.textContent = '✗'; st.style.color = '#ef4444'; st.style.opacity = '1'; }
   }
 }
+
+async function symParamsSave() { await _symParamFlush(); }
 
 // ── Symbol rendering — SVG-based editor ────────────────────────────────────
 function renderSymbolWithEditor(profile) {

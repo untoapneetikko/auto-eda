@@ -123,6 +123,19 @@ async function loadProfile(slug) {
   renderProfile(profile, activeVersion);
 }
 
+// ── Param field helper (compact, used inside right panel) ───────────────────
+function _symParamField(id, label, value, placeholder, fontFamily, readonly) {
+  const ro = readonly ? 'disabled' : '';
+  const roStyle = readonly ? 'opacity:0.5;cursor:not-allowed;' : '';
+  const ff = fontFamily ? `font-family:${fontFamily};` : '';
+  const onInput = readonly ? '' : `oninput="symParamAutoSave()"`;
+  return `<div style="display:flex;flex-direction:column;gap:2px;">
+    <label style="font-size:9px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">${label}</label>
+    <input id="${id}" type="text" value="${esc(value)}" placeholder="${placeholder}" ${ro} ${onInput}
+      style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);padding:3px 6px;font-size:11px;${ff}box-sizing:border-box;${roStyle}">
+  </div>`;
+}
+
 // ── Profile Render ─────────────────────────────────────────────────────────
 function renderProfile(p, activeVersion) {
   showView('library');
@@ -239,41 +252,6 @@ Then parse this component:
       <div class="profile-body">
         ${p.extraction_note ? `<div class="warning-banner">⚠ ${p.extraction_note} — Verify pin assignments before using in a circuit.</div>` : ''}
 
-        <!-- ── Component Parameters ── -->
-        <div style="margin-bottom:14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
-            <div class="section-title" style="margin-bottom:0;">⚙ Parameters</div>
-            ${p.builtin ? `<span style="font-size:10px;color:#f59e0b;border:1px solid rgba(245,158,11,0.4);border-radius:3px;padding:2px 7px;background:rgba(245,158,11,0.08);">🔒 Built-in — read only</span>` : `<button onclick="symParamsSave()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Save</button>`}
-          </div>
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div style="display:flex;flex-direction:column;gap:3px;">
-              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Part Number</label>
-              <input id="sym-param-partnum" type="text" value="${esc(p.part_number||'')}" ${p.builtin?'disabled':''} placeholder="e.g. LM358"
-                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px;">
-              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Manufacturer</label>
-              <input id="sym-param-manufacturer" type="text" value="${esc(p.manufacturer||'')}" ${p.builtin?'disabled':''} placeholder="e.g. Texas Instruments"
-                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px;">
-              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Default Value</label>
-              <input id="sym-param-value" type="text" value="${esc(p.value||p.part_number||'')}" ${p.builtin?'disabled':''} placeholder="e.g. 10k, 100nF"
-                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
-            </div>
-            <div style="display:flex;flex-direction:column;gap:3px;">
-              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Designator Prefix</label>
-              <input id="sym-param-designator" type="text" value="${esc(p.designator||'')}" ${p.builtin?'disabled':''} placeholder="e.g. U, R, C"
-                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;font-family:monospace;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
-            </div>
-            <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:3px;">
-              <label style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;">Description</label>
-              <input id="sym-param-desc" type="text" value="${esc(p.description||'')}" ${p.builtin?'disabled':''} placeholder="Short description of the component"
-                style="background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:5px 8px;font-size:12px;${p.builtin?'opacity:0.5;cursor:not-allowed;':''}">
-            </div>
-          </div>
-        </div>
-
         <div>
           <!-- Symbol Editor toolbar -->
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
@@ -284,14 +262,29 @@ Then parse this component:
               <button onclick="symEditorSave()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Save</button>`}
             </div>
           </div>
-          <!-- Editor area: canvas + right panel (pin list / pin form) -->
+          <!-- Editor area: canvas + right panel (params + pin list / pin form) -->
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;min-height:300px;">
-            <!-- Canvas — visual display only, no click events needed -->
+            <!-- Canvas -->
             <div style="flex:1;min-width:0;">
               <svg id="symbol-canvas" style="display:block;width:100%;min-height:200px;"></svg>
             </div>
             <!-- Right panel -->
-            <div style="width:250px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;">
+            <div style="width:200px;flex-shrink:0;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--surface);overflow:hidden;">
+
+              <!-- PARAMETERS -->
+              <div style="border-bottom:1px solid var(--border);flex-shrink:0;">
+                <div style="padding:5px 10px;display:flex;align-items:center;justify-content:space-between;">
+                  <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Parameters</span>
+                  ${p.builtin ? `<span title="Built-in — read only" style="font-size:9px;color:#f59e0b;">🔒</span>` : `<span id="sym-param-status" style="font-size:9px;color:var(--text-muted);transition:opacity 0.4s;"></span>`}
+                </div>
+                <div style="padding:0 10px 8px;display:flex;flex-direction:column;gap:5px;">
+                  ${_symParamField('sym-param-partnum', 'Part No.',     p.part_number||'',          'e.g. LM358', 'monospace', p.builtin)}
+                  ${_symParamField('sym-param-mfr',     'Manufacturer', p.manufacturer||'',         'e.g. TI',    '',          p.builtin)}
+                  ${_symParamField('sym-param-value',   'Value',        p.value||p.part_number||'', 'e.g. 10k',   'monospace', p.builtin)}
+                  ${_symParamField('sym-param-des',     'Designator',   p.designator||'',           'e.g. U',     'monospace', p.builtin)}
+                  ${_symParamField('sym-param-desc',    'Description',  p.description||'',          'Short desc…','',          p.builtin)}
+                </div>
+              </div>
 
               <!-- PIN LIST VIEW -->
               <div id="sym-list-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
