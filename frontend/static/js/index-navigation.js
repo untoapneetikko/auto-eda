@@ -263,6 +263,18 @@ async function accSaveExample(btn) {
   }
 }
 
+const _paletteTypeColors = {
+  ic:'#6c63ff', amplifier:'#6c63ff', resistor:'#c87533', capacitor:'#3b82f6',
+  capacitor_pol:'#3b82f6', inductor:'#a78bfa', led:'#22c55e', diode:'#f59e0b',
+  npn:'#f59e0b', pnp:'#f59e0b', nmos:'#f59e0b', pmos:'#f59e0b',
+  vcc:'#ef4444', gnd:'#6b7280'
+};
+const _paletteTypeLabels = {
+  ic:'IC', amplifier:'AMP', resistor:'R', capacitor:'C', capacitor_pol:'C+',
+  inductor:'L', led:'LED', diode:'D', npn:'NPN', pnp:'PNP', nmos:'FET', pmos:'FET',
+  vcc:'VCC', gnd:'GND'
+};
+
 // Render the compact component palette in the example schematic tab
 function renderAccPalette(filter) {
   const el = document.getElementById('acc-palette');
@@ -280,14 +292,21 @@ function renderAccPalette(filter) {
     el.innerHTML = '<div style="padding:8px 10px;font-size:10px;color:var(--text-muted);">No results.</div>';
     return;
   }
-  el.innerHTML = parts.map(p => `
-    <div onclick="accPlaceComponent('${p.slug}');const _i=document.getElementById('acc-palette-search');if(_i)_i.value='';accShowPanel('nets');" title="${(p.description||'').slice(0,80)}"
-      style="padding:5px 10px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:1px;"
-      onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
-      <span style="font-family:monospace;font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.part_number || p.slug}</span>
-      <span style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(p.description||'').slice(0,40)}</span>
-    </div>
-  `).join('');
+  el.innerHTML = parts.map(p => {
+    const st = detectSymbolType(p);
+    const col = _paletteTypeColors[st] || '#6c63ff';
+    const lbl = _paletteTypeLabels[st] || (st||'IC').slice(0,4).toUpperCase();
+    const name = p.part_number || p.slug || '';
+    const desc = (p.description || '').slice(0, 36);
+    return `<div onclick="accPlaceComponent('${p.slug}');const _i=document.getElementById('acc-palette-search');if(_i)_i.value='';accShowPanel('nets');"
+        title="${(p.description||'').slice(0,80)}"
+        style="display:flex;align-items:center;gap:6px;padding:5px 10px 5px 7px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);border-left:3px solid transparent;transition:background 0.1s;"
+        onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <span style="font-size:9px;font-weight:700;color:${col};background:${col}22;border-radius:3px;padding:1px 4px;flex-shrink:0;">${lbl}</span>
+      <span style="font-family:monospace;font-size:10px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${name}</span>
+      <span style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${desc}</span>
+    </div>`;
+  }).join('');
 }
 
 async function accPlaceComponent(slug) {

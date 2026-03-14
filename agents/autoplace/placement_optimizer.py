@@ -894,7 +894,7 @@ def optimize_placement_for_traces(
     pos: list[list[float]] = [
         [float(c.get("x", 0)), float(c.get("y", 0))] for c in components
     ]
-    ref_to_idx = {c.get("reference", ""): i for i, c in enumerate(components)}
+    ref_to_idx = {(c.get("reference") or c.get("ref") or ""): i for i, c in enumerate(components)}
 
     # ── Pad-level collision detection (same as greedy placer) ─────────
     def _collides(i: int, j: int) -> bool:
@@ -916,7 +916,7 @@ def optimize_placement_for_traces(
     # "REF.PADNUM" → (comp_idx, pad_local_idx)
     pad_lookup: dict[str, tuple[int, int]] = {}
     for i, comp in enumerate(components):
-        ref = comp.get("reference", "")
+        ref = comp.get("reference") or comp.get("ref") or ""
         for pi, pad in enumerate(comp.get("pads", [])):
             key = f"{ref}.{pad.get('number', pi+1)}"
             pad_lookup[key] = (i, pi)
@@ -972,56 +972,77 @@ def optimize_placement_for_traces(
     # ── Simulated annealing: try small moves to reduce trace length ───
     rng = random.Random(seed)
     trace_conns = _build_trace_connections()
-    best_length = _total_trace_length()
+    original_length = _total_trace_length()
+    best_length = original_length
 
-    # Step sizes: start large (2mm), cool down
+    # Board boundary margin
+    margin = gap + 0.5
+
+    # Multiple step sizes tried each iteration: coarse → fine
+    STEP_SIZES = [3.0, 1.5, 0.75, 0.35]
+
     for iteration in range(iterations):
-        t = 1.0 - iteration / max(iterations, 1)
-        step = max(0.25, 2.0 * t)  # mm
+        improved_this_iter = False
 
-        for i in range(n):
+        # Shuffle component order each iteration for fairness
+        order = list(range(n))
+        rng.shuffle(order)
+
+        for i in order:
             if _is_connector(components[i]):
                 continue  # don't move connectors
 
             orig_x, orig_y = pos[i][0], pos[i][1]
 
-            # Try 4 cardinal + 4 diagonal nudges
-            candidates = [
-                (orig_x + step, orig_y),
-                (orig_x - step, orig_y),
-                (orig_x, orig_y + step),
-                (orig_x, orig_y - step),
-                (orig_x + step * 0.7, orig_y + step * 0.7),
-                (orig_x + step * 0.7, orig_y - step * 0.7),
-                (orig_x - step * 0.7, orig_y + step * 0.7),
-                (orig_x - step * 0.7, orig_y - step * 0.7),
-            ]
+            # Try multiple step sizes — coarse first, then fine-tune
+            for step in STEP_SIZES:
+                # 4 cardinal + 4 diagonal nudges
+                candidates = [
+                    (orig_x + step, orig_y),
+                    (orig_x - step, orig_y),
+                    (orig_x, orig_y + step),
+                    (orig_x, orig_y - step),
+                    (orig_x + step * 0.707, orig_y + step * 0.707),
+                    (orig_x + step * 0.707, orig_y - step * 0.707),
+                    (orig_x - step * 0.707, orig_y + step * 0.707),
+                    (orig_x - step * 0.707, orig_y - step * 0.707),
+                ]
 
-            best_cand = None
-            best_cand_len = best_length
+                best_cand = None
+                best_cand_len = best_length
 
-            for cx, cy in candidates:
-                pos[i] = [cx, cy]
+                for cx, cy in candidates:
+                    # Clamp to board bounds
+                    cx = max(margin + env_hw[i], min(board_width_mm - margin - env_hw[i], cx))
+                    cy = max(margin + env_hh[i], min(board_height_mm - margin - env_hh[i], cy))
 
-                # Check for pad collisions
-                if any(_collides(i, j) for j in range(n) if j != i):
-                    continue
+                    pos[i] = [cx, cy]
 
-                # Snap traces and measure
-                _snap_traces(trace_conns)
-                new_len = _total_trace_length()
+                    # Check for pad collisions
+                    if any(_collides(i, j) for j in range(n) if j != i):
+                        continue
 
-                if new_len < best_cand_len - 1e-4:
-                    best_cand_len = new_len
-                    best_cand = [cx, cy]
+                    # Snap traces and measure
+                    _snap_traces(trace_conns)
+                    new_len = _total_trace_length()
 
-            if best_cand:
-                pos[i] = best_cand
-                _snap_traces(trace_conns)
-                best_length = best_cand_len
-            else:
-                pos[i] = [orig_x, orig_y]
-                _snap_traces(trace_conns)
+                    if new_len < best_cand_len - 1e-4:
+                        best_cand_len = new_len
+                        best_cand = [cx, cy]
+
+                if best_cand:
+                    pos[i] = best_cand
+                    _snap_traces(trace_conns)
+                    best_length = best_cand_len
+                    improved_this_iter = True
+                    break  # accepted a move at this step size, next component
+                else:
+                    pos[i] = [orig_x, orig_y]
+                    _snap_traces(trace_conns)
+
+        # Early termination: if no component moved this iteration, we're at a local min
+        if not improved_this_iter and iteration > 10:
+            break
 
     # ── Build output ──────────────────────────────────────────────────
     result_components: list[dict[str, Any]] = []
@@ -1032,7 +1053,14 @@ def optimize_placement_for_traces(
             "y": round(pos[i][1], 3),
             "rotation": rotations[i],
         })
-    return {"components": result_components, "traces": traces}
+    reduction_pct = (1.0 - best_length / original_length) * 100 if original_length > 0 else 0.0
+    return {
+        "components": result_components,
+        "traces": traces,
+        "original_length": round(original_length, 2),
+        "optimized_length": round(best_length, 2),
+        "reduction_pct": round(reduction_pct, 1),
+    }
 
 
 def compute_net_proximity_placement(
