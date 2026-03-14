@@ -1214,28 +1214,12 @@ class SchematicEditor {
   _rotateSelected() {
     if (this.multiSelected.size > 0) {
       this._saveHist();
-      const TOL = this.GRID * 1.5;
       for (const id of this.multiSelected) {
         const c = this.project.components.find(c => c.id === id);
-        if (c) {
-          const oldPorts = this._ports(c);
-          c.rotation = ((c.rotation || 0) + 1) % 4;
-          const newPorts = this._ports(c);
-          for (let pi = 0; pi < oldPorts.length && pi < newPorts.length; pi++) {
-            const op = oldPorts[pi], np = newPorts[pi];
-            for (const w of this.project.wires) {
-              if (!w.points?.length) continue;
-              const p0 = w.points[0], pN = w.points[w.points.length - 1];
-              if (Math.hypot(p0.x - op.x, p0.y - op.y) < TOL) { p0.x = np.x; p0.y = np.y; }
-              if (Math.hypot(pN.x - op.x, pN.y - op.y) < TOL) { pN.x = np.x; pN.y = np.y; }
-            }
-          }
-          continue;
-        }
+        if (c) { this._rotateComp(c); continue; }
         const lbl = (this.project.labels || []).find(l => l.id === id);
         if (lbl) lbl.rotation = ((lbl.rotation || 0) + 1) % 4;
       }
-      this._autoConnectAll();
       this.dirty = true; this._render(); return;
     }
     if (!this.selected) return;
@@ -1247,23 +1231,28 @@ class SchematicEditor {
     if (this.selected.type !== 'comp') return;
     const c = this.project.components.find(c => c.id === this.selected.id);
     if (!c) return;
-    // Capture old port positions before rotation
+    this._saveHist();
+    this._rotateComp(c);
+    this.dirty = true; this._render();
+  }
+
+  // Rotate component 90° CW: move exactly-connected wire endpoints to new port
+  // positions, then reroute each affected wire to strict 90° segments.
+  _rotateComp(c) {
     const oldPorts = this._ports(c);
     c.rotation = ((c.rotation || 0) + 1) % 4;
     const newPorts = this._ports(c);
-    // Move any wire endpoints that were attached to old port positions
-    const TOL = this.GRID * 1.5;
+    const affected = new Set();
     for (let pi = 0; pi < oldPorts.length && pi < newPorts.length; pi++) {
       const op = oldPorts[pi], np = newPorts[pi];
       for (const w of this.project.wires) {
         if (!w.points?.length) continue;
         const p0 = w.points[0], pN = w.points[w.points.length - 1];
-        if (Math.hypot(p0.x - op.x, p0.y - op.y) < TOL) { p0.x = np.x; p0.y = np.y; }
-        if (Math.hypot(pN.x - op.x, pN.y - op.y) < TOL) { pN.x = np.x; pN.y = np.y; }
+        if (Math.hypot(p0.x - op.x, p0.y - op.y) < 0.5) { p0.x = np.x; p0.y = np.y; affected.add(w); }
+        if (Math.hypot(pN.x - op.x, pN.y - op.y) < 0.5) { pN.x = np.x; pN.y = np.y; affected.add(w); }
       }
     }
-    this._autoConnectAll(); // new port positions may now coincide with other ports
-    this.dirty = true; this._render();
+    for (const w of affected) this._rerouteWire90(w);
   }
 
   // ── Wire ops ──────────────────────────────────────────────────────────────
