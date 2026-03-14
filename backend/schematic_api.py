@@ -3084,8 +3084,6 @@ def run_autoroute(board: dict) -> dict:
             _comp_body_cells.setdefault(net, set()).update(body_cells)
         # Block on F.Cu occupancy
         occupied |= body_cells
-        # Also block for no-via
-        _no_via_cells |= body_cells
 
     # Block NC pads on F.Cu (B.Cu blocking added after occupied_b is created)
     _nc_blocked_cells: set[tuple[int, int]] = set()
@@ -3113,6 +3111,9 @@ def run_autoroute(board: dict) -> dict:
     for ncx, ncy in nc_pad_positions:
         hw, hh = _get_pad_hw(ncx, ncy)
         _no_via_cells |= _pad_cells(ncx, ncy, hw, hh)
+    # Also block component body areas for vias
+    for _body_net, _body_set in _comp_body_cells.items():
+        _no_via_cells |= _body_set
 
     # ── Multi-layer BFS with via support ─────────────────────────────────────
     # Layer 0 = F.Cu, Layer 1 = B.Cu.  A via transition costs VIA_PENALTY
@@ -3543,6 +3544,26 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
                     pcb_rotations[_ref] = int(_ec["rotation"])
         except Exception:
             pass  # silently fall back to orig_rotations
+
+    # ── Fill in missing pad-level net fields from the board nets array ────
+    # Some boards store net→pad mappings only in the nets array, leaving
+    # pad.net empty.  The optimizer needs pad-level net info for pin-aligned
+    # placement, so back-fill it here.
+    _pad_ref_to_net: dict[str, str] = {}  # "L1.1" → "RF_IN"
+    for net in nets:
+        net_name = (net.get("name", "") or "").upper()
+        if not net_name:
+            continue
+        for pad_ref in net.get("pads", []):
+            _pad_ref_to_net[pad_ref.upper()] = net_name
+    for comp in components:
+        ref = comp.get("ref", "")
+        for pad in comp.get("pads", []):
+            if not (pad.get("net", "") or "").strip():
+                pad_num = pad.get("number", pad.get("name", ""))
+                pad_key = f"{ref}.{pad_num}".upper()
+                if pad_key in _pad_ref_to_net:
+                    pad["net"] = _pad_ref_to_net[pad_key]
 
     # ── Build optimizer-format component list ────────────────────────────
     opt_components = [
