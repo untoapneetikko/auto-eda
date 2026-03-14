@@ -3191,12 +3191,32 @@ def run_autoplace(board: dict) -> dict:
         ref = comp.get("ref", comp.get("id", ""))
         orig_rotations[ref] = comp.get("rotation", 0)
 
+    # ── Load PCB rotations from example_schematic.json (authoritative source) ─
+    # The example_schematic.json stores the correct PCB footprint rotation for
+    # each component (0/90/180/270°).  These override the board's original
+    # rotations, which default to 0° on a freshly-created board.
+    pcb_rotations: dict[str, int] = {}
+    _example_sch_path = Path(os.getenv("OUTPUT_DIR", str(PROJECT_ROOT_SA / "data" / "outputs"))) / "example_schematic.json"
+    if _example_sch_path.exists():
+        try:
+            _example_sch = json.loads(_example_sch_path.read_text("utf-8"))
+            for _ec in _example_sch.get("components", []):
+                _ref = _ec.get("reference", "")
+                if _ref and "rotation" in _ec:
+                    pcb_rotations[_ref] = int(_ec["rotation"])
+        except Exception:
+            pass  # silently fall back to orig_rotations
+
     # ── Build optimizer-format component list ────────────────────────────
     opt_components = [
         {
             "reference": c.get("ref", c.get("id", "?")),
             "value":     c.get("value", ""),
             "footprint": c.get("footprint", ""),
+            "rotation":  pcb_rotations.get(
+                             c.get("ref", c.get("id", "")),
+                             orig_rotations.get(c.get("ref", c.get("id", "")), 0)
+                         ),
             "nets":      comp_nets.get(c.get("ref", c.get("id", "")), []),
         }
         for c in components
@@ -3245,14 +3265,21 @@ def run_autoplace(board: dict) -> dict:
         hint_weight=hw,
     )
 
-    # ── Write x/y back; preserve original rotations ──────────────────────
+    # ── Write x/y and rotation back ──────────────────────────────────────
+    # Priority: example_schematic.json PCB rotation → optimizer result → original board rotation
     placement_by_ref = {p["reference"]: p for p in placements}
     for comp in components:
         ref = comp.get("ref", comp.get("id", ""))
         if ref in placement_by_ref:
             comp["x"] = placement_by_ref[ref]["x"]
             comp["y"] = placement_by_ref[ref]["y"]
-            comp["rotation"] = orig_rotations.get(ref, comp.get("rotation", 0))
+            # Use PCB rotation from example_schematic if known; fall back to
+            # the optimizer result (which already carries pcb_rotations), then
+            # fall back to the board's original rotation.
+            comp["rotation"] = pcb_rotations.get(
+                ref,
+                placement_by_ref[ref].get("rotation", orig_rotations.get(ref, 0))
+            )
 
     # Merge: keep all original components (including skipped power symbols),
     # updating only the ones that were actually placed.
