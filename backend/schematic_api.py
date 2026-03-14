@@ -356,14 +356,41 @@ async def api_library_layout_example(slug: str, request: Request):
     profile = _read_profile(slug)
     profile["layout_example"] = body
     _write_profile(slug, profile)
-    snapshot_id = _snapshot_profile(slug, "layout_example")
-    # Stamp this snapshot as the active version so history badge stays in sync
+
+    # Update the active version snapshot in-place — do NOT create a new version.
+    # If an active version exists, overwrite its JSON file with the updated profile.
+    # Only fall back to creating a new snapshot when there is no active version yet.
+    av_path = _active_version_path(slug)
+    active_id = None
+    v_num = 1
+    label = "layout_example"
+    if av_path.exists():
+        try:
+            av = json.loads(av_path.read_text(encoding="utf-8"))
+            active_id = av.get("id")
+            v_num = av.get("vNum", 1)
+            label = av.get("label", "layout_example")
+        except Exception:
+            pass
+
+    if active_id:
+        snap_path = _history_dir(slug) / (active_id + ".json")
+        if snap_path.exists():
+            snap_path.write_text(json.dumps({
+                "saved_at": datetime.now(timezone.utc).isoformat(),
+                "label": label,
+                "profile": json.loads(_profile_path(slug).read_text(encoding="utf-8")),
+            }, indent=2), encoding="utf-8")
+            return {"ok": True, "snapshot_id": active_id}
+        # Snapshot file missing — fall through to create fresh
+
+    snapshot_id = _snapshot_profile(slug, label)
     if snapshot_id:
         h = _history_dir(slug)
         files = sorted(h.glob("*.json"))
         v_num = next((i + 1 for i, f in enumerate(files) if f.stem == snapshot_id), 1)
-        _active_version_path(slug).write_text(
-            json.dumps({"id": snapshot_id, "label": "layout_example", "vNum": v_num}, indent=2),
+        av_path.write_text(
+            json.dumps({"id": snapshot_id, "label": label, "vNum": v_num}, indent=2),
             encoding="utf-8")
     return {"ok": True, "snapshot_id": snapshot_id}
 
