@@ -1525,12 +1525,29 @@ class SchematicEditor {
     return h;
   }
 
+  // Returns a Set of "x,y" strings for every port on the highlighted net, or null.
+  _hlPortKeys() {
+    const hn = this._highlightedNet;
+    if (!hn || !this._cachedNetOverlay?.nets) return null;
+    const net = this._cachedNetOverlay.nets.find(n => n.name === hn);
+    if (!net) return null;
+    return new Set(net.ports.map(p => `${p.x},${p.y}`));
+  }
+
   _lblH(lbl, sel) {
     const name = lbl.name || '?';
     const nc = this._labelColor(name);
-    const r = sel ? 4 : 3;
-    const ring = sel ? `<circle cx="${lbl.x}" cy="${lbl.y}" r="7" fill="none" stroke="${nc}" stroke-width="1" opacity="0.4"/>` : '';
-    return `<g class="se-label" data-id="${esc(lbl.id)}" style="cursor:pointer;">
+    const hn = this._highlightedNet;
+    const hlKeys = hn ? this._hlPortKeys() : null;
+    const onNet = hn && (name === hn || hlKeys?.has(`${lbl.x},${lbl.y}`));
+    const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"' : '';
+    const r = (sel || onNet) ? 4 : 3;
+    const ring = sel
+      ? `<circle cx="${lbl.x}" cy="${lbl.y}" r="7" fill="none" stroke="${nc}" stroke-width="1" opacity="0.4"/>`
+      : onNet
+        ? `<circle cx="${lbl.x}" cy="${lbl.y}" r="9" fill="rgba(250,204,21,0.12)" stroke="#facc15" stroke-width="1.5" opacity="0.9"/>`
+        : '';
+    return `<g class="se-label" data-id="${esc(lbl.id)}" style="cursor:pointer;"${opStr}>
       ${ring}
       <circle cx="${lbl.x}" cy="${lbl.y}" r="${r}" fill="${nc}"/>
       <text x="${lbl.x + 6}" y="${lbl.y + 4}" font-family="monospace" font-size="9" font-weight="bold" fill="${nc}">${esc(name)}</text>
@@ -1598,16 +1615,32 @@ class SchematicEditor {
     const isIC = comp.symType === 'ic' || !SYMDEFS[comp.symType];
     const lay = isIC ? this._icLayout(comp.slug || '') : this._def(comp.symType);
     const ports = lay.ports;
+
+    // Net highlight: check if any world-space port of this component is on the highlighted net
+    const hn = this._highlightedNet;
+    let onNet = false;
+    if (hn && !sel) {
+      const hlKeys = this._hlPortKeys();
+      if (hlKeys) onNet = this._ports(comp).some(p => hlKeys.has(`${p.x},${p.y}`));
+    }
+    const opStr = (hn && !sel && !onNet) ? ' opacity="0.15"' : '';
+
     let ph = '';
     if (showPorts) for (const p of ports)
       ph += `<circle cx="${p.dx}" cy="${p.dy}" r="3.5" fill="${hov ? '#60a5fa' : 'rgba(96,165,250,0.4)'}"/>`;
-    // Selection box — dashed border, only on selected (not on hover), so user can tell them apart
+    // Net highlight ring (yellow glow behind the symbol when component is on the active net)
+    let hlRing = '';
+    if (onNet) {
+      const hw = lay.w / 2 + 5, hh = lay.h / 2 + 5;
+      hlRing = `<rect x="${-hw}" y="${-hh}" width="${hw*2}" height="${hh*2}" fill="rgba(250,204,21,0.12)" stroke="#facc15" stroke-width="1.5" opacity="0.9"/>`;
+    }
+    // Selection box
     let selBox = '';
     if (sel) {
       const hw = lay.w / 2 + 6, hh = lay.h / 2 + 6;
       selBox = `<rect x="${-hw}" y="${-hh}" width="${hw*2}" height="${hh*2}" fill="none" stroke="#818cf8" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.8"/>`;
     }
-    // Label drag handle — small circle at label position when selected, for non-power symbols
+    // Label drag handle
     let labelHandle = '';
     const t = comp.symType || 'ic';
     if (sel && t !== 'vcc' && t !== 'gnd') {
@@ -1615,7 +1648,7 @@ class SchematicEditor {
       const lox = comp.labelOffsetX || 0, loy = autoLy + (comp.labelOffsetY || 0);
       labelHandle = `<circle cx="${lox}" cy="${loy}" r="4" fill="#818cf8" opacity="0.5" style="cursor:move"/>`;
     }
-    return `<g class="se-comp" data-id="${esc(comp.id)}" transform="translate(${comp.x},${comp.y}) rotate(${rot})">${selBox}${labelHandle}${this._symH(comp,sel,hov)}${ph}</g>`;
+    return `<g class="se-comp" data-id="${esc(comp.id)}" transform="translate(${comp.x},${comp.y}) rotate(${rot})"${opStr}>${hlRing}${selBox}${labelHandle}${this._symH(comp,sel,hov)}${ph}</g>`;
   }
 
   _ghH() {
