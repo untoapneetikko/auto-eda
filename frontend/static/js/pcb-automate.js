@@ -132,6 +132,16 @@ async function runAutoPlace() {
       }
       editor._snapshot();
       editor.render(); rebuildCompList(); updateBoardInfo();
+      // Show trace reduction stats
+      if (data.trace_reduction_pct != null && data.trace_reduction_pct > 0) {
+        const sb = document.getElementById('status-bar');
+        if (sb) {
+          const prev = sb.textContent;
+          sb.style.color = 'var(--accent)';
+          sb.textContent = `Traces optimized: ${data.trace_original_mm.toFixed(1)}mm → ${data.trace_optimized_mm.toFixed(1)}mm (${data.trace_reduction_pct.toFixed(1)}% shorter)`;
+          setTimeout(() => { sb.style.color = ''; sb.textContent = prev; }, 5000);
+        }
+      }
     }
   } catch(e) {
     alert('Auto-place failed: ' + e.message);

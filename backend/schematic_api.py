@@ -3233,6 +3233,9 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
         result = dict(board)
         result["components"] = merged
         result["traces"] = opt_result["traces"]
+        result["_trace_reduction_pct"] = opt_result.get("reduction_pct", 0)
+        result["_trace_original_mm"] = opt_result.get("original_length", 0)
+        result["_trace_optimized_mm"] = opt_result.get("optimized_length", 0)
         return result
 
     # ── Build comp_ref → list[net_name] ─────────────────────────────────
@@ -3393,6 +3396,9 @@ async def autoplace_board_id(bid: str, clearance_mm: float = 1.0):
     # Include updated traces when trace-aware optimisation ran
     if "traces" in result and result["traces"]:
         resp["traces"] = result["traces"]
+        resp["trace_reduction_pct"] = result.get("_trace_reduction_pct", 0)
+        resp["trace_original_mm"] = result.get("_trace_original_mm", 0)
+        resp["trace_optimized_mm"] = result.get("_trace_optimized_mm", 0)
     return resp
 
 
@@ -3405,6 +3411,9 @@ async def autoplace_direct(request: Request):
     resp: dict[str, Any] = {"components": result.get("components", []), "placed": len(result.get("components", []))}
     if "traces" in result and result["traces"]:
         resp["traces"] = result["traces"]
+        resp["trace_reduction_pct"] = result.get("_trace_reduction_pct", 0)
+        resp["trace_original_mm"] = result.get("_trace_original_mm", 0)
+        resp["trace_optimized_mm"] = result.get("_trace_optimized_mm", 0)
     return resp
 
 
