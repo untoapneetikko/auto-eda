@@ -1029,13 +1029,14 @@ class SchematicEditor {
   // fromDrag=false → called on load/undo/redo → only add T-junction dots, never create
   //                  port-to-port wires (avoids spurious connections between nearby symbols).
   _autoConnectPorts(comp, fromDrag = false) {
-    const TOL = this.SNAP * 1.2;
+    const EXACT = 0.5; // ports must be at the exact same coordinate to auto-connect
+    const TOL_TJUNC = this.SNAP * 0.8; // looser only for T-junction body detection
     const mkWire = (x1, y1, x2, y2) => {
       const already = this.project.wires.some(w => {
         if (!w.points?.length) return false;
         const a = w.points[0], b = w.points[w.points.length - 1];
-        return (Math.hypot(a.x-x1,a.y-y1)<=TOL && Math.hypot(b.x-x2,b.y-y2)<=TOL)
-            || (Math.hypot(a.x-x2,a.y-y2)<=TOL && Math.hypot(b.x-x1,b.y-y1)<=TOL);
+        return (Math.hypot(a.x-x1,a.y-y1)<EXACT && Math.hypot(b.x-x2,b.y-y2)<EXACT)
+            || (Math.hypot(a.x-x2,a.y-y2)<EXACT && Math.hypot(b.x-x1,b.y-y1)<EXACT);
       });
       if (!already) this.project.wires.push({
         id: 'cw' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
@@ -1048,12 +1049,12 @@ class SchematicEditor {
         for (const other of this.project.components) {
           if (other.id === comp.id) continue;
           for (const otherPort of this._ports(other)) {
-            if (Math.hypot(myPort.x - otherPort.x, myPort.y - otherPort.y) > TOL) continue;
+            if (Math.hypot(myPort.x - otherPort.x, myPort.y - otherPort.y) >= EXACT) continue;
             const connected = this.project.wires.some(w => {
               if (!w.points?.length) return false;
               const a = w.points[0], b = w.points[w.points.length - 1];
-              return (Math.hypot(a.x-myPort.x,a.y-myPort.y)<=TOL && Math.hypot(b.x-otherPort.x,b.y-otherPort.y)<=TOL)
-                  || (Math.hypot(b.x-myPort.x,b.y-myPort.y)<=TOL && Math.hypot(a.x-otherPort.x,a.y-otherPort.y)<=TOL);
+              return (Math.hypot(a.x-myPort.x,a.y-myPort.y)<EXACT && Math.hypot(b.x-otherPort.x,b.y-otherPort.y)<EXACT)
+                  || (Math.hypot(b.x-myPort.x,b.y-myPort.y)<EXACT && Math.hypot(a.x-otherPort.x,a.y-otherPort.y)<EXACT);
             });
             if (!connected) mkWire(myPort.x, myPort.y, otherPort.x, otherPort.y);
           }
@@ -1063,14 +1064,14 @@ class SchematicEditor {
       for (const wire of this.project.wires) {
         if (!wire.points?.length) continue;
         const pts = wire.points;
-        if (pts.some(p => Math.hypot(p.x - myPort.x, p.y - myPort.y) <= TOL)) continue;
+        if (pts.some(p => Math.hypot(p.x - myPort.x, p.y - myPort.y) < EXACT)) continue;
         for (let j = 0; j < pts.length - 1; j++) {
           const a = pts[j], b = pts[j + 1];
           if (a.x === b.x && a.y === b.y) continue;
-          const onH = a.y === b.y && Math.abs(myPort.y - a.y) < TOL &&
-                      myPort.x > Math.min(a.x, b.x) + TOL && myPort.x < Math.max(a.x, b.x) - TOL;
-          const onV = a.x === b.x && Math.abs(myPort.x - a.x) < TOL &&
-                      myPort.y > Math.min(a.y, b.y) + TOL && myPort.y < Math.max(a.y, b.y) - TOL;
+          const onH = a.y === b.y && Math.abs(myPort.y - a.y) < TOL_TJUNC &&
+                      myPort.x > Math.min(a.x, b.x) + TOL_TJUNC && myPort.x < Math.max(a.x, b.x) - TOL_TJUNC;
+          const onV = a.x === b.x && Math.abs(myPort.x - a.x) < TOL_TJUNC &&
+                      myPort.y > Math.min(a.y, b.y) + TOL_TJUNC && myPort.y < Math.max(a.y, b.y) - TOL_TJUNC;
           if (onH || onV) { mkWire(myPort.x, myPort.y, myPort.x, myPort.y); break; }
         }
       }
