@@ -929,7 +929,7 @@ def optimize_placement_for_traces(
     # ── Map each trace to the components it connects ──────────────────
     # For each trace, find which component pads are at its endpoints.
     # trace_connections[t] = list of (comp_idx, pad_idx, "start"|"end", seg_idx)
-    EPS = 0.5  # mm snap tolerance
+    EPS = 1.5  # mm snap tolerance (pads can be offset from trace endpoints)
 
     def _build_trace_connections() -> list[list[tuple[int, int, str, int]]]:
         conns: list[list[tuple[int, int, str, int]]] = []
@@ -939,11 +939,17 @@ def optimize_placement_for_traces(
                 for end_key in ("start", "end"):
                     pt = seg.get(end_key, {})
                     px, py = float(pt.get("x", 0)), float(pt.get("y", 0))
-                    for pad_key, (ci, pi) in pad_lookup.items():
+                    # Find nearest pad within EPS
+                    best_dist = EPS
+                    best_match: tuple[int, int] | None = None
+                    for _pad_key, (ci, pi) in pad_lookup.items():
                         wx, wy = _pad_world(ci, pi)
-                        if math.hypot(px - wx, py - wy) < EPS:
-                            tc.append((ci, pi, end_key, si))
-                            break
+                        d = math.hypot(px - wx, py - wy)
+                        if d < best_dist:
+                            best_dist = d
+                            best_match = (ci, pi)
+                    if best_match is not None:
+                        tc.append((best_match[0], best_match[1], end_key, si))
             conns.append(tc)
         return conns
 

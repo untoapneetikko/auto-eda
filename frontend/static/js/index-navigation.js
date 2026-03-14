@@ -297,14 +297,16 @@ function renderAccPalette(filter) {
     const col = _paletteTypeColors[st] || '#6c63ff';
     const lbl = _paletteTypeLabels[st] || (st||'IC').slice(0,4).toUpperCase();
     const name = p.part_number || p.slug || '';
-    const desc = (p.description || '').slice(0, 36);
+    const desc = (p.description || '').slice(0, 34);
     return `<div onclick="accPlaceComponent('${p.slug}');const _i=document.getElementById('acc-palette-search');if(_i)_i.value='';accShowPanel('nets');"
         title="${(p.description||'').slice(0,80)}"
         style="display:flex;align-items:center;gap:6px;padding:5px 10px 5px 7px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);border-left:3px solid transparent;transition:background 0.1s;"
         onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
       <span style="font-size:9px;font-weight:700;color:${col};background:${col}22;border-radius:3px;padding:1px 4px;flex-shrink:0;">${lbl}</span>
-      <span style="font-family:monospace;font-size:10px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${name}</span>
-      <span style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${desc}</span>
+      <div style="display:flex;flex-direction:column;gap:1px;min-width:0;flex:1;overflow:hidden;">
+        <span style="font-family:monospace;font-size:10px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${name}</span>
+        <span style="font-size:9px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${desc}</span>
+      </div>
     </div>`;
   }).join('');
 }
