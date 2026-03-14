@@ -200,6 +200,7 @@ async function newBoardVersion(){
       const apData = await apRes.json();
       if (apRes.ok && apData.components && editor?.board) {
         editor.board.components = apData.components;
+        editor.fitBoard();
         editor.render(); rebuildCompList && rebuildCompList(); updateBoardInfo && updateBoardInfo();
         await saveBoard();
       }

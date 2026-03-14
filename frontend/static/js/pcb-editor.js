@@ -308,7 +308,7 @@ class PCBEditor {
     const ctx=this.ctx;
     ctx.lineCap='round'; ctx.lineJoin='round'; ctx.setLineDash([]);
     for(const tr of(this.board.traces||[])){
-      if(tr.layer!==layer)continue;
+      if((tr.layer||'F.Cu')!==layer)continue;
       const sel=this.selectedTrace===tr;
       const hov=this._hoverTrace===tr&&!sel;
       const isDragging=this._isDragTrace&&this._dragTrace===tr;

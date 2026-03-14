@@ -145,6 +145,7 @@ async function runAutoPlace() {
     if (data.components && editor?.board) {
       editor.board.components = data.components;
       editor._snapshot();
+      editor.fitBoard();
       editor.render(); rebuildCompList(); updateBoardInfo();
     }
   } catch(e) {
