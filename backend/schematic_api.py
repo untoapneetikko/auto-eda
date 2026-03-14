@@ -2930,7 +2930,8 @@ def run_autoroute(board: dict) -> dict:
     # (There is no top-level board.nets[] array.)
     # Pad world position accounts for component rotation.
     # Pads with name "NC" (No Connect) are excluded — they must not be routed.
-    net_pads: dict[str, list[tuple[float, float]]] = {}
+    # net_pads stores (x, y, layer_index) — layer_index: 0=F.Cu, 1=B.Cu
+    net_pads: dict[str, list[tuple[float, float, int]]] = {}
     nc_pad_positions: list[tuple[float, float]] = []  # blocked zones around NC pins
     nc_nets: set[str] = set()  # nets that contain at least one NC-named pad
     _net_has_real_pad: set[str] = set()  # nets that have at least one non-NC pad
@@ -2940,6 +2941,7 @@ def run_autoroute(board: dict) -> dict:
         cy  = float(comp.get("y", 0))
         rot = float(comp.get("rotation", 0)) * math.pi / 180
         cos_r, sin_r = math.cos(rot), math.sin(rot)
+        comp_layer = 1 if comp.get("layer", "F") == "B" else 0  # 0=F.Cu, 1=B.Cu
         for pad in comp.get("pads", []):
             net = (pad.get("net", "") or "").upper()
             # Rotate local pad offset into world space
@@ -2957,8 +2959,12 @@ def run_autoroute(board: dict) -> dict:
                 continue  # NEVER add NC pads to net_pads
             if not net:
                 continue
+            # Through-hole pads exist on both layers; SMD pads on their component's layer
+            pad_layer = comp_layer
+            if pad.get("type") == "thru_hole":
+                pad_layer = 0  # through-hole: accessible from F.Cu (BFS starts here)
             _net_has_real_pad.add(net)
-            net_pads.setdefault(net, []).append((px, py))
+            net_pads.setdefault(net, []).append((px, py, pad_layer))
     # Nets where ALL pads are NC should be skipped
     nc_only_nets = nc_nets - _net_has_real_pad
 
@@ -3014,7 +3020,8 @@ def run_autoroute(board: dict) -> dict:
     all_pad_cells: dict[str, set[tuple[int, int]]] = {}
     for net_name_p, pads_p in net_pads.items():
         cells: set[tuple[int, int]] = set()
-        for px, py in pads_p:
+        for pad_tuple in pads_p:
+            px, py = pad_tuple[0], pad_tuple[1]
             hw, hh = _get_pad_hw(px, py)
             cells |= _pad_cells(px, py, hw, hh)
         all_pad_cells[net_name_p] = cells
@@ -3034,17 +3041,19 @@ def run_autoroute(board: dict) -> dict:
 
     def _bfs(sx: float, sy: float, ex: float, ey: float,
              force_single_layer: bool = False,
+             start_layer: int = 0,
              ) -> tuple[list[tuple[float, float, int]], bool]:
         """BFS on 2-layer grid. Returns (path with layer info, used_via).
 
         Each path element is (world_x, world_y, layer_index).
-        If allow_vias is False or force_single_layer is True, only searches layer 0.
+        If allow_vias is False or force_single_layer is True, only searches
+        the start_layer (no layer transitions).
         """
-        sg = (int(round(sx / GRID)), int(round(sy / GRID)), 0)
+        sg = (int(round(sx / GRID)), int(round(sy / GRID)), start_layer)
         # End must be reachable on either layer (pads are through-hole or SMD on F.Cu)
         eg_xy = (int(round(ex / GRID)), int(round(ey / GRID)))
         if sg[:2] == eg_xy:
-            return [(sx, sy, 0), (ex, ey, 0)], False
+            return [(sx, sy, start_layer), (ex, ey, start_layer)], False
 
         dist: dict[tuple[int, int, int], int] = {sg: 0}
         prev: dict[tuple[int, int, int], tuple[int, int, int]] = {}
@@ -3067,7 +3076,7 @@ def run_autoroute(board: dict) -> dict:
                 if path:
                     path[0] = (sx, sy, path[0][2])
                     path.append((ex, ey, path[-1][2]))
-                used_via = any(p[2] != 0 for p in path)
+                used_via = len(set(p[2] for p in path)) > 1  # via if path uses multiple layers
                 return path, used_via
 
             layer = cur[2]
@@ -3127,11 +3136,15 @@ def run_autoroute(board: dict) -> dict:
         occupied -= own_cells
 
         # Greedy nearest-neighbour MST: always connect closest unconnected pad
-        remaining: list[tuple[float, float]] = list(pads_xy)
-        connected: list[tuple[float, float]] = [remaining.pop(0)]
+        # pads_xy are (x, y, layer_index) tuples
+        remaining: list[tuple[float, float, int]] = list(pads_xy)
+        connected: list[tuple[float, float, int]] = [remaining.pop(0)]
         per_layer_segs: dict[str, list[dict]] = {}
         vias_list: list[dict] = []
         all_routed = True
+
+        # RF nets must stay on the pad's layer — no layer transitions allowed
+        _is_rf_net = net_name.upper().startswith("RF")
 
         while remaining:
             best_i    = 0
@@ -3148,16 +3161,17 @@ def run_autoroute(board: dict) -> dict:
             dest = remaining.pop(best_i)
             connected.append(dest)
 
-            # RF nets must stay on a single layer — no vias allowed
-            _is_rf_net = net_name.upper().startswith("RF") or net_name.upper().startswith("RF_")
+            # Use the source pad's layer as the starting layer for BFS
+            src_layer = best_src[2] if len(best_src) > 2 else 0
             path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
-                                  force_single_layer=_is_rf_net)
+                                  force_single_layer=_is_rf_net,
+                                  start_layer=src_layer)
             if not path:
                 # BFS blocked — fall back to straight Manhattan segment so the
                 # net is still partially connected rather than lost entirely.
                 all_routed = False
                 mid = (dest[0], best_src[1])  # horizontal-first elbow
-                path = [(best_src[0], best_src[1], 0), (mid[0], mid[1], 0), (dest[0], dest[1], 0)]
+                path = [(best_src[0], best_src[1], src_layer), (mid[0], mid[1], src_layer), (dest[0], dest[1], src_layer)]
                 used_via = False
 
             # Split path into per-layer segments and insert vias at transitions
@@ -3230,7 +3244,13 @@ async def autoroute_board_id(bid: str):
     # Save updated board
     autoroute_meta = result.pop("_autoroute", {})
     fpath.write_text(json.dumps(result, indent=2), encoding="utf-8")
-    return {**autoroute_meta, "board": result}
+    return {
+        "routed": autoroute_meta.get("routed", 0),
+        "total":  autoroute_meta.get("total", 0),
+        "via_count": autoroute_meta.get("vias", 0),
+        "traces": result.get("traces", []),
+        "vias":   result.get("vias", []),
+    }
 
 
 @router.post("/pcb/autoroute")
@@ -3239,7 +3259,13 @@ async def autoroute_direct(request: Request):
     board = body.get("board", body)
     result = run_autoroute(board)
     autoroute_meta = result.pop("_autoroute", {})
-    return {**autoroute_meta, "board": result}
+    return {
+        "routed": autoroute_meta.get("routed", 0),
+        "total":  autoroute_meta.get("total", 0),
+        "via_count": autoroute_meta.get("vias", 0),
+        "traces": result.get("traces", []),
+        "vias":   result.get("vias", []),
+    }
 
 
 # ── Autoplace ─────────────────────────────────────────────────────────────────
@@ -3363,7 +3389,7 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
     nets = board.get("nets", [])
     comp_nets: dict[str, list[str]] = {c["ref"]: [] for c in components}
     for net in nets:
-        net_name = net.get("name", "")
+        net_name = (net.get("name", "") or "").upper()
         if not net_name:
             continue
         for pad_ref in net.get("pads", []):
@@ -3374,7 +3400,7 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
     for comp in components:
         ref = comp.get("ref", "")
         for pad in comp.get("pads", []):
-            net_name = pad.get("net", "")
+            net_name = (pad.get("net", "") or "").upper()
             if net_name and ref in comp_nets and net_name not in comp_nets[ref]:
                 comp_nets[ref].append(net_name)
 
@@ -3783,7 +3809,7 @@ async def api_pcb_import_schematic(request: Request):
     for net_name, pads_list in netlist.items():
         if isinstance(pads_list, list):
             for p in pads_list:
-                pad_net[str(p)] = net_name
+                pad_net[str(p)] = net_name.upper()  # force CAPS
 
     # ── Pre-load layout_example data for example groups ────────────────────
     # When a schematic component was placed via an "example circuit" drop
@@ -4209,7 +4235,7 @@ async def api_pcb_import_schematic(request: Request):
                             f"{sc_ref}.{parts[1]}")
 
     pcb_nets: list[dict] = [
-        {"name": name, "pads": sorted(pads)}
+        {"name": name.upper(), "pads": sorted(pads)}
         for name, pads in pcb_nets_by_name.items()
         if pads
     ]

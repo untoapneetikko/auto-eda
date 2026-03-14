@@ -535,7 +535,8 @@ class PCBEditor {
   _drawVias(){
     if(this.layers['Vias']&&!this.layers['Vias'].visible)return;
     const ctx=this.ctx;
-    for(const v of(this.board.vias||[])){
+    const viasList=Array.isArray(this.board.vias)?this.board.vias:[];
+    for(const v of viasList){
       const cx=this.mmX(v.x),cy=this.mmY(v.y);
       const or=Math.max(3,(v.size||DR.viaSize||1.0)/2*this.scale);
       const ir=Math.max(1,(v.drill||DR.viaDrill||0.6)/2*this.scale);
