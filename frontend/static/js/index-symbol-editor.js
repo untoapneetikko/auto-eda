@@ -1249,7 +1249,12 @@ function _applyWireNetName(editorRef, wireId, newName) {
 
   editorRef._saveHist();
 
-  if (oldName) {
+  // Only use the rename/remove path if there's an actual label with oldName in project.labels.
+  // oldName can also come from _cachedNetOverlay (pin connectivity via API) — in that case
+  // there's no label to rename, so we fall through to placing a new one.
+  const hasOldLabel = oldName && editorRef.project.labels.some(l => l.name === oldName);
+
+  if (hasOldLabel) {
     // Rename or remove every label with the old name (spreads to whole net)
     if (newName) {
       editorRef.project.labels.forEach(l => { if (l.name === oldName) l.name = newName; });
@@ -1257,8 +1262,8 @@ function _applyWireNetName(editorRef, wireId, newName) {
       editorRef.project.labels = editorRef.project.labels.filter(l => l.name !== oldName);
     }
   } else if (newName) {
-    // No label anywhere in the connected net — place one at a free endpoint.
-    // Walk all connected wires to find an endpoint not occupied by an existing label.
+    // No real label for this net (name came from pin connectivity or no name at all).
+    // Place a new label at a free endpoint of the connected wire group.
     const connectedIds = _getConnectedWireIds(editorRef.project, wireId);
     const taken = new Set((editorRef.project.labels || []).map(l => `${l.x},${l.y}`));
     let placePt = null;
