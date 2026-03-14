@@ -455,13 +455,24 @@ Then parse this component:
         <div class="profile-body">
           <div style="display:flex;align-items:stretch;">
             <!-- Nets panel — left side -->
-            <div style="width:148px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;display:flex;flex-direction:column;overflow:hidden;">
+            <div style="width:148px;flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;display:flex;flex-direction:column;overflow:hidden;position:relative;">
               <div style="padding:7px 10px 5px;border-bottom:1px solid var(--border);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
                 <span>Nets</span>
-                <span id="acc-nets-count" style="font-size:10px;font-weight:600;"></span>
+                <div style="display:flex;align-items:center;gap:4px;">
+                  <span id="acc-nets-count" style="font-size:10px;font-weight:600;"></span>
+                  <button onclick="accShowPanel('search')" title="Search library" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:0 2px;line-height:1;" id="acc-search-btn">🔍</button>
+                </div>
               </div>
               <div id="acc-nets-list" style="overflow-y:auto;flex:1;font-size:10px;">
                 <div style="padding:6px 10px;font-size:10px;color:var(--text-muted);">No nets yet.</div>
+              </div>
+              <!-- Search overlay — covers the nets list when active -->
+              <div id="acc-search-panel" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:var(--surface);flex-direction:column;z-index:10;">
+                <div style="padding:5px 8px 4px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                  <input id="acc-palette-search" type="text" placeholder="Search…" oninput="renderAccPalette(this.value)" style="flex:1;min-width:0;padding:2px 5px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:10px;font-family:monospace;"/>
+                  <button onclick="accShowPanel('nets')" title="Close search" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;">✕</button>
+                </div>
+                <div id="acc-palette" style="overflow-y:auto;flex:1;font-size:10px;"></div>
               </div>
             </div>
             <div style="flex:1;min-width:0;">
@@ -485,12 +496,6 @@ Then parse this component:
                   <button onclick="accSaveExample(this)" title="Save example circuit" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#22c55e;border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;cursor:pointer;">💾 Save</button>
                   <button onclick="openExampleInEditor()" title="Open in full Schematic Editor" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">✏ Open in Editor</button>
                 </div>
-                <!-- Component palette bar -->
-                <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid var(--border);background:var(--bg);min-height:32px;">
-                  <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">Place:</span>
-                  <input id="acc-palette-search" type="text" placeholder="Search library…" oninput="renderAccPalette(this.value)" style="width:110px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);color:var(--text);font-size:10px;font-family:monospace;flex-shrink:0;"/>
-                  <div id="acc-palette" style="display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;flex:1;align-items:center;"></div>
-                </div>
                 <svg id="app-circuit-canvas" style="display:block;width:100%;height:420px;"></svg>
               </div>
             </div>
@@ -512,44 +517,6 @@ Then parse this component:
             </div>
           </div>
 
-          ${(() => {
-            // Build BOM from example_circuit.components if available, else required_passives
-            const ecComps = (p.example_circuit?.components || []).filter(c => c.slug && c.slug !== 'GND' && c.slug !== 'VCC');
-            if (!ecComps.length && !(p.required_passives||[]).length) return '';
-            const rows = ecComps.length
-              ? ecComps.map((c, i) => {
-                  const typeLabel = c.symType === 'ic' ? 'IC' : (c.symType || 'passive');
-                  const typeCls = c.symType === 'ic' ? 'type-output' : 'type-passive';
-                  const dispVal = profileCache[c.slug]?.value || profileCache[c.slug]?.part_number || c.value || c.slug || '';
-                  return `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;" title="Place ${c.designator||''} in schematic"
-                      data-slug="${esc(c.slug)}" data-st="${esc(c.symType||'ic')}" data-val="" data-idx="${i}">
-                    <td class="pin-num">${c.designator||''}</td>
-                    <td><span class="pin-type ${typeCls}">${typeLabel}</span></td>
-                    <td class="pin-name">${dispVal}</td>
-                    <td style="font-size:11px;color:var(--text-muted);">${c.slug||''}</td>
-                    <td class="acc-bom-icon" style="width:20px;text-align:center;">+</td>
-                  </tr>`;
-                }).join('')
-              : `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;"
-                    data-slug="${esc(p.slug||p.part_number||'')}" data-st="ic" data-val="" data-idx="0">
-                  <td class="pin-num">U1</td><td><span class="pin-type type-output">IC</span></td>
-                  <td class="pin-name">${p.part_number||''}</td><td style="font-size:11px;color:var(--text-muted);">${p.manufacturer||''}</td>
-                  <td class="acc-bom-icon" style="width:20px;text-align:center;">+</td>
-                </tr>` + (p.required_passives||[]).map((pas,i) => {
-                  const ref = pas.type==='capacitor'?'C':pas.type==='inductor'?'L':'R';
-                  const slug = pas.type==='capacitor'?'CAPACITOR':pas.type==='inductor'?'INDUCTOR':'RESISTOR';
-                  return `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;"
-                      data-slug="${esc(slug)}" data-st="${esc(pas.type)}" data-val="${esc(pas.value||'')}" data-idx="${i+1}">
-                    <td class="pin-num">${ref}${i+1}</td><td><span class="pin-type type-passive">${pas.type}</span></td>
-                    <td class="pin-name">${pas.value}</td><td style="font-size:11px;color:var(--text-muted);">${pas.part_number||'—'}</td>
-                    <td class="acc-bom-icon" style="width:20px;text-align:center;">+</td>
-                  </tr>`;
-                }).join('');
-            return `<div>
-              <div class="section-title" style="display:flex;align-items:center;gap:8px;">🧩 Circuit Components <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">— click a row to place</span></div>
-              <table class="pin-table"><thead><tr><th>Ref</th><th>Type</th><th>Value</th><th>Slug</th><th></th></tr></thead><tbody id="acc-bom-tbody">${rows}</tbody></table>
-            </div>`;
-          })()}
         </div>
       </div>
 

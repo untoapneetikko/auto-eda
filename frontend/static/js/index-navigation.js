@@ -187,6 +187,18 @@ async function placeFromPalette(slug) {
   editor.startPlace(slug, detectSymbolType(p));
 }
 
+function accShowPanel(mode) {
+  const searchPanel = document.getElementById('acc-search-panel');
+  if (!searchPanel) return;
+  if (mode === 'search') {
+    searchPanel.style.display = 'flex';
+    const inp = document.getElementById('acc-palette-search');
+    if (inp) { inp.focus(); renderAccPalette(inp.value); }
+  } else {
+    searchPanel.style.display = 'none';
+  }
+}
+
 // Save the example editor's current circuit back to the server
 async function accSaveExample(btn) {
   if (!selectedSlug) {
@@ -248,17 +260,25 @@ function renderAccPalette(filter) {
   const el = document.getElementById('acc-palette');
   if (!el) return;
   if (!library || !Object.keys(library).length) {
-    el.innerHTML = '<span style="font-size:10px;color:var(--text-muted);">Loading…</span>';
+    el.innerHTML = '<div style="padding:8px 10px;font-size:10px;color:var(--text-muted);">Loading…</div>';
     setTimeout(() => renderAccPalette(filter), 300);
     return;
   }
   const parts = Object.values(library).filter(p =>
     !filter || p.part_number?.toLowerCase().includes(filter.toLowerCase()) ||
     p.description?.toLowerCase().includes(filter.toLowerCase())
-  ).slice(0, 12);
+  ).slice(0, 30);
+  if (!parts.length) {
+    el.innerHTML = '<div style="padding:8px 10px;font-size:10px;color:var(--text-muted);">No results.</div>';
+    return;
+  }
   el.innerHTML = parts.map(p => `
-    <button onclick="accPlaceComponent('${p.slug}')" title="${(p.description||'').slice(0,80)}"
-      style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:2px 8px;font-size:10px;font-family:monospace;cursor:pointer;white-space:nowrap;flex-shrink:0;">${p.part_number || p.slug}</button>
+    <div onclick="accPlaceComponent('${p.slug}');accShowPanel('nets')" title="${(p.description||'').slice(0,80)}"
+      style="padding:5px 10px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:1px;"
+      onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
+      <span style="font-family:monospace;font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.part_number || p.slug}</span>
+      <span style="font-size:9px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(p.description||'').slice(0,40)}</span>
+    </div>
   `).join('');
 }
 
