@@ -835,9 +835,12 @@ class PCBEditor {
     if(hitPad&&netMatch){ex=hitPad.x;ey=hitPad.y;}
     ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
-    // Compute avoidance path for the last segment
+    // Compute avoidance path for the last segment (cached until endpoint grid cell changes)
     const lastPt=pts[pts.length-1];
-    const avoidPath=this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+    const _cacheKey=`${lastPt.x.toFixed(2)},${lastPt.y.toFixed(2)},${ex.toFixed(2)},${ey.toFixed(2)},${this.routeNet||''}`;
+    let avoidPath;
+    if(this._avoidCache&&this._avoidCacheKey===_cacheKey){avoidPath=this._avoidCache;}
+    else{avoidPath=this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');this._avoidCache=avoidPath;this._avoidCacheKey=_cacheKey;}
     // Validate: check if any segment in the avoidance path still crosses a foreign pad
     let pathBlocked=false, blockingPad=null;
     for(let i=0;i<avoidPath.length-1;i++){
@@ -1048,58 +1051,106 @@ class PCBEditor {
     return obs;
   }
 
-  /** Given a start and end point, return an array of waypoints [start, ...intermediate, end]
-   *  that avoids all foreign-net pads. Uses iterative greedy corner-hugging. */
-  _routeAroundPads(sx,sy,ex,ey,net,maxDepth){
-    if(maxDepth===undefined) maxDepth=12;
+  /** A* grid pathfinder: returns waypoints [start, ...intermediate, end] that
+   *  avoid all foreign-net pads.  Uses a coarse grid for performance during
+   *  live mouse-move preview. */
+  _routeAroundPads(sx,sy,ex,ey,net){
+    const GRID=DR.routingGrid||0.25;
     const obs=this._getObstacles(net);
-    const pts=[{x:sx,y:sy}];
-    let cx=sx,cy=sy;
-    const visited=new Set();
 
-    for(let iter=0;iter<maxDepth;iter++){
-      // Find first obstacle blocking segment from (cx,cy) to (ex,ey)
-      const blocker=this._firstBlockingObs(cx,cy,ex,ey,obs);
-      if(!blocker){ pts.push({x:ex,y:ey}); return pts; }
+    // Quick check: direct path clear?
+    if(!this._segHitsWrongPad(sx,sy,ex,ey,net))return[{x:sx,y:sy},{x:ex,y:ey}];
 
-      // Pick best corner of the blocking obstacle to route around
-      const o=blocker;
-      const corners=[
-        {x:o.x-o.hx, y:o.y-o.hy},
-        {x:o.x+o.hx, y:o.y-o.hy},
-        {x:o.x-o.hx, y:o.y+o.hy},
-        {x:o.x+o.hx, y:o.y+o.hy},
-      ];
-      // Score: distance from current + distance to endpoint, pick shortest that doesn't revisit
-      let best=null, bestCost=Infinity;
-      for(const cn of corners){
-        const key=`${cn.x.toFixed(3)},${cn.y.toFixed(3)}`;
-        if(visited.has(key))continue;
-        // Ensure corner→end doesn't go back through the same obstacle
-        const cost=Math.hypot(cn.x-cx,cn.y-cy)+Math.hypot(ex-cn.x,ey-cn.y);
-        if(cost<bestCost){bestCost=cost;best=cn;best._key=key;}
-      }
-      if(!best){ pts.push({x:ex,y:ey}); return pts; } // fallback: no valid corner
-      visited.add(best._key);
-      pts.push({x:best.x,y:best.y});
-      cx=best.x; cy=best.y;
-    }
-    pts.push({x:ex,y:ey});
-    return pts;
-  }
+    // Build bounding box with margin
+    const margin=8*GRID;
+    const minX=Math.min(sx,ex)-margin, maxX=Math.max(sx,ex)+margin;
+    const minY=Math.min(sy,ey)-margin, maxY=Math.max(sy,ey)+margin;
+    const cols=Math.ceil((maxX-minX)/GRID)+1;
+    const rows=Math.ceil((maxY-minY)/GRID)+1;
+    if(cols*rows>80000)return[{x:sx,y:sy},{x:ex,y:ey}]; // too large, skip
 
-  /** Returns the first obstacle that blocks segment (sx,sy)->(ex,ey), or null. */
-  _firstBlockingObs(sx,sy,ex,ey,obs){
-    const dx=ex-sx,dy=ey-sy,len2=dx*dx+dy*dy;
-    let earliest=null, earliestT=Infinity;
+    // Build blocked cell set
+    const blocked=new Set();
     for(const o of obs){
-      let t=len2>0?Math.max(0,Math.min(1,((o.x-sx)*dx+(o.y-sy)*dy)/len2)):0;
-      const cx2=sx+t*dx,cy2=sy+t*dy;
-      if(Math.abs(cx2-o.x)<o.hx&&Math.abs(cy2-o.y)<o.hy){
-        if(t<earliestT){earliestT=t;earliest=o;}
+      const gx0=Math.floor((o.x-o.hx-minX)/GRID);
+      const gx1=Math.ceil((o.x+o.hx-minX)/GRID);
+      const gy0=Math.floor((o.y-o.hy-minY)/GRID);
+      const gy1=Math.ceil((o.y+o.hy-minY)/GRID);
+      for(let gx=Math.max(0,gx0);gx<=Math.min(cols-1,gx1);gx++)
+        for(let gy=Math.max(0,gy0);gy<=Math.min(rows-1,gy1);gy++)
+          blocked.add(gx+gy*cols);
+    }
+
+    const sg=Math.round((sx-minX)/GRID), sr=Math.round((sy-minY)/GRID);
+    const eg=Math.round((ex-minX)/GRID), er=Math.round((ey-minY)/GRID);
+    const startK=sg+sr*cols, endK=eg+er*cols;
+
+    // Unblock start and end cells
+    blocked.delete(startK); blocked.delete(endK);
+
+    // Directions based on angle step
+    const stepDeg=DR.routeAngleStep??45;
+    let dirs;
+    if(stepDeg>=90)dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+    else dirs=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+    const SQRT2=1.414;
+
+    // A* with Manhattan/Chebyshev heuristic
+    const gScore=new Map(); gScore.set(startK,0);
+    const came=new Map();
+    const heur=(k)=>{const c=k%cols,r=(k-c)/cols;const dx=Math.abs(c-eg),dy=Math.abs(r-er);return stepDeg>=90?(dx+dy)*GRID:Math.max(dx,dy)*GRID;};
+    // Min-heap using array (good enough for <80k cells)
+    const open=[[heur(startK),startK]];
+    const closed=new Set();
+    let found=false;
+
+    while(open.length>0){
+      // Pop min
+      let mi=0;for(let i=1;i<open.length;i++)if(open[i][0]<open[mi][0])mi=i;
+      const[,cur]=open[mi]; open[mi]=open[open.length-1]; open.pop();
+      if(cur===endK){found=true;break;}
+      if(closed.has(cur))continue;
+      closed.add(cur);
+      const cc=cur%cols,cr=(cur-cc)/cols;
+      const cg=gScore.get(cur);
+
+      for(const[dx,dy]of dirs){
+        const nc=cc+dx,nr=cr+dy;
+        if(nc<0||nc>=cols||nr<0||nr>=rows)continue;
+        const nk=nc+nr*cols;
+        if(blocked.has(nk)||closed.has(nk))continue;
+        const cost=(dx!==0&&dy!==0)?SQRT2:1;
+        const ng=cg+cost;
+        if(!gScore.has(nk)||ng<gScore.get(nk)){
+          gScore.set(nk,ng);
+          came.set(nk,cur);
+          open.push([ng+heur(nk),nk]);
+        }
       }
     }
-    return earliest;
+
+    if(!found)return[{x:sx,y:sy},{x:ex,y:ey}]; // no path
+
+    // Reconstruct
+    const path=[];
+    let k=endK;
+    while(k!==undefined){path.push(k);k=came.get(k);}
+    path.reverse();
+
+    // Convert grid to world coords and simplify (remove collinear points)
+    const raw=path.map(k=>{const c=k%cols,r=(k-c)/cols;return{x:minX+c*GRID,y:minY+r*GRID};});
+    // Force exact start/end
+    raw[0]={x:sx,y:sy}; raw[raw.length-1]={x:ex,y:ey};
+    // Remove collinear intermediate points
+    if(raw.length<=2)return raw;
+    const simplified=[raw[0]];
+    for(let i=1;i<raw.length-1;i++){
+      const p=simplified[simplified.length-1],c=raw[i],n=raw[i+1];
+      const dx1=c.x-p.x,dy1=c.y-p.y,dx2=n.x-c.x,dy2=n.y-c.y;
+      if(Math.abs(dx1*dy2-dy1*dx2)>0.001)simplified.push(c); // not collinear
+    }
+    simplified.push(raw[raw.length-1]);
+    return simplified;
   }
 
   /** Check if a single segment (sx,sy)->(ex,ey) crosses any pad not on `net`.
