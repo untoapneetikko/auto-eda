@@ -498,7 +498,8 @@ class PCBEditor {
         oc.moveTo(vsx+r,vsy);
         oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
-      // — Trace clearances (capsule = rectangle + semicircular end-caps) —
+      oc.fill(); // erase pad + via clearance shapes in one pass
+      // — Trace clearances (capsule — each filled individually for reliable paths) —
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===z.net)continue;
         const hw=(tr.width||DR.traceWidth||0.25)/2+cl;
@@ -511,15 +512,16 @@ class PCBEditor {
           const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
           const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
           const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
+          oc.beginPath();
           oc.moveTo(asx-nx,asy-ny);
           oc.lineTo(bsx-nx,bsy-ny);
           oc.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
           oc.lineTo(asx+nx,asy+ny);
           oc.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
           oc.closePath();
+          oc.fill();
         }
       }
-      oc.fill(); // erase all clearance shapes in one pass
       // ── Step 3: composite the zone tile onto the main canvas ─────────────
       ctx.drawImage(off,bx1,by1);
       // Border (drawn on main canvas so outline is always sharp)
@@ -995,7 +997,8 @@ class PCBEditor {
         oc.moveTo(vsx+r,vsy);
         oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
-      // — Trace clearances (capsule) —
+      oc.fill();
+      // — Trace clearances (each as its own fill to avoid complex path issues) —
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===a.net)continue;
         const hw=(tr.width||DR.traceWidth||0.25)/2+cl;
@@ -1008,15 +1011,16 @@ class PCBEditor {
           const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
           const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
           const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
+          oc.beginPath();
           oc.moveTo(asx-nx,asy-ny);
           oc.lineTo(bsx-nx,bsy-ny);
           oc.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
           oc.lineTo(asx+nx,asy+ny);
           oc.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
           oc.closePath();
+          oc.fill();
         }
       }
-      oc.fill();
       // Step 3: composite onto main canvas
       ctx.drawImage(off,bx1,by1);
       // Border
