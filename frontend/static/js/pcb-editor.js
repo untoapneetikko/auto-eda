@@ -389,13 +389,13 @@ class PCBEditor {
         const _bright=this._lightenColor(_lc,0.35);
         ctx.strokeStyle=_bright+'33'; ctx.lineWidth=w+10; drawPath();
         ctx.strokeStyle=_bright; ctx.lineWidth=w; drawPath();
-        // Extra highlight on the dragged segment
-        if(isDragging&&dragSegIdx>=0&&dragSegIdx<segs.length){
+        // Extra highlight on the whole trace when dragging
+        if(isDragging){
           const hasViolations=this._traceDragViolations.length>0;
           ctx.strokeStyle=hasViolations?'rgba(239,68,68,0.5)':'rgba(108,255,108,0.4)';
-          ctx.lineWidth=w+14; drawSeg(dragSegIdx);
+          ctx.lineWidth=w+14; drawPath();
           ctx.strokeStyle=hasViolations?'#ef4444':'#6fff6f';
-          ctx.lineWidth=w; drawSeg(dragSegIdx);
+          ctx.lineWidth=w; drawPath();
         }
       } else if(hov){
         ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=w+6; drawPath();
@@ -2423,6 +2423,15 @@ class PCBEditor {
                 }
               }
             }
+          }
+        }
+        // Check if any trace now crosses a foreign-net pad
+        this._compDragViolations=[];
+        for(const tr of(this.board.traces||[])){
+          if(!tr.net)continue;
+          for(const seg of(tr.segments||[])){
+            const hit=this._segHitsWrongPad(seg.start.x,seg.start.y,seg.end.x,seg.end.y,tr.net);
+            if(hit) this._compDragViolations.push({x:hit.px,y:hit.py,pad:hit.pad,comp:hit.comp});
           }
         }
         this.render();
