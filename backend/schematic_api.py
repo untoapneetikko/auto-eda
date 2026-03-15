@@ -3286,8 +3286,8 @@ def run_autoroute(board: dict) -> dict:
     # ── Route each net with greedy nearest-neighbour MST ─────────────────────
     routed = 0
     total  = 0
-    new_traces: list[dict] = list(board.get("traces", []))
-    all_vias: list[dict] = list(board.get("vias", []))
+    new_traces: list[dict] = []   # start fresh — old traces caused violations
+    all_vias: list[dict] = []
 
     # Sort nets: power first, then alphabetical for determinism
     def _net_priority(name: str) -> int:
