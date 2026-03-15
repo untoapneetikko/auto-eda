@@ -379,15 +379,19 @@ class SchematicEditor {
       this._render(); return;
     }
 
-    // Hit resolution: wire precision (6px) beats loose component bbox, EXCEPT when
-    // the click is within PORT_R world-units of a component port — in that case the
-    // component wins so GND/VCC/etc. remain draggable even when a wire endpoint
-    // sits exactly on the port.
+    // Hit resolution: dot wires (junction markers) get absolute priority so they
+    // can be selected even when sitting on a component pin.  Then: wire precision
+    // (6px) beats loose component bbox, EXCEPT when the click is within PORT_R
+    // world-units of a component port — the component wins so GND/VCC/etc.
+    // remain draggable even when a wire endpoint sits exactly on the port.
     const labelHit = this._hitLabel(sx, sy);
     const compHit  = !labelHit ? this._hitComp(sx, sy) : null;
     const wireHit  = !labelHit ? this._hitWire(sx, sy) : null;
+    // Check if the wire hit is a dot wire — if so, it always wins
+    const isDotHit = wireHit && (wireHit.points.length === 1 || (wireHit.points.length === 2 &&
+        wireHit.points[0].x === wireHit.points[1].x && wireHit.points[0].y === wireHit.points[1].y));
     let comp = null;
-    if (compHit) {
+    if (compHit && !isDotHit) {
       if (!wireHit) {
         comp = compHit; // only component, no wire
       } else {
@@ -1561,9 +1565,15 @@ class SchematicEditor {
     this._hlWireSetCache = undefined;
     let h = '';
     for (const grp of (this.project.groups || [])) h += this._groupH(grp);
-    for (const w of this.project.wires) h += this._wH(w);
+    let dotWireH = '';
+    for (const w of this.project.wires) {
+      const isDot = w.points?.length === 1 || (w.points?.length === 2 &&
+          w.points[0].x === w.points[1].x && w.points[0].y === w.points[1].y);
+      if (isDot) { dotWireH += this._wH(w); } else { h += this._wH(w); }
+    }
     if (this.wirePoints.length > 0) h += this._wpH();
     for (const c of this.project.components) h += this._cH(c);
+    h += dotWireH; // dot wires render on top of components so highlights are visible
     for (const l of (this.project.labels || [])) h += this._lblH(l, this.selected?.id === l.id || this.multiSelected.has(l.id));
     if (this.tool === 'place' && this.placeCursor) h += this._ghH();
     if (this.tool === 'placeGroup' && this.placeGroupData?.cursor) h += this._groupGhostH();
@@ -2372,8 +2382,14 @@ class SchematicEditor {
     const bg = darkBg ? '#0d0f18' : '#ffffff';
     let out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${w}" height="${h}">`;
     out += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${bg}"/>`;
-    for (const wire of this.project.wires) out += this._wH(wire);
+    let dotOut = '';
+    for (const wire of this.project.wires) {
+      const isDot = wire.points?.length === 1 || (wire.points?.length === 2 &&
+          wire.points[0].x === wire.points[1].x && wire.points[0].y === wire.points[1].y);
+      if (isDot) dotOut += this._wH(wire); else out += this._wH(wire);
+    }
     for (const c of this.project.components) out += this._cH(c);
+    out += dotOut;
     for (const l of (this.project.labels || [])) out += this._lblH(l, false);
     out += this._jH();
     out += `</svg>`;
