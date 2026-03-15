@@ -178,8 +178,6 @@ Then parse this component:
   const passives = p.required_passives || [];
   const mistakes = p.common_mistakes || [];
   const corrections = p.human_corrections || [];
-  const confColor = { HIGH: 'var(--green)', MEDIUM: 'var(--yellow)', LOW: 'var(--red)', FAILED: 'var(--red)' };
-
   const _avLabel = activeVersion ? (activeVersion.label || `v${activeVersion.vNum}`) : null;
   const _avBadgeHtml = _avLabel
     ? `<span id="active-version-badge" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:rgba(139,92,246,0.18);border:1.5px solid rgba(139,92,246,0.55);border-radius:5px;padding:2px 10px;color:#c4b5fd;font-family:monospace;letter-spacing:.04em;white-space:nowrap;">● ${_avLabel}</span>`
@@ -190,14 +188,6 @@ Then parse this component:
       <div class="profile-header">
         <div style="min-width:0;">
           <div class="profile-part" style="display:flex;align-items:center;gap:8px;">${p.part_number || p.slug}${_avBadgeHtml}</div>
-          <div class="profile-desc">${p.description || ''}</div>
-          <div class="profile-meta">
-            ${p.manufacturer ? `<span class="meta-tag">${p.manufacturer}</span>` : ''}
-            ${(p.package_types || []).map(t => `<span class="meta-tag">${t}</span>`).join('')}
-            ${p.supply_voltage_range ? `<span class="meta-tag">⚡ ${p.supply_voltage_range}</span>` : ''}
-            <span class="meta-tag" style="color:${confColor[p.confidence]||'var(--green)'}">● ${p.confidence || 'HIGH'} confidence</span>
-            <span class="meta-tag desig-badge" title="Schematic designator prefix — edit inline" onclick="editDesignator(this, '${selectedSlug}')" style="cursor:pointer;color:#a78bfa;border-color:rgba(167,139,250,0.4);">${p.designator ? '🔖 ' + p.designator : '+ Add designator'}</span>
-          </div>
         </div>
         <div class="actions-bar" style="position:relative;">
           <button class="btn btn-rebuild" id="rebuild-btn" onclick="queueRebuild()">✨ Generate</button>
