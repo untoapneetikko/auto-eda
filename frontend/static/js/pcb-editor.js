@@ -857,6 +857,13 @@ class PCBEditor {
       const hit=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
       if(hit){pathBlocked=true;blockingPad=hit;break;}
     }
+    // Validate angles: all segments must be on valid angle steps
+    let prevDir=null;
+    if(pts.length>=2){
+      const p1=pts[pts.length-2],p2=pts[pts.length-1];
+      prevDir=Math.atan2(p2.y-p1.y,p2.x-p1.x);
+    }
+    if(!pathBlocked&&!this._validatePathAngles(avoidPath,prevDir)){pathBlocked=true;}
     // Store for use by click handler (null if blocked)
     this._lastAvoidPath=pathBlocked?null:avoidPath;
 
@@ -1061,14 +1068,31 @@ class PCBEditor {
     return obs;
   }
 
+  /** Snap an angle to the nearest allowed step (45°, 90°, or free). */
+  _snapAngle(ang){
+    const stepDeg=DR.routeAngleStep??45;
+    if(stepDeg<=0)return ang;
+    const stepRad=stepDeg*Math.PI/180;
+    return Math.round(ang/stepRad)*stepRad;
+  }
+
   /** Compute an L-route (elbow) from S to C using two segments at allowed angles.
    *  Returns [{x,y}, {x,y}, {x,y}] (start, elbow, end) or just [start,end] if direct.
    *  Toggle this._elbowMode with '/' to switch between H-first and V-first. */
   _computeElbow(sx,sy,ex,ey){
     const stepDeg=DR.routeAngleStep??45;
     const dx=ex-sx,dy=ey-sy;
-    if(Math.abs(dx)<0.01&&Math.abs(dy)<0.01)return[{x:sx,y:sy},{x:ex,y:ey}];
+    const dist=Math.hypot(dx,dy);
+    if(dist<0.01)return[{x:sx,y:sy},{x:ex,y:ey}];
     if(stepDeg===0)return[{x:sx,y:sy},{x:ex,y:ey}]; // free-form: direct
+
+    // Snap the overall direction to nearest allowed angle
+    const rawAng=Math.atan2(dy,dx);
+    const snappedAng=this._snapAngle(rawAng);
+
+    // Check if cursor is already on-axis (single segment suffices)
+    const angDiff=Math.abs(rawAng-snappedAng);
+    if(angDiff<0.01)return[{x:sx,y:sy},{x:sx+Math.cos(snappedAng)*dist,y:sy+Math.sin(snappedAng)*dist}];
 
     if(stepDeg>=90){
       // Orthogonal: H then V, or V then H
@@ -1090,6 +1114,44 @@ class PCBEditor {
       const remDx=dx-diagDx,remDy=dy-diagDy;
       return[{x:sx,y:sy},{x:sx+remDx,y:sy+remDy},{x:ex,y:ey}];
     }
+  }
+
+  /** Check all angles in a path respect the minimum trace angle and step constraints.
+   *  prevDir is the direction (radians) of the last committed segment, or null.
+   *  Returns true if all angles are valid. */
+  _validatePathAngles(path,prevDir){
+    const stepDeg=DR.routeAngleStep??45;
+    if(stepDeg<=0)return true; // free-form
+    const stepRad=stepDeg*Math.PI/180;
+    const minAng=(DR.minTraceAngle??stepDeg)*Math.PI/180;
+    const EPS=0.02; // ~1° tolerance
+
+    for(let i=0;i<path.length-1;i++){
+      const dx=path[i+1].x-path[i].x, dy=path[i+1].y-path[i].y;
+      const len=Math.hypot(dx,dy);
+      if(len<0.01)continue;
+      const ang=Math.atan2(dy,dx);
+
+      // Check segment angle is on a valid step
+      const snapped=this._snapAngle(ang);
+      if(Math.abs(ang-snapped)>EPS)return false;
+
+      // Check angle between consecutive segments
+      if(i>0||prevDir!==null){
+        const prev=i>0?Math.atan2(path[i].y-path[i-1].y,path[i].x-path[i-1].x):prevDir;
+        if(prev!==null){
+          // Angle between incoming and outgoing at this vertex
+          let turn=Math.abs(ang-prev);
+          if(turn>Math.PI)turn=2*Math.PI-turn;
+          // turn is the exterior angle; the interior angle is PI - turn
+          // We want the interior angle (bend angle) >= minAng
+          // A U-turn (turn=PI) means interior=0 which is invalid
+          // Straight (turn=0) means interior=PI which is fine
+          if(turn>0.01 && (Math.PI-turn)<minAng-EPS)return false;
+        }
+      }
+    }
+    return true;
   }
 
   /** A* grid pathfinder: returns waypoints [start, ...intermediate, end] that
@@ -2111,10 +2173,19 @@ class PCBEditor {
               const seg=this._routeAroundPads(elbowPts[i].x,elbowPts[i].y,elbowPts[i+1].x,elbowPts[i+1].y,this.routeNet||'');
               for(let j=1;j<seg.length;j++)avoidPath.push(seg[j]);
             }
-            // Validate the path
+            // Validate the path — collisions
             for(let i=0;i<avoidPath.length-1;i++){
               const h2=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
               if(h2){avoidPath=null;break;}
+            }
+            // Validate angles
+            if(avoidPath){
+              let prevDir2=null;
+              if(this.routePoints.length>=2){
+                const p1=this.routePoints[this.routePoints.length-2],p2=this.routePoints[this.routePoints.length-1];
+                prevDir2=Math.atan2(p2.y-p1.y,p2.x-p1.x);
+              }
+              if(!this._validatePathAngles(avoidPath,prevDir2))avoidPath=null;
             }
           }
           // Block if no valid path around obstacles
