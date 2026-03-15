@@ -1535,12 +1535,15 @@ class SchematicEditor {
     if (cc) cc.textContent = this.project.components.length + ' components';
     if (wc) wc.textContent = this.project.wires.length + ' wires';
     if (sv) sv.classList.toggle('dirty', this.dirty);
+    // Update global dirty flag for beforeunload warning
+    window._edaDirty = this.dirty;
     renderTabs();
     _notifyPcbSync();
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
   _render() {
+    if (this.dirty && !this._isEmbedded) window._edaDirty = true;
     // Schedule at most one DOM update per animation frame — prevents rebuilding
     // the entire SVG innerHTML multiple times per frame during mousemove drags.
     if (this._renderPending) return;

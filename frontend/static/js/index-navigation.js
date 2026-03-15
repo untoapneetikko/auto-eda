@@ -701,23 +701,15 @@ function buildExampleCircuit(profile) {
 })();
 
 // ── Warn before unload if there are unsaved changes ───────────────────────
+// Global dirty flag — set by any editor that modifies state.
+// SchematicEditor sets this via _status(), PCB editor via _snapshot().
+window._edaDirty = false;
+
 window.addEventListener('beforeunload', function(e) {
-  let dirty = false;
-  // Check schematic editor
-  if (typeof editor !== 'undefined' && editor && editor.dirty) dirty = true;
-  // Check open tabs
-  if (typeof openTabs !== 'undefined' && openTabs.some(t => t.dirty)) dirty = true;
-  // Check PCB editor (inside iframe)
-  try {
-    const frame = document.getElementById('pcb-frame');
-    if (frame && frame.contentWindow && frame.contentWindow.editor) {
-      const pcbEd = frame.contentWindow.editor;
-      if (pcbEd._historyIdx > 0) dirty = true;
-    }
-  } catch(_) {}
-  if (dirty) {
+  if (window._edaDirty) {
     e.preventDefault();
-    e.returnValue = '';
+    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+    return e.returnValue;
   }
 });
 
