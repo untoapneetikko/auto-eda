@@ -38,8 +38,32 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('label-edit-modal')?.style.display === 'flex') {
     saveLabelEdit();
   }
-  if (e.key === 'Escape' && document.getElementById('pa-modal')?.classList.contains('open')) {
-    paChatClose();
+  if (e.key === 'Escape') {
+    // Close topmost open modal/popover
+    if (document.getElementById('pa-modal')?.classList.contains('open')) { paChatClose(); return; }
+    const modals = [
+      { id: 'comp-builder-modal', close: () => typeof closeComponentBuilder==='function'&&closeComponentBuilder() },
+      { id: 'pin-editor-modal',   close: () => typeof closePinEditor==='function'&&closePinEditor() },
+      { id: 'comp-edit-modal',    close: closeCompEditModal },
+      { id: 'label-edit-modal',   close: closeLabelEditModal },
+      { id: 'delete-project-modal', close: () => typeof closeDeleteProjectModal==='function'&&closeDeleteProjectModal() },
+      { id: 'create-pcb-modal',   close: () => typeof closeCreatePCBModal==='function'&&closeCreatePCBModal() },
+      { id: 'ai-gen-modal',       close: () => { const m=document.getElementById('ai-gen-modal'); if(m)m.style.display='none'; } },
+      { id: 'drc-modal',          close: () => { const m=document.getElementById('drc-modal'); if(m)m.style.display='none'; } },
+    ];
+    for (const { id, close } of modals) {
+      const el = document.getElementById(id);
+      if (el && el.style.display === 'flex') { close(); return; }
+    }
+    // Popovers
+    const rebuild = document.getElementById('rebuild-popover');
+    if (rebuild && rebuild.style.display !== 'none' && rebuild.offsetParent !== null) {
+      if (typeof closeRebuildPopover==='function') closeRebuildPopover(); return;
+    }
+    const history = document.getElementById('history-popover');
+    if (history && history.style.display !== 'none' && history.offsetParent !== null) {
+      history.style.display = 'none'; return;
+    }
   }
 });
 

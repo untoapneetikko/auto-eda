@@ -2285,6 +2285,11 @@ class PCBEditor {
         editor.drawPoints=[];editor.render();
       }
       else if(k==='escape'){
+        // Close any open PCB modal first
+        const pcbModals=['import-modal','boards-modal','layer-modal','drc-modal','gerber-modal'];
+        for(const mid of pcbModals){const m=document.getElementById(mid);if(m&&m.classList.contains('open')){
+          if(typeof closeModal==='function')closeModal(mid);return;
+        }}
         editor.routePoints=[];editor.routeNet=null;
         editor.zonePoints=[];editor.measureStart=null;
         editor.areaStart=null;editor._isAreaDrag=false;
