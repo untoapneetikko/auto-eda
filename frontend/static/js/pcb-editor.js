@@ -470,24 +470,25 @@ class PCBEditor {
       oc.globalCompositeOperation='destination-out';
       oc.fillStyle='rgba(0,0,0,1)';
       oc.beginPath();
-      // — Pad clearances —
+      // — Pad clearances (only pads on the same layer as this zone) —
+      const zoneIsF=lyr.startsWith('F');
       for(const c of(this.board?.components||[])){
+        const compIsF=(c.layer||'F')!=='B';
         const rot=(c.rotation||0)*Math.PI/180;
         const cosR=Math.cos(rot),sinR=Math.sin(rot);
         for(const p of(c.pads||[])){
           // Skip only if the pad is on the EXACT same net as the zone
           if(p.net&&p.net===z.net)continue;
+          // Skip pads on a different layer (through-hole pads exist on both)
+          const isThru=p.type==='thru_hole';
+          if(!isThru&&compIsF!==zoneIsF)continue;
           const{px,py}=this._padWorld(c,p);
           const hpx=(p.size_x||1.6)/2,hpy=(p.size_y||1.6)/2;
           const maxhp=Math.max(hpx,hpy);
           if(px<zx1-maxhp-cl||px>zx2+maxhp+cl||py<zy1-maxhp-cl||py>zy2+maxhp+cl)continue;
           const psx=this.mmX(px),psy=this.mmY(py);
           if(p.shape==='rect'||p.shape==='square'){
-            // Rectangular clearance — matches pad outline + rotation.
-            // Corners computed analytically so we can batch into one path.
             const hw=(hpx+cl)*this.scale,hh=(hpy+cl)*this.scale;
-            // Four corners in local pad space rotated to screen space:
-            // local (±hw, ±hh) → screen via rotation matrix
             const c0x=psx+(-hw)*cosR-(-hh)*sinR, c0y=psy+(-hw)*sinR+(-hh)*cosR;
             const c1x=psx+(+hw)*cosR-(-hh)*sinR, c1y=psy+(+hw)*sinR+(-hh)*cosR;
             const c2x=psx+(+hw)*cosR-(+hh)*sinR, c2y=psy+(+hw)*sinR+(+hh)*cosR;
@@ -498,14 +499,13 @@ class PCBEditor {
             oc.lineTo(c3x,c3y);
             oc.closePath();
           }else{
-            // Circular/oval clearance for round pads
             const r=(maxhp+cl)*this.scale;
             oc.moveTo(psx+r,psy);
             oc.arc(psx,psy,r,0,Math.PI*2);
           }
         }
       }
-      // — Via clearances (always circular) —
+      // — Via clearances (vias span all layers, always apply) —
       for(const v of(this.board?.vias||[])){
         if(v.net&&v.net===z.net)continue;
         if(v.x<zx1-cl||v.x>zx2+cl||v.y<zy1-cl||v.y>zy2+cl)continue;
@@ -515,11 +515,14 @@ class PCBEditor {
         oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
       oc.fill(); // erase pad + via clearance shapes in one pass
-      // — Trace clearances (thick stroked lines with round caps = capsule shape) —
+      // — Trace clearances (only traces on the same layer as this zone) —
       oc.strokeStyle='rgba(0,0,0,1)';
       oc.lineCap='round';
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===z.net)continue;
+        // Skip traces on different layer
+        const trIsF=(tr.layer||'F.Cu').startsWith('F');
+        if(trIsF!==zoneIsF)continue;
         const tw=(tr.width||tr.width_mm||DR.traceWidth||0.25)+cl*2;
         oc.lineWidth=tw*this.scale;
         for(const seg of(tr.segments||[])){
@@ -1026,12 +1029,17 @@ class PCBEditor {
       oc.globalCompositeOperation='destination-out';
       oc.fillStyle='rgba(0,0,0,1)';
       oc.beginPath();
-      // — Pad clearances —
+      // — Pad clearances (only pads on the same layer as this area) —
+      const areaIsF=lyr.startsWith('F');
       for(const c of(this.board?.components||[])){
+        const compIsF=(c.layer||'F')!=='B';
         const rot=(c.rotation||0)*Math.PI/180;
         const cosR=Math.cos(rot),sinR=Math.sin(rot);
         for(const p of(c.pads||[])){
           if(p.net&&p.net===a.net)continue;
+          // Skip pads on a different layer (through-hole pads exist on both)
+          const isThru=p.type==='thru_hole';
+          if(!isThru&&compIsF!==areaIsF)continue;
           const{px,py}=this._padWorld(c,p);
           const hpx=(p.size_x||1.6)/2,hpy=(p.size_y||1.6)/2;
           const maxhp=Math.max(hpx,hpy);
@@ -1055,7 +1063,7 @@ class PCBEditor {
           }
         }
       }
-      // — Via clearances —
+      // — Via clearances (vias span all layers, always apply) —
       for(const v of(this.board?.vias||[])){
         if(v.net&&v.net===a.net)continue;
         if(v.x<x1-cl||v.x>x2+cl||v.y<y1-cl||v.y>y2+cl)continue;
@@ -1065,11 +1073,14 @@ class PCBEditor {
         oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
       oc.fill();
-      // — Trace clearances (thick stroked lines with round caps = capsule shape) —
+      // — Trace clearances (only traces on the same layer) —
       oc.strokeStyle='rgba(0,0,0,1)';
       oc.lineCap='round';
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===a.net)continue;
+        // Skip traces on different layer
+        const trIsF=(tr.layer||'F.Cu').startsWith('F');
+        if(trIsF!==areaIsF)continue;
         const tw=(tr.width||tr.width_mm||DR.traceWidth||0.25)+cl*2;
         oc.lineWidth=tw*this.scale;
         for(const seg of(tr.segments||[])){
@@ -2434,10 +2445,17 @@ class PCBEditor {
         const origMidX=(orig.start.x+orig.end.x)/2,origMidY=(orig.start.y+orig.end.y)/2;
         let dx=curX-this._dragTraceOff.x-origMidX;
         let dy=curY-this._dragTraceOff.y-origMidY;
-        // Constrain to perpendicular for orthogonal segments (KiCad-style)
-        const sdx=Math.abs(orig.end.x-orig.start.x),sdy=Math.abs(orig.end.y-orig.start.y);
-        if(sdx>sdy*2)dx=0;       // mostly horizontal → only allow Y movement
-        else if(sdy>sdx*2)dy=0;  // mostly vertical → only allow X movement
+        // Enforce angle rule: constrain drag to perpendicular axis of the
+        // segment so its angle is preserved (45° stays 45°, H stays H, etc.)
+        const segDx=orig.end.x-orig.start.x,segDy=orig.end.y-orig.start.y;
+        const segLen=Math.hypot(segDx,segDy);
+        if(segLen>0.01){
+          const segAng=Math.atan2(segDy,segDx);
+          const perpX=-Math.sin(segAng),perpY=Math.cos(segAng);
+          const proj=dx*perpX+dy*perpY;
+          dx=this.snap(proj*perpX);
+          dy=this.snap(proj*perpY);
+        }
         const nsx=orig.start.x+dx,nsy=orig.start.y+dy;
         const nex=orig.end.x+dx,ney=orig.end.y+dy;
         const EPS=0.001;
