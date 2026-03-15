@@ -2557,6 +2557,7 @@ def build_netlist(components: list, wires: list, labels: list, no_connects: list
     used_names: set[str] = set()
 
     def _assign(root: str, name: str):
+        name = name.upper()
         root_to_net[root] = name
         used_names.add(name)
 
@@ -2843,7 +2844,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
             wx, wy = _pw(comp, pad)
             sx = float(pad.get("size_x", pad.get("width", 1.0)))
             sy = float(pad.get("size_y", pad.get("height", 1.0)))
-            e = {"x":wx,"y":wy,"net":pad.get("net",""),
+            e = {"x":wx,"y":wy,"net":(pad.get("net","") or "").upper(),
                  "ref":cref,"pad":str(pad.get("number","")),
                  "layer":clyr,"th":pad.get("type","smd")=="through_hole",
                  "hw":sx/2,"hh":sy/2,"rot":comp_rot,
@@ -2854,7 +2855,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
     # ── Flatten segments ──────────────────────────────────────────────────────
     all_segs: list[dict] = []
     for tr in traces:
-        tn = tr.get("net",""); tl = tr.get("layer","F.Cu")
+        tn = (tr.get("net","") or "").upper(); tl = tr.get("layer","F.Cu")
         tw = float(tr.get("width",0.25))
         for seg in tr.get("segments", []):
             s,e2 = seg.get("start",{}), seg.get("end",{})
@@ -2897,7 +2898,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
     # ══ 4: Unconnected nets (union-find, same as frontend ratsnest) ═════
     npads: dict[str,list[dict]] = {}
     for ne in nets:
-        nn = ne.get("name","")
+        nn = (ne.get("name","") or "").upper()
         if not nn: continue
         pl = [pad_lk[str(pk)] for pk in ne.get("pads",[]) if str(pk) in pad_lk]
         if len(pl)>=2: npads[nn]=pl
