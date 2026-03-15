@@ -3094,13 +3094,22 @@ def run_drc(board: dict) -> dict:  # noqa: C901
                 "x":round(pad["x"],2),"y":round(pad["y"],2)})
 
     # ══ 10: Net conflict — different-net pads overlapping ══════════════════
+    # Use actual rectangle geometry: check if pad A center is inside pad B rect
+    # (expanded by a tiny margin) or vice versa, to avoid false positives from
+    # using max-dimension circles on rectangular pads.
     for i,pa in enumerate(all_pads):
         for j in range(i+1,len(all_pads)):
             pb=all_pads[j]
             if not pa["th"] and not pb["th"] and pa["layer"]!=pb["layer"]: continue
             if pa["net"] and pb["net"] and pa["net"]!=pb["net"]:
-                d5=math.hypot(pa["x"]-pb["x"],pa["y"]-pb["y"])
-                if d5<pa["r"]+pb["r"]:
+                # Distance from pad A center to pad B rectangle
+                d_a2b = _pt_rect_dist(pa["x"],pa["y"],pb["x"],pb["y"],pb["hw"],pb["hh"],pb["rot"])
+                # Distance from pad B center to pad A rectangle
+                d_b2a = _pt_rect_dist(pb["x"],pb["y"],pa["x"],pa["y"],pa["hw"],pa["hh"],pa["rot"])
+                # Pads overlap if either center is inside the other's rectangle
+                # (or very close — use half of smaller dimension as threshold)
+                overlap_thresh = min(pa["hw"],pa["hh"],pb["hw"],pb["hh"]) * 0.5
+                if d_a2b < overlap_thresh or d_b2a < overlap_thresh:
                     violations.append({"type":"NET_CONFLICT","cat":"net","sev":"ERROR",
                         "msg":f"{pa['ref']}.{pa['pad']} ({pa['net']}) / {pb['ref']}.{pb['pad']} ({pb['net']}) overlap",
                         "x":round((pa["x"]+pb["x"])/2,2),"y":round((pa["y"]+pb["y"])/2,2)})
