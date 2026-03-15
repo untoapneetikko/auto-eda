@@ -426,8 +426,8 @@ class PCBEditor {
 
   _drawZones(){
     const ctx=this.ctx;
-    const cl=DR.clearance||0.2;
     for(const z of(this.board.zones||[])){
+      const cl=z.clearance!=null?z.clearance:(DR.clearance||0.2);
       if(!z.points||z.points.length<3)continue;
       const lyr=z.layer||'F.Cu';
       if(!this.layers[lyr]?.visible)continue;
@@ -514,6 +514,7 @@ class PCBEditor {
       }
       oc.fill(); // erase pad + via clearance shapes in one pass
       // — Trace clearances (thick stroked lines with round caps = capsule shape) —
+      oc.strokeStyle='rgba(0,0,0,1)';
       oc.lineCap='round';
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===z.net)continue;
@@ -985,8 +986,8 @@ class PCBEditor {
 
   _drawAreas(){
     const ctx=this.ctx;
-    const cl=DR.clearance||0.2;
     for(const a of(this.board?.areas||[])){
+      const cl=a.clearance!=null?a.clearance:(DR.clearance||0.2);
       // Skip outline-based areas (handled by _drawZones after load normalization)
       if(a.outline||a.x1==null||a.x2==null)continue;
       const lyr=a.layer||'F.Cu';
@@ -1054,6 +1055,7 @@ class PCBEditor {
       }
       oc.fill();
       // — Trace clearances (thick stroked lines with round caps = capsule shape) —
+      oc.strokeStyle='rgba(0,0,0,1)';
       oc.lineCap='round';
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===a.net)continue;

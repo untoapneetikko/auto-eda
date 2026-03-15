@@ -335,6 +335,9 @@ function updateInfoPanel(){
       </div>
       <div class="ir"><span class="il">Net</span><input class="ii" style="width:90px;" value="${ar.net||''}" onchange="editor.selectedArea.net=this.value.trim();editor.render();renderAreasPanel();"> </div>
       <div class="ir"><span class="il">Layer</span><span class="iv">${ar.layer||'F.Cu'}</span></div>
+      <div class="ir"><span class="il">Clearance</span>
+        <input class="ii" value="${(ar.clearance!=null?ar.clearance:DR.clearance||0.2).toFixed(3)}"
+          onchange="editor._snapshot();editor.selectedArea.clearance=Math.max(0,parseFloat(this.value)||0.2);editor.render();updateInfoPanel()"> mm</div>
       <div class="ir"><span class="il">Width</span><span class="iv">${w} mm</span></div>
       <div class="ir"><span class="il">Height</span><span class="iv">${h} mm</span></div>
       <div style="margin-top:10px;display:flex;gap:5px;">
