@@ -3001,6 +3001,8 @@ def run_autoroute(board: dict) -> dict:
                 except Exception:
                     pass  # silently continue without project nets
 
+    # Build old→new net name map so we can also fix existing trace net names
+    _old_to_new_net: dict[str, str] = {}
     if _pad_ref_to_net_ar:
         for comp in board.get("components", []):
             ref = comp.get("ref", comp.get("id", ""))
@@ -3008,9 +3010,19 @@ def run_autoroute(board: dict) -> dict:
                 pnum = pad.get("number", pad.get("name", ""))
                 pkey = f"{ref}.{pnum}".upper()
                 if pkey in _pad_ref_to_net_ar:
+                    old_net = (pad.get("net", "") or "").upper()
+                    new_net = _pad_ref_to_net_ar[pkey]
+                    if old_net and old_net != new_net:
+                        _old_to_new_net[old_net] = new_net
                     # Always overwrite — nets[] array is authoritative over
                     # stale pad.net values like "N1", "N2" etc.
-                    pad["net"] = _pad_ref_to_net_ar[pkey]
+                    pad["net"] = new_net
+
+        # Also normalize existing trace net names (e.g. "N1" → "RF_IN")
+        for trace in board.get("traces", []):
+            tn = (trace.get("net", "") or "").upper()
+            if tn in _old_to_new_net:
+                trace["net"] = _old_to_new_net[tn]
 
     # ── Build net → [(x, y)] map from board.components[].pads[].net ──────────
     # Pad world position accounts for component rotation.
@@ -3285,11 +3297,21 @@ def run_autoroute(board: dict) -> dict:
 
         return [], False  # no path found
 
-    # ── Route each net with greedy nearest-neighbour MST ─────────────────────
+    # ── Identify already-routed nets (keep existing traces, only route missing) ─
+    _existing_routed_nets: set[str] = set()
+    for _et in board.get("traces", []):
+        _en = (_et.get("net", "") or "").upper()
+        if _en and _et.get("segments"):
+            _existing_routed_nets.add(_en)
+
+    # Keep all existing traces and vias — autoroute only adds new ones
+    new_traces: list[dict] = list(board.get("traces", []))
+    all_vias: list[dict] = list(board.get("vias", []))
+
+    # ── Route each UNROUTED net with greedy nearest-neighbour MST ─────────
     routed = 0
     total  = 0
-    new_traces: list[dict] = []   # start fresh — old traces caused violations
-    all_vias: list[dict] = []
+    skipped_existing = 0
     failed_nets: list[str] = []   # nets where at least one segment couldn't route
 
     # Sort nets: power first, then alphabetical for determinism
@@ -3306,6 +3328,12 @@ def run_autoroute(board: dict) -> dict:
         if len(pads_xy) < 2:
             continue
         total += 1
+
+        # Skip nets that already have traces — preserve user's manual routing
+        if net_name in _existing_routed_nets:
+            skipped_existing += 1
+            routed += 1  # count as routed since they already have traces
+            continue
 
         width_mm = _autoroute_trace_width(net_name, dr)
 
@@ -3491,6 +3519,7 @@ def run_autoroute(board: dict) -> dict:
     return {**result, "_autoroute": {
         "routed": routed, "total": total, "vias": len(all_vias),
         "violations": violations, "failed_nets": failed_nets,
+        "kept_existing": skipped_existing,
     }}
 
 
@@ -3513,6 +3542,7 @@ async def autoroute_board_id(bid: str):
         "vias":   result.get("vias", []),
         "violations": autoroute_meta.get("violations", []),
         "failed_nets": autoroute_meta.get("failed_nets", []),
+        "kept_existing": autoroute_meta.get("kept_existing", 0),
     }
 
 
@@ -3530,6 +3560,7 @@ async def autoroute_direct(request: Request):
         "vias":   result.get("vias", []),
         "violations": autoroute_meta.get("violations", []),
         "failed_nets": autoroute_meta.get("failed_nets", []),
+        "kept_existing": autoroute_meta.get("kept_existing", 0),
     }
 
 
