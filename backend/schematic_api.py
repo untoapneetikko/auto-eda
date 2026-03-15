@@ -2847,10 +2847,9 @@ async def drc_board_direct(request: Request):
 def _autoroute_skip_net(net_name: str) -> bool:
     """
     Return True for nets that must NOT be routed as individual traces.
+    - GND and all variants (AGND, PGND, DGND, GND_*) → handled by copper pour
     - NC / no-connect nets → intentionally floating
     - Empty net name
-    NOTE: GND nets ARE routed now — copper pour alone doesn't guarantee
-    connectivity between distant pads, so we route them as traces too.
     """
     if not net_name:
         return True
@@ -2858,7 +2857,7 @@ def _autoroute_skip_net(net_name: str) -> bool:
     for prefix in ("NC", "PWR_FLAG"):
         if upper == prefix or upper.startswith(prefix + "_") or upper.startswith(prefix + "-"):
             return True
-    for sub in ("UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
+    for sub in ("GND", "UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
         if sub in upper:
             return True
     return False
@@ -2926,9 +2925,10 @@ def run_autoroute(board: dict) -> dict:
             occupied.add((gx, gy))                     # left edge
             occupied.add((grid_w - 1 - gx, gy))        # right edge
 
-    # ── Back-fill missing pad.net fields from board.nets[] array ─────────────
-    # Some boards store net→pad mappings only in the nets array, leaving
-    # pad.net empty.  Fill them in before collecting net_pads.
+    # ── Overwrite pad.net from board.nets[] array (authoritative source) ─────
+    # The nets[] array contains the real net connectivity from the schematic.
+    # Pad.net values may be stale generic names (N1, N2…) that don't reflect
+    # the actual grouping.  Always prefer the nets[] array mapping.
     _pad_ref_to_net_ar: dict[str, str] = {}  # "L1.1" → "RF_IN"
     for _net_entry in board.get("nets", []):
         _nn = (_net_entry.get("name", "") or "").upper()
@@ -3005,11 +3005,12 @@ def run_autoroute(board: dict) -> dict:
         for comp in board.get("components", []):
             ref = comp.get("ref", comp.get("id", ""))
             for pad in comp.get("pads", []):
-                if not (pad.get("net", "") or "").strip():
-                    pnum = pad.get("number", pad.get("name", ""))
-                    pkey = f"{ref}.{pnum}".upper()
-                    if pkey in _pad_ref_to_net_ar:
-                        pad["net"] = _pad_ref_to_net_ar[pkey]
+                pnum = pad.get("number", pad.get("name", ""))
+                pkey = f"{ref}.{pnum}".upper()
+                if pkey in _pad_ref_to_net_ar:
+                    # Always overwrite — nets[] array is authoritative over
+                    # stale pad.net values like "N1", "N2" etc.
+                    pad["net"] = _pad_ref_to_net_ar[pkey]
 
     # ── Build net → [(x, y)] map from board.components[].pads[].net ──────────
     # Pad world position accounts for component rotation.
@@ -3347,14 +3348,8 @@ def run_autoroute(board: dict) -> dict:
             path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
                                   force_single_layer=_is_rf_net,
                                   start_layer=src_layer)
-            if not path and not _is_rf_net:
-                # Retry starting from the other layer (via at source)
-                alt_layer = 1 - src_layer
-                path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
-                                      force_single_layer=False,
-                                      start_layer=alt_layer)
             if not path:
-                # BFS blocked on both layers — skip this segment
+                # BFS blocked — skip this segment
                 all_routed = False
                 continue
 
