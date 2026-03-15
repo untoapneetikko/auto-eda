@@ -29,7 +29,7 @@ class PCBEditor {
     this.drawPoints = []; this.drawLayer = 'Edge.Cuts'; this.drawWidth = 0.05;
     this.selectedDrawing = null;
     this._routeError = null;
-    this._mx = 0; this._my = 0; this._mxPx = 0; this._myPx = 0;
+    this._mx = 0; this._my = 0; this._mxPx = null; this._myPx = null;
     this._isDragVia = false;
     // Undo/redo history
     this._history = []; this._historyIdx = -1;
@@ -831,8 +831,9 @@ class PCBEditor {
 
     // Check what's under the cursor right now (generous snap to help land on pads)
     const mx=this._mxPx,my=this._myPx;
-    const hitPad=this.getNearestPad(mx,my,15);
-    const hitVia=hitPad?null:this.getNearestVia(mx,my,15);
+    const _snapR=Math.max(30,2*this.scale);
+    const hitPad=this.getNearestPad(mx,my,_snapR);
+    const hitVia=hitPad?null:this.getNearestVia(mx,my,_snapR);
     const hitArea=(hitPad||hitVia)?null:this.getAreaAt(mx,my);
     const destNet=(hitPad?.pad?.net)||(hitVia?.net)||(hitArea?.net)||null;
     const netConflict=destNet&&this.routeNet&&destNet!==this.routeNet;
@@ -2209,8 +2210,9 @@ class PCBEditor {
         if(!this.board)return;
         if(this.routePoints.length===0){
           // Start: snap to nearby pad/via with generous radius, inherit net
-          const hit=this.getNearestPad(mx,my,20);
-          const hv=hit?null:this.getNearestVia(mx,my,20);
+          const _snapR=Math.max(30,2*this.scale);
+          const hit=this.getNearestPad(mx,my,_snapR);
+          const hv=hit?null:this.getNearestVia(mx,my,_snapR);
           const sx=hit?hit.x:(hv?hv.x:xmm);
           const sy=hit?hit.y:(hv?hv.y:ymm);
           this.routeLayer=this.workLayer||'F.Cu';
@@ -2218,8 +2220,9 @@ class PCBEditor {
           this.routePoints=[{x:sx,y:sy}];
         } else {
           // Adding a point: check destination net (generous snap)
-          const hit=this.getNearestPad(mx,my,15);
-          const hv=hit?null:this.getNearestVia(mx,my,15);
+          const _snapR2=Math.max(30,2*this.scale);
+          const hit=this.getNearestPad(mx,my,_snapR2);
+          const hv=hit?null:this.getNearestVia(mx,my,_snapR2);
           const ha=(hit||hv)?null:this.getAreaAt(mx,my);
           const destNet=(hit?.pad?.net)||(hv?.net)||(ha?.net)||null;
 
