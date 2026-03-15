@@ -196,7 +196,10 @@ Then parse this component:
           <button class="btn btn-danger" onclick="deletePart()">Delete</button>
           <!-- Generate popover -->
           <div id="rebuild-popover" style="display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:9999;background:var(--bg-2,#1e1e2e);border:1px solid var(--border,#333);border-radius:8px;padding:12px;width:340px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
-            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase;">What to generate</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase;">What to generate</div>
+              <button onclick="closeRebuildPopover()" style="background:none;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;padding:0 2px;line-height:1;">✕</button>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;">
               <button class="gen-toggle" id="gen-t-symbol"    onclick="genToggle('symbol')">🔷 Symbol</button>
               <button class="gen-toggle" id="gen-t-schematic" onclick="genToggle('schematic')">📐 Schematic Example</button>
@@ -206,7 +209,6 @@ Then parse this component:
             <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase;">Optional instructions</div>
             <textarea id="rebuild-notes" rows="3" placeholder="e.g. Add 2 missing bypass caps on the BIAS line. Use 100nF 0402." style="width:100%;box-sizing:border-box;background:var(--bg-1,#141420);border:1px solid var(--border,#333);border-radius:5px;color:var(--text,#e2e2e2);font-size:12px;padding:7px 9px;resize:vertical;outline:none;font-family:inherit;"></textarea>
             <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;">
-              <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="closeRebuildPopover()">Cancel</button>
               <button class="btn btn-rebuild" id="rebuild-queue-btn" style="font-size:11px;padding:4px 12px;" onclick="confirmRebuild()">Queue ↗</button>
             </div>
           </div>

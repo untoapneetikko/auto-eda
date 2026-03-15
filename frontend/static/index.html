@@ -1107,7 +1107,6 @@
       </div>
     </div>
     <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;">
-      <button onclick="closeComponentBuilder()" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text-dim);padding:7px 16px;font-size:12px;cursor:pointer;">Cancel</button>
       <button onclick="saveNewComponent()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:5px;color:#22c55e;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;">💾 Save &amp; Place</button>
     </div>
   </div>
@@ -1137,7 +1136,6 @@
     <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:space-between;">
       <button onclick="peAddPin()" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text-dim);padding:6px 14px;font-size:12px;cursor:pointer;">+ Add Pin</button>
       <div style="display:flex;gap:8px;">
-        <button onclick="closePinEditor()" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;color:var(--text-dim);padding:6px 14px;font-size:12px;cursor:pointer;">Cancel</button>
         <button onclick="savePins()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:5px;color:#22c55e;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Save Pins</button>
       </div>
     </div>
@@ -1160,7 +1158,6 @@
       <input id="comp-edit-partnumber" type="text" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:13px;font-family:monospace;width:100%;box-sizing:border-box;" placeholder="e.g. RC0402FR-0710KL"/>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-      <button onclick="closeCompEditModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:7px 16px;font-size:12px;cursor:pointer;">Cancel</button>
       <button onclick="saveCompEdit()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#22c55e;border-radius:6px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;">Save</button>
     </div>
   </div>
@@ -1179,7 +1176,6 @@
       <input id="label-edit-name" type="text" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 10px;font-size:13px;font-family:monospace;width:100%;box-sizing:border-box;" placeholder="e.g. VDD, GND, SDA"/>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-      <button onclick="closeLabelEditModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:7px 16px;font-size:12px;cursor:pointer;">Cancel</button>
       <button onclick="saveLabelEdit()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#22c55e;border-radius:6px;padding:7px 18px;font-size:12px;font-weight:700;cursor:pointer;">Save</button>
     </div>
   </div>
@@ -1222,7 +1218,6 @@
         oninput="onDeleteConfirmInput(this.value)" onkeydown="if(event.key==='Enter')doDeleteProject()" />
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button onclick="closeDeleteProjectModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:8px 18px;font-size:12px;cursor:pointer;">Cancel</button>
       <button id="delete-project-confirm-btn" onclick="doDeleteProject()" disabled
         style="background:#7f1d1d;color:#fca5a5;border:1px solid #f87171;border-radius:6px;padding:8px 18px;font-size:12px;font-weight:700;cursor:not-allowed;opacity:0.45;transition:opacity .15s;">
         Delete Forever
@@ -1255,7 +1250,6 @@
     </div>
     <div id="create-pcb-status" style="font-size:11px;color:var(--text-muted);min-height:16px;"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button onclick="closeCreatePCBModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:8px 18px;font-size:12px;cursor:pointer;">Cancel</button>
       <button onclick="doCreatePCBLayout()" style="background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:6px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;">
         Create Layout &#8658;
       </button>
