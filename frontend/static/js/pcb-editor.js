@@ -20,6 +20,7 @@ class PCBEditor {
     // Click-cycle: remember last click pos + last picked object for cycling
     this._lastClickMx = null; this._lastClickMy = null; this._lastClickObj = null;
     this.routePoints = []; this.routeNet = null; this.routeLayer = 'F.Cu';
+    this._elbowMode = 0; // 0 = H/diag first, 1 = V/diag first; toggle with '/'
     this.zonePoints = []; this.zoneNet = null;
     this.measureStart = null;
     this.areaStart = null; this.areaNet = 'GND'; this.areaLayer = 'F.Cu';
@@ -830,17 +831,26 @@ class PCBEditor {
     const netConflict=destNet&&this.routeNet&&destNet!==this.routeNet;
     const netMatch=destNet&&(!this.routeNet||destNet===this.routeNet);
 
-    // Snap endpoint to pad/via if net matches, then clamp to minimum trace angle
+    // Snap endpoint to pad/via if net matches; use raw cursor for elbow target
     let ex=this._mx,ey=this._my;
     if(hitPad&&netMatch){ex=hitPad.x;ey=hitPad.y;}
-    ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
-    // Compute avoidance path for the last segment (cached until endpoint grid cell changes)
+    // Compute elbow path (L-route: two segments via corner point)
     const lastPt=pts[pts.length-1];
-    const _cacheKey=`${lastPt.x.toFixed(2)},${lastPt.y.toFixed(2)},${ex.toFixed(2)},${ey.toFixed(2)},${this.routeNet||''}`;
+    const elbowPts=this._computeElbow(lastPt.x,lastPt.y,ex,ey);
+
+    // Run A* avoidance on each elbow segment, concatenate results
+    const _cacheKey=`${lastPt.x.toFixed(2)},${lastPt.y.toFixed(2)},${ex.toFixed(2)},${ey.toFixed(2)},${this.routeNet||''},${this._elbowMode}`;
     let avoidPath;
     if(this._avoidCache&&this._avoidCacheKey===_cacheKey){avoidPath=this._avoidCache;}
-    else{avoidPath=this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');this._avoidCache=avoidPath;this._avoidCacheKey=_cacheKey;}
+    else{
+      avoidPath=[elbowPts[0]];
+      for(let i=0;i<elbowPts.length-1;i++){
+        const seg=this._routeAroundPads(elbowPts[i].x,elbowPts[i].y,elbowPts[i+1].x,elbowPts[i+1].y,this.routeNet||'');
+        for(let j=1;j<seg.length;j++)avoidPath.push(seg[j]);
+      }
+      this._avoidCache=avoidPath;this._avoidCacheKey=_cacheKey;
+    }
     // Validate: check if any segment in the avoidance path still crosses a foreign pad
     let pathBlocked=false, blockingPad=null;
     for(let i=0;i<avoidPath.length-1;i++){
@@ -1049,6 +1059,37 @@ class PCBEditor {
       }
     }
     return obs;
+  }
+
+  /** Compute an L-route (elbow) from S to C using two segments at allowed angles.
+   *  Returns [{x,y}, {x,y}, {x,y}] (start, elbow, end) or just [start,end] if direct.
+   *  Toggle this._elbowMode with '/' to switch between H-first and V-first. */
+  _computeElbow(sx,sy,ex,ey){
+    const stepDeg=DR.routeAngleStep??45;
+    const dx=ex-sx,dy=ey-sy;
+    if(Math.abs(dx)<0.01&&Math.abs(dy)<0.01)return[{x:sx,y:sy},{x:ex,y:ey}];
+    if(stepDeg===0)return[{x:sx,y:sy},{x:ex,y:ey}]; // free-form: direct
+
+    if(stepDeg>=90){
+      // Orthogonal: H then V, or V then H
+      if(this._elbowMode===0)return[{x:sx,y:sy},{x:ex,y:sy},{x:ex,y:ey}];
+      else return[{x:sx,y:sy},{x:sx,y:ey},{x:ex,y:ey}];
+    }
+
+    // 45° mode: diagonal + straight or straight + diagonal
+    const adx=Math.abs(dx),ady=Math.abs(dy);
+    if(Math.abs(adx-ady)<0.01)return[{x:sx,y:sy},{x:ex,y:ey}]; // pure 45° diagonal
+    const diagLen=Math.min(adx,ady);
+    const diagDx=Math.sign(dx)*diagLen,diagDy=Math.sign(dy)*diagLen;
+
+    if(this._elbowMode===0){
+      // Diagonal first, then straight
+      return[{x:sx,y:sy},{x:sx+diagDx,y:sy+diagDy},{x:ex,y:ey}];
+    } else {
+      // Straight first, then diagonal
+      const remDx=dx-diagDx,remDy=dy-diagDy;
+      return[{x:sx,y:sy},{x:sx+remDx,y:sy+remDy},{x:ex,y:ey}];
+    }
   }
 
   /** A* grid pathfinder: returns waypoints [start, ...intermediate, end] that
@@ -2056,20 +2097,24 @@ class PCBEditor {
             return;
           }
 
-          // Snap to pad position if hitting a pad, then clamp to minimum trace angle
+          // Snap to pad position if hitting a pad; use elbow routing
           let ex=hit?hit.x:xmm, ey=hit?hit.y:ymm;
-          ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
-          // Use avoidance path from preview (or compute fresh) to route around pads
+          // Use avoidance path from preview (or compute fresh with elbow)
           const lastPt=this.routePoints[this.routePoints.length-1];
           let avoidPath=this._lastAvoidPath;
           this._lastAvoidPath=null;
           if(!avoidPath){
-            avoidPath=this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+            const elbowPts=this._computeElbow(lastPt.x,lastPt.y,ex,ey);
+            avoidPath=[elbowPts[0]];
+            for(let i=0;i<elbowPts.length-1;i++){
+              const seg=this._routeAroundPads(elbowPts[i].x,elbowPts[i].y,elbowPts[i+1].x,elbowPts[i+1].y,this.routeNet||'');
+              for(let j=1;j<seg.length;j++)avoidPath.push(seg[j]);
+            }
             // Validate the path
             for(let i=0;i<avoidPath.length-1;i++){
-              const hit=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
-              if(hit){avoidPath=null;break;}
+              const h2=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
+              if(h2){avoidPath=null;break;}
             }
           }
           // Block if no valid path around obstacles
@@ -2366,6 +2411,12 @@ class PCBEditor {
           editor._snapshot();
         }
         editor.drawPoints=[];editor.render();
+      }
+      else if(k==='/'&&editor.tool==='route'&&editor.routePoints.length>0){
+        e.preventDefault();
+        editor._elbowMode=editor._elbowMode?0:1;
+        editor._avoidCache=null;editor._avoidCacheKey=null; // invalidate cache
+        editor.render();
       }
       else if(k==='escape'){
         // Close any open PCB modal first
