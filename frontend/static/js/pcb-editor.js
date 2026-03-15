@@ -835,32 +835,31 @@ class PCBEditor {
     if(hitPad&&netMatch){ex=hitPad.x;ey=hitPad.y;}
     ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
-    // Check if the proposed last segment crosses any foreign-net pad
+    // Compute avoidance path for the last segment
     const lastPt=pts[pts.length-1];
-    const segBlocked=this._segHitsWrongPad(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
-    const pathBlocked=!!segBlocked;
+    const avoidPath=this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+    // Store for use by click handler
+    this._lastAvoidPath=avoidPath;
 
     const endPxX=this.mmX(ex),endPxY=this.mmY(ey);
-    const col=netConflict||pathBlocked?'#ef4444':netMatch?'#22c55e':layerCol;
+    const col=netConflict?'#ef4444':netMatch?'#22c55e':layerCol;
 
-    // Draw the trace preview
+    // Draw the trace preview — committed points + avoidance path
     ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.setLineDash([3,2]);
     ctx.beginPath();
     ctx.moveTo(this.mmX(pts[0].x),this.mmY(pts[0].y));
     for(let i=1;i<pts.length;i++)ctx.lineTo(this.mmX(pts[i].x),this.mmY(pts[i].y));
-    ctx.lineTo(endPxX,endPxY);
+    // Draw avoidance waypoints instead of straight line
+    for(let i=1;i<avoidPath.length;i++)ctx.lineTo(this.mmX(avoidPath[i].x),this.mmY(avoidPath[i].y));
     ctx.stroke(); ctx.setLineDash([]);
 
-    // Draw red X on the blocking pad
-    if(segBlocked){
-      const bx=this.mmX(segBlocked.px),by=this.mmY(segBlocked.py);
-      const sz=8;
-      ctx.strokeStyle='#ef4444'; ctx.lineWidth=3; ctx.lineCap='round';
-      ctx.beginPath(); ctx.moveTo(bx-sz,by-sz); ctx.lineTo(bx+sz,by+sz); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(bx+sz,by-sz); ctx.lineTo(bx-sz,by+sz); ctx.stroke();
-      // Label
-      ctx.fillStyle='#ef4444'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
-      ctx.fillText('✕ '+(segBlocked.pad.net||'?'),bx+sz+4,by-2);
+    // Draw small dots on avoidance waypoints (if path was rerouted)
+    if(avoidPath.length>2){
+      ctx.fillStyle=col+'aa';
+      for(let i=1;i<avoidPath.length-1;i++){
+        const wx=this.mmX(avoidPath[i].x),wy=this.mmY(avoidPath[i].y);
+        ctx.beginPath(); ctx.arc(wx,wy,3,0,Math.PI*2); ctx.fill();
+      }
     }
 
     // Endpoint indicator
@@ -1012,6 +1011,78 @@ class PCBEditor {
     ctx.fillRect(rx,ry,rw,rh);
     ctx.strokeRect(rx,ry,rw,rh);
     ctx.setLineDash([]);
+  }
+
+  /** Build a list of obstacle rectangles (foreign-net pads expanded by trace half-width + clearance). */
+  _getObstacles(net){
+    const tw=parseFloat(document.getElementById('route-width')?.value||DR.traceWidth)||0.25;
+    const cl=DR.clearance||0.2;
+    const margin=tw/2+cl;
+    const obs=[];
+    for(const c of(this.board?.components||[])){
+      for(const p of(c.pads||[])){
+        if(!p.net||p.net===net)continue;
+        const{px,py}=this._padWorld(c,p);
+        const hx=(p.size_x||1.6)/2+margin;
+        const hy=(p.size_y||1.6)/2+margin;
+        obs.push({x:px,y:py,hx,hy,pad:p,comp:c});
+      }
+    }
+    return obs;
+  }
+
+  /** Given a start and end point, return an array of waypoints [start, ...intermediate, end]
+   *  that avoids all foreign-net pads. Uses iterative greedy corner-hugging. */
+  _routeAroundPads(sx,sy,ex,ey,net,maxDepth){
+    if(maxDepth===undefined) maxDepth=12;
+    const obs=this._getObstacles(net);
+    const pts=[{x:sx,y:sy}];
+    let cx=sx,cy=sy;
+    const visited=new Set();
+
+    for(let iter=0;iter<maxDepth;iter++){
+      // Find first obstacle blocking segment from (cx,cy) to (ex,ey)
+      const blocker=this._firstBlockingObs(cx,cy,ex,ey,obs);
+      if(!blocker){ pts.push({x:ex,y:ey}); return pts; }
+
+      // Pick best corner of the blocking obstacle to route around
+      const o=blocker;
+      const corners=[
+        {x:o.x-o.hx, y:o.y-o.hy},
+        {x:o.x+o.hx, y:o.y-o.hy},
+        {x:o.x-o.hx, y:o.y+o.hy},
+        {x:o.x+o.hx, y:o.y+o.hy},
+      ];
+      // Score: distance from current + distance to endpoint, pick shortest that doesn't revisit
+      let best=null, bestCost=Infinity;
+      for(const cn of corners){
+        const key=`${cn.x.toFixed(3)},${cn.y.toFixed(3)}`;
+        if(visited.has(key))continue;
+        // Ensure corner→end doesn't go back through the same obstacle
+        const cost=Math.hypot(cn.x-cx,cn.y-cy)+Math.hypot(ex-cn.x,ey-cn.y);
+        if(cost<bestCost){bestCost=cost;best=cn;best._key=key;}
+      }
+      if(!best){ pts.push({x:ex,y:ey}); return pts; } // fallback: no valid corner
+      visited.add(best._key);
+      pts.push({x:best.x,y:best.y});
+      cx=best.x; cy=best.y;
+    }
+    pts.push({x:ex,y:ey});
+    return pts;
+  }
+
+  /** Returns the first obstacle that blocks segment (sx,sy)->(ex,ey), or null. */
+  _firstBlockingObs(sx,sy,ex,ey,obs){
+    const dx=ex-sx,dy=ey-sy,len2=dx*dx+dy*dy;
+    let earliest=null, earliestT=Infinity;
+    for(const o of obs){
+      let t=len2>0?Math.max(0,Math.min(1,((o.x-sx)*dx+(o.y-sy)*dy)/len2)):0;
+      const cx2=sx+t*dx,cy2=sy+t*dy;
+      if(Math.abs(cx2-o.x)<o.hx&&Math.abs(cy2-o.y)<o.hy){
+        if(t<earliestT){earliestT=t;earliest=o;}
+      }
+    }
+    return earliest;
   }
 
   /** Check if a single segment (sx,sy)->(ex,ey) crosses any pad not on `net`.
@@ -1921,21 +1992,16 @@ class PCBEditor {
           let ex=hit?hit.x:xmm, ey=hit?hit.y:ymm;
           ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
-          // Block if the new segment crosses any foreign-net pad
+          // Use avoidance path from preview (or compute fresh) to route around pads
           const lastPt=this.routePoints[this.routePoints.length-1];
-          const blocked=this._segHitsWrongPad(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
-          if(blocked){
-            const name=blocked.pad.name||blocked.pad.number||'?';
-            this._routeError=`Blocked: trace crosses ${name} (${blocked.pad.net})`;
-            this.render();
-            setTimeout(()=>{this._routeError=null;this.render();},2000);
-            return;
-          }
+          const avoidPath=this._lastAvoidPath||this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+          this._lastAvoidPath=null;
 
           // Assign net from destination if not yet set
           if(!this.routeNet&&destNet) this.routeNet=destNet;
 
-          this.routePoints.push({x:ex,y:ey});
+          // Push all avoidance waypoints (skip first which is lastPt)
+          for(let i=1;i<avoidPath.length;i++) this.routePoints.push({x:avoidPath[i].x,y:avoidPath[i].y});
 
           // Auto-commit when landing on same-net pad/via/area, or double-click
           const sameNet=destNet&&(!this.routeNet||destNet===this.routeNet);
