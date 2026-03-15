@@ -2380,10 +2380,7 @@ class PCBEditor {
               // Fall back to raw elbow without A* avoidance
               avoidPath=elbowPts;
             }
-            if(_hasCollision){
-              this._routeError='⚠ Trace crosses foreign net pad';
-              setTimeout(()=>{this._routeError=null;this.render();},2500);
-            }
+            // Collision with foreign-net pad is allowed — DRC will catch it
           }
 
           // Assign net from destination if not yet set
@@ -2633,19 +2630,10 @@ class PCBEditor {
 
     cv.addEventListener('mouseup',e=>{
       const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace;
-      // If component drag caused trace-pad violations, undo the move
-      const hadCompViolations=this._compDragViolations&&this._compDragViolations.length>0;
       this._isDrag=false; this._dragC=null; this._isPan=false; this._isDragVia=false;
       this._isDragDrawing=false; this._dragDrawingStart=null; this._dragDrawingPts=null;
       this._isDragTrace=false; this._dragTrace=null; this._traceDragViolations=[];
       this._compDragViolations=[];
-      if(hadCompViolations&&wasDragging){
-        this.undo(); // revert to pre-drag state
-        this._routeError='Blocked: trace would cross foreign-net pad';
-        this.render();
-        setTimeout(()=>{this._routeError=null;this.render();},2500);
-        return;
-      }
       if(wasDragging) this._snapshot(); // snapshot after move
       if(this._isBoxSel&&this._boxSelStart&&this._boxSelEnd){
         const bx1=Math.min(this._boxSelStart.mx,this._boxSelEnd.mx);
