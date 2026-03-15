@@ -283,7 +283,7 @@
         "x": 300,
         "y": 260,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 300,
         "_exampleY": 260
@@ -297,7 +297,7 @@
         "x": 130,
         "y": 230,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 130,
         "_exampleY": 230
@@ -311,7 +311,7 @@
         "x": 170,
         "y": 270,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 170,
         "_exampleY": 270,
@@ -327,7 +327,7 @@
         "x": 500,
         "y": 270,
         "rotation": 3,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 500,
         "_exampleY": 270
@@ -341,7 +341,7 @@
         "x": 440,
         "y": 230,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 440,
         "_exampleY": 230
@@ -353,12 +353,12 @@
         "designator": "VDD",
         "value": "V+",
         "x": 440,
-        "y": 90,
+        "y": 30,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 440,
-        "_exampleY": 90
+        "_exampleY": 30
       },
       {
         "id": "gnd1",
@@ -369,7 +369,7 @@
         "x": 170,
         "y": 350,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 170,
         "_exampleY": 350
@@ -383,7 +383,7 @@
         "x": 150,
         "y": 190,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 150,
         "_exampleY": 190
@@ -397,24 +397,10 @@
         "x": 460,
         "y": 180,
         "rotation": 1,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 460,
         "_exampleY": 180
-      },
-      {
-        "id": "cmml340vw",
-        "slug": "CAPACITOR",
-        "symType": "capacitor",
-        "designator": "C4",
-        "value": "1uF",
-        "x": 460,
-        "y": 140,
-        "rotation": 1,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
-        "_exampleSlug": "PMA3_83LNW",
-        "_exampleX": 460,
-        "_exampleY": 140
       },
       {
         "id": "cmml34ife",
@@ -425,10 +411,24 @@
         "x": 480,
         "y": 210,
         "rotation": 0,
-        "_exampleGroupId": "eg_mmqqwnzj7q",
+        "_exampleGroupId": "eg_mms0odwyxf",
         "_exampleSlug": "PMA3_83LNW",
         "_exampleX": 480,
         "_exampleY": 210
+      },
+      {
+        "id": "cmmrz5eipx60a",
+        "slug": "CAPACITOR",
+        "symType": "capacitor",
+        "designator": "C4",
+        "value": "1uF",
+        "x": 460,
+        "y": 140,
+        "rotation": 1,
+        "_exampleGroupId": "eg_mms0odwyxf",
+        "_exampleSlug": "PMA3_83LNW",
+        "_exampleX": 460,
+        "_exampleY": 140
       }
     ],
     "wires": [
@@ -446,34 +446,6 @@
         ]
       },
       {
-        "id": "cwmmjc04bp3k6",
-        "points": [
-          {
-            "x": 440,
-            "y": 110
-          },
-          {
-            "x": 440,
-            "y": 110
-          }
-        ],
-        "net": "V+"
-      },
-      {
-        "id": "cwmmjc1iv6vqy",
-        "points": [
-          {
-            "x": 440,
-            "y": 110
-          },
-          {
-            "x": 440,
-            "y": 110
-          }
-        ],
-        "net": "V+"
-      },
-      {
         "id": "wmmjc2h5l",
         "points": [
           {
@@ -487,20 +459,6 @@
           }
         ],
         "net": "RF_bias"
-      },
-      {
-        "id": "wmmjc2u79",
-        "points": [
-          {
-            "x": 440,
-            "y": 190
-          },
-          {
-            "x": 440,
-            "y": 110
-          }
-        ],
-        "net": "V+"
       },
       {
         "id": "wmmjcevfa",
@@ -558,19 +516,6 @@
         ]
       },
       {
-        "id": "cwmml33upa799",
-        "points": [
-          {
-            "x": 440,
-            "y": 170
-          },
-          {
-            "x": 440,
-            "y": 170
-          }
-        ]
-      },
-      {
         "id": "cwmml3428ctn1",
         "points": [
           {
@@ -580,19 +525,6 @@
           {
             "x": 440,
             "y": 140
-          }
-        ]
-      },
-      {
-        "id": "cwmml34ifei9w",
-        "points": [
-          {
-            "x": 480,
-            "y": 190
-          },
-          {
-            "x": 480,
-            "y": 190
           }
         ]
       },
@@ -683,20 +615,6 @@
         ]
       },
       {
-        "id": "cwmmov8567fr3",
-        "points": [
-          {
-            "x": 440,
-            "y": 190
-          },
-          {
-            "x": 440,
-            "y": 190
-          }
-        ],
-        "net": "V+"
-      },
-      {
         "id": "cwmmqlcxcel9j",
         "points": [
           {
@@ -719,6 +637,34 @@
           {
             "x": 440,
             "y": 180
+          }
+        ]
+      },
+      {
+        "id": "cwmmrnhrzhgd7",
+        "points": [
+          {
+            "x": 440,
+            "y": 80
+          },
+          {
+            "x": 440,
+            "y": 80
+          }
+        ]
+      },
+      {
+        "id": "wmmrnpa5k",
+        "points": [
+          {
+            "x": 440,
+            "y": 190,
+            "isPort": true
+          },
+          {
+            "x": 440,
+            "y": 50,
+            "isPort": true
           }
         ]
       }
@@ -807,8 +753,8 @@
         "ref": "L2",
         "value": "39nH 0402",
         "footprint": "0402",
-        "x": 4.871,
-        "y": 4.179,
+        "x": 6,
+        "y": 3,
         "rotation": 0,
         "layer": "F",
         "pads": [
@@ -821,7 +767,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "bias"
+            "net": "RF_bias"
           },
           {
             "number": "2",
@@ -841,8 +787,8 @@
         "ref": "C1",
         "value": "0.01\u00b5F 0402",
         "footprint": "0402",
-        "x": 4.871,
-        "y": 2.579,
+        "x": 7,
+        "y": 0.5,
         "rotation": 0,
         "layer": "F",
         "pads": [
@@ -875,8 +821,8 @@
         "ref": "C3",
         "value": "100pF 0402",
         "footprint": "0402",
-        "x": 2.271,
-        "y": 4.179,
+        "x": 1,
+        "y": 3.5,
         "rotation": 270,
         "layer": "F",
         "pads": [
@@ -889,7 +835,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "RFOUT"
+            "net": "RF_RFOUT"
           },
           {
             "number": "2",
@@ -900,7 +846,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "bias"
+            "net": "RF_bias"
           }
         ]
       },
@@ -909,8 +855,8 @@
         "ref": "L1",
         "value": "18nH 0402",
         "footprint": "0402",
-        "x": 1.471,
-        "y": 7.579,
+        "x": 6,
+        "y": 12.5,
         "rotation": 180,
         "layer": "F",
         "pads": [
@@ -934,7 +880,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "IN"
+            "net": "RF_IN"
           }
         ]
       },
@@ -943,9 +889,9 @@
         "ref": "C2",
         "value": "10pF 0402",
         "footprint": "0402",
-        "x": -0.129,
-        "y": 8.579,
-        "rotation": 90,
+        "x": 6,
+        "y": 15,
+        "rotation": 180,
         "layer": "F",
         "pads": [
           {
@@ -957,7 +903,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "RFIN"
+            "net": "RF_RFIN"
           },
           {
             "number": "2",
@@ -968,7 +914,7 @@
             "shape": "rect",
             "size_x": 0.6,
             "size_y": 0.6,
-            "net": "IN"
+            "net": "RF_IN"
           }
         ]
       },
@@ -977,8 +923,8 @@
         "ref": "C4",
         "value": "1uF",
         "footprint": "0402",
-        "x": 2.771,
-        "y": 2.079,
+        "x": 7,
+        "y": -1.5,
         "rotation": 0,
         "layer": "F",
         "pads": [
@@ -1009,8 +955,8 @@
         "ref": "U1",
         "value": "PMA3-83LNW+",
         "footprint": "QFN-12-3x3",
-        "x": 4.871,
-        "y": 7.579,
+        "x": 5.5,
+        "y": 7.5,
         "rotation": 0,
         "layer": "F",
         "pads": [
@@ -1034,7 +980,7 @@
             "shape": "rect",
             "size_x": 0.3,
             "size_y": 0.7,
-            "net": "IN"
+            "net": "RF_IN"
           },
           {
             "number": "3",
@@ -1100,7 +1046,7 @@
             "shape": "rect",
             "size_x": 0.3,
             "size_y": 0.7,
-            "net": "bias"
+            "net": "RF_bias"
           },
           {
             "number": "9",
@@ -1162,10 +1108,11 @@
     ],
     "nets": [
       {
-        "name": "bias",
+        "name": "RF_bias",
         "pads": [
           "L2.1",
-          "C3.2"
+          "C3.2",
+          "U1.8"
         ]
       },
       {
@@ -1181,33 +1128,99 @@
         "pads": [
           "C1.2",
           "L1.1",
-          "C4.2"
+          "C4.2",
+          "U1.0"
         ]
       },
       {
-        "name": "RFOUT",
+        "name": "RF_RFOUT",
         "pads": [
           "C3.1"
         ]
       },
       {
-        "name": "IN",
+        "name": "RF_IN",
         "pads": [
           "L1.2",
-          "C2.2"
+          "C2.2",
+          "U1.2"
         ]
       },
       {
-        "name": "RFIN",
+        "name": "RF_RFIN",
         "pads": [
           "C2.1"
         ]
+      },
+      {
+        "name": "NC",
+        "pads": [
+          "U1.1",
+          "U1.3",
+          "U1.4",
+          "U1.5",
+          "U1.6",
+          "U1.7",
+          "U1.9",
+          "U1.10",
+          "U1.11"
+        ]
       }
     ],
-    "traces": [],
+    "traces": [
+      {
+        "net": "RF_IN",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 5.5,
+              "y": 12.5
+            },
+            "end": {
+              "x": 5.5,
+              "y": 9.25
+            }
+          }
+        ]
+      },
+      {
+        "net": "RF_bias",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 5.5,
+              "y": 5.75
+            },
+            "end": {
+              "x": 5.5,
+              "y": 3
+            }
+          }
+        ]
+      }
+    ],
     "vias": [],
     "groups": [],
-    "areas": []
+    "areas": [],
+    "zones": [],
+    "designRules": {
+      "traceWidth": 0.25,
+      "minTraceWidth": 0.15,
+      "clearance": 0.2,
+      "tracePadClearance": 0.2,
+      "viaClearance": 0.25,
+      "routeEdgeClearance": 0.5,
+      "viaSize": 0.4,
+      "viaDrill": 0.2,
+      "minAnnularRing": 0.15,
+      "allowVias": true,
+      "powerTraceWidth": 0.4,
+      "routingGrid": 0.25
+    }
   },
   "slug": "PMA3_83LNW",
   "value": "PMA3-83LNW+_V2"

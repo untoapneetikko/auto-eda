@@ -4493,6 +4493,8 @@ async def api_pcb_import_schematic(request: Request):
             #   internal → LE canonical → schematic net name
             raw_net = t.get("net", "")
             t["net"] = net_map.get(raw_net, raw_net)
+            # Tag trace with the example groupId so it moves/rotates with the group
+            t["groupId"] = eg_id
             # Translate coordinates — three possible storage formats:
             if "x1" in t:                                        # flat x1/y1/x2/y2
                 t["x1"] = round(float(t["x1"]) + dx, 3)
@@ -4523,6 +4525,8 @@ async def api_pcb_import_schematic(request: Request):
             v["y"]   = round(float(v.get("y", 0)) + dy, 3)
             raw_net  = v.get("net", "")
             v["net"] = net_map.get(raw_net, raw_net)
+            # Tag via with the example groupId so it moves/rotates with the group
+            v["groupId"] = eg_id
             pcb_vias.append(v)
 
     # ── Build nets list from netlist dict + translated LE nets ─────────────

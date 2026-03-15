@@ -80,8 +80,8 @@
       "symType": "vcc",
       "designator": "VDD",
       "value": "V+",
-      "x": 740,
-      "y": 170,
+      "x": 700,
+      "y": 140,
       "rotation": 0,
       "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
@@ -108,7 +108,7 @@
       "symType": "gnd",
       "designator": "GND1",
       "value": "GND",
-      "x": 450,
+      "x": 400,
       "y": 270,
       "rotation": 1,
       "_exampleGroupId": "eg_mmrmdgi5rk",
@@ -177,8 +177,12 @@
       "id": "wmmrmdgi6m77",
       "points": [
         {
+          "x": 700,
+          "y": 160
+        },
+        {
           "x": 740,
-          "y": 190
+          "y": 160
         },
         {
           "x": 740,
@@ -191,8 +195,12 @@
       "id": "wmmrmdgi6ijw",
       "points": [
         {
+          "x": 700,
+          "y": 160
+        },
+        {
           "x": 740,
-          "y": 190
+          "y": 160
         },
         {
           "x": 740,
@@ -224,8 +232,12 @@
           "y": 270
         },
         {
-          "x": 740,
-          "y": 190
+          "x": 700,
+          "y": 270
+        },
+        {
+          "x": 700,
+          "y": 160
         }
       ],
       "net": "V+"
@@ -340,21 +352,6 @@
       ]
     },
     {
-      "id": "wmmrmdgi6hj2",
-      "points": [
-        {
-          "x": 470,
-          "y": 270,
-          "isPort": false
-        },
-        {
-          "x": 500,
-          "y": 270
-        }
-      ],
-      "net": "GND"
-    },
-    {
       "id": "wmmrmdgi6tbw",
       "points": [
         {
@@ -449,6 +446,20 @@
           "y": 260
         }
       ]
+    },
+    {
+      "id": "wmms0shls",
+      "points": [
+        {
+          "x": 420,
+          "y": 270,
+          "isPort": true
+        },
+        {
+          "x": 500,
+          "y": 270
+        }
+      ]
     }
   ],
   "labels": [
@@ -468,7 +479,7 @@
     }
   ],
   "created_at": "2026-03-12T07:44:24.037Z",
-  "updated_at": "2026-03-15T10:36:34.999840+00:00",
+  "updated_at": "2026-03-15T17:24:22.291226+00:00",
   "groups": [],
   "noConnects": []
 }

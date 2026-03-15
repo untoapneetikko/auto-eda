@@ -1,18 +1,18 @@
 {
-  "title": "jimi2 - V3",
+  "title": "jimi2 - V1",
   "board": {
-    "width": 100,
-    "height": 80,
+    "width": 80,
+    "height": 60,
     "units": "mm"
   },
   "components": [
     {
       "id": "U1",
       "ref": "U1",
-      "value": "PMA3-83LNW+",
+      "value": "PMA3-83LNW+_V2",
       "footprint": "QFN-12-3x3",
-      "x": 50.001,
-      "y": 40,
+      "x": 36.05,
+      "y": 36.19,
       "rotation": 0,
       "layer": "F",
       "pads": [
@@ -159,16 +159,17 @@
           "size_y": 1.7,
           "net": ""
         }
-      ]
+      ],
+      "groupId": "eg_mmrmdgi5rk"
     },
     {
       "id": "C1",
       "ref": "C1",
       "value": "10pF",
       "footprint": "0402",
-      "x": 53.9,
-      "y": 43.4,
-      "rotation": 0,
+      "x": 36.55,
+      "y": 43.69,
+      "rotation": 180,
       "layer": "F",
       "pads": [
         {
@@ -193,117 +194,51 @@
           "size_y": 0.6,
           "net": ""
         }
-      ]
+      ],
+      "groupId": "eg_mmrmdgi5rk"
     },
     {
       "id": "L1",
       "ref": "L1",
       "value": "18nH",
-      "footprint": "0402",
-      "x": 53.9,
-      "y": 36.6,
+      "footprint": "0603",
+      "x": 36.55,
+      "y": 41.19,
       "rotation": 180,
       "layer": "F",
       "pads": [
         {
           "number": "1",
           "name": "A",
-          "x": -0.5,
+          "x": -0.8,
           "y": 0,
           "type": "smd",
           "shape": "rect",
-          "size_x": 0.6,
-          "size_y": 0.6,
+          "size_x": 0.9,
+          "size_y": 0.8,
           "net": ""
         },
         {
           "number": "2",
           "name": "B",
-          "x": 0.5,
+          "x": 0.8,
           "y": 0,
           "type": "smd",
           "shape": "rect",
-          "size_x": 0.6,
-          "size_y": 0.6,
+          "size_x": 0.9,
+          "size_y": 0.8,
           "net": ""
         }
-      ]
+      ],
+      "groupId": "eg_mmrmdgi5rk"
     },
     {
       "id": "C2",
       "ref": "C2",
       "value": "100pF",
       "footprint": "0402",
-      "x": 46.1,
-      "y": 43.4,
-      "rotation": 90,
-      "layer": "F",
-      "pads": [
-        {
-          "number": "1",
-          "name": "+",
-          "x": -0.5,
-          "y": 0,
-          "type": "smd",
-          "shape": "rect",
-          "size_x": 0.6,
-          "size_y": 0.6,
-          "net": ""
-        },
-        {
-          "number": "2",
-          "name": "-",
-          "x": 0.5,
-          "y": 0,
-          "type": "smd",
-          "shape": "rect",
-          "size_x": 0.6,
-          "size_y": 0.6,
-          "net": ""
-        }
-      ]
-    },
-    {
-      "id": "L2",
-      "ref": "L2",
-      "value": "39nH",
-      "footprint": "0402",
-      "x": 46.1,
-      "y": 36.6,
-      "rotation": 0,
-      "layer": "F",
-      "pads": [
-        {
-          "number": "1",
-          "name": "A",
-          "x": -0.5,
-          "y": 0,
-          "type": "smd",
-          "shape": "rect",
-          "size_x": 0.6,
-          "size_y": 0.6,
-          "net": ""
-        },
-        {
-          "number": "2",
-          "name": "B",
-          "x": 0.5,
-          "y": 0,
-          "type": "smd",
-          "shape": "rect",
-          "size_x": 0.6,
-          "size_y": 0.6,
-          "net": ""
-        }
-      ]
-    },
-    {
-      "id": "C3",
-      "ref": "C3",
-      "value": "1uF",
-      "footprint": "0402",
-      "x": 53.902,
-      "y": 40,
+      "x": 31.55,
+      "y": 32.19,
       "rotation": 270,
       "layer": "F",
       "pads": [
@@ -329,15 +264,51 @@
           "size_y": 0.6,
           "net": ""
         }
-      ]
+      ],
+      "groupId": "eg_mmrmdgi5rk"
     },
     {
-      "id": "C4",
-      "ref": "C4",
+      "id": "L2",
+      "ref": "L2",
+      "value": "39nH",
+      "footprint": "0603",
+      "x": 36.55,
+      "y": 31.69,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "A",
+          "x": -0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "B",
+          "x": 0.8,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.9,
+          "size_y": 0.8,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmrmdgi5rk"
+    },
+    {
+      "id": "C3",
+      "ref": "C3",
       "value": "1uF",
       "footprint": "0402",
-      "x": 46.097,
-      "y": 40,
+      "x": 37.55,
+      "y": 29.19,
       "rotation": 0,
       "layer": "F",
       "pads": [
@@ -363,24 +334,167 @@
           "size_y": 0.6,
           "net": ""
         }
+      ],
+      "groupId": "eg_mmrmdgi5rk"
+    },
+    {
+      "id": "C4",
+      "ref": "C4",
+      "value": "1uF",
+      "footprint": "0402",
+      "x": 37.55,
+      "y": 27.19,
+      "rotation": 0,
+      "layer": "F",
+      "pads": [
+        {
+          "number": "1",
+          "name": "+",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        },
+        {
+          "number": "2",
+          "name": "-",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": ""
+        }
+      ],
+      "groupId": "eg_mmrmdgi5rk"
+    }
+  ],
+  "nets": [
+    {
+      "name": "RF_BIAS",
+      "pads": [
+        "C2.2",
+        "L2.1",
+        "U1.8"
+      ]
+    },
+    {
+      "name": "V+",
+      "pads": [
+        "C3.1",
+        "C4.1",
+        "L2.2"
+      ]
+    },
+    {
+      "name": "GND",
+      "pads": [
+        "C3.2",
+        "C4.2",
+        "L1.1",
+        "U1.0"
+      ]
+    },
+    {
+      "name": "RF_RFOUT",
+      "pads": [
+        "C2.1"
+      ]
+    },
+    {
+      "name": "RF_IN",
+      "pads": [
+        "C1.2",
+        "L1.2",
+        "U1.2"
+      ]
+    },
+    {
+      "name": "RF_RFIN",
+      "pads": [
+        "C1.1"
+      ]
+    },
+    {
+      "name": "NC",
+      "pads": [
+        "U1.1",
+        "U1.10",
+        "U1.11",
+        "U1.3",
+        "U1.4",
+        "U1.5",
+        "U1.6",
+        "U1.7",
+        "U1.9"
       ]
     }
   ],
-  "nets": [],
-  "traces": [],
+  "traces": [
+    {
+      "net": "RF_IN",
+      "layer": "F.Cu",
+      "width": 0.25,
+      "segments": [
+        {
+          "start": {
+            "x": 36.05,
+            "y": 41.19
+          },
+          "end": {
+            "x": 36.05,
+            "y": 37.94
+          }
+        }
+      ]
+    },
+    {
+      "net": "RF_bias",
+      "layer": "F.Cu",
+      "width": 0.25,
+      "segments": [
+        {
+          "start": {
+            "x": 36.05,
+            "y": 34.44
+          },
+          "end": {
+            "x": 36.05,
+            "y": 31.69
+          }
+        }
+      ]
+    }
+  ],
   "vias": [],
   "areas": [],
-  "id": "0d0e4537cf9a",
-  "projectId": "mmn5tn73dweos",
-  "updated_at": "2026-03-15T10:36:51.406352+00:00",
+  "groups": [
+    {
+      "id": "eg_mmrmdgi5rk",
+      "name": "PMA3_83LNW",
+      "members": [
+        "U1",
+        "C1",
+        "L1",
+        "C2",
+        "L2",
+        "C3",
+        "C4"
+      ]
+    }
+  ],
   "schematicRefs": [
     {
       "id": "U1",
       "ref": "U1",
       "value": "PMA3-83LNW+_V2",
       "footprint": "QFN-12-3x3",
-      "x": 43.12,
-      "y": 48.62,
+      "x": 36.05,
+      "y": 36.19,
       "rotation": 0,
       "layer": "F",
       "pads": [
@@ -535,9 +649,9 @@
       "ref": "C1",
       "value": "10pF",
       "footprint": "0402",
-      "x": 38.12,
-      "y": 49.62,
-      "rotation": 90,
+      "x": 36.55,
+      "y": 43.69,
+      "rotation": 180,
       "layer": "F",
       "pads": [
         {
@@ -570,8 +684,8 @@
       "ref": "L1",
       "value": "18nH",
       "footprint": "0603",
-      "x": 39.72,
-      "y": 48.62,
+      "x": 36.55,
+      "y": 41.19,
       "rotation": 180,
       "layer": "F",
       "pads": [
@@ -605,8 +719,8 @@
       "ref": "C2",
       "value": "100pF",
       "footprint": "0402",
-      "x": 40.52,
-      "y": 45.22,
+      "x": 31.55,
+      "y": 32.19,
       "rotation": 270,
       "layer": "F",
       "pads": [
@@ -640,8 +754,8 @@
       "ref": "L2",
       "value": "39nH",
       "footprint": "0603",
-      "x": 43.12,
-      "y": 45.22,
+      "x": 36.55,
+      "y": 31.69,
       "rotation": 0,
       "layer": "F",
       "pads": [
@@ -675,8 +789,8 @@
       "ref": "C3",
       "value": "1uF",
       "footprint": "0402",
-      "x": 43.12,
-      "y": 43.62,
+      "x": 37.55,
+      "y": 29.19,
       "rotation": 0,
       "layer": "F",
       "pads": [
@@ -710,8 +824,8 @@
       "ref": "C4",
       "value": "1uF",
       "footprint": "0402",
-      "x": 41.02,
-      "y": 43.12,
+      "x": 37.55,
+      "y": 27.19,
       "rotation": 0,
       "layer": "F",
       "pads": [
@@ -741,18 +855,8 @@
       "groupId": "eg_mmrmdgi5rk"
     }
   ],
-  "designRules": {
-    "traceWidth": 0.25,
-    "minTraceWidth": 0.15,
-    "clearance": 0.2,
-    "tracePadClearance": 0.2,
-    "viaClearance": 0.25,
-    "routeEdgeClearance": 0.5,
-    "viaSize": 0.4,
-    "viaDrill": 0.2,
-    "minAnnularRing": 0.15,
-    "allowVias": true,
-    "powerTraceWidth": 0.4,
-    "routingGrid": 0.25
-  }
+  "zones": [],
+  "projectId": "mmn5tn73dweos",
+  "id": "mms0y2rf1l9gt",
+  "updated_at": "2026-03-15T17:24:24.317999+00:00"
 }
