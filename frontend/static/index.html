@@ -765,18 +765,18 @@
     <div class="wf-tree">
 
       <!-- ── ROW 1: Generate ── -->
-      <div class="wf-node wf-accent" onclick="document.getElementById('build-prompt').focus();document.getElementById('build-prompt').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
+      <div class="wf-node wf-accent">
         <div class="wf-icon">✨</div>
         <div class="wf-body">
           <div class="wf-title">Generate</div>
-          <div class="wf-desc">Describe your circuit and let AI build it — or start from scratch below.</div>
+          <div class="wf-desc">Describe your circuit and the AI designs it end-to-end — or build from scratch yourself.</div>
         </div>
         <div class="wf-badge">START</div>
       </div>
       <div class="wf-line"></div>
 
       <!-- ── ROW 2: Upload Datasheet ── -->
-      <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+      <div class="wf-node">
         <div class="wf-icon">📄</div>
         <div class="wf-body">
           <div class="wf-title">Upload Datasheet</div>
@@ -788,7 +788,7 @@
 
       <!-- ── ROW 3: Split — Symbol + Footprint ── -->
       <div class="wf-split">
-        <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+        <div class="wf-node">
           <div class="wf-icon">🔣</div>
           <div class="wf-body">
             <div class="wf-title">Symbol</div>
@@ -796,11 +796,11 @@
           </div>
           <div class="wf-badge wf-auto">AI</div>
         </div>
-        <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+        <div class="wf-node">
           <div class="wf-icon">📐</div>
           <div class="wf-body">
             <div class="wf-title">Footprint</div>
-            <div class="wf-desc">IPC-7351 pad layout created from package dimensions in the datasheet.</div>
+            <div class="wf-desc">Pad layout created from package dimensions in the datasheet.</div>
           </div>
           <div class="wf-badge wf-auto">AI</div>
         </div>
@@ -808,24 +808,24 @@
       <div class="wf-line"></div>
 
       <!-- ── ROW 4: Example Circuit ── -->
-      <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+      <div class="wf-node">
         <div class="wf-icon">🧪</div>
         <div class="wf-body">
           <div class="wf-title">Example Circuit</div>
-          <div class="wf-desc">Reference application circuit extracted from the datasheet — edit it live in the built-in schematic editor.</div>
+          <div class="wf-desc">Reference application circuit extracted from the datasheet — edit it live in the built-in editor.</div>
         </div>
         <div class="wf-badge wf-auto">AI</div>
       </div>
       <div class="wf-line"></div>
 
       <!-- ── ROW 5: Schematic Design ── -->
-      <div class="wf-node wf-highlight" onclick="switchSection('schematic')" style="cursor:pointer;">
+      <div class="wf-node wf-highlight">
         <div class="wf-icon">📋</div>
         <div class="wf-body">
           <div class="wf-title">Schematic Design</div>
           <div class="wf-desc">Place components, draw wires, label nets. Full editor with undo, copy-paste, and net highlighting.</div>
         </div>
-        <div class="wf-badge wf-user">YOU</div>
+        <div class="wf-badge wf-user">EDIT</div>
       </div>
       <div class="wf-line"></div>
 
@@ -842,7 +842,7 @@
 
       <!-- ── ROW 7: Split — Placement + Routing ── -->
       <div class="wf-split">
-        <div class="wf-node" onclick="switchSection('pcb')" style="cursor:pointer;">
+        <div class="wf-node">
           <div class="wf-icon">🗺</div>
           <div class="wf-body">
             <div class="wf-title">Placement</div>
@@ -850,11 +850,11 @@
           </div>
           <div class="wf-badge wf-auto">AI</div>
         </div>
-        <div class="wf-node" onclick="switchSection('pcb')" style="cursor:pointer;">
+        <div class="wf-node">
           <div class="wf-icon">🛤</div>
           <div class="wf-body">
             <div class="wf-title">Routing</div>
-            <div class="wf-desc">Copper traces routed automatically — power nets wide, signals tight, vias where needed.</div>
+            <div class="wf-desc">Copper traces routed — power nets wide, signals tight, vias where needed.</div>
           </div>
           <div class="wf-badge wf-auto">AI</div>
         </div>
@@ -862,22 +862,22 @@
       <div class="wf-line"></div>
 
       <!-- ── ROW 8: PCB Editor ── -->
-      <div class="wf-node wf-highlight" onclick="switchSection('pcb')" style="cursor:pointer;">
+      <div class="wf-node wf-highlight">
         <div class="wf-icon">🔲</div>
         <div class="wf-body">
           <div class="wf-title">PCB Layout Editor</div>
           <div class="wf-desc">Fine-tune placement, adjust routes, run DRC. Multi-layer support with copper pours.</div>
         </div>
-        <div class="wf-badge wf-user">YOU</div>
+        <div class="wf-badge wf-user">EDIT</div>
       </div>
       <div class="wf-line"></div>
 
-      <!-- ── ROW 9: Export ── -->
+      <!-- ── ROW 9: Fabrication Ready ── -->
       <div class="wf-node wf-done">
-        <div class="wf-icon">📦</div>
+        <div class="wf-icon">🏭</div>
         <div class="wf-body">
-          <div class="wf-title">Export to KiCad</div>
-          <div class="wf-desc">Download .kicad_sch, .kicad_pcb, .kicad_sym, .kicad_mod — ready for fabrication.</div>
+          <div class="wf-title">Fabrication Ready</div>
+          <div class="wf-desc">Your board is complete — Gerber output, BOM, and pick-and-place data ready to send to manufacturing.</div>
         </div>
         <div class="wf-badge" style="background:rgba(34,197,94,0.15);color:#22c55e;">DONE</div>
       </div>

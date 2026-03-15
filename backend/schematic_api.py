@@ -3306,13 +3306,13 @@ def run_autoroute(board: dict) -> dict:
 
         width_mm = _autoroute_trace_width(net_name, dr)
 
-        # Temporarily unblock this net's own pads + component bodies so BFS can reach them
+        # Temporarily unblock this net's own pad cells so BFS can reach them.
+        # NOTE: do NOT unblock component body cells — the body contains pads of
+        # OTHER nets that must remain blocked.  Only the specific pad cells for
+        # the current net are safe to unblock.
         own_cells = all_pad_cells.get(net_name, set())
-        own_body  = _comp_body_cells.get(net_name, set())
         occupied -= own_cells
-        occupied -= own_body
         occupied_b -= own_cells
-        occupied_b -= own_body
 
         # Greedy nearest-neighbour MST: always connect closest unconnected pad
         # pads_xy are (x, y, layer_index) tuples
@@ -3380,11 +3380,9 @@ def run_autoroute(board: dict) -> dict:
                 # Mark on correct layer's occupancy (with clearance expansion)
                 _mark_segment(x0, y0, x1, y1, occ=_occupied_by_layer[l0])
 
-        # Re-block this net's pads + component bodies now that routing is done
+        # Re-block this net's pads now that routing is done
         occupied |= own_cells
-        occupied |= own_body
         occupied_b |= own_cells
-        occupied_b |= own_body
 
         # Build trace objects per layer
         for layer_name, segs in per_layer_segs.items():
