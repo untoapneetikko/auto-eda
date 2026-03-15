@@ -535,14 +535,15 @@ Then parse this component:
                     <td class="pin-num">${c.designator||''}</td>
                     <td><span class="pin-type ${typeCls}">${typeLabel}</span></td>
                     <td class="pin-name">${dispVal}</td>
-                    <td style="font-size:11px;color:var(--text-muted);">${c.slug||''}</td>
+                    <td><span class="acc-bom-status required">Required</span></td>
                     <td class="acc-bom-icon" style="width:20px;text-align:center;">+</td>
                   </tr>`;
                 }).join('')
               : `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;"
                     data-slug="${esc(p.slug||p.part_number||'')}" data-st="ic" data-val="" data-idx="0">
                   <td class="pin-num">U1</td><td><span class="pin-type type-output">IC</span></td>
-                  <td class="pin-name">${p.part_number||''}</td><td style="font-size:11px;color:var(--text-muted);">${p.manufacturer||''}</td>
+                  <td class="pin-name">${p.part_number||''}</td>
+                  <td><span class="acc-bom-status required">Required</span></td>
                   <td class="acc-bom-icon" style="width:20px;text-align:center;">+</td>
                 </tr>` + (p.required_passives||[]).map((pas,i) => {
                   const ref = pas.type==='capacitor'?'C':pas.type==='inductor'?'L':'R';
@@ -550,13 +551,14 @@ Then parse this component:
                   return `<tr onclick="accBomPlace(this.dataset.slug,this.dataset.st,this.dataset.val)" style="cursor:pointer;"
                       data-slug="${esc(slug)}" data-st="${esc(pas.type)}" data-val="${esc(pas.value||'')}" data-idx="${i+1}">
                     <td class="pin-num">${ref}${i+1}</td><td><span class="pin-type type-passive">${pas.type}</span></td>
-                    <td class="pin-name">${pas.value}</td><td style="font-size:11px;color:var(--text-muted);">${pas.part_number||'—'}</td>
+                    <td class="pin-name">${pas.value}</td>
+                    <td><span class="acc-bom-status required">Required</span></td>
                     <td class="acc-bom-icon" style="width:20px;text-align:center;">+</td>
                   </tr>`;
                 }).join('');
             return `<div>
               <div class="section-title" style="display:flex;align-items:center;gap:8px;">🧩 Circuit Components <span style="font-size:10px;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;">— click a row to place</span></div>
-              <table class="pin-table"><thead><tr><th>Ref</th><th>Type</th><th>Value</th><th>Slug</th><th></th></tr></thead><tbody id="acc-bom-tbody">${rows}</tbody></table>
+              <table class="pin-table"><thead><tr><th>Ref</th><th>Type</th><th>Value</th><th>Status</th><th></th></tr></thead><tbody id="acc-bom-tbody">${rows}</tbody></table>
             </div>`;
           })()}
         </div>

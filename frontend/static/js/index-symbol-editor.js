@@ -495,6 +495,12 @@ function refreshAccBomRows() {
     row.classList.toggle('acc-bom-placed', placed);
     const icon = row.querySelector('.acc-bom-icon');
     if (icon) icon.textContent = placed ? '✓' : '+';
+    const badge = row.querySelector('.acc-bom-status');
+    if (badge) {
+      badge.textContent = placed ? 'Placed' : 'Required';
+      badge.classList.toggle('placed', placed);
+      badge.classList.toggle('required', !placed);
+    }
   }
 }
 
