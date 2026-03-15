@@ -2981,31 +2981,72 @@ def run_drc(board: dict) -> dict:  # noqa: C901
                     "x":round(mx3,2),"y":round(my3,2)})
 
     # ══ 6: Trace-to-pad clearance (different nets) ═════════════════════════
-    # Find the closest point on the segment to the pad center, then compute
-    # that point's distance to the actual pad rectangle edge.
-    def _seg_rect_dist(sg, pad):
-        """Min distance from segment to pad rectangle."""
-        # Find closest point on segment to pad center
+    # Build lookup: which pads does a segment endpoint sit inside (same-net)?
+    # A trace starting inside its own pad is normal — we clip the segment to
+    # exclude that portion so adjacent different-net pads aren't falsely flagged.
+    def _pt_inside_pad(px, py, pad):
+        return _pt_rect_dist(px, py, pad["x"], pad["y"], pad["hw"], pad["hh"], pad["rot"]) < 0.01
+
+    # For each segment endpoint, find the same-net pad it sits inside (if any)
+    # and compute the exit-t (the t along the segment where it leaves that pad).
+    def _clip_t_for_endpoint(sg, t_end, same_pads):
+        """Return the t value where the segment exits any same-net pad at t_end."""
+        ex = sg["x1"] + t_end*(sg["x2"]-sg["x1"])
+        ey = sg["y1"] + t_end*(sg["y2"]-sg["y1"])
+        best_t = t_end
+        for sp in same_pads:
+            if not _pt_inside_pad(ex, ey, sp):
+                continue
+            # Binary search for exit point along segment
+            t_in, t_out = t_end, 1.0 - t_end  # search toward other end
+            for _ in range(12):
+                t_mid = (t_in + t_out) / 2
+                mx = sg["x1"] + (t_mid if t_end==0 else 1-t_mid)*(sg["x2"]-sg["x1"])
+                my = sg["y1"] + (t_mid if t_end==0 else 1-t_mid)*(sg["y2"]-sg["y1"])
+                if _pt_inside_pad(mx, my, sp):
+                    t_in = t_mid
+                else:
+                    t_out = t_mid
+            if t_end == 0:
+                best_t = max(best_t, t_out)
+            else:
+                best_t = min(best_t, 1.0 - t_out)
+        return best_t
+
+    def _seg_rect_dist_clipped(sg, pad, same_net_pads):
+        """Min distance from segment (clipped outside same-net pads) to foreign pad rect."""
         ax,ay,bx,by = sg["x1"],sg["y1"],sg["x2"],sg["y2"]
         dx,dy = bx-ax, by-ay
         lsq = dx*dx+dy*dy
         if lsq < 1e-8:
-            t_closest = 0.0
-        else:
-            t_closest = max(0.0, min(1.0, ((pad["x"]-ax)*dx+(pad["y"]-ay)*dy)/lsq))
-        # Also check a few extra sample points near t_closest for better coverage
+            return _pt_rect_dist(ax, ay, pad["x"], pad["y"], pad["hw"], pad["hh"], pad["rot"])
+        # Determine effective t range (excluding portions inside same-net pads)
+        t_lo = _clip_t_for_endpoint(sg, 0.0, same_net_pads)
+        t_hi = _clip_t_for_endpoint(sg, 1.0, same_net_pads)
+        if t_lo >= t_hi:
+            return float('inf')  # entire segment inside same-net pads
+        # Find closest point on clipped segment to pad center
+        t_closest = max(0.0, min(1.0, ((pad["x"]-ax)*dx+(pad["y"]-ay)*dy)/lsq))
+        t_closest = max(t_lo, min(t_hi, t_closest))
         best = float('inf')
-        for t in set([0.0, t_closest, 1.0,
-                      max(0.0,t_closest-0.1), min(1.0,t_closest+0.1)]):
+        for t in set([t_lo, t_closest, t_hi,
+                      max(t_lo, t_closest-0.1), min(t_hi, t_closest+0.1)]):
             sx2 = ax + t*dx
             sy2 = ay + t*dy
             d = _pt_rect_dist(sx2, sy2, pad["x"], pad["y"], pad["hw"], pad["hh"], pad["rot"])
             if d < best: best = d
         return best
 
+    # Pre-build same-net pads lookup for each net
+    net_to_pads: dict[str, list[dict]] = {}
+    for pad in all_pads:
+        if pad["net"]:
+            net_to_pads.setdefault(pad["net"], []).append(pad)
+
     for sg in all_segs:
         sl="F" if sg["layer"].startswith("F") else "B"
         hw_tr = sg["width"] / 2
+        same_pads = net_to_pads.get(sg["net"], [])
         for pad in all_pads:
             if not pad["th"] and pad["layer"]!=sl: continue
             if sg["net"] and pad["net"] and sg["net"]==pad["net"]: continue
@@ -3014,7 +3055,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
             if (abs((sg["x1"]+sg["x2"])/2 - pad["x"]) > margin + abs(sg["x2"]-sg["x1"])/2 or
                 abs((sg["y1"]+sg["y2"])/2 - pad["y"]) > margin + abs(sg["y2"]-sg["y1"])/2):
                 continue
-            best_d = _seg_rect_dist(sg, pad)
+            best_d = _seg_rect_dist_clipped(sg, pad, same_pads)
             rq2 = min_clearance + hw_tr
             if best_d < rq2:
                 violations.append({"type":"PAD_CLEARANCE","cat":"clearance","sev":"ERROR",
@@ -3729,6 +3770,11 @@ def run_autoroute(board: dict) -> dict:
         per_layer_segs: dict[str, list[dict]] = {}
         vias_list: list[dict] = []
         all_routed = True
+        # Track cells occupied by THIS net's routed segments — same-net traces
+        # don't need clearance from each other, so these cells are temporarily
+        # unblocked before each BFS within the same net.
+        _same_net_occ_f: set[tuple[int, int]] = set()
+        _same_net_occ_b: set[tuple[int, int]] = set()
 
         # RF nets must stay on the pad's layer — no layer transitions allowed
         _is_rf_net = net_name.upper().startswith("RF")
@@ -3748,6 +3794,14 @@ def run_autoroute(board: dict) -> dict:
             dest = remaining.pop(best_i)
             connected.append(dest)
 
+            # Temporarily remove same-net trace occupancy so BFS can route
+            # through cells already used by earlier segments of THIS net.
+            # Same-net traces don't need clearance from each other.
+            if _same_net_occ_f:
+                occupied -= _same_net_occ_f
+            if _same_net_occ_b:
+                occupied_b -= _same_net_occ_b
+
             # Use the source pad's layer as the starting layer for BFS
             src_layer = best_src[2] if len(best_src) > 2 else 0
             path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
@@ -3759,6 +3813,13 @@ def run_autoroute(board: dict) -> dict:
                     path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
                                           force_single_layer=False,
                                           start_layer=src_layer)
+
+            # Re-add same-net occupancy after BFS completes
+            if _same_net_occ_f:
+                occupied |= _same_net_occ_f
+            if _same_net_occ_b:
+                occupied_b |= _same_net_occ_b
+
             if not path:
                 all_routed = False
                 continue
@@ -3839,8 +3900,11 @@ def run_autoroute(board: dict) -> dict:
                     vg = (int(round(x0 / GRID)), int(round(y0 / GRID)))
                     for vdx in range(-via_r, via_r + 1):
                         for vdy in range(-via_r, via_r + 1):
-                            occupied.add((vg[0] + vdx, vg[1] + vdy))
-                            occupied_b.add((vg[0] + vdx, vg[1] + vdy))
+                            _vc = (vg[0] + vdx, vg[1] + vdy)
+                            occupied.add(_vc)
+                            occupied_b.add(_vc)
+                            _same_net_occ_f.add(_vc)
+                            _same_net_occ_b.add(_vc)
                     continue  # no segment for the transition itself
                 if abs(x1 - x0) < 0.001 and abs(y1 - y0) < 0.001:
                     continue  # skip zero-length segments
@@ -3850,7 +3914,14 @@ def run_autoroute(board: dict) -> dict:
                     "end":   {"x": round(x1, 4), "y": round(y1, 4)},
                 })
                 # Mark on correct layer's occupancy (with clearance expansion)
+                # Also track cells in same-net set for later BFS unblocking
+                _seg_cells: set[tuple[int, int]] = set()
                 _mark_segment(x0, y0, x1, y1, occ=_occupied_by_layer[l0])
+                _mark_segment(x0, y0, x1, y1, occ=_seg_cells)
+                if l0 == 0:
+                    _same_net_occ_f |= _seg_cells
+                else:
+                    _same_net_occ_b |= _seg_cells
 
         # Re-block this net's pads, body cells, and NC cells now that routing is done
         occupied |= own_cells
