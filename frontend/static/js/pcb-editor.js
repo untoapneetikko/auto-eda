@@ -2461,16 +2461,34 @@ class PCBEditor {
             if(this._dragPadSnap){for(const snap of this._dragPadSnap){snap.px+=dx;snap.py+=dy;}}
           } else {
             // Move trace endpoints connected to dragged pads (non-grouped drag)
+            // Snap moved endpoint to maintain 45° angle rule with the fixed end
             if(this._dragPadSnap){
               const EPS=0.15;
+              const stepDeg=DR.routeAngleStep??45;
+              const _snap45=(movedX,movedY,fixedX,fixedY)=>{
+                if(stepDeg<=0)return{x:movedX,y:movedY};
+                const adx=movedX-fixedX,ady=movedY-fixedY;
+                const dist=Math.hypot(adx,ady);
+                if(dist<0.01)return{x:movedX,y:movedY};
+                const rawAng=Math.atan2(ady,adx);
+                const stepRad=stepDeg*Math.PI/180;
+                const snapped=Math.round(rawAng/stepRad)*stepRad;
+                return{x:this.snap(fixedX+Math.cos(snapped)*dist),y:this.snap(fixedY+Math.sin(snapped)*dist)};
+              };
               for(const snap of this._dragPadSnap){
                 const oldX=snap.px, oldY=snap.py;
                 const newX=oldX+dx, newY=oldY+dy;
                 snap.px=newX; snap.py=newY;
                 for(const tr of(this.board.traces||[])){
                   for(const seg of(tr.segments||[])){
-                    if(Math.abs(seg.start.x-oldX)<EPS&&Math.abs(seg.start.y-oldY)<EPS){seg.start.x=newX;seg.start.y=newY;}
-                    if(Math.abs(seg.end.x-oldX)<EPS&&Math.abs(seg.end.y-oldY)<EPS){seg.end.x=newX;seg.end.y=newY;}
+                    if(Math.abs(seg.start.x-oldX)<EPS&&Math.abs(seg.start.y-oldY)<EPS){
+                      const s=_snap45(newX,newY,seg.end.x,seg.end.y);
+                      seg.start.x=s.x;seg.start.y=s.y;
+                    }
+                    if(Math.abs(seg.end.x-oldX)<EPS&&Math.abs(seg.end.y-oldY)<EPS){
+                      const s=_snap45(newX,newY,seg.start.x,seg.start.y);
+                      seg.end.x=s.x;seg.end.y=s.y;
+                    }
                   }
                 }
               }
