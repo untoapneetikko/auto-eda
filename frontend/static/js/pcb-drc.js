@@ -93,16 +93,16 @@ function applyDRPreset(name){
   const presets={
     standard:{minTraceWidth:0.2,traceWidth:0.25,clearance:0.2,edgeClearance:0.5,
       drillClearance:0.25,viaSize:1.0,viaDrill:0.6,minAnnularRing:0.2,viaClearance:0.25,tentedVias:true,viaInPad:false,
-      boardThickness:1.6,copperWeight:1,silkscreenWidth:0.12,cornerAngle:90,routeAngleStep:45},
+      boardThickness:1.6,copperWeight:1,silkscreenWidth:0.12,cornerAngle:90,routeAngleStep:45,snapRadius:2.0},
     tight:{minTraceWidth:0.15,traceWidth:0.15,clearance:0.15,edgeClearance:0.3,
       drillClearance:0.2,viaSize:0.8,viaDrill:0.4,minAnnularRing:0.15,viaClearance:0.15,tentedVias:true,viaInPad:false,
-      boardThickness:1.6,copperWeight:1,silkscreenWidth:0.1,cornerAngle:45,routeAngleStep:45},
+      boardThickness:1.6,copperWeight:1,silkscreenWidth:0.1,cornerAngle:45,routeAngleStep:45,snapRadius:1.5},
     RF:{minTraceWidth:0.15,traceWidth:0.15,clearance:0.2,edgeClearance:0.5,
       drillClearance:0.25,viaSize:0.8,viaDrill:0.4,minAnnularRing:0.15,viaClearance:0.2,tentedVias:true,viaInPad:false,
-      boardThickness:0.5,copperWeight:1,silkscreenWidth:0.1,cornerAngle:0,routeAngleStep:45},
+      boardThickness:0.5,copperWeight:1,silkscreenWidth:0.1,cornerAngle:0,routeAngleStep:45,snapRadius:1.5},
     power:{minTraceWidth:0.5,traceWidth:0.5,clearance:0.25,edgeClearance:1.0,
       drillClearance:0.3,viaSize:1.2,viaDrill:0.8,minAnnularRing:0.2,viaClearance:0.3,tentedVias:false,viaInPad:true,
-      boardThickness:1.6,copperWeight:2,silkscreenWidth:0.15,cornerAngle:90,routeAngleStep:90},
+      boardThickness:1.6,copperWeight:2,silkscreenWidth:0.15,cornerAngle:90,routeAngleStep:90,snapRadius:2.5},
   };
   const p=presets[name];if(!p)return;
   Object.assign(DR,p);

@@ -60,6 +60,7 @@ let DR = {
   tracePadClearance: 0.2, // Min trace-to-pad clearance (mm)
   routeEdgeClearance: 0.5,// Min trace-to-board-edge clearance (mm)
   routingGrid: 0.25,      // Pathfinding grid resolution (mm)
+  snapRadius: 2.0,        // Pad/via snap radius (mm) — how close cursor must be to snap
   // Placement rules
   silkscreenGap: 0.15,    // Min gap between silkscreen outlines (mm)
   courtyardExpansion: 0.25,// Extra courtyard margin (mm)

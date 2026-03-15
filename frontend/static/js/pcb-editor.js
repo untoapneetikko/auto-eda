@@ -832,7 +832,7 @@ class PCBEditor {
 
     // Check what's under the cursor right now (generous snap to help land on pads)
     const mx=this._mxPx,my=this._myPx;
-    const _snapR=Math.max(30,2*this.scale);
+    const _snapR=Math.max(20,(DR.snapRadius||2)*this.scale);
     const hitPad=this.getNearestPad(mx,my,_snapR);
     const hitVia=hitPad?null:this.getNearestVia(mx,my,_snapR);
     const hitArea=(hitPad||hitVia)?null:this.getAreaAt(mx,my);
@@ -932,7 +932,7 @@ class PCBEditor {
     if(this._mxPx==null)return;
     const mx=this._mxPx,my=this._myPx;
     // Generous snap: at least 30px or 2mm in screen pixels
-    const snapR=Math.max(30,2*this.scale);
+    const snapR=Math.max(20,(DR.snapRadius||2)*this.scale);
     const hit=this.getNearestPad(mx,my,snapR);
     const hv=hit?null:this.getNearestVia(mx,my,snapR);
     if(!hit&&!hv)return;
@@ -2212,7 +2212,7 @@ class PCBEditor {
         if(!this.board)return;
         if(this.routePoints.length===0){
           // Start: snap to nearby pad/via with generous radius, inherit net
-          const _snapR=Math.max(30,2*this.scale);
+          const _snapR=Math.max(20,(DR.snapRadius||2)*this.scale);
           const hit=this.getNearestPad(mx,my,_snapR);
           const hv=hit?null:this.getNearestVia(mx,my,_snapR);
           const sx=hit?hit.x:(hv?hv.x:xmm);
@@ -2222,7 +2222,7 @@ class PCBEditor {
           this.routePoints=[{x:sx,y:sy}];
         } else {
           // Adding a point: check destination net (generous snap)
-          const _snapR2=Math.max(30,2*this.scale);
+          const _snapR2=Math.max(20,(DR.snapRadius||2)*this.scale);
           const hit=this.getNearestPad(mx,my,_snapR2);
           const hv=hit?null:this.getNearestVia(mx,my,_snapR2);
           const ha=(hit||hv)?null:this.getAreaAt(mx,my);

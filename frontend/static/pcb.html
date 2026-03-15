@@ -538,6 +538,12 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
           <option value="0">0° (free-form)</option>
         </select>
 
+        <label>Snap Radius (mm)</label>
+        <input type="number" id="auto-snap-radius" min="0.5" max="10" step="0.5" value="2.0"
+               onchange="DR.snapRadius=+this.value;_saveDRStorage()"
+               style="width:70px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px;"
+               title="How close the cursor must be (in mm) to snap to a pad or via when drawing traces">
+
         <label>Min Trace Angle</label>
         <select id="auto-min-angle" onchange="DR.minTraceAngle=+this.value;_saveDRStorage()" style="width:90px;"
                 title="Minimum allowed angle between trace segments — prevents acute bends">
