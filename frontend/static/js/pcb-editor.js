@@ -385,8 +385,10 @@ class PCBEditor {
         ctx.stroke();
       };
       if(sel||isDragging){
-        ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=w+10; drawPath();
-        ctx.strokeStyle='#ffffff'; ctx.lineWidth=w; drawPath();
+        const _lc=this.layers[layer].color;
+        const _bright=this._lightenColor(_lc,0.35);
+        ctx.strokeStyle=_bright+'33'; ctx.lineWidth=w+10; drawPath();
+        ctx.strokeStyle=_bright; ctx.lineWidth=w; drawPath();
         // Extra highlight on the dragged segment
         if(isDragging&&dragSegIdx>=0&&dragSegIdx<segs.length){
           const hasViolations=this._traceDragViolations.length>0;
@@ -416,7 +418,7 @@ class PCBEditor {
           ctx.fillStyle='rgba(0,0,0,0.65)';
           const tw=ctx.measureText(tr.net).width;
           ctx.fillRect(mx-tw/2-2,my-fs/2-1,tw+4,fs+2);
-          ctx.fillStyle= sel?'#ffffff': this.layers[layer].color;
+          ctx.fillStyle= sel?this._lightenColor(this.layers[layer].color,0.35): this.layers[layer].color;
           ctx.fillText(tr.net,mx,my);
           ctx.restore();
         }
@@ -609,6 +611,15 @@ class PCBEditor {
       }
     }
     ctx.textAlign='left';
+  }
+
+  /** Lighten a hex color by amount (0–1). Returns hex string. */
+  _lightenColor(hex,amt){
+    let r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    r=Math.min(255,Math.round(r+(255-r)*amt));
+    g=Math.min(255,Math.round(g+(255-g)*amt));
+    b=Math.min(255,Math.round(b+(255-b)*amt));
+    return'#'+(r<<16|g<<8|b).toString(16).padStart(6,'0');
   }
 
   _padWorld(comp,pad){
@@ -1316,7 +1327,8 @@ class PCBEditor {
     const cl=DR.clearance||0.2;
     for(const c of(this.board?.components||[])){
       for(const p of(c.pads||[])){
-        if(!p.net||p.net===net)continue;
+        // Skip pads on the same net; block ALL other pads (including unassigned)
+        if(p.net&&net&&p.net===net)continue;
         const{px,py}=this._padWorld(c,p);
         // Expand pad by half-trace-width + clearance
         const hpx=(p.size_x||1.6)/2+tw/2+cl;
