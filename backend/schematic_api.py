@@ -2822,12 +2822,23 @@ def run_drc(board: dict) -> dict:  # noqa: C901
             if d < best: best,rx,ry = d,mx2,my2
         return best, rx, ry
 
+    # ── Helper: point-to-rotated-rectangle distance ─────────────────────────
+    def _pt_rect_dist(px, py, rx, ry, hw, hh, rot_rad):
+        """Distance from point to rotated rectangle (center rx,ry, half-sizes hw,hh)."""
+        cs, sn = math.cos(-rot_rad), math.sin(-rot_rad)
+        lx = (px - rx)*cs - (py - ry)*sn
+        ly = (px - rx)*sn + (py - ry)*cs
+        cx = max(-hw, min(hw, lx))
+        cy = max(-hh, min(hh, ly))
+        return math.hypot(lx - cx, ly - cy)
+
     # ── Build pad lookup ──────────────────────────────────────────────────────
     pad_lk: dict[str, dict] = {}
     all_pads: list[dict] = []
     for comp in comps:
         cref = comp.get("ref", comp.get("id", ""))
         clyr = "F" if comp.get("layer","F") in ("F","F.Cu") else "B"
+        comp_rot = math.radians(float(comp.get("rotation", 0)))
         for pad in comp.get("pads", []):
             wx, wy = _pw(comp, pad)
             sx = float(pad.get("size_x", pad.get("width", 1.0)))
@@ -2835,6 +2846,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
             e = {"x":wx,"y":wy,"net":pad.get("net",""),
                  "ref":cref,"pad":str(pad.get("number","")),
                  "layer":clyr,"th":pad.get("type","smd")=="through_hole",
+                 "hw":sx/2,"hh":sy/2,"rot":comp_rot,
                  "r":max(sx,sy)/2}
             pad_lk[f"{cref}.{e['pad']}"] = e
             all_pads.append(e)
@@ -2969,16 +2981,44 @@ def run_drc(board: dict) -> dict:  # noqa: C901
                     "x":round(mx3,2),"y":round(my3,2)})
 
     # ══ 6: Trace-to-pad clearance (different nets) ═════════════════════════
+    # Find the closest point on the segment to the pad center, then compute
+    # that point's distance to the actual pad rectangle edge.
+    def _seg_rect_dist(sg, pad):
+        """Min distance from segment to pad rectangle."""
+        # Find closest point on segment to pad center
+        ax,ay,bx,by = sg["x1"],sg["y1"],sg["x2"],sg["y2"]
+        dx,dy = bx-ax, by-ay
+        lsq = dx*dx+dy*dy
+        if lsq < 1e-8:
+            t_closest = 0.0
+        else:
+            t_closest = max(0.0, min(1.0, ((pad["x"]-ax)*dx+(pad["y"]-ay)*dy)/lsq))
+        # Also check a few extra sample points near t_closest for better coverage
+        best = float('inf')
+        for t in set([0.0, t_closest, 1.0,
+                      max(0.0,t_closest-0.1), min(1.0,t_closest+0.1)]):
+            sx2 = ax + t*dx
+            sy2 = ay + t*dy
+            d = _pt_rect_dist(sx2, sy2, pad["x"], pad["y"], pad["hw"], pad["hh"], pad["rot"])
+            if d < best: best = d
+        return best
+
     for sg in all_segs:
         sl="F" if sg["layer"].startswith("F") else "B"
+        hw_tr = sg["width"] / 2
         for pad in all_pads:
             if not pad["th"] and pad["layer"]!=sl: continue
             if sg["net"] and pad["net"] and sg["net"]==pad["net"]: continue
-            d4=_ptsd(pad["x"],pad["y"],sg["x1"],sg["y1"],sg["x2"],sg["y2"])
-            rq2=min_clearance+sg["width"]/2+pad["r"]
-            if d4<rq2:
+            # Quick bounding-box pre-filter
+            margin = min_clearance + hw_tr + pad["r"] + 0.5
+            if (abs((sg["x1"]+sg["x2"])/2 - pad["x"]) > margin + abs(sg["x2"]-sg["x1"])/2 or
+                abs((sg["y1"]+sg["y2"])/2 - pad["y"]) > margin + abs(sg["y2"]-sg["y1"])/2):
+                continue
+            best_d = _seg_rect_dist(sg, pad)
+            rq2 = min_clearance + hw_tr
+            if best_d < rq2:
                 violations.append({"type":"PAD_CLEARANCE","cat":"clearance","sev":"ERROR",
-                    "msg":f"Trace '{sg['net']}' too close to {pad['ref']}.{pad['pad']} ('{pad['net']}') \u2014 {d4:.3f}mm",
+                    "msg":f"Trace '{sg['net']}' too close to {pad['ref']}.{pad['pad']} ('{pad['net']}') \u2014 {best_d:.3f}mm",
                     "x":round(pad["x"],2),"y":round(pad["y"],2)})
 
     # ══ 7: Via annular ring ════════════════════════════════════════════════
@@ -3045,11 +3085,10 @@ async def drc_board_direct(request: Request):
 
 # ── Autoroute helper ──────────────────────────────────────────────────────────
 
-def _autoroute_skip_net(net_name: str, route_gnd: bool = False) -> bool:
+def _autoroute_skip_net(net_name: str) -> bool:
     """
     Return True for nets that must NOT be routed as individual traces.
     - GND and all variants (AGND, PGND, DGND, GND_*) → handled by copper pour
-      UNLESS route_gnd=True (no copper pour exists for GND)
     - NC / no-connect nets → intentionally floating
     - Empty net name
     """
@@ -3059,14 +3098,9 @@ def _autoroute_skip_net(net_name: str, route_gnd: bool = False) -> bool:
     for prefix in ("NC", "PWR_FLAG"):
         if upper == prefix or upper.startswith(prefix + "_") or upper.startswith(prefix + "-"):
             return True
-    for sub in ("UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
+    for sub in ("GND", "UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
         if sub in upper:
             return True
-    # GND: skip only if copper pour exists for it
-    if not route_gnd:
-        for sub in ("GND",):
-            if sub in upper:
-                return True
     return False
 
 
@@ -3088,15 +3122,6 @@ def run_autoroute(board: dict) -> dict:
     GRID = max(0.1, float(dr.get("routingGrid", 0.25)))  # mm routing grid
     bw   = float(board.get("board", {}).get("width",  board.get("width",  200)))
 
-    # ── Detect whether GND has a copper pour / zone ────────────────────────
-    # If no zone covers GND, route it as normal traces instead of skipping.
-    _gnd_has_zone = False
-    for _zone in board.get("zones", board.get("areas", [])):
-        _zn = (_zone.get("net", "") or "").upper()
-        if "GND" in _zn:
-            _gnd_has_zone = True
-            break
-    _route_gnd = not _gnd_has_zone
     bh   = float(board.get("board", {}).get("height", board.get("height", 200)))
     cu_clearance = float(dr.get("clearance", 0.2))  # copper-to-copper clearance
     edge_clearance = float(dr.get("routeEdgeClearance", dr.get("edgeClearance", 0.5)))
@@ -3459,8 +3484,24 @@ def run_autoroute(board: dict) -> dict:
 
     # Block all routable pads (will be temporarily unblocked per-net)
     all_pad_cells: dict[str, set[tuple[int, int]]] = {}
-    # NO-VIA zone: vias must NEVER be placed on any pad (even same-net pads)
+    # NO-VIA zone: vias must not overlap any pad's physical area.
+    # Uses tighter bounds than trace clearance (just pad extent + via radius).
+    _via_size_mm = float(dr.get("viaSize", 1.0))
     _no_via_cells: set[tuple[int, int]] = set()
+
+    def _pad_via_cells(px: float, py: float, half_w: float, half_h: float) -> set[tuple[int, int]]:
+        """Grid cells where a via center would land inside the pad footprint."""
+        # Block only the pad's physical area — via center must not be inside the pad
+        rx = max(1, int(math.ceil(half_w / GRID)))
+        ry = max(1, int(math.ceil(half_h / GRID)))
+        gc_x = int(round(px / GRID))
+        gc_y = int(round(py / GRID))
+        cells: set[tuple[int, int]] = set()
+        for ddx in range(-rx, rx + 1):
+            for ddy in range(-ry, ry + 1):
+                cells.add((gc_x + ddx, gc_y + ddy))
+        return cells
+
     for net_name_p, pads_p in net_pads.items():
         cells: set[tuple[int, int]] = set()
         for pad_tuple in pads_p:
@@ -3468,16 +3509,10 @@ def run_autoroute(board: dict) -> dict:
             hw, hh = _get_pad_hw(px, py)
             pad_cells = _pad_cells(px, py, hw, hh)
             cells |= pad_cells
-            _no_via_cells |= pad_cells
+            _no_via_cells |= _pad_via_cells(px, py, hw, hh)
         all_pad_cells[net_name_p] = cells
         occupied |= cells
-    # Also block NC pad positions for vias
-    for ncx, ncy in nc_pad_positions:
-        hw, hh = _get_pad_hw(ncx, ncy)
-        _no_via_cells |= _pad_cells(ncx, ncy, hw, hh)
-    # Also block component body areas for vias
-    for _body_net, _body_set in _comp_body_cells.items():
-        _no_via_cells |= _body_set
+    # NC pads are not electrically connected — no need to block vias near them
 
     # ── Multi-layer A* with via support ──────────────────────────────────────
     # Layer 0 = F.Cu, Layer 1 = B.Cu.  A via transition costs VIA_PENALTY
@@ -3656,7 +3691,7 @@ def run_autoroute(board: dict) -> dict:
             _existing_routed_nets.add(_check_net)
 
     for net_name in sorted(net_pads.keys(), key=lambda n: (_net_priority(n), n)):
-        if _autoroute_skip_net(net_name, route_gnd=_route_gnd) or net_name in nc_only_nets:
+        if _autoroute_skip_net(net_name) or net_name in nc_only_nets:
             continue
         pads_xy = net_pads[net_name]
         if len(pads_xy) < 2:
@@ -3685,7 +3720,7 @@ def run_autoroute(board: dict) -> dict:
         occupied_b -= own_cells
         occupied_b -= own_body_cells
         occupied_b -= own_nc_cells
-        _no_via_cells -= own_cells  # allow vias on own pads (thermal vias)
+        # Note: _no_via_cells keeps own pads blocked — vias must NOT be placed on pads
 
         # Greedy nearest-neighbour MST: always connect closest unconnected pad
         # pads_xy are (x, y, layer_index) tuples
@@ -3824,7 +3859,6 @@ def run_autoroute(board: dict) -> dict:
         occupied_b |= own_cells
         occupied_b |= own_body_cells
         occupied_b |= own_nc_cells
-        _no_via_cells |= own_cells  # re-block vias on pads
 
         # Build trace objects per layer
         for layer_name, segs in per_layer_segs.items():
