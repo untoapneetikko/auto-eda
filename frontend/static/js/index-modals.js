@@ -46,6 +46,7 @@ document.addEventListener('keydown', e => {
       { id: 'pin-editor-modal',   close: () => typeof closePinEditor==='function'&&closePinEditor() },
       { id: 'comp-edit-modal',    close: closeCompEditModal },
       { id: 'label-edit-modal',   close: closeLabelEditModal },
+      { id: 'delete-part-modal',    close: () => typeof closeDeletePartModal==='function'&&closeDeletePartModal() },
       { id: 'delete-project-modal', close: () => typeof closeDeleteProjectModal==='function'&&closeDeleteProjectModal() },
       { id: 'create-pcb-modal',   close: () => typeof closeCreatePCBModal==='function'&&closeCreatePCBModal() },
       { id: 'ai-gen-modal',       close: () => { const m=document.getElementById('ai-gen-modal'); if(m)m.style.display='none'; } },

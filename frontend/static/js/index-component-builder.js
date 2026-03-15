@@ -124,9 +124,41 @@ async function saveCorrection() {
   await loadProfile(selectedSlug);
 }
 
-async function deletePart() {
-  if (!confirm(`Delete ${selectedSlug}?`)) return;
-  await fetch(`/api/library/${selectedSlug}`, { method: 'DELETE' });
+let _deletePartSlug = null;
+let _deletePartName = null;
+
+function deletePart() {
+  if (!selectedSlug) return;
+  _deletePartSlug = selectedSlug;
+  const prof = Object.values(library).find(p => p.slug === selectedSlug);
+  _deletePartName = prof?.part_number || selectedSlug;
+  document.getElementById('delete-part-name-display').textContent = _deletePartName;
+  document.getElementById('delete-part-confirm-input').value = '';
+  const btn = document.getElementById('delete-part-confirm-btn');
+  btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed';
+  document.getElementById('delete-part-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('delete-part-confirm-input').focus(), 50);
+}
+
+function closeDeletePartModal() {
+  document.getElementById('delete-part-modal').style.display = 'none';
+  _deletePartSlug = null; _deletePartName = null;
+}
+
+function onDeletePartInput(val) {
+  const match = val.trim() === _deletePartName;
+  const btn = document.getElementById('delete-part-confirm-btn');
+  btn.disabled = !match;
+  btn.style.opacity = match ? '1' : '0.45';
+  btn.style.cursor = match ? 'pointer' : 'not-allowed';
+}
+
+async function doDeletePart() {
+  if (!_deletePartSlug) return;
+  const input = document.getElementById('delete-part-confirm-input');
+  if (input.value.trim() !== _deletePartName) return;
+  await fetch(`/api/library/${_deletePartSlug}`, { method: 'DELETE' });
+  closeDeletePartModal();
   selectedSlug = null;
   await loadLibrary();
   document.getElementById('view-library').innerHTML = `
