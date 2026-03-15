@@ -818,8 +818,13 @@ class PCBEditor {
     if(hitPad&&netMatch){ex=hitPad.x;ey=hitPad.y;}
     ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
 
+    // Check if the proposed last segment crosses any foreign-net pad
+    const lastPt=pts[pts.length-1];
+    const segBlocked=this._segHitsWrongPad(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+    const pathBlocked=!!segBlocked;
+
     const endPxX=this.mmX(ex),endPxY=this.mmY(ey);
-    const col=netConflict?'#ef4444':netMatch?'#22c55e':layerCol;
+    const col=netConflict||pathBlocked?'#ef4444':netMatch?'#22c55e':layerCol;
 
     // Draw the trace preview
     ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.setLineDash([3,2]);
@@ -828,6 +833,18 @@ class PCBEditor {
     for(let i=1;i<pts.length;i++)ctx.lineTo(this.mmX(pts[i].x),this.mmY(pts[i].y));
     ctx.lineTo(endPxX,endPxY);
     ctx.stroke(); ctx.setLineDash([]);
+
+    // Draw red X on the blocking pad
+    if(segBlocked){
+      const bx=this.mmX(segBlocked.px),by=this.mmY(segBlocked.py);
+      const sz=8;
+      ctx.strokeStyle='#ef4444'; ctx.lineWidth=3; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(bx-sz,by-sz); ctx.lineTo(bx+sz,by+sz); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx+sz,by-sz); ctx.lineTo(bx-sz,by+sz); ctx.stroke();
+      // Label
+      ctx.fillStyle='#ef4444'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
+      ctx.fillText('✕ '+(segBlocked.pad.net||'?'),bx+sz+4,by-2);
+    }
 
     // Endpoint indicator
     ctx.beginPath();
@@ -980,20 +997,33 @@ class PCBEditor {
     ctx.setLineDash([]);
   }
 
+  /** Check if a single segment (sx,sy)->(ex,ey) crosses any pad not on `net`.
+   *  Returns {pad, comp, px, py} or null. Uses trace width + DR clearance. */
+  _segHitsWrongPad(sx,sy,ex,ey,net){
+    const dx=ex-sx,dy=ey-sy,len2=dx*dx+dy*dy;
+    const tw=parseFloat(document.getElementById('route-width')?.value||DR.traceWidth)||0.25;
+    const cl=DR.clearance||0.2;
+    for(const c of(this.board?.components||[])){
+      for(const p of(c.pads||[])){
+        if(!p.net||p.net===net)continue;
+        const{px,py}=this._padWorld(c,p);
+        // Expand pad by half-trace-width + clearance
+        const hpx=(p.size_x||1.6)/2+tw/2+cl;
+        const hpy=(p.size_y||1.6)/2+tw/2+cl;
+        let t=len2>0?Math.max(0,Math.min(1,((px-sx)*dx+(py-sy)*dy)/len2)):0;
+        const cx2=sx+t*dx,cy2=sy+t*dy;
+        if(Math.abs(cx2-px)<hpx&&Math.abs(cy2-py)<hpy)
+          return{pad:p,comp:c,px,py};
+      }
+    }
+    return null;
+  }
+
+  /** Check all segments of a point list. Returns first blocking pad or null. */
   _traceHitsWrongNet(pts,net){
     for(let i=0;i<pts.length-1;i++){
-      const sx=pts[i].x,sy=pts[i].y,ex=pts[i+1].x,ey=pts[i+1].y;
-      const dx=ex-sx,dy=ey-sy,len2=dx*dx+dy*dy;
-      for(const c of(this.board?.components||[])){
-        for(const p of(c.pads||[])){
-          if(!p.net||p.net===net)continue;
-          const{px,py}=this._padWorld(c,p);
-          const tol=(Math.max(p.size_x||1.6,p.size_y||1.6)/2)+(DR.clearance||0.2)*0.5;
-          let t=len2>0?Math.max(0,Math.min(1,((px-sx)*dx+(py-sy)*dy)/len2)):0;
-          const cx=sx+t*dx,cy=sy+t*dy;
-          if(Math.hypot(px-cx,py-cy)<tol)return p;
-        }
-      }
+      const hit=this._segHitsWrongPad(pts[i].x,pts[i].y,pts[i+1].x,pts[i+1].y,net);
+      if(hit)return hit.pad;
     }
     return null;
   }
@@ -1873,6 +1903,17 @@ class PCBEditor {
           // Snap to pad position if hitting a pad, then clamp to minimum trace angle
           let ex=hit?hit.x:xmm, ey=hit?hit.y:ymm;
           ({x:ex,y:ey}=this._clampRoutePoint(ex,ey));
+
+          // Block if the new segment crosses any foreign-net pad
+          const lastPt=this.routePoints[this.routePoints.length-1];
+          const blocked=this._segHitsWrongPad(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+          if(blocked){
+            const name=blocked.pad.name||blocked.pad.number||'?';
+            this._routeError=`Blocked: trace crosses ${name} (${blocked.pad.net})`;
+            this.render();
+            setTimeout(()=>{this._routeError=null;this.render();},2000);
+            return;
+          }
 
           // Assign net from destination if not yet set
           if(!this.routeNet&&destNet) this.routeNet=destNet;
