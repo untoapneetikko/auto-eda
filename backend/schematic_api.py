@@ -2860,6 +2860,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
             sy = float(pad.get("size_y", pad.get("height", 1.0)))
             e = {"x":wx,"y":wy,"net":(pad.get("net","") or "").upper(),
                  "ref":cref,"pad":str(pad.get("number","")),
+                 "name":(pad.get("name","") or "").upper(),
                  "layer":clyr,"th":pad.get("type","smd")=="through_hole",
                  "hw":sx/2,"hh":sy/2,"rot":comp_rot,
                  "r":max(sx,sy)/2}
@@ -2925,9 +2926,13 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         if _a.get("outline") and len(_a.get("outline", [])) >= 3:
             _zones.append({"layer": _a.get("layer", "F.Cu"), "net": _a.get("net", ""), "points": _a["outline"]})
         elif _a.get("net"):
-            # Rectangle-based area: treat entire board as the zone for this net
+            # Rectangle-based area (x1/y1/x2/y2): build polygon from corners
+            ax1 = min(float(_a.get("x1", 0)), float(_a.get("x2", bw)))
+            ay1 = min(float(_a.get("y1", 0)), float(_a.get("y2", bh)))
+            ax2 = max(float(_a.get("x1", 0)), float(_a.get("x2", bw)))
+            ay2 = max(float(_a.get("y1", 0)), float(_a.get("y2", bh)))
             _zones.append({"layer": _a.get("layer", "F.Cu"), "net": _a.get("net", ""),
-                           "points": [{"x":0,"y":0},{"x":bw,"y":0},{"x":bw,"y":bh},{"x":0,"y":bh}]})
+                           "points": [{"x":ax1,"y":ay1},{"x":ax2,"y":ay1},{"x":ax2,"y":ay2},{"x":ax1,"y":ay2}]})
 
     def _pt_in_poly(px, py, poly):
         """Ray-casting point-in-polygon test."""
@@ -3106,7 +3111,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         for pad in all_pads:
             if not pad["th"] and pad["layer"]!=sl: continue
             if sg["net"] and pad["net"] and sg["net"]==pad["net"]: continue
-            if _is_nc(pad["net"]): continue  # NC pads have no electrical connection
+            if _is_nc(pad["net"]) or _is_nc(pad.get("name","")): continue  # NC pads have no electrical connection
             # Quick bounding-box pre-filter
             margin = min_clearance + hw_tr + pad["r"] + 0.5
             if (abs((sg["x1"]+sg["x2"])/2 - pad["x"]) > margin + abs(sg["x2"]-sg["x1"])/2 or
@@ -3145,7 +3150,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         for pk3 in ne.get("pads",[]): asgn.add(str(pk3))
     for pad in all_pads:
         pk4=f"{pad['ref']}.{pad['pad']}"
-        if _is_nc(pad["net"]): continue  # NC pins are intentionally unconnected
+        if _is_nc(pad["net"]) or _is_nc(pad.get("name","")): continue  # NC pins are intentionally unconnected
         if pk4 not in asgn and not pad["net"]:
             violations.append({"type":"UNASSIGNED_PIN","cat":"unconnected","sev":"WARNING",
                 "msg":f"Pin {pk4} has no net assignment",
@@ -3159,7 +3164,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         for j in range(i+1,len(all_pads)):
             pb=all_pads[j]
             if not pa["th"] and not pb["th"] and pa["layer"]!=pb["layer"]: continue
-            if pa["net"] and pb["net"] and pa["net"]!=pb["net"] and not _is_nc(pa["net"]) and not _is_nc(pb["net"]):
+            if pa["net"] and pb["net"] and pa["net"]!=pb["net"] and not _is_nc(pa["net"]) and not _is_nc(pa.get("name","")) and not _is_nc(pb["net"]) and not _is_nc(pb.get("name","")):
                 # Distance from pad A center to pad B rectangle
                 d_a2b = _pt_rect_dist(pa["x"],pa["y"],pb["x"],pb["y"],pb["hw"],pb["hh"],pb["rot"])
                 # Distance from pad B center to pad A rectangle
