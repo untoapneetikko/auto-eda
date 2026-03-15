@@ -2917,8 +2917,49 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         pl = [pad_lk[str(pk)] for pk in ne.get("pads",[]) if str(pk) in pad_lk]
         if len(pl)>=2: npads[nn]=pl
 
+    # ── Copper pour / zone connectivity ─────────────────────────────────────
+    # Zones with a net connect all same-net pads inside their polygon.
+    # Also: areas with outline + net act as pours too.
+    _zones = list(board.get("zones", []))
+    for _a in board.get("areas", []):
+        if _a.get("outline") and len(_a.get("outline", [])) >= 3:
+            _zones.append({"layer": _a.get("layer", "F.Cu"), "net": _a.get("net", ""), "points": _a["outline"]})
+        elif _a.get("net"):
+            # Rectangle-based area: treat entire board as the zone for this net
+            _zones.append({"layer": _a.get("layer", "F.Cu"), "net": _a.get("net", ""),
+                           "points": [{"x":0,"y":0},{"x":bw,"y":0},{"x":bw,"y":bh},{"x":0,"y":bh}]})
+
+    def _pt_in_poly(px, py, poly):
+        """Ray-casting point-in-polygon test."""
+        n = len(poly)
+        inside = False
+        j = n - 1
+        for i in range(n):
+            xi, yi = float(poly[i].get("x",0)), float(poly[i].get("y",0))
+            xj, yj = float(poly[j].get("x",0)), float(poly[j].get("y",0))
+            if ((yi > py) != (yj > py)) and (px < (xj - xi) * (py - yi) / (yj - yi + 1e-12) + xi):
+                inside = not inside
+            j = i
+        return inside
+
+    # Build set of nets fully connected by copper pour
+    _pour_connected_nets: set[str] = set()
+    for zone in _zones:
+        znet = (zone.get("net", "") or "").upper()
+        if not znet or znet not in npads:
+            continue
+        poly = zone.get("points", [])
+        if len(poly) < 3:
+            continue
+        # Check if ALL pads of this net are inside the zone polygon
+        all_inside = all(_pt_in_poly(p["x"], p["y"], poly) for p in npads[znet])
+        if all_inside:
+            _pour_connected_nets.add(znet)
+
     EPS = 0.05
     for nn, pl in npads.items():
+        if nn in _pour_connected_nets:
+            continue  # all pads connected via copper pour
         n = len(pl)
         tn_nodes: list[tuple] = []; tp_arr: list[int] = []; ni_map: dict[str,int] = {}
         def _tf2(i, _tp=tp_arr):
