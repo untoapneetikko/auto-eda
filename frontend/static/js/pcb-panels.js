@@ -210,6 +210,8 @@ function updateToolPanel(tool){
   const labels={select:'Select',route:'Trace',via:'Via',area:'Area',zone:'Zone',measure:'Measure'};
   title.textContent=labels[tool]||tool;
   title.style.display='';
+  const sec=document.getElementById('tool-params-section');
+  if(sec) sec.style.display='';
   if(tool==='via'){
     content.innerHTML=`
       <div class="ir"><span class="il">Via ⌀</span>
@@ -235,6 +237,9 @@ function updateToolPanel(tool){
   } else if(tool==='select'){
     title.style.display='none';
     content.innerHTML='';
+    // Hide the entire section when in select mode
+    const sec=document.getElementById('tool-params-section');
+    if(sec) sec.style.display='none';
   } else {
     content.innerHTML=`<div style="font-size:11px;color:var(--text-muted);">${labels[tool]||tool} active</div>`;
   }
