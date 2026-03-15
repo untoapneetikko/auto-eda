@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-03-15T20:45:07.790211+00:00",
+  "saved_at": "2026-03-15T20:54:48.043820+00:00",
   "label": "v3",
   "profile": {
     "part_number": "PMA3-83LNW+",
@@ -286,7 +286,7 @@
           "x": 300,
           "y": 260,
           "rotation": 0,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 300,
           "_exampleY": 260
@@ -300,7 +300,7 @@
           "x": 130,
           "y": 230,
           "rotation": 1,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 130,
           "_exampleY": 230
@@ -314,7 +314,7 @@
           "x": 170,
           "y": 270,
           "rotation": 1,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
           "_exampleY": 270,
@@ -330,7 +330,7 @@
           "x": 500,
           "y": 270,
           "rotation": 3,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 500,
           "_exampleY": 270
@@ -344,7 +344,7 @@
           "x": 440,
           "y": 230,
           "rotation": 1,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
           "_exampleY": 230
@@ -358,7 +358,7 @@
           "x": 440,
           "y": 30,
           "rotation": 0,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
           "_exampleY": 30
@@ -372,7 +372,7 @@
           "x": 170,
           "y": 350,
           "rotation": 0,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
           "_exampleY": 350
@@ -386,7 +386,7 @@
           "x": 150,
           "y": 190,
           "rotation": 1,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 150,
           "_exampleY": 190
@@ -400,7 +400,7 @@
           "x": 460,
           "y": 180,
           "rotation": 1,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 460,
           "_exampleY": 180
@@ -414,24 +414,20 @@
           "x": 480,
           "y": 210,
           "rotation": 0,
-          "_exampleGroupId": "eg_mms29abjwr",
+          "_exampleGroupId": "eg_mms8gd558w",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 480,
           "_exampleY": 210
         },
         {
-          "id": "cmmrz5eipx60a",
+          "id": "cmms8gi41",
           "slug": "CAPACITOR",
           "symType": "capacitor",
           "designator": "C4",
-          "value": "1uF",
+          "value": "100uF",
           "x": 460,
           "y": 140,
-          "rotation": 1,
-          "_exampleGroupId": "eg_mms29abjwr",
-          "_exampleSlug": "PMA3_83LNW",
-          "_exampleX": 460,
-          "_exampleY": 140
+          "rotation": 1
         }
       ],
       "wires": [
@@ -667,6 +663,34 @@
             {
               "x": 440,
               "y": 50,
+              "isPort": true
+            }
+          ]
+        },
+        {
+          "id": "cwmms8fusa4nj",
+          "points": [
+            {
+              "x": 440,
+              "y": 100
+            },
+            {
+              "x": 440,
+              "y": 100
+            }
+          ]
+        },
+        {
+          "id": "wmms8fvwr",
+          "points": [
+            {
+              "x": 480,
+              "y": 100,
+              "isPort": true
+            },
+            {
+              "x": 480,
+              "y": 140,
               "isPort": true
             }
           ]

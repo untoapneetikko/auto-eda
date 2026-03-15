@@ -192,14 +192,27 @@ class PCBEditor {
     if(this.tool==='measure'&&this.measureStart) this._drawMeasure();
     if(this.tool==='area'&&this.areaStart) this._drawActiveArea();
     if(this.tool==='draw'&&this.drawPoints.length>0) this._drawActiveDrawing();
-    // Via ghost preview when in via tool
-    if(this.tool==='via'&&this._mx!=null){
+    // Via ghost preview when in via tool — full-size preview follows cursor
+    if(this.tool==='via'){
       const gx=this.mmX(this._mx),gy=this.mmY(this._my);
-      const gor=Math.max(3,(DR.viaSize||1.0)/2*this.scale);
-      const gir=Math.max(1,(DR.viaDrill||0.6)/2*this.scale);
-      ctx.globalAlpha=0.5;
+      const gor=Math.max(4,(DR.viaSize||1.0)/2*this.scale);
+      const gir=Math.max(1.5,(DR.viaDrill||0.6)/2*this.scale);
+      // Outer copper ring
+      ctx.globalAlpha=0.75;
       ctx.fillStyle='#88aacc';ctx.beginPath();ctx.arc(gx,gy,gor,0,Math.PI*2);ctx.fill();
+      // White border ring
+      ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(gx,gy,gor,0,Math.PI*2);ctx.stroke();
+      // Drill hole
       ctx.fillStyle='#0a0a0a';ctx.beginPath();ctx.arc(gx,gy,gir,0,Math.PI*2);ctx.fill();
+      // Crosshair inside
+      if(gor>=4){
+        ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=0.5;
+        ctx.beginPath();ctx.moveTo(gx-gir*0.6,gy);ctx.lineTo(gx+gir*0.6,gy);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(gx,gy-gir*0.6);ctx.lineTo(gx,gy+gir*0.6);ctx.stroke();
+      }
+      // Dashed selection ring to make it really visible
+      ctx.strokeStyle='#6c63ff';ctx.lineWidth=1.5;ctx.setLineDash([3,2]);
+      ctx.beginPath();ctx.arc(gx,gy,gor+4,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
       ctx.globalAlpha=1.0;
     }
     if(this._hoverComp&&!this.selectedComps.includes(this._hoverComp)) this._drawHoverComp(this._hoverComp);
@@ -2439,8 +2452,12 @@ class PCBEditor {
           if(hitTr?.trace?.net) viNet=hitTr.trace.net;
         }
         if(!viNet){
-          const hitA=this.getAreaAt(mx,my);
-          if(hitA) viNet=hitA.net||null;
+          // Check copper areas (pours) — use mm coords directly for reliable matching
+          for(const a of(this.board.areas||[])){
+            const ax1=Math.min(a.x1,a.x2),ay1=Math.min(a.y1,a.y2);
+            const ax2=Math.max(a.x1,a.x2),ay2=Math.max(a.y1,a.y2);
+            if(xmm>=ax1&&xmm<=ax2&&ymm>=ay1&&ymm<=ay2){viNet=a.net||null;break;}
+          }
         }
         if(!viNet){
           for(const z of(this.board.zones||[])){
