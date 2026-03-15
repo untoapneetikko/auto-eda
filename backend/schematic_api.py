@@ -2847,9 +2847,10 @@ async def drc_board_direct(request: Request):
 def _autoroute_skip_net(net_name: str) -> bool:
     """
     Return True for nets that must NOT be routed as individual traces.
-    - GND and all variants (AGND, PGND, DGND, GND_*) → handled by copper pour
     - NC / no-connect nets → intentionally floating
     - Empty net name
+    NOTE: GND nets ARE routed now — copper pour alone doesn't guarantee
+    connectivity between distant pads, so we route them as traces too.
     """
     if not net_name:
         return True
@@ -2857,7 +2858,7 @@ def _autoroute_skip_net(net_name: str) -> bool:
     for prefix in ("NC", "PWR_FLAG"):
         if upper == prefix or upper.startswith(prefix + "_") or upper.startswith(prefix + "-"):
             return True
-    for sub in ("GND", "UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
+    for sub in ("UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
         if sub in upper:
             return True
     return False
@@ -3288,6 +3289,7 @@ def run_autoroute(board: dict) -> dict:
     total  = 0
     new_traces: list[dict] = []   # start fresh — old traces caused violations
     all_vias: list[dict] = []
+    failed_nets: list[str] = []   # nets where at least one segment couldn't route
 
     # Sort nets: power first, then alphabetical for determinism
     def _net_priority(name: str) -> int:
@@ -3345,9 +3347,14 @@ def run_autoroute(board: dict) -> dict:
             path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
                                   force_single_layer=_is_rf_net,
                                   start_layer=src_layer)
+            if not path and not _is_rf_net:
+                # Retry starting from the other layer (via at source)
+                alt_layer = 1 - src_layer
+                path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
+                                      force_single_layer=False,
+                                      start_layer=alt_layer)
             if not path:
-                # BFS blocked — skip this segment (no Manhattan fallback which
-                # would route straight through pads of other nets)
+                # BFS blocked on both layers — skip this segment
                 all_routed = False
                 continue
 
@@ -3396,6 +3403,8 @@ def run_autoroute(board: dict) -> dict:
         all_vias.extend(vias_list)
         if per_layer_segs:
             routed += 1
+        if not all_routed:
+            failed_nets.append(net_name)
 
     # ── Post-route DRC: detect trace segments crossing foreign-net pads ──────
     # Build a spatial list of all pads with their net and bounding box.
@@ -3486,7 +3495,7 @@ def run_autoroute(board: dict) -> dict:
     result["vias"] = all_vias
     return {**result, "_autoroute": {
         "routed": routed, "total": total, "vias": len(all_vias),
-        "violations": violations,
+        "violations": violations, "failed_nets": failed_nets,
     }}
 
 
@@ -3508,6 +3517,7 @@ async def autoroute_board_id(bid: str):
         "traces": result.get("traces", []),
         "vias":   result.get("vias", []),
         "violations": autoroute_meta.get("violations", []),
+        "failed_nets": autoroute_meta.get("failed_nets", []),
     }
 
 
@@ -3524,6 +3534,7 @@ async def autoroute_direct(request: Request):
         "traces": result.get("traces", []),
         "vias":   result.get("vias", []),
         "violations": autoroute_meta.get("violations", []),
+        "failed_nets": autoroute_meta.get("failed_nets", []),
     }
 
 

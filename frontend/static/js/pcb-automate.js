@@ -122,12 +122,14 @@ async function runAutoRoute() {
     }
 
     const viaCount = data.via_count || vias.length || 0;
+    const failedNets = Array.isArray(data.failed_nets) ? data.failed_nets : [];
     const viasMsg = viaCount ? `, ${viaCount} vias` : '';
     const violMsg = violations.length ? ` ⚠ ${violations.length} violations` : '';
-    const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets${viasMsg}${violMsg}`;
+    const failMsg = failedNets.length ? ` | Failed: ${failedNets.join(', ')}` : '';
+    const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets${viasMsg}${violMsg}${failMsg}`;
     const status = document.getElementById('status-bar') || document.getElementById('route-status') || document.getElementById('auto-status');
     if (status) status.textContent = msg;
-    if (violations.length) {
+    if (violations.length || failedNets.length) {
       editor?.render();  // redraw to show X markers
     }
     if (btn) { btn.disabled = false; btn.textContent = '⚡ Auto-Route'; }
