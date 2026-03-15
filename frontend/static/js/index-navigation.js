@@ -700,30 +700,10 @@ function buildExampleCircuit(profile) {
   } catch(_) {}
 })();
 
-// ── Warn before unload if there are unsaved changes ───────────────────────
-// Checks all 4 editors: Schematic, Schematic Example, Layout Example, PCB Layout
+// ── Always warn before leaving/refreshing ─────────────────────────────────
 window.addEventListener('beforeunload', function(e) {
-  let dirty = false;
-  // 1. Main Schematic editor (const in index-schematic-ops.js)
-  try { if (editor && editor.dirty) dirty = true; } catch(_) {}
-  // 2. Schematic Example editor
-  try { if (appCircuitEditor && appCircuitEditor.dirty) dirty = true; } catch(_) {}
-  // 3. Open schematic tabs
-  try { if (openTabs && openTabs.some(t => t.dirty)) dirty = true; } catch(_) {}
-  // 4. PCB Layout (inside app-frame iframe)
-  try {
-    const frame = document.getElementById('pcb-frame');
-    if (frame?.contentWindow?.editor?._historyIdx > 0) dirty = true;
-  } catch(_) {}
-  // 5. Layout Example (inside embedded iframe)
-  try {
-    const leFrame = document.getElementById('le-frame');
-    if (leFrame?.contentWindow?.editor?._historyIdx > 0) dirty = true;
-  } catch(_) {}
-  if (dirty) {
-    e.preventDefault();
-    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
-    return e.returnValue;
-  }
+  e.preventDefault();
+  e.returnValue = 'Are you sure? You may lose unsaved work.';
+  return e.returnValue;
 });
 
