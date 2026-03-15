@@ -209,6 +209,7 @@ function updateToolPanel(tool){
   if(!title||!content) return;
   const labels={select:'Select',route:'Trace',via:'Via',area:'Area',zone:'Zone',measure:'Measure'};
   title.textContent=labels[tool]||tool;
+  title.style.display='';
   if(tool==='via'){
     content.innerHTML=`
       <div class="ir"><span class="il">Via ⌀</span>
@@ -232,8 +233,8 @@ function updateToolPanel(tool){
       <div class="ir"><span class="il">Layer</span><span class="iv">${editor.workLayer||'F.Cu'}</span></div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">Click pad to start</div>`;
   } else if(tool==='select'){
-    title.textContent='Select';
-    content.innerHTML='<div style="font-size:11px;color:var(--text-muted);">Click an object to inspect</div>';
+    title.style.display='none';
+    content.innerHTML='';
   } else {
     content.innerHTML=`<div style="font-size:11px;color:var(--text-muted);">${labels[tool]||tool} active</div>`;
   }
