@@ -894,24 +894,25 @@ class PCBEditor {
       }
       this._avoidCache=avoidPath;this._avoidCacheKey=_cacheKey;
     }
-    // Validate: check if any segment in the avoidance path still crosses a foreign pad
-    let pathBlocked=false, blockingPad=null;
+    // Check if any segment crosses a foreign pad (warning, not blocking)
+    let pathWarning=false, blockingPad=null;
     for(let i=0;i<avoidPath.length-1;i++){
       const hit=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
-      if(hit){pathBlocked=true;blockingPad=hit;break;}
+      if(hit){pathWarning=true;blockingPad=hit;break;}
     }
-    // Validate angles: all segments must be on valid angle steps
+    // Validate angles: only angle violations actually block placement
+    let angleBlocked=false;
     let prevDir=null;
     if(pts.length>=2){
       const p1=pts[pts.length-2],p2=pts[pts.length-1];
       prevDir=Math.atan2(p2.y-p1.y,p2.x-p1.x);
     }
-    if(!pathBlocked&&!this._validatePathAngles(avoidPath,prevDir)){pathBlocked=true;}
-    // Store for use by click handler (null if blocked)
-    this._lastAvoidPath=pathBlocked?null:avoidPath;
+    if(!this._validatePathAngles(avoidPath,prevDir)){angleBlocked=true;}
+    // Store for use by click handler (null only if angle-blocked)
+    this._lastAvoidPath=angleBlocked?null:avoidPath;
 
     const endPxX=this.mmX(ex),endPxY=this.mmY(ey);
-    const col=netConflict||pathBlocked?'#ef4444':netMatch?'#22c55e':layerCol;
+    const col=netConflict?'#ef4444':pathWarning?'#f59e0b':netMatch?'#22c55e':layerCol;
 
     // Draw the trace preview — committed points + avoidance path
     ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.setLineDash([3,2]);
@@ -2128,13 +2129,6 @@ class PCBEditor {
 
   _commitTrace(){
     if(this.routePoints.length<2){this.routePoints=[];return;}
-    const badPad=this._traceHitsWrongNet(this.routePoints,this.routeNet||'');
-    if(badPad){
-      this._routeError=`Blocked: passes through ${badPad.name}(${badPad.net})`;
-      this.render();
-      setTimeout(()=>{this._routeError=null;this.render();},2500);
-      return;
-    }
     const segs=[];
     for(let i=0;i<this.routePoints.length-1;i++)
       segs.push({start:{x:this.routePoints[i].x,y:this.routePoints[i].y},
@@ -2144,6 +2138,12 @@ class PCBEditor {
       width:parseFloat(document.getElementById('route-width').value)||DR.traceWidth,
       segments:segs
     });
+    // Show warning markers on foreign-net pads the trace crosses (non-blocking)
+    const badPad=this._traceHitsWrongNet(this.routePoints,this.routeNet||'');
+    if(badPad){
+      this._routeError=`⚠ Crosses ${badPad.name}(${badPad.net})`;
+      setTimeout(()=>{this._routeError=null;this.render();},2500);
+    }
     this.routePoints=[];this.routeNet=null;
     this._snapshot(); this.render();
   }
@@ -2326,27 +2326,26 @@ class PCBEditor {
               const seg=this._routeAroundPads(elbowPts[i].x,elbowPts[i].y,elbowPts[i+1].x,elbowPts[i+1].y,this.routeNet||'');
               for(let j=1;j<seg.length;j++)avoidPath.push(seg[j]);
             }
-            // Validate the path — collisions
+            // Check collisions — warn but don't block
+            let _hasCollision=false;
             for(let i=0;i<avoidPath.length-1;i++){
               const h2=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
-              if(h2){avoidPath=null;break;}
+              if(h2){_hasCollision=true;break;}
             }
-            // Validate angles
-            if(avoidPath){
-              let prevDir2=null;
-              if(this.routePoints.length>=2){
-                const p1=this.routePoints[this.routePoints.length-2],p2=this.routePoints[this.routePoints.length-1];
-                prevDir2=Math.atan2(p2.y-p1.y,p2.x-p1.x);
-              }
-              if(!this._validatePathAngles(avoidPath,prevDir2))avoidPath=null;
+            // Check angles — fall back to direct elbow if invalid
+            let prevDir2=null;
+            if(this.routePoints.length>=2){
+              const p1=this.routePoints[this.routePoints.length-2],p2=this.routePoints[this.routePoints.length-1];
+              prevDir2=Math.atan2(p2.y-p1.y,p2.x-p1.x);
             }
-          }
-          // Block if no valid path around obstacles
-          if(!avoidPath){
-            this._routeError='Blocked: no clear path around pads';
-            this.render();
-            setTimeout(()=>{this._routeError=null;this.render();},2000);
-            return;
+            if(!this._validatePathAngles(avoidPath,prevDir2)){
+              // Fall back to raw elbow without A* avoidance
+              avoidPath=elbowPts;
+            }
+            if(_hasCollision){
+              this._routeError='⚠ Trace crosses foreign net pad';
+              setTimeout(()=>{this._routeError=null;this.render();},2500);
+            }
           }
 
           // Assign net from destination if not yet set
