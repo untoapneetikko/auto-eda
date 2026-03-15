@@ -513,27 +513,18 @@ class PCBEditor {
         oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
       oc.fill(); // erase pad + via clearance shapes in one pass
-      // — Trace clearances (capsule — each filled individually for reliable paths) —
+      // — Trace clearances (thick stroked lines with round caps = capsule shape) —
+      oc.lineCap='round';
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===z.net)continue;
-        const hw=(tr.width||tr.width_mm||DR.traceWidth||0.25)/2+cl;
+        const tw=(tr.width||tr.width_mm||DR.traceWidth||0.25)+cl*2;
+        oc.lineWidth=tw*this.scale;
         for(const seg of(tr.segments||[])){
           if(!seg||!seg.start||!seg.end)continue;
-          const ax=seg.start.x,ay=seg.start.y,bx=seg.end.x,by=seg.end.y;
-          if(Math.max(ax,bx)+hw<zx1||Math.min(ax,bx)-hw>zx2||Math.max(ay,by)+hw<zy1||Math.min(ay,by)-hw>zy2)continue;
-          const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
-          if(len<0.001)continue;
-          const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
-          const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
-          const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
           oc.beginPath();
-          oc.moveTo(asx-nx,asy-ny);
-          oc.lineTo(bsx-nx,bsy-ny);
-          oc.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
-          oc.lineTo(asx+nx,asy+ny);
-          oc.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
-          oc.closePath();
-          oc.fill();
+          oc.moveTo(this.mmX(seg.start.x),this.mmY(seg.start.y));
+          oc.lineTo(this.mmX(seg.end.x),this.mmY(seg.end.y));
+          oc.stroke();
         }
       }
       // ── Step 3: composite the zone tile onto the main canvas ─────────────
@@ -936,9 +927,10 @@ class PCBEditor {
 
   /** Draw a snap indicator ring + crosshair on the nearest pad/via when in route mode. */
   _drawSnapIndicator(){
-    if(!this._mxPx)return;
+    if(this._mxPx==null)return;
     const mx=this._mxPx,my=this._myPx;
-    const snapR=this.routePoints.length>0?15:20;
+    // Generous snap: at least 30px or 2mm in screen pixels
+    const snapR=Math.max(30,2*this.scale);
     const hit=this.getNearestPad(mx,my,snapR);
     const hv=hit?null:this.getNearestVia(mx,my,snapR);
     if(!hit&&!hv)return;
@@ -994,6 +986,8 @@ class PCBEditor {
     const ctx=this.ctx;
     const cl=DR.clearance||0.2;
     for(const a of(this.board?.areas||[])){
+      // Skip outline-based areas (handled by _drawZones after load normalization)
+      if(a.outline||a.x1==null||a.x2==null)continue;
       const lyr=a.layer||'F.Cu';
       if(!this.layers[lyr]?.visible)continue;
       const col=this.layers[lyr].color;
@@ -1013,7 +1007,7 @@ class PCBEditor {
       const oc=off.getContext('2d');
       oc.translate(-bx1,-by1);
       // Step 1: fill area rectangle
-      oc.fillStyle=col+(sel?'50':'28');
+      oc.fillStyle=col+(sel?'70':'40');
       oc.fillRect(sx,sy,w,h);
       // Step 2: cut clearance holes
       oc.globalCompositeOperation='destination-out';
@@ -1058,27 +1052,18 @@ class PCBEditor {
         oc.arc(vsx,vsy,r,0,Math.PI*2);
       }
       oc.fill();
-      // — Trace clearances (each as its own fill to avoid complex path issues) —
+      // — Trace clearances (thick stroked lines with round caps = capsule shape) —
+      oc.lineCap='round';
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===a.net)continue;
-        const hw=(tr.width||tr.width_mm||DR.traceWidth||0.25)/2+cl;
+        const tw=(tr.width||tr.width_mm||DR.traceWidth||0.25)+cl*2;
+        oc.lineWidth=tw*this.scale;
         for(const seg of(tr.segments||[])){
           if(!seg||!seg.start||!seg.end)continue;
-          const ax=seg.start.x,ay=seg.start.y,bx=seg.end.x,by=seg.end.y;
-          if(Math.max(ax,bx)+hw<x1||Math.min(ax,bx)-hw>x2||Math.max(ay,by)+hw<y1||Math.min(ay,by)-hw>y2)continue;
-          const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
-          if(len<0.001)continue;
-          const nx=(-dy/len)*hw*this.scale,ny=(dx/len)*hw*this.scale;
-          const asx=this.mmX(ax),asy=this.mmY(ay),bsx=this.mmX(bx),bsy=this.mmY(by);
-          const ang=Math.atan2(by-ay,bx-ax),capR=hw*this.scale;
           oc.beginPath();
-          oc.moveTo(asx-nx,asy-ny);
-          oc.lineTo(bsx-nx,bsy-ny);
-          oc.arc(bsx,bsy,capR,ang-Math.PI/2,ang+Math.PI/2,false);
-          oc.lineTo(asx+nx,asy+ny);
-          oc.arc(asx,asy,capR,ang+Math.PI/2,ang+3*Math.PI/2,false);
-          oc.closePath();
-          oc.fill();
+          oc.moveTo(this.mmX(seg.start.x),this.mmY(seg.start.y));
+          oc.lineTo(this.mmX(seg.end.x),this.mmY(seg.end.y));
+          oc.stroke();
         }
       }
       // Step 3: composite onto main canvas
