@@ -2955,13 +2955,48 @@ def run_autoroute(board: dict) -> dict:
                         _proj.get("labels", []),
                         _proj.get("noConnects", []),
                     )
-                    # build_netlist returns {namedNets: {net_name: ["R1.1", ...]}, ...}
-                    _named_nets = _netlist_result.get("namedNets", {})
-                    for _nn, _pads in _named_nets.items():
-                        _nn_upper = _nn.upper()
-                        if isinstance(_pads, list):
-                            for _pr in _pads:
-                                _pad_ref_to_net_ar[str(_pr).upper()] = _nn_upper
+                    # build_netlist returns {namedNets: [{name, pins: ["C1.P1", ...]}, ...]}
+                    # Netlist pins use schematic pin names ("U1.RF-IN", "C1.P2").
+                    # Board pads use different names ("+" / "-" / "A" / "B") and numbers (1, 2).
+                    # Build multiple lookup paths to translate:
+                    #   1. Pad name match: "U1.RF-IN" → board U1 pad named "RF-IN" → "U1.2"
+                    #   2. Pn→number: "C1.P2" → "C1.2" (for generic schematic pin names)
+                    #   3. Direct number: "C1.2" → "C1.2"
+                    _pin_to_board_key: dict[str, str] = {}  # netlist pin ref → board "REF.NUM"
+                    for _bc in board.get("components", []):
+                        _bc_ref = _bc.get("ref", "")
+                        for _bp in _bc.get("pads", []):
+                            _bp_name = (_bp.get("name", "") or "").upper()
+                            _bp_num  = str(_bp.get("number", ""))
+                            _board_key = f"{_bc_ref}.{_bp_num}".upper()
+                            # Map by pad name (e.g. "U1.RF-IN" → "U1.2")
+                            if _bp_name and _bc_ref:
+                                _pin_to_board_key[f"{_bc_ref}.{_bp_name}"] = _board_key
+                                # Also try cleaned version (RF-IN → RFIN)
+                                _clean = _bp_name.replace("-", "").replace(" ", "").replace("(", "").replace(")", "").replace("!", "").replace("/", "")
+                                if _clean != _bp_name:
+                                    _pin_to_board_key[f"{_bc_ref}.{_clean}"] = _board_key
+                            # Map Pn notation: "C1.P1"→"C1.1", "C1.P2"→"C1.2"
+                            _pin_to_board_key[f"{_bc_ref}.P{_bp_num}"] = _board_key
+                            # Direct number
+                            _pin_to_board_key[_board_key] = _board_key
+
+                    _named_nets = _netlist_result.get("namedNets", [])
+                    if isinstance(_named_nets, list):
+                        for _net_entry in _named_nets:
+                            _nn_name = str(_net_entry.get("name", "")).upper()
+                            if not _nn_name:
+                                continue
+                            for _pin_ref in _net_entry.get("pins", []):
+                                _pr_upper = str(_pin_ref).upper()
+                                # Skip power/GND symbol pins (e.g. "GND.GND", "VDD.VCC")
+                                _pr_parts = _pr_upper.split(".", 1)
+                                if len(_pr_parts) == 2 and _pr_parts[0] in (
+                                    "GND", "GND1", "GND2", "VDD", "VCC", "PWR"):
+                                    continue
+                                _board_key = _pin_to_board_key.get(_pr_upper)
+                                if _board_key:
+                                    _pad_ref_to_net_ar[_board_key] = _nn_name
                 except Exception:
                     pass  # silently continue without project nets
 
