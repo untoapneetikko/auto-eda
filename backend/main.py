@@ -263,4 +263,4 @@ async def serve_index():
 
 @app.get("/pcb.html", include_in_schema=False)
 async def serve_pcb():
-    return FileResponse(str(_static_dir / "pcb.html"))
+    return FileResponse(str(_static_dir / "pcb.html"), headers={"Cache-Control": "no-cache"})
