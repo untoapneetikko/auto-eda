@@ -89,6 +89,8 @@ class PCBEditor {
 
   _snapshot(){
     if(!this.board)return;
+    // Clear stale DRC markers — board changed, old results are outdated
+    if(typeof _drcResults!=='undefined')_drcResults=[];
     const snap=JSON.stringify(this.board); // keep as string — structuredClone can fail on circular refs
     // Truncate forward history on new action
     this._history=this._history.slice(0,this._historyIdx+1);
