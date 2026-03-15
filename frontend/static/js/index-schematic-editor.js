@@ -290,15 +290,21 @@ class SchematicEditor {
 
   _hitWire(sx, sy) {
     const p = this._toW(sx, sy), th = 6 / this.zoom;
+    // First pass: dot wires get priority (they sit on top of other wires)
     for (let i = this.project.wires.length - 1; i >= 0; i--) {
       const w = this.project.wires[i];
       if (!w.points?.length) continue;
-      // Dot wire (single point or both endpoints identical) — hit as a point
       if (w.points.length === 1 || (w.points.length === 2 &&
           w.points[0].x === w.points[1].x && w.points[0].y === w.points[1].y)) {
-        if (Math.hypot(p.x - w.points[0].x, p.y - w.points[0].y) <= th) return w;
-        continue;
+        if (Math.hypot(p.x - w.points[0].x, p.y - w.points[0].y) <= th * 1.5) return w;
       }
+    }
+    // Second pass: regular wire segments
+    for (let i = this.project.wires.length - 1; i >= 0; i--) {
+      const w = this.project.wires[i];
+      if (!w.points?.length) continue;
+      if (w.points.length === 1 || (w.points.length === 2 &&
+          w.points[0].x === w.points[1].x && w.points[0].y === w.points[1].y)) continue;
       for (let j = 0; j < w.points.length - 1; j++) {
         if (this._nearSeg(p, w.points[j], w.points[j + 1], th)) return w;
       }
@@ -1169,11 +1175,21 @@ class SchematicEditor {
     this._saveHist();
     const OFFSET = this.GRID * 4; // paste offset so it doesn't land on top
     const idMap = {};
+    // Re-assign designators to avoid duplicates
+    const takenDesigs = new Set(this.project.components.map(c => c.designator));
     const newComps = comps.map(c => {
       const nc = JSON.parse(JSON.stringify(c));
       nc.id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       idMap[c.id] = nc.id;
       nc.x += OFFSET; nc.y += OFFSET;
+      // Auto-increment designator
+      const m = nc.designator?.match(/^([A-Za-z]+)(\d+)$/);
+      if (m) {
+        const pre = m[1];
+        const used = new Set([...takenDesigs].filter(d => d?.startsWith(pre) && /^\d+$/.test(d.slice(pre.length))).map(d => parseInt(d.slice(pre.length))));
+        let n = 1; while (used.has(n)) n++;
+        nc.designator = pre + n; takenDesigs.add(nc.designator);
+      }
       return nc;
     });
     const newLabels = labels.map(l => {
