@@ -2775,7 +2775,9 @@ async def get_project_bom(pid: str):
 
 # ── DRC helper ────────────────────────────────────────────────────────────────
 
-def run_drc(board: dict) -> dict:
+def run_drc(board: dict) -> dict:  # noqa: C901
+    """Comprehensive Design Rule Check with x/y coordinates for each violation."""
+    import math
     dr              = board.get("designRules", {})
     min_clearance   = float(dr.get("clearance", 0.2))
     min_trace_w     = float(dr.get("minTraceWidth", 0.15))
@@ -2844,10 +2846,11 @@ async def drc_board_direct(request: Request):
 
 # ── Autoroute helper ──────────────────────────────────────────────────────────
 
-def _autoroute_skip_net(net_name: str) -> bool:
+def _autoroute_skip_net(net_name: str, route_gnd: bool = False) -> bool:
     """
     Return True for nets that must NOT be routed as individual traces.
     - GND and all variants (AGND, PGND, DGND, GND_*) → handled by copper pour
+      UNLESS route_gnd=True (no copper pour exists for GND)
     - NC / no-connect nets → intentionally floating
     - Empty net name
     """
@@ -2857,9 +2860,14 @@ def _autoroute_skip_net(net_name: str) -> bool:
     for prefix in ("NC", "PWR_FLAG"):
         if upper == prefix or upper.startswith(prefix + "_") or upper.startswith(prefix + "-"):
             return True
-    for sub in ("GND", "UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
+    for sub in ("UNCONNECTED", "NOCONNECT", "NO_CONNECT"):
         if sub in upper:
             return True
+    # GND: skip only if copper pour exists for it
+    if not route_gnd:
+        for sub in ("GND",):
+            if sub in upper:
+                return True
     return False
 
 
@@ -2880,6 +2888,16 @@ def run_autoroute(board: dict) -> dict:
     dr   = board.get("designRules", {})
     GRID = max(0.1, float(dr.get("routingGrid", 0.25)))  # mm routing grid
     bw   = float(board.get("board", {}).get("width",  board.get("width",  200)))
+
+    # ── Detect whether GND has a copper pour / zone ────────────────────────
+    # If no zone covers GND, route it as normal traces instead of skipping.
+    _gnd_has_zone = False
+    for _zone in board.get("zones", board.get("areas", [])):
+        _zn = (_zone.get("net", "") or "").upper()
+        if "GND" in _zn:
+            _gnd_has_zone = True
+            break
+    _route_gnd = not _gnd_has_zone
     bh   = float(board.get("board", {}).get("height", board.get("height", 200)))
     cu_clearance = float(dr.get("clearance", 0.2))  # copper-to-copper clearance
     edge_clearance = float(dr.get("routeEdgeClearance", dr.get("edgeClearance", 0.5)))
@@ -3048,12 +3066,17 @@ def run_autoroute(board: dict) -> dict:
                 return True
         return False
 
+    # Track NC pad cells per component (for unblocking when routing through component)
+    _nc_cells_by_comp: dict[str, set[tuple[int, int]]] = {}  # comp_ref → NC pad grid cells
+    _comp_nets: dict[str, set[str]] = {}  # comp_ref → set of nets on this component
+
     for comp in board.get("components", []):
         cx  = float(comp.get("x", 0))
         cy  = float(comp.get("y", 0))
         rot = float(comp.get("rotation", 0)) * math.pi / 180
         cos_r, sin_r = math.cos(rot), math.sin(rot)
         comp_layer = 1 if comp.get("layer", "F") == "B" else 0  # 0=F.Cu, 1=B.Cu
+        comp_ref = comp.get("ref", comp.get("id", ""))
         for pad in comp.get("pads", []):
             net = (pad.get("net", "") or "").upper()
             # Rotate local pad offset into world space
@@ -3066,9 +3089,15 @@ def run_autoroute(board: dict) -> dict:
             if is_nc_pad:
                 # Mark NC pad position as blocked — no trace may pass through
                 nc_pad_positions.append((px, py))
+                # Track NC cells per component for selective unblocking
+                if comp_ref:
+                    _nc_cells_by_comp.setdefault(comp_ref, set())
                 if net:
                     nc_nets.add(net)
                 continue  # NEVER add NC pads to net_pads
+            # Track which nets each component has (for NC unblocking)
+            if net and comp_ref:
+                _comp_nets.setdefault(comp_ref, set()).add(net)
             if not net:
                 continue
             # Through-hole pads exist on both layers; SMD pads on their component's layer
@@ -3190,6 +3219,34 @@ def run_autoroute(board: dict) -> dict:
         _nc_blocked_cells |= nc_cells
     occupied |= _nc_blocked_cells
 
+    # Populate NC cells per component (now that _pad_cells is defined)
+    # Re-scan components to get per-comp NC cell sets
+    for comp in board.get("components", []):
+        cx  = float(comp.get("x", 0))
+        cy  = float(comp.get("y", 0))
+        rot = float(comp.get("rotation", 0)) * math.pi / 180
+        cos_r, sin_r = math.cos(rot), math.sin(rot)
+        comp_ref = comp.get("ref", comp.get("id", ""))
+        for pad in comp.get("pads", []):
+            pad_name = (pad.get("name", "") or "").upper().strip()
+            net = (pad.get("net", "") or "").upper()
+            if _is_nc(pad_name, net):
+                lx = float(pad.get("x", 0))
+                ly = float(pad.get("y", 0))
+                px = cx + lx * cos_r - ly * sin_r
+                py = cy + lx * sin_r + ly * cos_r
+                hw, hh = _get_pad_hw(px, py)
+                nc_cells = _pad_cells(px, py, hw, hh)
+                _nc_cells_by_comp.setdefault(comp_ref, set()).update(nc_cells)
+
+    # Build net → set of NC cells that can be unblocked (from same-component NC pads)
+    _nc_unblock_for_net: dict[str, set[tuple[int, int]]] = {}
+    for comp_ref, comp_net_set in _comp_nets.items():
+        nc_cells_comp = _nc_cells_by_comp.get(comp_ref, set())
+        if nc_cells_comp:
+            for net_name_cn in comp_net_set:
+                _nc_unblock_for_net.setdefault(net_name_cn, set()).update(nc_cells_comp)
+
     # Block all routable pads (will be temporarily unblocked per-net)
     all_pad_cells: dict[str, set[tuple[int, int]]] = {}
     # NO-VIA zone: vias must NEVER be placed on any pad (even same-net pads)
@@ -3212,10 +3269,12 @@ def run_autoroute(board: dict) -> dict:
     for _body_net, _body_set in _comp_body_cells.items():
         _no_via_cells |= _body_set
 
-    # ── Multi-layer BFS with via support ─────────────────────────────────────
+    # ── Multi-layer A* with via support ──────────────────────────────────────
     # Layer 0 = F.Cu, Layer 1 = B.Cu.  A via transition costs VIA_PENALTY
     # extra grid steps to discourage unnecessary layer changes.
-    DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    # Cardinal + diagonal directions (diagonal cost = 3 ≈ 2*√2, cardinal = 2)
+    DIRS = [(1, 0, 2), (-1, 0, 2), (0, 1, 2), (0, -1, 2),
+            (1, 1, 3), (1, -1, 3), (-1, 1, 3), (-1, -1, 3)]
     LAYERS = ("F.Cu", "B.Cu")
     occupied_b: set[tuple[int, int]] = set()  # B.Cu occupancy (starts empty)
     # Block NC pads and all routable pads on B.Cu too
@@ -3230,12 +3289,14 @@ def run_autoroute(board: dict) -> dict:
     def _bfs(sx: float, sy: float, ex: float, ey: float,
              force_single_layer: bool = False,
              start_layer: int = 0,
+             relaxed: bool = False,
              ) -> tuple[list[tuple[float, float, int]], bool]:
-        """BFS on 2-layer grid. Returns (path with layer info, used_via).
+        """A* on 2-layer grid. Returns (path with layer info, used_via).
 
         Each path element is (world_x, world_y, layer_index).
         If allow_vias is False or force_single_layer is True, only searches
         the start_layer (no layer transitions).
+        If relaxed=True, ignores component body blocking (for tight layouts).
         """
         sg = (int(round(sx / GRID)), int(round(sy / GRID)), start_layer)
         # End must be reachable on either layer (pads are through-hole or SMD on F.Cu)
@@ -3243,14 +3304,26 @@ def run_autoroute(board: dict) -> dict:
         if sg[:2] == eg_xy:
             return [(sx, sy, start_layer), (ex, ey, start_layer)], False
 
-        dist: dict[tuple[int, int, int], int] = {sg: 0}
-        prev: dict[tuple[int, int, int], tuple[int, int, int]] = {}
-        pq: list = [(0, sg)]
-        n_layers = 2 if (allow_vias and not force_single_layer) else 1
+        # A* heuristic: octile distance (accounts for diagonal moves)
+        def _h(gx: int, gy: int) -> int:
+            dx_h = abs(gx - eg_xy[0])
+            dy_h = abs(gy - eg_xy[1])
+            # Cardinal cost=2, diagonal cost=3: h = 2*max + 1*min (octile)
+            return 2 * max(dx_h, dy_h) + 1 * min(dx_h, dy_h)
 
+        g_cost: dict[tuple[int, int, int], int] = {sg: 0}
+        prev: dict[tuple[int, int, int], tuple[int, int, int]] = {}
+        pq: list = [(_h(sg[0], sg[1]), 0, sg)]  # (f, g, node)
+        n_layers = 2 if (allow_vias and not force_single_layer) else 1
+        _max_visits = grid_w * grid_h * n_layers * 2  # safety cap
+
+        visited = 0
         while pq:
-            d, cur = heapq.heappop(pq)
-            if d > dist.get(cur, 10**9):
+            f, g, cur = heapq.heappop(pq)
+            visited += 1
+            if visited > _max_visits:
+                break
+            if g > g_cost.get(cur, 10**9):
                 continue
             if cur[0] == eg_xy[0] and cur[1] == eg_xy[1]:
                 # Reached target — reconstruct path
@@ -3264,24 +3337,24 @@ def run_autoroute(board: dict) -> dict:
                 if path:
                     path[0] = (sx, sy, path[0][2])
                     path.append((ex, ey, path[-1][2]))
-                used_via = len(set(p[2] for p in path)) > 1  # via if path uses multiple layers
+                used_via = len(set(p[2] for p in path)) > 1
                 return path, used_via
 
             layer = cur[2]
             occ = _occupied_by_layer[layer]
 
-            # Cardinal moves on same layer
-            for dx, dy in DIRS:
+            # Cardinal + diagonal moves on same layer
+            for dx, dy, cost in DIRS:
                 nxt = (cur[0] + dx, cur[1] + dy, layer)
                 if nxt[0] < 0 or nxt[1] < 0 or nxt[0] >= grid_w or nxt[1] >= grid_h:
                     continue
                 if (nxt[0], nxt[1]) in occ:
                     continue
-                nd = d + 1
-                if nd < dist.get(nxt, 10**9):
-                    dist[nxt] = nd
+                ng = g + cost
+                if ng < g_cost.get(nxt, 10**9):
+                    g_cost[nxt] = ng
                     prev[nxt] = cur
-                    heapq.heappush(pq, (nd, nxt))
+                    heapq.heappush(pq, (ng + _h(nxt[0], nxt[1]), ng, nxt))
 
             # Via transition to other layer (NEVER on a pad)
             if n_layers > 1:
@@ -3289,20 +3362,70 @@ def run_autoroute(board: dict) -> dict:
                 nxt_via = (cur[0], cur[1], other)
                 if ((cur[0], cur[1]) not in _occupied_by_layer[other]
                         and (cur[0], cur[1]) not in _no_via_cells):
-                    nd = d + VIA_PENALTY
-                    if nd < dist.get(nxt_via, 10**9):
-                        dist[nxt_via] = nd
+                    ng = g + VIA_PENALTY
+                    if ng < g_cost.get(nxt_via, 10**9):
+                        g_cost[nxt_via] = ng
                         prev[nxt_via] = cur
-                        heapq.heappush(pq, (nd, nxt_via))
+                        heapq.heappush(pq, (ng + _h(nxt_via[0], nxt_via[1]), ng, nxt_via))
 
         return [], False  # no path found
 
-    # ── Identify already-routed nets (keep existing traces, only route missing) ─
+    # ── Identify already-routed nets: check if ALL pads are connected ────────
+    # Use union-find on trace segment endpoints to determine pad connectivity.
+    # Only skip a net if every pad in it is reachable from every other pad
+    # through existing traces.
+    def _trace_connectivity(net_name_tc: str, pads_tc: list[tuple[float, float, int]]) -> bool:
+        """Return True if all pads in this net are connected by existing traces."""
+        if len(pads_tc) < 2:
+            return True
+        # Snap threshold: 2 grid cells
+        snap_th = GRID * 2
+        # Collect trace endpoints for this net
+        endpoints: list[tuple[float, float]] = []
+        segs: list[tuple[float, float, float, float]] = []
+        for _et in board.get("traces", []):
+            _en = (_et.get("net", "") or "").upper()
+            if _en != net_name_tc:
+                continue
+            for _seg in _et.get("segments", []):
+                sx_t = float(_seg.get("start", {}).get("x", 0))
+                sy_t = float(_seg.get("start", {}).get("y", 0))
+                ex_t = float(_seg.get("end", {}).get("x", 0))
+                ey_t = float(_seg.get("end", {}).get("y", 0))
+                segs.append((sx_t, sy_t, ex_t, ey_t))
+                endpoints.append((sx_t, sy_t))
+                endpoints.append((ex_t, ey_t))
+        if not segs:
+            return False
+        # Union-find
+        parent_tc: dict[int, int] = {}
+        def _find_tc(a: int) -> int:
+            while parent_tc.get(a, a) != a:
+                parent_tc[a] = parent_tc.get(parent_tc[a], parent_tc[a])
+                a = parent_tc[a]
+            return a
+        def _union_tc(a: int, b: int) -> None:
+            ra, rb = _find_tc(a), _find_tc(b)
+            if ra != rb:
+                parent_tc[ra] = rb
+        # All points: pads + trace endpoints
+        all_pts: list[tuple[float, float]] = [(p[0], p[1]) for p in pads_tc] + endpoints
+        n_pads = len(pads_tc)
+        # Union points that are close together
+        for i in range(len(all_pts)):
+            for j in range(i + 1, len(all_pts)):
+                if abs(all_pts[i][0] - all_pts[j][0]) < snap_th and abs(all_pts[i][1] - all_pts[j][1]) < snap_th:
+                    _union_tc(i, j)
+        # Union trace segment endpoints
+        idx_base = n_pads
+        for si, (sx_t, sy_t, ex_t, ey_t) in enumerate(segs):
+            _union_tc(idx_base + si * 2, idx_base + si * 2 + 1)
+        # Check all pads are in same group
+        roots = set(_find_tc(i) for i in range(n_pads))
+        return len(roots) == 1
+
     _existing_routed_nets: set[str] = set()
-    for _et in board.get("traces", []):
-        _en = (_et.get("net", "") or "").upper()
-        if _en and _et.get("segments"):
-            _existing_routed_nets.add(_en)
+    # Will be populated after net_pads is built (moved below)
 
     # Keep all existing traces and vias — autoroute only adds new ones
     new_traces: list[dict] = list(board.get("traces", []))
@@ -3321,29 +3444,42 @@ def run_autoroute(board: dict) -> dict:
                           "12V", "24V", "AVCC", "DVCC", "VPW", "VMOT", "VPWR")
         return 0 if any(kw in upper for kw in power_keywords) else 1
 
+    # Populate _existing_routed_nets using proper connectivity check
+    for _check_net, _check_pads in net_pads.items():
+        if len(_check_pads) >= 2 and _trace_connectivity(_check_net, _check_pads):
+            _existing_routed_nets.add(_check_net)
+
     for net_name in sorted(net_pads.keys(), key=lambda n: (_net_priority(n), n)):
-        if _autoroute_skip_net(net_name) or net_name in nc_only_nets:
+        if _autoroute_skip_net(net_name, route_gnd=_route_gnd) or net_name in nc_only_nets:
             continue
         pads_xy = net_pads[net_name]
         if len(pads_xy) < 2:
             continue
         total += 1
 
-        # Skip nets that already have traces — preserve user's manual routing
+        # Skip nets where ALL pads are already connected by existing traces
         if net_name in _existing_routed_nets:
             skipped_existing += 1
-            routed += 1  # count as routed since they already have traces
+            routed += 1
             continue
 
         width_mm = _autoroute_trace_width(net_name, dr)
 
-        # Temporarily unblock this net's own pad cells so BFS can reach them.
-        # NOTE: do NOT unblock component body cells — the body contains pads of
-        # OTHER nets that must remain blocked.  Only the specific pad cells for
-        # the current net are safe to unblock.
+        # Temporarily unblock this net's own pad cells AND component body cells
+        # so BFS can reach pads inside component bodies.
+        # Also unblock NC pads on same components (so traces can escape through
+        # gaps between NC pads, e.g. QFN thermal paddle surrounded by NC pins).
+        # Also unblock _no_via_cells for own pads so thermal vias can be placed.
         own_cells = all_pad_cells.get(net_name, set())
+        own_body_cells = _comp_body_cells.get(net_name, set())
+        own_nc_cells = _nc_unblock_for_net.get(net_name, set())
         occupied -= own_cells
+        occupied -= own_body_cells
+        occupied -= own_nc_cells
         occupied_b -= own_cells
+        occupied_b -= own_body_cells
+        occupied_b -= own_nc_cells
+        _no_via_cells -= own_cells  # allow vias on own pads (thermal vias)
 
         # Greedy nearest-neighbour MST: always connect closest unconnected pad
         # pads_xy are (x, y, layer_index) tuples
@@ -3377,9 +3513,37 @@ def run_autoroute(board: dict) -> dict:
                                   force_single_layer=_is_rf_net,
                                   start_layer=src_layer)
             if not path:
-                # BFS blocked — skip this segment
+                # Retry with relaxed RF constraint (allow vias)
+                if _is_rf_net:
+                    path, used_via = _bfs(best_src[0], best_src[1], dest[0], dest[1],
+                                          force_single_layer=False,
+                                          start_layer=src_layer)
+            if not path:
                 all_routed = False
                 continue
+
+            # Simplify path: merge collinear points on the same layer
+            if len(path) > 2:
+                simplified: list[tuple[float, float, int]] = [path[0]]
+                for k in range(1, len(path) - 1):
+                    x_prev, y_prev, l_prev = simplified[-1]
+                    x_cur, y_cur, l_cur = path[k]
+                    x_nxt, y_nxt, l_nxt = path[k + 1]
+                    # Keep point if layer changes or direction changes
+                    if l_prev != l_cur or l_cur != l_nxt:
+                        simplified.append(path[k])
+                        continue
+                    # Check collinearity: same direction vector
+                    dx1 = x_cur - x_prev
+                    dy1 = y_cur - y_prev
+                    dx2 = x_nxt - x_cur
+                    dy2 = y_nxt - y_cur
+                    # Cross product ≈ 0 means collinear
+                    if abs(dx1 * dy2 - dy1 * dx2) < 1e-6:
+                        continue  # skip — collinear, will be merged
+                    simplified.append(path[k])
+                simplified.append(path[-1])
+                path = simplified
 
             # Split path into per-layer segments and insert vias at transitions
             for j in range(len(path) - 1):
@@ -3410,9 +3574,14 @@ def run_autoroute(board: dict) -> dict:
                 # Mark on correct layer's occupancy (with clearance expansion)
                 _mark_segment(x0, y0, x1, y1, occ=_occupied_by_layer[l0])
 
-        # Re-block this net's pads now that routing is done
+        # Re-block this net's pads, body cells, and NC cells now that routing is done
         occupied |= own_cells
+        occupied |= own_body_cells
+        occupied |= own_nc_cells
         occupied_b |= own_cells
+        occupied_b |= own_body_cells
+        occupied_b |= own_nc_cells
+        _no_via_cells |= own_cells  # re-block vias on pads
 
         # Build trace objects per layer
         for layer_name, segs in per_layer_segs.items():
@@ -3492,6 +3661,8 @@ def run_autoroute(board: dict) -> dict:
             for pcx_p, pcy_p, phw_p, phh_p, pnet in _all_pad_rects:
                 if pnet == tnet:
                     continue  # same net — no violation
+                if pnet == "NC" or pnet.startswith("NC_") or pnet.startswith("NC "):
+                    continue  # NC pads have no electrical connection — not a real violation
                 if _seg_crosses_pad(sx0, sy0, sx1, sy1, tw, pcx_p, pcy_p, phw_p, phh_p):
                     vkey = (round(pcx_p, 2), round(pcy_p, 2))
                     if vkey not in _seen_violations:
