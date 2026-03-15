@@ -113,11 +113,23 @@ async function runAutoRoute() {
       editor.fitBoard();
       editor.render(); rebuildCompList(); updateBoardInfo();
     }
+    // Show net-conflict violations as X markers on the layout
+    const violations = Array.isArray(data.violations) ? data.violations : [];
+    if (typeof _drcResults !== 'undefined') {
+      // Merge: keep non-conflict DRC results, replace conflict markers with fresh ones
+      const kept = (_drcResults || []).filter(e => e.type !== 'NET_CONFLICT');
+      _drcResults = [...kept, ...violations];
+    }
+
     const viaCount = data.via_count || vias.length || 0;
     const viasMsg = viaCount ? `, ${viaCount} vias` : '';
-    const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets${viasMsg}`;
+    const violMsg = violations.length ? ` ⚠ ${violations.length} violations` : '';
+    const msg = `Routed ${data.routed ?? '?'}/${data.total ?? '?'} nets${viasMsg}${violMsg}`;
     const status = document.getElementById('status-bar') || document.getElementById('route-status') || document.getElementById('auto-status');
     if (status) status.textContent = msg;
+    if (violations.length) {
+      editor?.render();  // redraw to show X markers
+    }
     if (btn) { btn.disabled = false; btn.textContent = '⚡ Auto-Route'; }
   } catch(e) {
     alert('Autoroute failed: ' + e.message);

@@ -2935,6 +2935,68 @@ def run_autoroute(board: dict) -> dict:
             continue
         for _pr in _net_entry.get("pads", []):
             _pad_ref_to_net_ar[_pr.upper()] = _nn
+
+    # ── Fallback: load nets from library layout_example for the board's project ──
+    # When a board was imported without a netlist, pad.net and board.nets[]
+    # are both empty.  Try using the library's layout_example (which has full
+    # net-annotated pads) to recover net information by matching component refs.
+    if not _pad_ref_to_net_ar:
+        project_id = board.get("projectId", "")
+        if project_id:
+            # Find which library slug this board uses (from the first non-passive component)
+            _board_comps = board.get("components", [])
+            _passive_fps = {"0201", "0402", "0603", "0805", "1206", "2010", "2512"}
+            for _bc in _board_comps:
+                _bc_fp = str(_bc.get("footprint", "")).lower()
+                if _bc_fp not in _passive_fps:
+                    # Try loading the library profile
+                    _bc_ref = _bc.get("ref", "")
+                    _bc_val = str(_bc.get("value", "")).upper().replace("+", "").replace(" ", "_")
+                    # Search library dirs for a matching slug
+                    for _lib_dir_name in os.listdir(str(LIBRARY_DIR)):
+                        _lib_prof_path = LIBRARY_DIR / _lib_dir_name / "profile.json"
+                        if not _lib_prof_path.exists():
+                            continue
+                        try:
+                            _lib_prof = json.loads(_lib_prof_path.read_text("utf-8"))
+                        except Exception:
+                            continue
+                        le = _lib_prof.get("layout_example") or {}
+                        le_comps = le.get("components") or []
+                        le_nets = le.get("nets") or []
+                        if not le_comps or not le_nets:
+                            continue
+                        # Build LE ref → pad → net mapping
+                        _le_pad_net: dict[str, str] = {}
+                        for _le_net in le_nets:
+                            _le_nn = (_le_net.get("name", "") or "").upper()
+                            if not _le_nn:
+                                continue
+                            for _le_pr in _le_net.get("pads", []):
+                                _le_pad_net[_le_pr.upper()] = _le_nn
+                        # Also from component pad.net fields
+                        for _lc in le_comps:
+                            _lc_ref = str(_lc.get("ref", _lc.get("id", "")))
+                            for _lp in _lc.get("pads", []):
+                                _lpn = (_lp.get("net", "") or "").upper()
+                                if _lpn:
+                                    _lpk = f"{_lc_ref}.{_lp.get('number', '')}".upper()
+                                    _le_pad_net[_lpk] = _lpn
+                        if not _le_pad_net:
+                            continue
+                        # Match: board refs to LE refs (same designator pattern)
+                        _le_refs = {str(c.get("ref", c.get("id", ""))): c for c in le_comps}
+                        for _bc2 in _board_comps:
+                            _bc2_ref = _bc2.get("ref", "")
+                            if _bc2_ref in _le_refs:
+                                for _bp in _bc2.get("pads", []):
+                                    _bp_num = _bp.get("number", _bp.get("name", ""))
+                                    _bpk = f"{_bc2_ref}.{_bp_num}".upper()
+                                    if _bpk in _le_pad_net:
+                                        _pad_ref_to_net_ar[_bpk] = _le_pad_net[_bpk]
+                        if _pad_ref_to_net_ar:
+                            break  # found nets, stop searching libraries
+
     if _pad_ref_to_net_ar:
         for comp in board.get("components", []):
             ref = comp.get("ref", comp.get("id", ""))
@@ -3281,12 +3343,10 @@ def run_autoroute(board: dict) -> dict:
                                   force_single_layer=_is_rf_net,
                                   start_layer=src_layer)
             if not path:
-                # BFS blocked — fall back to straight Manhattan segment so the
-                # net is still partially connected rather than lost entirely.
+                # BFS blocked — skip this segment (no Manhattan fallback which
+                # would route straight through pads of other nets)
                 all_routed = False
-                mid = (dest[0], best_src[1])  # horizontal-first elbow
-                path = [(best_src[0], best_src[1], src_layer), (mid[0], mid[1], src_layer), (dest[0], dest[1], src_layer)]
-                used_via = False
+                continue
 
             # Split path into per-layer segments and insert vias at transitions
             for j in range(len(path) - 1):
@@ -3336,6 +3396,82 @@ def run_autoroute(board: dict) -> dict:
         if per_layer_segs:
             routed += 1
 
+    # ── Post-route DRC: detect trace segments crossing foreign-net pads ──────
+    # Build a spatial list of all pads with their net and bounding box.
+    _all_pad_rects: list[tuple[float, float, float, float, str]] = []  # (cx, cy, hw, hh, net)
+    for comp in board.get("components", []):
+        cx_c = float(comp.get("x", 0))
+        cy_c = float(comp.get("y", 0))
+        rot_c = float(comp.get("rotation", 0)) * math.pi / 180
+        cos_c, sin_c = math.cos(rot_c), math.sin(rot_c)
+        for pad in comp.get("pads", []):
+            pnet = (pad.get("net", "") or "").upper()
+            if not pnet:
+                continue
+            lx = float(pad.get("x", 0))
+            ly = float(pad.get("y", 0))
+            px_w = cx_c + lx * cos_c - ly * sin_c
+            py_w = cy_c + lx * sin_c + ly * cos_c
+            sx = float(pad.get("size_x", pad.get("sizeX", 0.5)))
+            sy = float(pad.get("size_y", pad.get("sizeY", 0.5)))
+            if abs(rot_c) > 0.01:
+                hw_p = max(abs(sx * cos_c), abs(sy * sin_c)) / 2
+                hh_p = max(abs(sx * sin_c), abs(sy * cos_c)) / 2
+            else:
+                hw_p, hh_p = sx / 2, sy / 2
+            _all_pad_rects.append((px_w, py_w, hw_p, hh_p, pnet))
+
+    def _seg_crosses_pad(x0: float, y0: float, x1: float, y1: float, tw: float,
+                         pcx: float, pcy: float, phw: float, phh: float) -> bool:
+        """Check if a trace segment (as a fat line) crosses a pad rectangle."""
+        # Expand pad by half-trace-width + clearance
+        ehw = phw + tw / 2 + cu_clearance
+        ehh = phh + tw / 2 + cu_clearance
+        # Segment AABB
+        smin_x, smax_x = (min(x0, x1) - tw / 2, max(x0, x1) + tw / 2)
+        smin_y, smax_y = (min(y0, y1) - tw / 2, max(y0, y1) + tw / 2)
+        # Quick AABB reject
+        if smax_x < pcx - ehw or smin_x > pcx + ehw:
+            return False
+        if smax_y < pcy - ehh or smin_y > pcy + ehh:
+            return False
+        # Point-to-segment distance check (closest point on segment to pad center)
+        dx, dy = x1 - x0, y1 - y0
+        seg_len2 = dx * dx + dy * dy
+        if seg_len2 < 1e-12:
+            # Zero-length segment — point-to-point
+            return abs(x0 - pcx) < ehw and abs(y0 - pcy) < ehh
+        t = max(0.0, min(1.0, ((pcx - x0) * dx + (pcy - y0) * dy) / seg_len2))
+        closest_x = x0 + t * dx
+        closest_y = y0 + t * dy
+        return abs(closest_x - pcx) < ehw and abs(closest_y - pcy) < ehh
+
+    violations: list[dict] = []
+    _seen_violations: set[tuple[float, float]] = set()
+    for trace in new_traces:
+        tnet = (trace.get("net", "") or "").upper()
+        tw = float(trace.get("width", _default_trace_w))
+        for seg in trace.get("segments", []):
+            sx0 = float(seg["start"]["x"])
+            sy0 = float(seg["start"]["y"])
+            sx1 = float(seg["end"]["x"])
+            sy1 = float(seg["end"]["y"])
+            for pcx_p, pcy_p, phw_p, phh_p, pnet in _all_pad_rects:
+                if pnet == tnet:
+                    continue  # same net — no violation
+                if _seg_crosses_pad(sx0, sy0, sx1, sy1, tw, pcx_p, pcy_p, phw_p, phh_p):
+                    vkey = (round(pcx_p, 2), round(pcy_p, 2))
+                    if vkey not in _seen_violations:
+                        _seen_violations.add(vkey)
+                        violations.append({
+                            "type": "NET_CONFLICT",
+                            "x": round(pcx_p, 4),
+                            "y": round(pcy_p, 4),
+                            "trace_net": tnet,
+                            "pad_net": pnet,
+                            "message": f"Trace '{tnet}' crosses pad of net '{pnet}'",
+                        })
+
     result = dict(board)
     # Normalize all net names to UPPERCASE for consistency
     for comp in result.get("components", []):
@@ -3347,7 +3483,10 @@ def run_autoroute(board: dict) -> dict:
             net_obj["name"] = net_obj["name"].upper()
     result["traces"] = new_traces
     result["vias"] = all_vias
-    return {**result, "_autoroute": {"routed": routed, "total": total, "vias": len(all_vias)}}
+    return {**result, "_autoroute": {
+        "routed": routed, "total": total, "vias": len(all_vias),
+        "violations": violations,
+    }}
 
 
 # ── POST /api/pcb/{bid}/autoroute ─────────────────────────────────────────────
@@ -3367,6 +3506,7 @@ async def autoroute_board_id(bid: str):
         "via_count": autoroute_meta.get("vias", 0),
         "traces": result.get("traces", []),
         "vias":   result.get("vias", []),
+        "violations": autoroute_meta.get("violations", []),
     }
 
 
@@ -3382,6 +3522,7 @@ async def autoroute_direct(request: Request):
         "via_count": autoroute_meta.get("vias", 0),
         "traces": result.get("traces", []),
         "vias":   result.get("vias", []),
+        "violations": autoroute_meta.get("violations", []),
     }
 
 
