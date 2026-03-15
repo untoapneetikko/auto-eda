@@ -530,6 +530,14 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
           <option value="45">45 (chamfer)</option>
         </select>
 
+        <label>Route Angle Step</label>
+        <select id="auto-angle-step" onchange="DR.routeAngleStep=+this.value;_saveDRStorage()" style="width:90px;"
+                title="Allowed trace direction angles: 90 = ortho only, 45 = 8 directions, 0 = free-form">
+          <option value="90">90° (ortho)</option>
+          <option value="45">45° (diagonal)</option>
+          <option value="0">0° (free-form)</option>
+        </select>
+
       </div>
 
       <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Clearances</div>

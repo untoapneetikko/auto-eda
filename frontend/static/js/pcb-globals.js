@@ -52,6 +52,7 @@ let DR = {
   // Routing aesthetics
   cornerAngle: 90,        // Trace corner angle: 90 = sharp, 0 = fully rounded (degrees)
   // Routing constraints
+  routeAngleStep: 45,     // Allowed trace direction step (degrees): 45 = 8 dirs, 90 = 4 dirs (ortho), 0 = free-form
   minTraceAngle: 90,      // Minimum allowed angle between trace segments (degrees); 90 = no acute bends
   // Auto-route
   allowVias: true,        // Allow autorouter to use vias for layer transitions

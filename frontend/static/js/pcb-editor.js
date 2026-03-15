@@ -768,46 +768,52 @@ class PCBEditor {
     return['#4fc3f7','#f9a825','#ce93d8','#80cbc4','#ff8a65','#aed581','#ffb74d'][h%7];
   }
 
-  // Clamp (ex,ey) so the angle at the last routePoint junction is >= DR.minTraceAngle.
-  // Returns {x,y} — unchanged if there are fewer than 2 points or angle is already fine.
+  // Snap (ex,ey) so the segment from the last routePoint goes at an allowed angle.
+  // DR.routeAngleStep controls: 45 = 8 dirs, 90 = 4 dirs (ortho), 0 = free-form.
+  // Also enforces DR.minTraceAngle between consecutive segments.
   _clampRoutePoint(ex,ey){
     const pts=this.routePoints;
     if(pts.length<1)return{x:ex,y:ey};
     const cur=pts[pts.length-1];
-    const EPS0=0.001;
-    // First segment: snap direction to nearest allowed angle (45° increments)
-    if(pts.length<2){
-      const fdx=ex-cur.x, fdy=ey-cur.y;
-      const fl=Math.hypot(fdx,fdy); if(fl<EPS0)return{x:ex,y:ey};
-      const ang=Math.atan2(fdy,fdx);
-      const step=Math.PI/4; // 45° increments
-      const snapped=Math.round(ang/step)*step;
-      return{x:cur.x+Math.cos(snapped)*fl, y:cur.y+Math.sin(snapped)*fl};
-    }
-    const prev=pts[pts.length-2];
-    const MIN_RAD=(DR.minTraceAngle??90)*Math.PI/180;
     const EPS=0.001;
-    // Back-vector: from junction toward previous point
-    const bx=prev.x-cur.x, by=prev.y-cur.y;
-    const bl=Math.hypot(bx,by); if(bl<EPS)return{x:ex,y:ey};
-    const bnx=bx/bl, bny=by/bl; // normalised back direction
-    // New-segment vector: from junction toward cursor
-    const fx=ex-cur.x, fy=ey-cur.y;
-    const fl=Math.hypot(fx,fy); if(fl<EPS)return{x:ex,y:ey};
-    const fnx=fx/fl, fny=fy/fl;
-    // Signed angle from back-direction to cursor-direction (positive = CCW)
-    const dot=bnx*fnx+bny*fny;
-    const cross=bnx*fny-bny*fnx; // z of 3D cross product
-    const phi=Math.atan2(cross,dot); // in (-π, π]
-    // If the opening angle (|phi|) is already >= MIN_RAD, no clamping needed
-    if(Math.abs(phi)>=MIN_RAD)return{x:ex,y:ey};
-    // Clamp phi to ±MIN_RAD (keep the sign so we stay on the same side)
-    const clampedPhi=phi>=0?MIN_RAD:-MIN_RAD;
-    // Rotate back-direction by clampedPhi to get the constrained direction
-    const cosPhi=Math.cos(clampedPhi), sinPhi=Math.sin(clampedPhi);
-    const cdx=bnx*cosPhi-bny*sinPhi;
-    const cdy=bnx*sinPhi+bny*cosPhi;
-    return{x:cur.x+cdx*fl, y:cur.y+cdy*fl};
+    const stepDeg=DR.routeAngleStep??45;
+
+    // Snap direction to nearest allowed angle step
+    let fdx=ex-cur.x, fdy=ey-cur.y;
+    let fl=Math.hypot(fdx,fdy); if(fl<EPS)return{x:ex,y:ey};
+
+    if(stepDeg>0){
+      const stepRad=stepDeg*Math.PI/180;
+      const ang=Math.atan2(fdy,fdx);
+      const snapped=Math.round(ang/stepRad)*stepRad;
+      fdx=Math.cos(snapped)*fl; fdy=Math.sin(snapped)*fl;
+    }
+    // else stepDeg===0: free-form, no snapping
+
+    let rx=cur.x+fdx, ry=cur.y+fdy;
+
+    // For 2+ points, also enforce min angle between consecutive segments
+    if(pts.length>=2){
+      const prev=pts[pts.length-2];
+      const MIN_RAD=(DR.minTraceAngle??90)*Math.PI/180;
+      const bx=prev.x-cur.x, by=prev.y-cur.y;
+      const bl=Math.hypot(bx,by); if(bl<EPS)return{x:rx,y:ry};
+      const bnx=bx/bl, bny=by/bl;
+      const nx=rx-cur.x, ny=ry-cur.y;
+      const nl=Math.hypot(nx,ny); if(nl<EPS)return{x:rx,y:ry};
+      const nnx=nx/nl, nny=ny/nl;
+      const dot=bnx*nnx+bny*nny;
+      const cross=bnx*nny-bny*nnx;
+      const phi=Math.atan2(cross,dot);
+      if(Math.abs(phi)<MIN_RAD){
+        const clampedPhi=phi>=0?MIN_RAD:-MIN_RAD;
+        const cosPhi=Math.cos(clampedPhi), sinPhi=Math.sin(clampedPhi);
+        const cdx=bnx*cosPhi-bny*sinPhi;
+        const cdy=bnx*sinPhi+bny*cosPhi;
+        rx=cur.x+cdx*nl; ry=cur.y+cdy*nl;
+      }
+    }
+    return{x:rx,y:ry};
   }
 
   _drawActiveRoute(){
