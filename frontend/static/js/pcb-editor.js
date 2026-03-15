@@ -1403,6 +1403,39 @@ class PCBEditor {
     const midX=(seg.start.x+seg.end.x)/2,midY=(seg.start.y+seg.end.y)/2;
     this._dragTraceOff={x:this.cX(mx)-midX,y:this.cY(my)-midY};
     this._traceDragViolations=[];
+    // Detect pinned endpoints: trace ends that sit on a pad stay locked
+    this._dragTracePins=this._findTracePins(trace);
+  }
+
+  /** Find trace endpoints that sit on component pads. Returns [{segIdx, which:'start'|'end', x, y}] */
+  _findTracePins(trace){
+    const pins=[];
+    const segs=trace.segments||[];
+    if(!segs.length)return pins;
+    const EPS=0.15; // snap tolerance in mm
+    // Collect all unique endpoints of the trace
+    const ends=[];
+    const first=segs[0];
+    ends.push({x:first.start.x,y:first.start.y});
+    const last=segs[segs.length-1];
+    ends.push({x:last.end.x,y:last.end.y});
+    for(const ep of ends){
+      for(const c of(this.board?.components||[])){
+        for(const p of(c.pads||[])){
+          const{px,py}=this._padWorld(c,p);
+          if(Math.hypot(ep.x-px,ep.y-py)<EPS){
+            // Find which segments have this endpoint
+            for(let i=0;i<segs.length;i++){
+              if(Math.abs(segs[i].start.x-ep.x)<EPS&&Math.abs(segs[i].start.y-ep.y)<EPS)
+                pins.push({segIdx:i,which:'start',x:px,y:py});
+              if(Math.abs(segs[i].end.x-ep.x)<EPS&&Math.abs(segs[i].end.y-ep.y)<EPS)
+                pins.push({segIdx:i,which:'end',x:px,y:py});
+            }
+          }
+        }
+      }
+    }
+    return pins;
   }
 
   _checkTraceClearance(tr,segIdx){
@@ -2496,6 +2529,14 @@ class PCBEditor {
             if(Math.abs(o.start.x-orig.start.x)<EPS&&Math.abs(o.start.y-orig.start.y)<EPS){s.start.x=nsx;s.start.y=nsy;}
             if(Math.abs(o.end.x-orig.end.x)<EPS&&Math.abs(o.end.y-orig.end.y)<EPS){s.end.x=nex;s.end.y=ney;}
             if(Math.abs(o.start.x-orig.end.x)<EPS&&Math.abs(o.start.y-orig.end.y)<EPS){s.start.x=nex;s.start.y=ney;}
+          }
+        }
+        // Lock pinned endpoints back to their pads
+        if(this._dragTracePins){
+          for(const pin of this._dragTracePins){
+            const s=tr.segments[pin.segIdx];
+            if(pin.which==='start'){s.start.x=pin.x;s.start.y=pin.y;}
+            else{s.end.x=pin.x;s.end.y=pin.y;}
           }
         }
         // Enforce minimum angle rule (DR.minTraceAngle, default 90°) — reject move if it would create a sharp angle
