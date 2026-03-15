@@ -56,7 +56,8 @@ async function runSideDRC(){
         for(const v of items){
           const col = v.sev==='ERROR' ? '#ef4444' : '#facc15';
           const hasPos = v.x!=null && v.y!=null;
-          html += `<div class="drc-side-item" style="font-size:10px;padding:3px 4px;margin:1px 0;border-left:2px solid ${col};cursor:${hasPos?'pointer':'default'};border-radius:2px;color:var(--text-dim);line-height:1.3;word-break:break-word;" ${hasPos?`onclick="drcGoto(${v.x},${v.y})"`:''}>${v.msg||v.message||v.type}</div>`;
+          const args = hasPos ? `${v.x},${v.y},'${v.sev||'ERROR'}',${v.x1??'undefined'},${v.y1??'undefined'},${v.x2??'undefined'},${v.y2??'undefined'}` : '';
+          html += `<div class="drc-side-item" style="font-size:10px;padding:3px 4px;margin:1px 0;border-left:2px solid ${col};cursor:${hasPos?'pointer':'default'};border-radius:2px;color:var(--text-dim);line-height:1.3;word-break:break-word;" ${hasPos?`onclick="drcGoto(${args})"`:''}>${v.msg||v.message||v.type}</div>`;
         }
       }
       list.innerHTML = html;
@@ -84,7 +85,7 @@ function _updateDrcSideBadge(violations){
   }
 }
 
-function drcGoto(x, y){
+function drcGoto(x, y, sev, x1, y1, x2, y2){
   if(!editor) return;
   // Center the view on the error position and flash highlight
   const canvas = editor.canvas;
@@ -92,11 +93,20 @@ function drcGoto(x, y){
   const cy = canvas.height / 2;
   editor.panX = cx - x * editor.scale - editor.offsetX;
   editor.panY = cy - y * editor.scale - editor.offsetY;
-  // Store highlight position for render
-  editor._drcHighlight = {x, y, time: Date.now()};
+  // Store highlight with full info for render
+  editor._drcHighlight = {x, y, sev: sev||'ERROR', x1, y1, x2, y2, time: Date.now()};
   editor.render();
-  // Clear highlight after 2 seconds
-  setTimeout(()=>{ editor._drcHighlight = null; editor.render(); }, 2000);
+  // Animate pulse for 2 seconds
+  let _drcAnim;
+  const animate = ()=>{
+    if(!editor._drcHighlight) return;
+    if(Date.now()-editor._drcHighlight.time > 2000){
+      editor._drcHighlight = null; editor.render(); return;
+    }
+    editor.render();
+    _drcAnim = requestAnimationFrame(animate);
+  };
+  _drcAnim = requestAnimationFrame(animate);
 }
 
 // ── Design Rules Tab ─────────────────────────────────────────
@@ -313,7 +323,8 @@ function renderDRCTabResults(){
     html+=`<div class="drc-group-header">${catLabels[cat]||cat} <span style="font-weight:400;color:var(--text-muted);">(${items.length})</span></div>`;
     for(const e of items){
       const hasPos=e.x!=null&&e.y!=null;
-      html+=`<div class="drc-item ${e.sev==='ERROR'?'drc-error':'drc-warn'}" style="${hasPos?'cursor:pointer;':''}" ${hasPos?`onclick="drcGoto(${e.x},${e.y});switchPcbSection('layout')"`:''}><span style="font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.7;">${e.type}</span> ${e.msg||e.message}</div>`;
+      const args2=hasPos?`${e.x},${e.y},'${e.sev||'ERROR'}',${e.x1??'undefined'},${e.y1??'undefined'},${e.x2??'undefined'},${e.y2??'undefined'}`:'';
+      html+=`<div class="drc-item ${e.sev==='ERROR'?'drc-error':'drc-warn'}" style="${hasPos?'cursor:pointer;':''}" ${hasPos?`onclick="drcGoto(${args2});switchPcbSection('layout')"`:''}><span style="font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.7;">${e.type}</span> ${e.msg||e.message}</div>`;
     }
   }
   res.innerHTML=html;

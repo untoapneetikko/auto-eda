@@ -3471,9 +3471,8 @@ def run_autoroute(board: dict) -> dict:
     # ── Multi-layer A* with via support ──────────────────────────────────────
     # Layer 0 = F.Cu, Layer 1 = B.Cu.  A via transition costs VIA_PENALTY
     # extra grid steps to discourage unnecessary layer changes.
-    # Cardinal + diagonal directions (diagonal cost = 3 ≈ 2*√2, cardinal = 2)
-    DIRS = [(1, 0, 2), (-1, 0, 2), (0, 1, 2), (0, -1, 2),
-            (1, 1, 3), (1, -1, 3), (-1, 1, 3), (-1, -1, 3)]
+    # Cardinal-only movement produces clean H/V traces; 45° corners added in post-processing.
+    DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     LAYERS = ("F.Cu", "B.Cu")
     occupied_b: set[tuple[int, int]] = set()  # B.Cu occupancy (starts empty)
     # Block NC pads and all routable pads on B.Cu too
@@ -3503,12 +3502,9 @@ def run_autoroute(board: dict) -> dict:
         if sg[:2] == eg_xy:
             return [(sx, sy, start_layer), (ex, ey, start_layer)], False
 
-        # A* heuristic: octile distance (accounts for diagonal moves)
+        # A* heuristic: Manhattan distance (cardinal-only movement)
         def _h(gx: int, gy: int) -> int:
-            dx_h = abs(gx - eg_xy[0])
-            dy_h = abs(gy - eg_xy[1])
-            # Cardinal cost=2, diagonal cost=3: h = 2*max + 1*min (octile)
-            return 2 * max(dx_h, dy_h) + 1 * min(dx_h, dy_h)
+            return abs(gx - eg_xy[0]) + abs(gy - eg_xy[1])
 
         g_cost: dict[tuple[int, int, int], int] = {sg: 0}
         prev: dict[tuple[int, int, int], tuple[int, int, int]] = {}
@@ -3542,14 +3538,14 @@ def run_autoroute(board: dict) -> dict:
             layer = cur[2]
             occ = _occupied_by_layer[layer]
 
-            # Cardinal + diagonal moves on same layer
-            for dx, dy, cost in DIRS:
+            # Cardinal moves on same layer
+            for dx, dy in DIRS:
                 nxt = (cur[0] + dx, cur[1] + dy, layer)
                 if nxt[0] < 0 or nxt[1] < 0 or nxt[0] >= grid_w or nxt[1] >= grid_h:
                     continue
                 if (nxt[0], nxt[1]) in occ:
                     continue
-                ng = g + cost
+                ng = g + 1
                 if ng < g_cost.get(nxt, 10**9):
                     g_cost[nxt] = ng
                     prev[nxt] = cur
@@ -3728,21 +3724,58 @@ def run_autoroute(board: dict) -> dict:
                     x_prev, y_prev, l_prev = simplified[-1]
                     x_cur, y_cur, l_cur = path[k]
                     x_nxt, y_nxt, l_nxt = path[k + 1]
-                    # Keep point if layer changes or direction changes
                     if l_prev != l_cur or l_cur != l_nxt:
                         simplified.append(path[k])
                         continue
-                    # Check collinearity: same direction vector
                     dx1 = x_cur - x_prev
                     dy1 = y_cur - y_prev
                     dx2 = x_nxt - x_cur
                     dy2 = y_nxt - y_cur
-                    # Cross product ≈ 0 means collinear
                     if abs(dx1 * dy2 - dy1 * dx2) < 1e-6:
-                        continue  # skip — collinear, will be merged
+                        continue  # collinear — skip
                     simplified.append(path[k])
                 simplified.append(path[-1])
                 path = simplified
+
+            # Chamfer 90° corners to 45° bends for cleaner routing.
+            # Replace each H→V or V→H corner with a 45° diagonal segment.
+            if len(path) >= 3:
+                chamfered: list[tuple[float, float, int]] = [path[0]]
+                chamfer_d = GRID  # chamfer length in mm
+                for k in range(1, len(path) - 1):
+                    x_p, y_p, l_p = chamfered[-1]
+                    x_c, y_c, l_c = path[k]
+                    x_n, y_n, l_n = path[k + 1]
+                    if l_p != l_c or l_c != l_n:
+                        chamfered.append(path[k])
+                        continue
+                    # Check for 90° bend (one seg is H, other is V)
+                    is_h1 = abs(y_c - y_p) < 0.001  # horizontal
+                    is_v1 = abs(x_c - x_p) < 0.001  # vertical
+                    is_h2 = abs(y_n - y_c) < 0.001
+                    is_v2 = abs(x_n - x_c) < 0.001
+                    if (is_h1 and is_v2) or (is_v1 and is_h2):
+                        # 90° corner — add chamfer
+                        seg1_len = math.hypot(x_c - x_p, y_c - y_p)
+                        seg2_len = math.hypot(x_n - x_c, y_n - y_c)
+                        cd = min(chamfer_d, seg1_len * 0.4, seg2_len * 0.4)
+                        if cd > 0.01:
+                            # Pull back from corner along seg1
+                            dx1 = (x_c - x_p) / max(seg1_len, 1e-9)
+                            dy1 = (y_c - y_p) / max(seg1_len, 1e-9)
+                            c1x = x_c - dx1 * cd
+                            c1y = y_c - dy1 * cd
+                            # Push forward from corner along seg2
+                            dx2 = (x_n - x_c) / max(seg2_len, 1e-9)
+                            dy2 = (y_n - y_c) / max(seg2_len, 1e-9)
+                            c2x = x_c + dx2 * cd
+                            c2y = y_c + dy2 * cd
+                            chamfered.append((round(c1x, 4), round(c1y, 4), l_c))
+                            chamfered.append((round(c2x, 4), round(c2y, 4), l_c))
+                            continue
+                    chamfered.append(path[k])
+                chamfered.append(path[-1])
+                path = chamfered
 
             # Split path into per-layer segments and insert vias at transitions
             for j in range(len(path) - 1):

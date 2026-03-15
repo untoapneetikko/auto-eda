@@ -812,47 +812,39 @@ class PCBEditor {
     return['#4fc3f7','#f9a825','#ce93d8','#80cbc4','#ff8a65','#aed581','#ffb74d'][h%7];
   }
 
-  // Draw DRC violation markers on canvas
+  // Draw DRC marker only for the clicked/highlighted violation
   _drawDRCMarkers(){
-    const viol = window._drcViolations;
-    if(!viol||!viol.length) return;
+    if(!this._drcHighlight) return;
     const ctx = this.ctx;
+    const h = this._drcHighlight;
+    const elapsed = Date.now() - h.time;
+    const pulse = 0.5 + 0.5*Math.sin(elapsed*0.008);
+    const hx = this.mmX(h.x), hy = this.mmY(h.y);
+    const isErr = !h.sev || h.sev==='ERROR';
+    const col = isErr ? 'rgba(239,68,68,' : 'rgba(250,204,21,';
     ctx.save();
-    for(const v of viol){
-      if(v.x==null||v.y==null) continue;
-      const cx = this.mmX(v.x), cy = this.mmY(v.y);
-      const isErr = v.sev==='ERROR';
-      const col = isErr ? 'rgba(239,68,68,0.85)' : 'rgba(250,204,21,0.85)';
-      // Arrow/circle marker
-      const r = Math.max(6, 0.8*this.scale);
-      ctx.strokeStyle = col; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
-      // X inside for errors
-      if(isErr){
-        const d = r*0.55;
-        ctx.beginPath(); ctx.moveTo(cx-d,cy-d); ctx.lineTo(cx+d,cy+d); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(cx+d,cy-d); ctx.lineTo(cx-d,cy+d); ctx.stroke();
-      }
-      // For UNCONNECTED, draw a line between the two pads
-      if(v.type==='UNCONNECTED' && v.x1!=null){
-        ctx.strokeStyle = 'rgba(239,68,68,0.5)'; ctx.lineWidth = 1;
-        ctx.setLineDash([3,3]);
-        ctx.beginPath();
-        ctx.moveTo(this.mmX(v.x1),this.mmY(v.y1));
-        ctx.lineTo(this.mmX(v.x2),this.mmY(v.y2));
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
+    // Pulsing outer ring
+    const hr = Math.max(12, 2*this.scale);
+    ctx.strokeStyle = col+(0.4+pulse*0.6)+')'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(hx, hy, hr+pulse*6, 0, Math.PI*2); ctx.stroke();
+    // Inner circle + X cross
+    const r = Math.max(8, 1.2*this.scale);
+    ctx.strokeStyle = col+'0.9)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(hx, hy, r, 0, Math.PI*2); ctx.stroke();
+    if(isErr){
+      const d = r*0.6;
+      ctx.beginPath(); ctx.moveTo(hx-d,hy-d); ctx.lineTo(hx+d,hy+d); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hx+d,hy-d); ctx.lineTo(hx-d,hy+d); ctx.stroke();
     }
-    // DRC highlight (click-to-navigate pulse)
-    if(this._drcHighlight){
-      const h = this._drcHighlight;
-      const elapsed = Date.now() - h.time;
-      const pulse = 0.5 + 0.5*Math.sin(elapsed*0.008);
-      const hr = Math.max(12, 2*this.scale);
-      const hx = this.mmX(h.x), hy = this.mmY(h.y);
-      ctx.strokeStyle = `rgba(239,68,68,${0.4+pulse*0.6})`; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(hx, hy, hr+pulse*6, 0, Math.PI*2); ctx.stroke();
+    // For UNCONNECTED: dashed line between the two pads
+    if(h.x1!=null && h.y1!=null){
+      ctx.strokeStyle = col+'0.5)'; ctx.lineWidth = 1.5;
+      ctx.setLineDash([4,3]);
+      ctx.beginPath();
+      ctx.moveTo(this.mmX(h.x1),this.mmY(h.y1));
+      ctx.lineTo(this.mmX(h.x2),this.mmY(h.y2));
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
     ctx.restore();
   }
