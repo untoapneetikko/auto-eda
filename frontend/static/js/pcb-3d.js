@@ -152,7 +152,7 @@ class PCB3DViewer {
     this.board = board;
     // ── Layer thickness constants (visually exaggerated for clarity) ──────────
     this.PCB_T = 1.6;    // FR4 substrate
-    this.CU_T  = 0.20;   // copper (real: 0.035 — exaggerated 6× so it reads clearly)
+    this.CU_T  = 0.05;   // copper (real: 0.035 — slight exaggeration for visibility)
     this.SM_T  = 0.10;   // solder mask
     this.SP_T  = 0.06;   // solder paste (in pad openings only)
     // Derived Y positions (Y=0 is top of FR4, Y=-PCB_T is bottom of FR4)
@@ -223,7 +223,7 @@ class PCB3DViewer {
     const { CU_T, SM_T } = this;
     // Traces sit ON TOP of the solder mask so they are always visible.
     // Height is exaggerated beyond the mask thickness for clear readability.
-    const TR_H  = 0.30;   // visual trace height above solder mask surface
+    const TR_H  = 0.06;   // trace height — proportional to copper thickness
     const topSurface = CU_T + SM_T; // top of solder mask
     const botSurface = -(this.PCB_T + CU_T + SM_T); // bottom of solder mask
     const ty_top =  topSurface + TR_H / 2;
@@ -448,6 +448,67 @@ class PCB3DViewer {
     }
   }
 
+  exportSTL() {
+    if (!this.scene) return null;
+    // Simple binary STL exporter — merges all visible Mesh geometry
+    const meshes = [];
+    this.scene.traverse(obj => {
+      if (obj.isMesh && obj.visible) meshes.push(obj);
+    });
+    if (!meshes.length) return null;
+    // Count triangles
+    let totalTris = 0;
+    const triData = [];
+    for (const mesh of meshes) {
+      const geo = mesh.geometry.clone();
+      geo.applyMatrix4(mesh.matrixWorld);
+      if (!geo.index) { totalTris += geo.attributes.position.count / 3; }
+      else { totalTris += geo.index.count / 3; }
+      triData.push(geo);
+    }
+    const bufLen = 80 + 4 + totalTris * 50;
+    const buf = new ArrayBuffer(bufLen);
+    const dv = new DataView(buf);
+    // 80-byte header
+    for (let i = 0; i < 80; i++) dv.setUint8(i, 0);
+    dv.setUint32(80, totalTris, true);
+    let offset = 84;
+    for (const geo of triData) {
+      const pos = geo.attributes.position;
+      const idx = geo.index;
+      const count = idx ? idx.count / 3 : pos.count / 3;
+      for (let i = 0; i < count; i++) {
+        const i0 = idx ? idx.getX(i * 3) : i * 3;
+        const i1 = idx ? idx.getX(i * 3 + 1) : i * 3 + 1;
+        const i2 = idx ? idx.getX(i * 3 + 2) : i * 3 + 2;
+        const ax = pos.getX(i0), ay = pos.getY(i0), az = pos.getZ(i0);
+        const bx = pos.getX(i1), by = pos.getY(i1), bz = pos.getZ(i1);
+        const cx = pos.getX(i2), cy = pos.getY(i2), cz = pos.getZ(i2);
+        // normal
+        const ux = bx - ax, uy = by - ay, uz = bz - az;
+        const vx = cx - ax, vy = cy - ay, vz = cz - az;
+        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+        const nl = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+        nx /= nl; ny /= nl; nz /= nl;
+        dv.setFloat32(offset, nx, true); offset += 4;
+        dv.setFloat32(offset, ny, true); offset += 4;
+        dv.setFloat32(offset, nz, true); offset += 4;
+        dv.setFloat32(offset, ax, true); offset += 4;
+        dv.setFloat32(offset, ay, true); offset += 4;
+        dv.setFloat32(offset, az, true); offset += 4;
+        dv.setFloat32(offset, bx, true); offset += 4;
+        dv.setFloat32(offset, by, true); offset += 4;
+        dv.setFloat32(offset, bz, true); offset += 4;
+        dv.setFloat32(offset, cx, true); offset += 4;
+        dv.setFloat32(offset, cy, true); offset += 4;
+        dv.setFloat32(offset, cz, true); offset += 4;
+        dv.setUint16(offset, 0, true); offset += 2;
+      }
+      geo.dispose();
+    }
+    return new Blob([buf], { type: 'application/octet-stream' });
+  }
+
   destroy() {
     if (this.animId) cancelAnimationFrame(this.animId);
     if (this._ro) this._ro.disconnect();
@@ -503,6 +564,40 @@ const _3D_LAYERS = [
   { id: 'sp_bot',  label: 'B.Paste — Bottom Paste',     color: '#cccccc' },
 ];
 const _3dLayerVis = Object.fromEntries(_3D_LAYERS.map(l => [l.id, true]));
+
+function _download(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+function export3DSTL() {
+  if (!viewer3d || !viewer3d._initialized || !viewer3d.board) {
+    alert('No 3D board loaded — open a board first.');
+    return;
+  }
+  const blob = viewer3d.exportSTL();
+  if (!blob) { alert('Nothing to export.'); return; }
+  const name = (viewer3d.board.title || 'board').replace(/\s+/g, '_') + '.stl';
+  _download(blob, name);
+}
+
+function export3DSTP() {
+  if (!viewer3d || !viewer3d._initialized || !viewer3d.board) {
+    alert('No 3D board loaded — open a board first.');
+    return;
+  }
+  // STEP format requires a dedicated kernel (OpenCascade). Export as STL instead
+  // and rename to .stp for basic import compatibility.
+  const blob = viewer3d.exportSTL();
+  if (!blob) { alert('Nothing to export.'); return; }
+  const name = (viewer3d.board.title || 'board').replace(/\s+/g, '_') + '.stp';
+  _download(blob, name);
+  // Note: This is triangulated mesh geometry, not true BREP STEP.
+  // For full parametric STEP, use a tool like FreeCAD or KiCad StepUp.
+}
 
 function build3DLayerPanel() {
   const el = document.getElementById('3d-layer-list');

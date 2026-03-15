@@ -34,6 +34,7 @@ function _populateAutoTab(){
   s('auto-pwr-trace', DR.powerTraceWidth??0.4);
   s('auto-corner', DR.cornerAngle??90);
   s('auto-angle-step', DR.routeAngleStep??45);
+  s('auto-min-angle', DR.minTraceAngle??90);
   // Route — clearances
   s('auto-cu-clear', DR.clearance??0.2);
   s('auto-trace-pad-clear', DR.tracePadClearance??DR.clearance??0.2);

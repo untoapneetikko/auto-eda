@@ -538,6 +538,15 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
           <option value="0">0° (free-form)</option>
         </select>
 
+        <label>Min Trace Angle</label>
+        <select id="auto-min-angle" onchange="DR.minTraceAngle=+this.value;_saveDRStorage()" style="width:90px;"
+                title="Minimum allowed angle between trace segments — prevents acute bends">
+          <option value="0">0° (any)</option>
+          <option value="45">45°</option>
+          <option value="90">90°</option>
+          <option value="180">180° (straight)</option>
+        </select>
+
       </div>
 
       <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin:14px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Clearances</div>
@@ -801,6 +810,9 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <div class="tsep"></div>
     <button class="tbtn" onclick="refresh3DView()" title="Reload board from editor">↺ Refresh</button>
     <button class="tbtn" onclick="if(viewer3d)viewer3d.resetView()" title="Reset camera">⊡ Fit View</button>
+    <div class="tsep"></div>
+    <button class="tbtn" onclick="export3DSTL()" title="Export 3D model as STL">📦 Export STL</button>
+    <button class="tbtn" onclick="export3DSTP()" title="Export 3D model as STEP (.stp)">📦 Export STP</button>
     <div class="tsep"></div>
     <span style="font-size:11px;color:var(--text-muted);">Left drag: orbit &nbsp;·&nbsp; Right drag: pan &nbsp;·&nbsp; Scroll: zoom &nbsp;·&nbsp; Dbl-click: reset</span>
     <span id="viewer-3d-title" style="margin-left:auto;font-size:11px;color:var(--accent);font-family:monospace;"></span>
