@@ -2833,6 +2833,20 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         cy = max(-hh, min(hh, ly))
         return math.hypot(lx - cx, ly - cy)
 
+    # ── NC (No Connect) helper — these pins are intentionally unconnected ────
+    def _is_nc(net_name: str) -> bool:
+        if not net_name:
+            return False
+        u = net_name.upper().strip()
+        if u in ("NC", "N/C", "NO_CONNECT", "NOCONNECT"):
+            return True
+        if u.startswith("NC_") or u.startswith("NC-") or u.startswith("NC "):
+            return True
+        # Pad names like "NC (float)" end up as net names on some boards
+        if u.startswith("NC(") or u.startswith("NC ("):
+            return True
+        return False
+
     # ── Build pad lookup ──────────────────────────────────────────────────────
     pad_lk: dict[str, dict] = {}
     all_pads: list[dict] = []
@@ -2899,7 +2913,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
     npads: dict[str,list[dict]] = {}
     for ne in nets:
         nn = (ne.get("name","") or "").upper()
-        if not nn: continue
+        if not nn or _is_nc(nn): continue
         pl = [pad_lk[str(pk)] for pk in ne.get("pads",[]) if str(pk) in pad_lk]
         if len(pl)>=2: npads[nn]=pl
 
@@ -3051,6 +3065,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         for pad in all_pads:
             if not pad["th"] and pad["layer"]!=sl: continue
             if sg["net"] and pad["net"] and sg["net"]==pad["net"]: continue
+            if _is_nc(pad["net"]): continue  # NC pads have no electrical connection
             # Quick bounding-box pre-filter
             margin = min_clearance + hw_tr + pad["r"] + 0.5
             if (abs((sg["x1"]+sg["x2"])/2 - pad["x"]) > margin + abs(sg["x2"]-sg["x1"])/2 or
@@ -3089,6 +3104,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         for pk3 in ne.get("pads",[]): asgn.add(str(pk3))
     for pad in all_pads:
         pk4=f"{pad['ref']}.{pad['pad']}"
+        if _is_nc(pad["net"]): continue  # NC pins are intentionally unconnected
         if pk4 not in asgn and not pad["net"]:
             violations.append({"type":"UNASSIGNED_PIN","cat":"unconnected","sev":"WARNING",
                 "msg":f"Pin {pk4} has no net assignment",
@@ -3102,7 +3118,7 @@ def run_drc(board: dict) -> dict:  # noqa: C901
         for j in range(i+1,len(all_pads)):
             pb=all_pads[j]
             if not pa["th"] and not pb["th"] and pa["layer"]!=pb["layer"]: continue
-            if pa["net"] and pb["net"] and pa["net"]!=pb["net"]:
+            if pa["net"] and pb["net"] and pa["net"]!=pb["net"] and not _is_nc(pa["net"]) and not _is_nc(pb["net"]):
                 # Distance from pad A center to pad B rectangle
                 d_a2b = _pt_rect_dist(pa["x"],pa["y"],pb["x"],pb["y"],pb["hw"],pb["hh"],pb["rot"])
                 # Distance from pad B center to pad A rectangle
