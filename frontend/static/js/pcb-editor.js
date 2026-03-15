@@ -174,11 +174,13 @@ class PCBEditor {
       // Non-copper work layer: draw everything normally, work layer content is on top by draw order
       _safe(()=>{if(this.layers['B.Cu'].visible) this._drawTraces('B.Cu');});
       _safe(()=>{if(this.layers['F.Cu'].visible) this._drawTraces('F.Cu');});
-      _safe(()=>this._drawZones()); _safe(()=>this._drawAreas()); _safe(()=>this._drawVias());
+      _safe(()=>this._drawZones()); _safe(()=>this._drawAreas());
       this.ctx.globalAlpha=1.0;
       _safe(()=>this._drawPads());
       _safe(()=>{if(this.layers['B.SilkS'].visible) this._drawSilk('B');});
       _safe(()=>{if(this.layers['F.SilkS'].visible) this._drawSilk('F');});
+      // Vias rendered on top of everything (multilayer — always visible)
+      _safe(()=>this._drawVias());
     }
     if(this.layers['Ratsnest'].visible) this._drawRatsnest();
     this._drawDRCMarkers();
@@ -193,6 +195,7 @@ class PCBEditor {
     if(this._hoverComp&&!this.selectedComps.includes(this._hoverComp)) this._drawHoverComp(this._hoverComp);
     for(const sc of this.selectedComps) this._drawSel(sc);
     if(this.selectedComp&&!this.selectedComps.includes(this.selectedComp)) this._drawSel(this.selectedComp);
+    if(this.selectedVia) this._drawSelVia(this.selectedVia);
     if(this.selectedPad) this._drawSelPad(this.selectedPad);
     if(this._routeError){
       ctx.fillStyle='rgba(239,68,68,0.92)';ctx.font='bold 12px monospace';
@@ -1649,6 +1652,19 @@ class PCBEditor {
     ctx.setLineDash([]);
   }
 
+  _drawSelVia(v){
+    const ctx=this.ctx;
+    const cx=this.mmX(v.x),cy=this.mmY(v.y);
+    const or=Math.max(3,(v.size||DR.viaSize||1.0)/2*this.scale)+6;
+    // Dashed selection ring (matches component selection style)
+    ctx.strokeStyle='#6c63ff'; ctx.lineWidth=2; ctx.setLineDash([4,2]);
+    ctx.beginPath(); ctx.arc(cx,cy,or,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    // Subtle fill highlight
+    ctx.fillStyle='rgba(108,99,255,0.10)';
+    ctx.beginPath(); ctx.arc(cx,cy,or,0,Math.PI*2); ctx.fill();
+  }
+
   _drawHoverComp(comp){
     const bb=this._compBBox(comp); if(!bb)return;
     const m=1.2,ctx=this.ctx;
@@ -2044,6 +2060,16 @@ class PCBEditor {
     return null;
   }
 
+  _pointInPolygon(px,py,pts){
+    // Ray-casting algorithm
+    let inside=false;
+    for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+      const xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y;
+      if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+  }
+
   getDrawingAt(mx,my){
     // Returns drawing whose polyline passes within ~5px of click position
     const THRESH=5/this.scale; // mm threshold
@@ -2207,14 +2233,14 @@ class PCBEditor {
         const hitThs=this.getTracesAt(mx,my);    // all overlapping traces
         const hitA=this.getAreaAt(mx,my);
         const hitD=this.getDrawingAt(mx,my);
-        // Build cycle list: comps first, then pads (only if parent comp is already selected), via, traces, area, drawing
+        // Build cycle list: vias first (multilayer, always clickable through components), then comps, pads, traces, area, drawing
         const candidates=[];
+        if(hitV) candidates.push({type:'via',obj:hitV});
         for(const c of hitComps) candidates.push({type:'comp',obj:c});
         // Pads only available after their component is selected
         for(const h of hitPads)
           if(this.selectedComp===h.comp||this.selectedComps.includes(h.comp))
             candidates.push({type:'pad',obj:h});
-        if(hitV) candidates.push({type:'via',obj:hitV});
         for(const th of hitThs) candidates.push({type:'trace',obj:th.trace,segIdx:th.segIdx});
         if(hitA) candidates.push({type:'area',obj:hitA});
         if(hitD) candidates.push({type:'drawing',obj:hitD});
@@ -2396,8 +2422,19 @@ class PCBEditor {
       } else if(this.tool==='via'){
         if(!this.board)return;
         const hit=this.getPadAt(mx,my);
+        // Adopt net from pad, or from copper area/zone under the via
+        let viNet=hit?.pad?.net||null;
+        if(!viNet){
+          const hitA=this.getAreaAt(mx,my);
+          if(hitA) viNet=hitA.net||null;
+        }
+        if(!viNet){
+          for(const z of(this.board.zones||[])){
+            if(this._pointInPolygon(xmm,ymm,z.points||[])){viNet=z.net||null;break;}
+          }
+        }
         (this.board.vias||(this.board.vias=[])).push({
-          x:xmm,y:ymm,size:DR.viaSize,drill:DR.viaDrill,net:hit?.pad?.net||null});
+          x:xmm,y:ymm,size:DR.viaSize,drill:DR.viaDrill,net:viNet});
         this._snapshot(); this.render();
       } else if(this.tool==='zone'){
         if(!this.board)return;
@@ -2629,11 +2666,26 @@ class PCBEditor {
     });
 
     cv.addEventListener('mouseup',e=>{
+      const wasDragVia=this._isDragVia&&this.selectedVia;
       const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace;
       this._isDrag=false; this._dragC=null; this._isPan=false; this._isDragVia=false;
       this._isDragDrawing=false; this._dragDrawingStart=null; this._dragDrawingPts=null;
       this._isDragTrace=false; this._dragTrace=null; this._traceDragViolations=[];
       this._compDragViolations=[];
+      // After via drag, adopt net from copper area/zone if via has no net
+      if(wasDragVia&&this.selectedVia&&!this.selectedVia.net){
+        const vx=this.selectedVia.x,vy=this.selectedVia.y;
+        for(const a of(this.board?.areas||[])){
+          const ax1=Math.min(a.x1,a.x2),ay1=Math.min(a.y1,a.y2);
+          const ax2=Math.max(a.x1,a.x2),ay2=Math.max(a.y1,a.y2);
+          if(vx>=ax1&&vx<=ax2&&vy>=ay1&&vy<=ay2){this.selectedVia.net=a.net||null;break;}
+        }
+        if(!this.selectedVia.net){
+          for(const z of(this.board?.zones||[])){
+            if(this._pointInPolygon(vx,vy,z.points||[])){this.selectedVia.net=z.net||null;break;}
+          }
+        }
+      }
       if(wasDragging) this._snapshot(); // snapshot after move
       if(this._isBoxSel&&this._boxSelStart&&this._boxSelEnd){
         const bx1=Math.min(this._boxSelStart.mx,this._boxSelEnd.mx);

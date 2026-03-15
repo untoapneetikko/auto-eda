@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-03-15T18:01:14.566206+00:00",
+  "saved_at": "2026-03-15T20:45:07.790211+00:00",
   "label": "v3",
   "profile": {
     "part_number": "PMA3-83LNW+",
@@ -770,7 +770,7 @@
               "shape": "rect",
               "size_x": 0.6,
               "size_y": 0.6,
-              "net": "RF_bias"
+              "net": "RF_BIAS"
             },
             {
               "number": "2",
@@ -849,7 +849,7 @@
               "shape": "rect",
               "size_x": 0.6,
               "size_y": 0.6,
-              "net": "RF_bias"
+              "net": "RF_BIAS"
             }
           ]
         },
@@ -1049,7 +1049,7 @@
               "shape": "rect",
               "size_x": 0.3,
               "size_y": 0.7,
-              "net": "RF_bias"
+              "net": "RF_BIAS"
             },
             {
               "number": "9",
@@ -1111,7 +1111,7 @@
       ],
       "nets": [
         {
-          "name": "RF_bias",
+          "name": "RF_BIAS",
           "pads": [
             "L2.1",
             "C3.2",
@@ -1170,7 +1170,96 @@
           ]
         }
       ],
-      "traces": [],
+      "traces": [
+        {
+          "net": "RF_BIAS",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 5.5,
+                "y": 3
+              },
+              "end": {
+                "x": 5.5,
+                "y": 5.75
+              }
+            },
+            {
+              "start": {
+                "x": 5.5,
+                "y": 3
+              },
+              "end": {
+                "x": 1,
+                "y": 3
+              }
+            }
+          ]
+        },
+        {
+          "net": "RF_IN",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 5.5,
+                "y": 12.5
+              },
+              "end": {
+                "x": 5.5,
+                "y": 15
+              }
+            },
+            {
+              "start": {
+                "x": 5.5,
+                "y": 12.5
+              },
+              "end": {
+                "x": 5.5,
+                "y": 9.25
+              }
+            }
+          ]
+        },
+        {
+          "net": "V+",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 6.5,
+                "y": 3
+              },
+              "end": {
+                "x": 6.5,
+                "y": 0.5
+              }
+            }
+          ]
+        },
+        {
+          "net": "V+",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 6.5,
+                "y": 0.5
+              },
+              "end": {
+                "x": 6.5,
+                "y": -1.5
+              }
+            }
+          ]
+        }
+      ],
       "vias": [
         {
           "x": 5.5,
@@ -1181,7 +1270,17 @@
         }
       ],
       "groups": [],
-      "areas": [],
+      "areas": [
+        {
+          "id": "area_mms82p2e",
+          "net": "GND",
+          "layer": "F.Cu",
+          "x1": 12.5,
+          "y1": 17,
+          "x2": -5.5,
+          "y2": -4.5
+        }
+      ],
       "zones": [],
       "designRules": {
         "traceWidth": 0.25,
