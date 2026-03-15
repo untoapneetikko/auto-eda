@@ -103,7 +103,11 @@ window.addEventListener('load',()=>{
         if(saved){
           const parsed=JSON.parse(saved);
           const res=editor.load(parsed);
-          if(res.ok){afterLoad();switchPcbSection('layout');}
+          if(res.ok){
+            afterLoad();
+            const savedSec=localStorage.getItem('eda_pcb_section');
+            switchPcbSection(savedSec||'layout');
+          }
         }
       }catch(_){}
     }

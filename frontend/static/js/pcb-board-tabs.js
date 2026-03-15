@@ -6,6 +6,7 @@ function switchPcbSection(name){
     if(sec)sec.classList.toggle('hidden',s!==name);
     if(nav)nav.classList.toggle('active',s===name);
   });
+  try{localStorage.setItem('eda_pcb_section',name);}catch(_){}
   if(name==='boards')renderBoardsSection();
   if(name==='nets')renderNetsSection();
   if(name==='layout'&&editor)editor.render();

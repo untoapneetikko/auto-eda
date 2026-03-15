@@ -39,6 +39,7 @@ function switchSection(name) {
     if (sec) sec.classList.toggle('hidden', s !== name);
     if (nav) nav.classList.toggle('active', s === name);
   });
+  try { localStorage.setItem('eda_active_section', name); } catch(_) {}
   if (name === 'schematic') {
     setTimeout(() => { editor._resize(); renderSchPalette(document.getElementById('sch-lib-search')?.value || ''); }, 50);
   }
@@ -687,4 +688,36 @@ function buildExampleCircuit(profile) {
   });
   return { components: comps, wires };
 }
+
+// ── Restore last active section on page load ──────────────────────────────
+(function _restoreSection() {
+  try {
+    const saved = localStorage.getItem('eda_active_section');
+    if (saved && ['library','schematic','pcb','build'].includes(saved)) {
+      // Defer so all DOM + scripts are ready
+      setTimeout(() => switchSection(saved), 0);
+    }
+  } catch(_) {}
+})();
+
+// ── Warn before unload if there are unsaved changes ───────────────────────
+window.addEventListener('beforeunload', function(e) {
+  let dirty = false;
+  // Check schematic editor
+  if (typeof editor !== 'undefined' && editor && editor.dirty) dirty = true;
+  // Check open tabs
+  if (typeof openTabs !== 'undefined' && openTabs.some(t => t.dirty)) dirty = true;
+  // Check PCB editor (inside iframe)
+  try {
+    const frame = document.getElementById('pcb-frame');
+    if (frame && frame.contentWindow && frame.contentWindow.editor) {
+      const pcbEd = frame.contentWindow.editor;
+      if (pcbEd._historyIdx > 0) dirty = true;
+    }
+  } catch(_) {}
+  if (dirty) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
