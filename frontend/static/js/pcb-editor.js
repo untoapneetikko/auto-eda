@@ -163,13 +163,13 @@ class PCBEditor {
       // Zones & areas (board-wide)
       _safe(()=>this._drawZones());
       _safe(()=>this._drawAreas());
-      // Vias always fully visible
-      _safe(()=>this._drawVias());
       // Work layer copper + pads + silk on top at full alpha
       this.ctx.globalAlpha=1.0;
       _safe(()=>{if(this.layers[wl].visible) this._drawTraces(wl);});
       _safe(()=>this._drawPads(wSide));
       _safe(()=>{if(this.layers[workSilk].visible) this._drawSilk(wSide);});
+      // Vias rendered last — multilayer, always on top of everything
+      _safe(()=>this._drawVias());
     } else {
       // Non-copper work layer: draw everything normally, work layer content is on top by draw order
       _safe(()=>{if(this.layers['B.Cu'].visible) this._drawTraces('B.Cu');});
@@ -192,6 +192,16 @@ class PCBEditor {
     if(this.tool==='measure'&&this.measureStart) this._drawMeasure();
     if(this.tool==='area'&&this.areaStart) this._drawActiveArea();
     if(this.tool==='draw'&&this.drawPoints.length>0) this._drawActiveDrawing();
+    // Via ghost preview when in via tool
+    if(this.tool==='via'&&this._mx!=null){
+      const gx=this.mmX(this._mx),gy=this.mmY(this._my);
+      const gor=Math.max(3,(DR.viaSize||1.0)/2*this.scale);
+      const gir=Math.max(1,(DR.viaDrill||0.6)/2*this.scale);
+      ctx.globalAlpha=0.5;
+      ctx.fillStyle='#88aacc';ctx.beginPath();ctx.arc(gx,gy,gor,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#0a0a0a';ctx.beginPath();ctx.arc(gx,gy,gir,0,Math.PI*2);ctx.fill();
+      ctx.globalAlpha=1.0;
+    }
     if(this._hoverComp&&!this.selectedComps.includes(this._hoverComp)) this._drawHoverComp(this._hoverComp);
     for(const sc of this.selectedComps) this._drawSel(sc);
     if(this.selectedComp&&!this.selectedComps.includes(this.selectedComp)) this._drawSel(this.selectedComp);
@@ -2422,8 +2432,12 @@ class PCBEditor {
       } else if(this.tool==='via'){
         if(!this.board)return;
         const hit=this.getPadAt(mx,my);
-        // Adopt net from pad, or from copper area/zone under the via
+        // Adopt net from pad, trace, copper area, or zone under the via
         let viNet=hit?.pad?.net||null;
+        if(!viNet){
+          const hitTr=this.getTraceAt(mx,my);
+          if(hitTr?.trace?.net) viNet=hitTr.trace.net;
+        }
         if(!viNet){
           const hitA=this.getAreaAt(mx,my);
           if(hitA) viNet=hitA.net||null;
@@ -2646,7 +2660,7 @@ class PCBEditor {
         this.panX=mx-this._panS.x; this.panY=my-this._panS.y; this.render();
       } else if(this._isBoxSel&&this._boxSelStart){
         this._boxSelEnd={mx,my};this.render();
-      } else if(this.tool==='route'||
+      } else if(this.tool==='route'||this.tool==='via'||
                 (this.tool==='zone'&&this.zonePoints.length>0)||
                 (this.tool==='measure'&&this.measureStart)||
                 (this.tool==='area'&&this.areaStart)||
@@ -2672,14 +2686,22 @@ class PCBEditor {
       this._isDragDrawing=false; this._dragDrawingStart=null; this._dragDrawingPts=null;
       this._isDragTrace=false; this._dragTrace=null; this._traceDragViolations=[];
       this._compDragViolations=[];
-      // After via drag, adopt net from copper area/zone if via has no net
+      // After via drag, adopt net from trace, copper area, or zone if via has no net
       if(wasDragVia&&this.selectedVia&&!this.selectedVia.net){
         const vx=this.selectedVia.x,vy=this.selectedVia.y;
-        for(const a of(this.board?.areas||[])){
-          const ax1=Math.min(a.x1,a.x2),ay1=Math.min(a.y1,a.y2);
-          const ax2=Math.max(a.x1,a.x2),ay2=Math.max(a.y1,a.y2);
-          if(vx>=ax1&&vx<=ax2&&vy>=ay1&&vy<=ay2){this.selectedVia.net=a.net||null;break;}
+        // Check traces first
+        const vPx=this.mmX(vx),vPy=this.mmY(vy);
+        const hitTr=this.getTraceAt(vPx,vPy);
+        if(hitTr?.trace?.net) this.selectedVia.net=hitTr.trace.net;
+        // Then copper areas
+        if(!this.selectedVia.net){
+          for(const a of(this.board?.areas||[])){
+            const ax1=Math.min(a.x1,a.x2),ay1=Math.min(a.y1,a.y2);
+            const ax2=Math.max(a.x1,a.x2),ay2=Math.max(a.y1,a.y2);
+            if(vx>=ax1&&vx<=ax2&&vy>=ay1&&vy<=ay2){this.selectedVia.net=a.net||null;break;}
+          }
         }
+        // Then zones
         if(!this.selectedVia.net){
           for(const z of(this.board?.zones||[])){
             if(this._pointInPolygon(vx,vy,z.points||[])){this.selectedVia.net=z.net||null;break;}
