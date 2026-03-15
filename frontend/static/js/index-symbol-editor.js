@@ -497,7 +497,7 @@ function refreshAccBomRows() {
     if (icon) icon.textContent = placed ? '✓' : '+';
     const badge = row.querySelector('.acc-bom-status');
     if (badge) {
-      badge.textContent = placed ? 'Placed' : 'Required';
+      badge.textContent = placed ? 'Added' : 'Required';
       badge.classList.toggle('placed', placed);
       badge.classList.toggle('required', !placed);
     }
