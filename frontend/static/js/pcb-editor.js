@@ -838,11 +838,17 @@ class PCBEditor {
     // Compute avoidance path for the last segment
     const lastPt=pts[pts.length-1];
     const avoidPath=this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
-    // Store for use by click handler
-    this._lastAvoidPath=avoidPath;
+    // Validate: check if any segment in the avoidance path still crosses a foreign pad
+    let pathBlocked=false, blockingPad=null;
+    for(let i=0;i<avoidPath.length-1;i++){
+      const hit=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
+      if(hit){pathBlocked=true;blockingPad=hit;break;}
+    }
+    // Store for use by click handler (null if blocked)
+    this._lastAvoidPath=pathBlocked?null:avoidPath;
 
     const endPxX=this.mmX(ex),endPxY=this.mmY(ey);
-    const col=netConflict?'#ef4444':netMatch?'#22c55e':layerCol;
+    const col=netConflict||pathBlocked?'#ef4444':netMatch?'#22c55e':layerCol;
 
     // Draw the trace preview — committed points + avoidance path
     ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.setLineDash([3,2]);
@@ -853,13 +859,24 @@ class PCBEditor {
     for(let i=1;i<avoidPath.length;i++)ctx.lineTo(this.mmX(avoidPath[i].x),this.mmY(avoidPath[i].y));
     ctx.stroke(); ctx.setLineDash([]);
 
-    // Draw small dots on avoidance waypoints (if path was rerouted)
-    if(avoidPath.length>2){
+    // Draw small dots on avoidance waypoints (if path was rerouted and valid)
+    if(avoidPath.length>2&&!pathBlocked){
       ctx.fillStyle=col+'aa';
       for(let i=1;i<avoidPath.length-1;i++){
         const wx=this.mmX(avoidPath[i].x),wy=this.mmY(avoidPath[i].y);
         ctx.beginPath(); ctx.arc(wx,wy,3,0,Math.PI*2); ctx.fill();
       }
+    }
+
+    // Draw red X on the blocking pad
+    if(blockingPad){
+      const bx=this.mmX(blockingPad.px),by=this.mmY(blockingPad.py);
+      const sz=8;
+      ctx.strokeStyle='#ef4444'; ctx.lineWidth=3; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(bx-sz,by-sz); ctx.lineTo(bx+sz,by+sz); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx+sz,by-sz); ctx.lineTo(bx-sz,by+sz); ctx.stroke();
+      ctx.fillStyle='#ef4444'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
+      ctx.fillText('✕ '+(blockingPad.pad.net||'?'),bx+sz+4,by-2);
     }
 
     // Endpoint indicator
@@ -1994,8 +2011,23 @@ class PCBEditor {
 
           // Use avoidance path from preview (or compute fresh) to route around pads
           const lastPt=this.routePoints[this.routePoints.length-1];
-          const avoidPath=this._lastAvoidPath||this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+          let avoidPath=this._lastAvoidPath;
           this._lastAvoidPath=null;
+          if(!avoidPath){
+            avoidPath=this._routeAroundPads(lastPt.x,lastPt.y,ex,ey,this.routeNet||'');
+            // Validate the path
+            for(let i=0;i<avoidPath.length-1;i++){
+              const hit=this._segHitsWrongPad(avoidPath[i].x,avoidPath[i].y,avoidPath[i+1].x,avoidPath[i+1].y,this.routeNet||'');
+              if(hit){avoidPath=null;break;}
+            }
+          }
+          // Block if no valid path around obstacles
+          if(!avoidPath){
+            this._routeError='Blocked: no clear path around pads';
+            this.render();
+            setTimeout(()=>{this._routeError=null;this.render();},2000);
+            return;
+          }
 
           // Assign net from destination if not yet set
           if(!this.routeNet&&destNet) this.routeNet=destNet;
