@@ -20,6 +20,7 @@ function populateDRTab(){
   m('drt-copper',DR.copperWeight);
   m('drt-silk',DR.silkscreenWidth??0.12);
   m('drt-corner-angle',DR.cornerAngle??90);
+  m('drt-snap-radius',DR.snapRadius??2.0);
   updateDRTComputed();
 }
 
@@ -72,6 +73,7 @@ function saveDRTab(){
   DR.copperWeight=g('drt-copper',1.0);
   DR.silkscreenWidth=g('drt-silk',0.12);
   DR.cornerAngle=Math.min(90,Math.max(0,g('drt-corner-angle',90)));
+  DR.snapRadius=Math.max(0.5,g('drt-snap-radius',2.0));
   // Sync layer modal inputs too
   const sm=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   sm('dr-min-trace',DR.minTraceWidth);sm('dr-trace',DR.traceWidth);

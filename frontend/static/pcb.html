@@ -538,12 +538,6 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
           <option value="0">0° (free-form)</option>
         </select>
 
-        <label>Snap Radius (mm)</label>
-        <input type="number" id="auto-snap-radius" min="0.5" max="10" step="0.5" value="2.0"
-               onchange="DR.snapRadius=+this.value;_saveDRStorage()"
-               style="width:70px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:3px 6px;font-size:11px;"
-               title="How close the cursor must be (in mm) to snap to a pad or via when drawing traces">
-
         <label>Min Trace Angle</label>
         <select id="auto-min-angle" onchange="DR.minTraceAngle=+this.value;_saveDRStorage()" style="width:90px;"
                 title="Minimum allowed angle between trace segments — prevents acute bends">
@@ -726,6 +720,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
             <tr><td>Edge Clearance</td><td><input class="dr-input" id="drt-edge" type="number" step="0.1" min="0.1" max="20"></td><td style="color:var(--text-muted);font-size:11px;">Min distance from any copper to board edge</td></tr>
             <tr><td>Drill Clearance</td><td><input class="dr-input" id="drt-drill-clear" type="number" step="0.05" min="0.1" max="5"></td><td style="color:var(--text-muted);font-size:11px;">Min hole-to-hole center spacing</td></tr>
             <tr><td>Auto Place Gap</td><td><input class="dr-input" id="drt-courtyard-clear" type="number" step="0.1" min="0" max="10"></td><td style="color:var(--text-muted);font-size:11px;">Gap between silkscreen outlines after auto-place — 0 = touching, 1 = 1mm apart</td></tr>
+            <tr><td>Snap Radius</td><td><input class="dr-input" id="drt-snap-radius" type="number" step="0.5" min="0.5" max="10"></td><td style="color:var(--text-muted);font-size:11px;">How close cursor must be (mm) to snap to a pad/via when drawing traces</td></tr>
           </tbody>
         </table>
       </div>
