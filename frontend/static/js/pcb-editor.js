@@ -824,10 +824,10 @@ class PCBEditor {
     const layerCol=this.layers[this.routeLayer]?.color||'#cc6633';
     const w=Math.max(1,parseFloat(document.getElementById('route-width')?.value||0.25)*this.scale);
 
-    // Check what's under the cursor right now
+    // Check what's under the cursor right now (generous snap to help land on pads)
     const mx=this._mxPx,my=this._myPx;
-    const hitPad=this.getPadAt(mx,my);
-    const hitVia=hitPad?null:this.getViaAt(mx,my);
+    const hitPad=this.getNearestPad(mx,my,15);
+    const hitVia=hitPad?null:this.getNearestVia(mx,my,15);
     const hitArea=(hitPad||hitVia)?null:this.getAreaAt(mx,my);
     const destNet=(hitPad?.pad?.net)||(hitVia?.net)||(hitArea?.net)||null;
     const netConflict=destNet&&this.routeNet&&destNet!==this.routeNet;
@@ -1929,6 +1929,28 @@ class PCBEditor {
     return null;
   }
 
+  /** Find nearest pad within pixelRadius, returns same shape as getPadAt or null. */
+  getNearestPad(mx,my,pixelRadius){
+    let best=null,bestDist=pixelRadius;
+    for(const c of(this.board?.components||[]))
+      for(const p of(c.pads||[])){
+        const{px,py}=this._padWorld(c,p);
+        const dist=Math.hypot(mx-this.mmX(px),my-this.mmY(py));
+        if(dist<bestDist){bestDist=dist;best={comp:c,pad:p,x:px,y:py,dist};}
+      }
+    return best;
+  }
+
+  /** Find nearest via within pixelRadius, returns via object or null. */
+  getNearestVia(mx,my,pixelRadius){
+    let best=null,bestDist=pixelRadius;
+    for(const v of(this.board?.vias||[])){
+      const dist=Math.hypot(mx-this.mmX(v.x),my-this.mmY(v.y));
+      if(dist<bestDist){bestDist=dist;best=v;bestDist=dist;}
+    }
+    return best;
+  }
+
   getTraceAt(mx,my){
     // Returns first hit (for hover); use getTracesAt for all hits
     const hits=this.getTracesAt(mx,my);
@@ -2141,17 +2163,18 @@ class PCBEditor {
       } else if(this.tool==='route'){
         if(!this.board)return;
         if(this.routePoints.length===0){
-          // Start: snap to pad/via, inherit net
-          const hit=this.getPadAt(mx,my);
-          const hv=hit?null:this.getViaAt(mx,my);
-          const sx=hit?hit.x:xmm, sy=hit?hit.y:ymm;
+          // Start: snap to nearby pad/via with generous radius, inherit net
+          const hit=this.getNearestPad(mx,my,20);
+          const hv=hit?null:this.getNearestVia(mx,my,20);
+          const sx=hit?hit.x:(hv?hv.x:xmm);
+          const sy=hit?hit.y:(hv?hv.y:ymm);
           this.routeLayer=this.workLayer||'F.Cu';
           this.routeNet=(hit?.pad?.net)||(hv?.net)||null;
           this.routePoints=[{x:sx,y:sy}];
         } else {
-          // Adding a point: check destination net
-          const hit=this.getPadAt(mx,my);
-          const hv=hit?null:this.getViaAt(mx,my);
+          // Adding a point: check destination net (generous snap)
+          const hit=this.getNearestPad(mx,my,15);
+          const hv=hit?null:this.getNearestVia(mx,my,15);
           const ha=(hit||hv)?null:this.getAreaAt(mx,my);
           const destNet=(hit?.pad?.net)||(hv?.net)||(ha?.net)||null;
 
