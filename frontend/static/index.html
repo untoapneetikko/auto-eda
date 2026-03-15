@@ -589,8 +589,9 @@
       <h2 style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
         <span>Library (<span id="lib-count">0</span> parts)</span>
         <span style="display:flex;gap:4px;">
-          <button onclick="exportLibraryBundle()" title="Export all component profiles as library.json — share with a friend or back up your library" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ Export</button>
-          <button onclick="document.getElementById('import-lib-input').click()" title="Import a library.json — installs any missing components without overwriting existing ones" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬆ Import</button>
+          <button onclick="openComponentBuilder()" title="Build new component manually" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.4);color:#22c55e;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">+ New</button>
+          <button onclick="exportLibraryBundle()" title="Export all component profiles as library.json" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ Export</button>
+          <button onclick="document.getElementById('import-lib-input').click()" title="Import a library.json" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬆ Import</button>
           <input id="import-lib-input" type="file" accept=".json" style="display:none;" onchange="importLibraryBundle(this)"/>
         </span>
       </h2>
@@ -880,7 +881,6 @@
     <div class="sch-panel-section" style="flex:1;min-height:0;">
       <div class="sch-panel-header">
         <span>Components</span>
-        <button class="sch-icon-btn" onclick="openComponentBuilder()" title="Build new component">+</button>
       </div>
       <input type="text" class="library-search" id="sch-lib-search" placeholder="Search components…" style="margin:0 8px 6px;width:calc(100% - 16px);" oninput="renderSchPalette(this.value)" />
       <div id="sch-palette" style="overflow-y:auto;flex:1;padding:0 8px 8px;"></div>
@@ -932,6 +932,8 @@
       <div class="toolbar-sep"></div>
       <button class="tool-btn" id="btn-group" onclick="editor.groupSelected()" title="Group — Ctrl+G">&#9681; Group</button>
       <button class="tool-btn" id="btn-ungroup" onclick="editor.ungroupSelected()" title="Ungroup — Ctrl+Shift+G">&#9682; Ungroup</button>
+      <div class="toolbar-sep"></div>
+      <button class="tool-btn" onclick="openDeleteProjectModal()" title="Delete this project" style="color:#f87171;border-color:#f87171;">&#128465; Delete</button>
     </div>
     <!-- ── Auto toolbar ── -->
     <div class="editor-toolbar" id="sch-toolbar-auto" style="display:none;">
@@ -943,8 +945,6 @@
     <!-- ── Rules toolbar ── -->
     <div class="editor-toolbar" id="sch-toolbar-rules" style="display:none;">
       <button class="tool-btn" onclick="runCompatibilityCheck()" title="Run design rules check">&#9888; Run DRC</button>
-      <div class="toolbar-sep"></div>
-      <button class="tool-btn" onclick="openDeleteProjectModal()" title="Delete this project" style="color:#f87171;border-color:#f87171;">&#128465; Delete Project</button>
     </div>
     <!-- ── Export toolbar ── -->
     <div class="editor-toolbar" id="sch-toolbar-export" style="display:none;">
