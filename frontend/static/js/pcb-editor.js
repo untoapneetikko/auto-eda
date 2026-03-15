@@ -501,10 +501,10 @@ class PCBEditor {
       // — Trace clearances (capsule = rectangle + semicircular end-caps) —
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===z.net)continue;
-        const pts=tr.path||[];
-        const hw=(tr.width_mm||DR.traceWidth||0.25)/2+cl;
-        for(let i=0;i<pts.length-1;i++){
-          const ax=pts[i].x,ay=pts[i].y,bx=pts[i+1].x,by=pts[i+1].y;
+        const hw=(tr.width||DR.traceWidth||0.25)/2+cl;
+        for(const seg of(tr.segments||[])){
+          if(!seg||!seg.start||!seg.end)continue;
+          const ax=seg.start.x,ay=seg.start.y,bx=seg.end.x,by=seg.end.y;
           if(Math.max(ax,bx)+hw<zx1||Math.min(ax,bx)-hw>zx2||Math.max(ay,by)+hw<zy1||Math.min(ay,by)-hw>zy2)continue;
           const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
           if(len<0.001)continue;
@@ -998,10 +998,10 @@ class PCBEditor {
       // — Trace clearances (capsule) —
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===a.net)continue;
-        const pts=tr.path||[];
-        const hw=(tr.width_mm||DR.traceWidth||0.25)/2+cl;
-        for(let i=0;i<pts.length-1;i++){
-          const ax=pts[i].x,ay=pts[i].y,bx=pts[i+1].x,by=pts[i+1].y;
+        const hw=(tr.width||DR.traceWidth||0.25)/2+cl;
+        for(const seg of(tr.segments||[])){
+          if(!seg||!seg.start||!seg.end)continue;
+          const ax=seg.start.x,ay=seg.start.y,bx=seg.end.x,by=seg.end.y;
           if(Math.max(ax,bx)+hw<x1||Math.min(ax,bx)-hw>x2||Math.max(ay,by)+hw<y1||Math.min(ay,by)-hw>y2)continue;
           const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy);
           if(len<0.001)continue;
