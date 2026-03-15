@@ -934,6 +934,52 @@ class PCBEditor {
     }
   }
 
+  /** Draw a snap indicator ring + crosshair on the nearest pad/via when in route mode. */
+  _drawSnapIndicator(){
+    if(!this._mxPx)return;
+    const mx=this._mxPx,my=this._myPx;
+    const snapR=this.routePoints.length>0?15:20;
+    const hit=this.getNearestPad(mx,my,snapR);
+    const hv=hit?null:this.getNearestVia(mx,my,snapR);
+    if(!hit&&!hv)return;
+    const ctx=this.ctx;
+    const px=hit?this.mmX(hit.x):this.mmX(hv.x);
+    const py=hit?this.mmY(hit.y):this.mmY(hv.y);
+    const netLabel=hit?(hit.pad.net||''):(hv.net||'');
+    // Animated pulsing ring
+    const t=Date.now()%1000/1000;
+    const pulse=8+3*Math.sin(t*Math.PI*2);
+    // Outer glow
+    ctx.strokeStyle='rgba(96,165,250,0.3)'; ctx.lineWidth=4;
+    ctx.beginPath();ctx.arc(px,py,pulse+2,0,Math.PI*2);ctx.stroke();
+    // Main ring
+    ctx.strokeStyle='rgba(96,165,250,0.9)'; ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(px,py,pulse,0,Math.PI*2);ctx.stroke();
+    // Crosshair
+    const ch=pulse+5;
+    ctx.strokeStyle='rgba(96,165,250,0.6)'; ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(px-ch,py);ctx.lineTo(px-pulse-1,py);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px+pulse+1,py);ctx.lineTo(px+ch,py);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px,py-ch);ctx.lineTo(px,py-pulse-1);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(px,py+pulse+1);ctx.lineTo(px,py+ch);ctx.stroke();
+    // Center dot
+    ctx.fillStyle='rgba(96,165,250,0.9)';
+    ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);ctx.fill();
+    // Net label
+    if(netLabel){
+      ctx.fillStyle='rgba(96,165,250,0.95)'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
+      ctx.fillText(netLabel,px+pulse+6,py-2);
+      ctx.textAlign='left';
+    }
+    // Request next frame for pulse animation
+    if(!this._snapAnimFrame){
+      this._snapAnimFrame=requestAnimationFrame(()=>{
+        this._snapAnimFrame=null;
+        if(this.tool==='route')this.render();
+      });
+    }
+  }
+
   _drawActiveZone(){
     const ctx=this.ctx,pts=this.zonePoints;
     ctx.strokeStyle='#aaaaaa'; ctx.lineWidth=1; ctx.setLineDash([3,2]);
