@@ -2781,49 +2781,248 @@ def run_drc(board: dict) -> dict:  # noqa: C901
     dr              = board.get("designRules", {})
     min_clearance   = float(dr.get("clearance", 0.2))
     min_trace_w     = float(dr.get("minTraceWidth", 0.15))
-    bw              = float(board.get("board", {}).get("width",  board.get("width",  200)))
-    bh              = float(board.get("board", {}).get("height", board.get("height", 200)))
+    edge_clearance  = float(dr.get("edgeClearance", 0.5))
+    via_size_def    = float(dr.get("viaSize", 1.0))
+    via_drill_def   = float(dr.get("viaDrill", 0.6))
+    min_annular     = float(dr.get("minAnnularRing", 0.15))
+    bw = float(board.get("board", {}).get("width",  board.get("width",  200)))
+    bh = float(board.get("board", {}).get("height", board.get("height", 200)))
 
     violations: list[dict] = []
+    comps  = board.get("components", [])
+    traces = board.get("traces", [])
+    vias_l = board.get("vias", [])
+    nets   = board.get("nets", [])
 
-    # Build set of net names that have at least one trace
-    traced_nets: set[str] = set()
-    for trace in board.get("traces", []):
-        net = trace.get("net", "")
-        if net:
-            traced_nets.add(net)
-        # Check trace width
-        w = float(trace.get("width", 0))
-        if w > 0 and w < min_trace_w:
-            violations.append({
-                "type":    "trace_width",
-                "message": f"Trace on net '{net}' has width {w}mm < min {min_trace_w}mm",
-                "net":     net,
-            })
-        # Check trace out of board bounds
-        for seg in trace.get("segments", []):
-            for pt_key in ("start", "end"):
-                pt = seg.get(pt_key, {})
-                x, y = float(pt.get("x", 0)), float(pt.get("y", 0))
-                if x < 0 or y < 0 or x > bw or y > bh:
-                    violations.append({
-                        "type":    "out_of_bounds",
-                        "message": f"Trace on net '{net}' goes outside board at ({x:.2f},{y:.2f})",
-                        "net":     net,
-                    })
+    # ── Helpers ───────────────────────────────────────────────────────────────
+    def _pw(comp, pad):
+        r = math.radians(float(comp.get("rotation", 0)))
+        px, py = float(pad.get("x", 0)), float(pad.get("y", 0))
+        return (round(px*math.cos(r)-py*math.sin(r)+float(comp.get("x",0)),4),
+                round(px*math.sin(r)+py*math.cos(r)+float(comp.get("y",0)),4))
 
-    # Check unconnected nets: each net with 2+ pads but no trace
-    for net_entry in board.get("nets", []):
-        net_name = net_entry.get("name", "")
-        pads_in_net = net_entry.get("pads", [])
-        if len(pads_in_net) < 2:
-            continue
-        if net_name and net_name not in traced_nets:
-            violations.append({
-                "type":    "unconnected_net",
-                "message": f"Net '{net_name}' has {len(pads_in_net)} pads but no routed traces",
-                "net":     net_name,
-            })
+    def _ptsd(px, py, ax, ay, bx, by):
+        dx, dy = bx-ax, by-ay
+        lsq = dx*dx+dy*dy
+        if lsq < 1e-8: return math.hypot(px-ax, py-ay)
+        t = max(0.0, min(1.0, ((px-ax)*dx+(py-ay)*dy)/lsq))
+        return math.hypot(px-(ax+t*dx), py-(ay+t*dy))
+
+    def _ssd(a, b):
+        ax1,ay1,ax2,ay2 = a; bx1,by1,bx2,by2 = b
+        best, rx, ry = float('inf'), (ax1+bx1)/2, (ay1+by1)/2
+        for px,py,sx1,sy1,sx2,sy2 in [
+            (ax1,ay1,bx1,by1,bx2,by2),(ax2,ay2,bx1,by1,bx2,by2),
+            (bx1,by1,ax1,ay1,ax2,ay2),(bx2,by2,ax1,ay1,ax2,ay2)]:
+            d = _ptsd(px,py,sx1,sy1,sx2,sy2)
+            if d < best: best,rx,ry = d,px,py
+        for t in (0.25, 0.5, 0.75):
+            mx2,my2 = ax1+t*(ax2-ax1), ay1+t*(ay2-ay1)
+            d = _ptsd(mx2,my2,bx1,by1,bx2,by2)
+            if d < best: best,rx,ry = d,mx2,my2
+        return best, rx, ry
+
+    # ── Build pad lookup ──────────────────────────────────────────────────────
+    pad_lk: dict[str, dict] = {}
+    all_pads: list[dict] = []
+    for comp in comps:
+        cref = comp.get("ref", comp.get("id", ""))
+        clyr = "F" if comp.get("layer","F") in ("F","F.Cu") else "B"
+        for pad in comp.get("pads", []):
+            wx, wy = _pw(comp, pad)
+            sx = float(pad.get("size_x", pad.get("width", 1.0)))
+            sy = float(pad.get("size_y", pad.get("height", 1.0)))
+            e = {"x":wx,"y":wy,"net":pad.get("net",""),
+                 "ref":cref,"pad":str(pad.get("number","")),
+                 "layer":clyr,"th":pad.get("type","smd")=="through_hole",
+                 "r":max(sx,sy)/2}
+            pad_lk[f"{cref}.{e['pad']}"] = e
+            all_pads.append(e)
+
+    # ── Flatten segments ──────────────────────────────────────────────────────
+    all_segs: list[dict] = []
+    for tr in traces:
+        tn = tr.get("net",""); tl = tr.get("layer","F.Cu")
+        tw = float(tr.get("width",0.25))
+        for seg in tr.get("segments", []):
+            s,e2 = seg.get("start",{}), seg.get("end",{})
+            all_segs.append({"x1":float(s.get("x",0)),"y1":float(s.get("y",0)),
+                             "x2":float(e2.get("x",0)),"y2":float(e2.get("y",0)),
+                             "net":tn,"layer":tl,"width":tw})
+
+    # ══ 1: Trace width ═════════════════════════════════════════════════════
+    for sg in all_segs:
+        if 0 < sg["width"] < min_trace_w:
+            violations.append({"type":"TRACE_WIDTH","cat":"trace","sev":"ERROR",
+                "msg":f"Trace '{sg['net']}' width {sg['width']:.3f}mm < min {min_trace_w}mm",
+                "x":round((sg["x1"]+sg["x2"])/2,2),"y":round((sg["y1"]+sg["y2"])/2,2),"net":sg["net"]})
+
+    # ══ 2: Out of bounds ═══════════════════════════════════════════════════
+    for sg in all_segs:
+        for px,py in [(sg["x1"],sg["y1"]),(sg["x2"],sg["y2"])]:
+            if px<0 or py<0 or px>bw or py>bh:
+                violations.append({"type":"OUT_OF_BOUNDS","cat":"bounds","sev":"ERROR",
+                    "msg":f"Trace '{sg['net']}' outside board at ({px:.2f},{py:.2f})",
+                    "x":round(px,2),"y":round(py,2),"net":sg["net"]})
+    for v in vias_l:
+        vx,vy = float(v.get("x",0)),float(v.get("y",0))
+        if vx<0 or vy<0 or vx>bw or vy>bh:
+            violations.append({"type":"OUT_OF_BOUNDS","cat":"bounds","sev":"ERROR",
+                "msg":f"Via outside board at ({vx:.2f},{vy:.2f})",
+                "x":round(vx,2),"y":round(vy,2),"net":v.get("net","")})
+
+    # ══ 3: Edge clearance ═════════════════════════════════════════════════
+    for sg in all_segs:
+        hw = sg["width"]/2
+        for px,py in [(sg["x1"],sg["y1"]),(sg["x2"],sg["y2"])]:
+            de = min(px, py, bw-px, bh-py) - hw
+            if 0<=px<=bw and 0<=py<=bh and de < edge_clearance:
+                violations.append({"type":"EDGE_CLEARANCE","cat":"clearance","sev":"WARNING",
+                    "msg":f"Trace '{sg['net']}' {de:.2f}mm from edge (min {edge_clearance}mm)",
+                    "x":round(px,2),"y":round(py,2),"net":sg["net"]})
+                break
+
+    # ══ 4: Unconnected nets (union-find, same as frontend ratsnest) ═════
+    npads: dict[str,list[dict]] = {}
+    for ne in nets:
+        nn = ne.get("name","")
+        if not nn: continue
+        pl = [pad_lk[str(pk)] for pk in ne.get("pads",[]) if str(pk) in pad_lk]
+        if len(pl)>=2: npads[nn]=pl
+
+    EPS = 0.05
+    for nn, pl in npads.items():
+        n = len(pl)
+        tn_nodes: list[tuple] = []; tp_arr: list[int] = []; ni_map: dict[str,int] = {}
+        def _tf2(i, _tp=tp_arr):
+            while _tp[i]!=i: _tp[i]=_tp[_tp[i]]; i=_tp[i]
+            return i
+        def _tu2(a,b, _tp=tp_arr): _tp[_tf2(a,_tp)]=_tf2(b,_tp)
+        def _ga2(x,y, _ni=ni_map, _tn=tn_nodes, _tp=tp_arr):
+            k=f"{x:.4f},{y:.4f}"
+            if k not in _ni: _ni[k]=len(_tn); _tn.append((x,y)); _tp.append(len(_tn)-1)
+            return _ni[k]
+        for sg in all_segs:
+            if sg["net"]!=nn: continue
+            _tu2(_ga2(sg["x1"],sg["y1"]), _ga2(sg["x2"],sg["y2"]))
+        for v in vias_l:
+            if v.get("net")!=nn: continue
+            _ga2(float(v.get("x",0)),float(v.get("y",0)))
+        tot = n+len(tn_nodes)
+        ap2 = list(range(tot))
+        def _af2(i, _ap=ap2):
+            while _ap[i]!=i: _ap[i]=_ap[_ap[i]]; i=_ap[i]
+            return i
+        def _aun2(a,b, _ap=ap2): _ap[_af2(a,_ap)]=_af2(b,_ap)
+        for i in range(len(tn_nodes)):
+            r2=_tf2(i)
+            if r2!=i: _aun2(n+i,n+r2)
+        for pi in range(n):
+            for ti in range(len(tn_nodes)):
+                if math.hypot(pl[pi]["x"]-tn_nodes[ti][0],pl[pi]["y"]-tn_nodes[ti][1])<=EPS:
+                    _aun2(pi,n+ti)
+        cl2: dict[int,list[int]] = {}
+        for i in range(n): cl2.setdefault(_af2(i),[]).append(i)
+        cls2 = list(cl2.values())
+        if len(cls2)<=1: continue
+        inm2=[False]*len(cls2); inm2[0]=True
+        for _ in range(len(cls2)-1):
+            bd2,ba2,bb2,bc3=float('inf'),-1,-1,-1
+            for ci in range(len(cls2)):
+                if not inm2[ci]: continue
+                for cj in range(len(cls2)):
+                    if inm2[cj]: continue
+                    for ia in cls2[ci]:
+                        for ib in cls2[cj]:
+                            d2=math.hypot(pl[ia]["x"]-pl[ib]["x"],pl[ia]["y"]-pl[ib]["y"])
+                            if d2<bd2: bd2,ba2,bb2,bc3=d2,ia,ib,cj
+            if bc3!=-1: inm2[bc3]=True
+            if ba2!=-1:
+                pa,pb=pl[ba2],pl[bb2]
+                violations.append({"type":"UNCONNECTED","cat":"unconnected","sev":"ERROR",
+                    "msg":f"Net '{nn}': {pa['ref']}.{pa['pad']} \u2194 {pb['ref']}.{pb['pad']} not connected",
+                    "x":round((pa["x"]+pb["x"])/2,2),"y":round((pa["y"]+pb["y"])/2,2),"net":nn,
+                    "x1":round(pa["x"],2),"y1":round(pa["y"],2),
+                    "x2":round(pb["x"],2),"y2":round(pb["y"],2)})
+
+    # ══ 5: Copper clearance — different-net traces ═════════════════════════
+    seen_p: set = set()
+    for i,sa in enumerate(all_segs):
+        for j in range(i+1,len(all_segs)):
+            sb=all_segs[j]
+            if sa["layer"]!=sb["layer"]: continue
+            if sa["net"] and sb["net"] and sa["net"]==sb["net"]: continue
+            mg=min_clearance+max(sa["width"],sb["width"])
+            if (min(sa["x1"],sa["x2"])-mg>max(sb["x1"],sb["x2"]) or
+                max(sa["x1"],sa["x2"])+mg<min(sb["x1"],sb["x2"]) or
+                min(sa["y1"],sa["y2"])-mg>max(sb["y1"],sb["y2"]) or
+                max(sa["y1"],sa["y2"])+mg<min(sb["y1"],sb["y2"])): continue
+            d3,mx3,my3=_ssd((sa["x1"],sa["y1"],sa["x2"],sa["y2"]),
+                            (sb["x1"],sb["y1"],sb["x2"],sb["y2"]))
+            rq=min_clearance+sa["width"]/2+sb["width"]/2
+            if d3<rq:
+                pk2=(min(i,j),max(i,j))
+                if pk2 in seen_p: continue
+                seen_p.add(pk2)
+                violations.append({"type":"CLEARANCE","cat":"clearance","sev":"ERROR",
+                    "msg":f"Traces '{sa['net']}'/'{sb['net']}' clearance {d3:.3f}mm < {rq:.3f}mm",
+                    "x":round(mx3,2),"y":round(my3,2)})
+
+    # ══ 6: Trace-to-pad clearance (different nets) ═════════════════════════
+    for sg in all_segs:
+        sl="F" if sg["layer"].startswith("F") else "B"
+        for pad in all_pads:
+            if not pad["th"] and pad["layer"]!=sl: continue
+            if sg["net"] and pad["net"] and sg["net"]==pad["net"]: continue
+            d4=_ptsd(pad["x"],pad["y"],sg["x1"],sg["y1"],sg["x2"],sg["y2"])
+            rq2=min_clearance+sg["width"]/2+pad["r"]
+            if d4<rq2:
+                violations.append({"type":"PAD_CLEARANCE","cat":"clearance","sev":"ERROR",
+                    "msg":f"Trace '{sg['net']}' too close to {pad['ref']}.{pad['pad']} ('{pad['net']}') \u2014 {d4:.3f}mm",
+                    "x":round(pad["x"],2),"y":round(pad["y"],2)})
+
+    # ══ 7: Via annular ring ════════════════════════════════════════════════
+    for v in vias_l:
+        vs=float(v.get("size",via_size_def)); vd=float(v.get("drill",via_drill_def))
+        ring=(vs-vd)/2
+        if ring<min_annular:
+            violations.append({"type":"ANNULAR_RING","cat":"via","sev":"ERROR",
+                "msg":f"Via annular ring {ring:.3f}mm < min {min_annular}mm",
+                "x":round(float(v.get("x",0)),2),"y":round(float(v.get("y",0)),2),
+                "net":v.get("net","")})
+
+    # ══ 8: Duplicate references ════════════════════════════════════════════
+    rseen: dict[str,bool] = {}
+    for comp in comps:
+        ref=comp.get("ref",comp.get("id",""))
+        if ref in rseen:
+            violations.append({"type":"DUPLICATE_REF","cat":"refs","sev":"ERROR",
+                "msg":f"Duplicate reference '{ref}'",
+                "x":round(float(comp.get("x",0)),2),"y":round(float(comp.get("y",0)),2)})
+        else: rseen[ref]=True
+
+    # ══ 9: Unassigned pins ═════════════════════════════════════════════════
+    asgn: set[str] = set()
+    for ne in nets:
+        for pk3 in ne.get("pads",[]): asgn.add(str(pk3))
+    for pad in all_pads:
+        pk4=f"{pad['ref']}.{pad['pad']}"
+        if pk4 not in asgn and not pad["net"]:
+            violations.append({"type":"UNASSIGNED_PIN","cat":"unconnected","sev":"WARNING",
+                "msg":f"Pin {pk4} has no net assignment",
+                "x":round(pad["x"],2),"y":round(pad["y"],2)})
+
+    # ══ 10: Net conflict — different-net pads overlapping ══════════════════
+    for i,pa in enumerate(all_pads):
+        for j in range(i+1,len(all_pads)):
+            pb=all_pads[j]
+            if not pa["th"] and not pb["th"] and pa["layer"]!=pb["layer"]: continue
+            if pa["net"] and pb["net"] and pa["net"]!=pb["net"]:
+                d5=math.hypot(pa["x"]-pb["x"],pa["y"]-pb["y"])
+                if d5<pa["r"]+pb["r"]:
+                    violations.append({"type":"NET_CONFLICT","cat":"net","sev":"ERROR",
+                        "msg":f"{pa['ref']}.{pa['pad']} ({pa['net']}) / {pb['ref']}.{pb['pad']} ({pb['net']}) overlap",
+                        "x":round((pa["x"]+pb["x"])/2,2),"y":round((pa["y"]+pb["y"])/2,2)})
 
     return {"violations": violations, "passed": len(violations) == 0}
 

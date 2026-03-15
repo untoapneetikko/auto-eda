@@ -1,0 +1,420 @@
+{
+  "id": "3b63251742fb",
+  "name": "Projekt x",
+  "components": [
+    {
+      "id": "cmms1242257a",
+      "slug": "PMA3_83LNW",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "PMA3-83LNW+_V2",
+      "x": -160,
+      "y": 110,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 300,
+      "_exampleY": 260
+    },
+    {
+      "id": "cmms12422uky",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "10pF",
+      "x": -330,
+      "y": 80,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 130,
+      "_exampleY": 230
+    },
+    {
+      "id": "cmms12422h0h",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L1",
+      "value": "18nH",
+      "x": -290,
+      "y": 120,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 270,
+      "labelOffsetX": 7.432792192709428,
+      "labelOffsetY": -3.0969967469622754
+    },
+    {
+      "id": "cmms12422a65",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "100pF",
+      "x": 40,
+      "y": 120,
+      "rotation": 3,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 500,
+      "_exampleY": 270
+    },
+    {
+      "id": "cmms12422tqc",
+      "slug": "INDUCTOR",
+      "symType": "inductor",
+      "designator": "L2",
+      "value": "39nH",
+      "x": -20,
+      "y": 80,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 230
+    },
+    {
+      "id": "cmms12422q8q",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "VDD",
+      "value": "V+",
+      "x": -20,
+      "y": -120,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 440,
+      "_exampleY": 30
+    },
+    {
+      "id": "cmms12422m5p",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND",
+      "value": "",
+      "x": -290,
+      "y": 200,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 170,
+      "_exampleY": 350
+    },
+    {
+      "id": "cmms12422mbq",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": -310,
+      "y": 40,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 150,
+      "_exampleY": 190
+    },
+    {
+      "id": "cmms124225yd",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "1uF",
+      "x": 0,
+      "y": 30,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 180
+    },
+    {
+      "id": "cmms12422xgw",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "GND",
+      "x": 20,
+      "y": 60,
+      "rotation": 0,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 480,
+      "_exampleY": 210
+    },
+    {
+      "id": "cmms12422j35",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C4",
+      "value": "1uF",
+      "x": 0,
+      "y": -10,
+      "rotation": 1,
+      "_exampleGroupId": "eg_mms1242127",
+      "_exampleSlug": "PMA3_83LNW",
+      "_exampleX": 460,
+      "_exampleY": 140
+    }
+  ],
+  "wires": [
+    {
+      "id": "wmms12422w5c",
+      "points": [
+        {
+          "x": -420,
+          "y": 80
+        },
+        {
+          "x": -350,
+          "y": 80
+        }
+      ]
+    },
+    {
+      "id": "wmms12422od7",
+      "points": [
+        {
+          "x": -60,
+          "y": 120,
+          "isPort": true
+        },
+        {
+          "x": 20,
+          "y": 120
+        }
+      ],
+      "net": "RF_bias"
+    },
+    {
+      "id": "wmms12422s7r",
+      "points": [
+        {
+          "x": 110,
+          "y": 120,
+          "isPort": true
+        },
+        {
+          "x": 110,
+          "y": 120
+        }
+      ]
+    },
+    {
+      "id": "wmms12422v8m",
+      "points": [
+        {
+          "x": -20,
+          "y": 120
+        },
+        {
+          "x": -20,
+          "y": 120
+        }
+      ]
+    },
+    {
+      "id": "wmms124222tw",
+      "points": [
+        {
+          "x": 110,
+          "y": 120,
+          "isPort": true
+        },
+        {
+          "x": 110,
+          "y": 120
+        }
+      ]
+    },
+    {
+      "id": "wmms12422xjd",
+      "points": [
+        {
+          "x": 60,
+          "y": 120,
+          "isPort": true
+        },
+        {
+          "x": 110,
+          "y": 120
+        }
+      ]
+    },
+    {
+      "id": "wmms12422qqj",
+      "points": [
+        {
+          "x": -20,
+          "y": -10
+        },
+        {
+          "x": -20,
+          "y": -10
+        }
+      ]
+    },
+    {
+      "id": "wmms12422pjf",
+      "points": [
+        {
+          "x": 20,
+          "y": 40,
+          "isPort": true
+        },
+        {
+          "x": 20,
+          "y": -10,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmms12422f7n",
+      "points": [
+        {
+          "x": -290,
+          "y": 40,
+          "isPort": false
+        },
+        {
+          "x": -260,
+          "y": 40
+        }
+      ],
+      "net": "GND"
+    },
+    {
+      "id": "wmms124222d1",
+      "points": [
+        {
+          "x": -310,
+          "y": 80,
+          "isPort": true
+        },
+        {
+          "x": -260,
+          "y": 80
+        }
+      ],
+      "net": "RF_IN"
+    },
+    {
+      "id": "wmms12422pzx",
+      "points": [
+        {
+          "x": -290,
+          "y": 80
+        },
+        {
+          "x": -290,
+          "y": 80
+        }
+      ]
+    },
+    {
+      "id": "wmms12422222",
+      "points": [
+        {
+          "x": -290,
+          "y": 180
+        },
+        {
+          "x": -290,
+          "y": 180
+        }
+      ]
+    },
+    {
+      "id": "wmms124225yc",
+      "points": [
+        {
+          "x": -290,
+          "y": 160,
+          "isPort": true
+        },
+        {
+          "x": -290,
+          "y": 180,
+          "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmms12422boy",
+      "points": [
+        {
+          "x": 20,
+          "y": 30
+        },
+        {
+          "x": 20,
+          "y": 30
+        }
+      ]
+    },
+    {
+      "id": "wmms12422zph",
+      "points": [
+        {
+          "x": -20,
+          "y": 30
+        },
+        {
+          "x": -20,
+          "y": 30
+        }
+      ]
+    },
+    {
+      "id": "wmms12422c6m",
+      "points": [
+        {
+          "x": -20,
+          "y": -70
+        },
+        {
+          "x": -20,
+          "y": -70
+        }
+      ]
+    },
+    {
+      "id": "wmms12422jsn",
+      "points": [
+        {
+          "x": -20,
+          "y": 40,
+          "isPort": true
+        },
+        {
+          "x": -20,
+          "y": -100,
+          "isPort": true
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lmms124227sn",
+      "name": "RF_RFIN",
+      "x": -420,
+      "y": 80,
+      "rotation": 2
+    },
+    {
+      "id": "lmms1242227g",
+      "name": "RF_RFOUT",
+      "x": 110,
+      "y": 120,
+      "rotation": 0
+    }
+  ],
+  "groups": [],
+  "noConnects": [],
+  "created_at": "2026-03-15T17:35:03.542211+00:00",
+  "updated_at": "2026-03-15T17:35:03.542235+00:00"
+}

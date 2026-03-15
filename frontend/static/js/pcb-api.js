@@ -36,29 +36,27 @@ async function importSchematic(projectData, netlist, boardW, boardH) {
 // DRC — delegated to Python API
 // ═══════════════════════════════════════════════════════════════
 async function runDRC(board, dr, fpData) {
-  const boardId = editor?.board?.id || _activeBoardId;
+  const b = board || editor?.board;
+  if (!b) return [];
+  // Attach current design rules so backend uses them
+  const payload = JSON.parse(JSON.stringify(b));
+  if (typeof DR !== 'undefined') {
+    payload.designRules = {
+      clearance: DR.clearance, minTraceWidth: DR.minTraceWidth,
+      edgeClearance: DR.edgeClearance, viaSize: DR.viaSize,
+      viaDrill: DR.viaDrill, minAnnularRing: DR.minAnnularRing,
+      drillClearance: DR.drillClearance,
+    };
+  }
   try {
-    let res;
-    if (boardId) {
-      res = await fetch(`/api/pcb/${boardId}/drc`, { method: 'POST' });
-    } else {
-      res = await fetch('/api/pcb/drc', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ board: board || editor?.board || {} })
-      });
-    }
+    const res = await fetch('/api/pcb/drc', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
     const data = await res.json();
     const violations = data.violations || data.errors || [];
-    const resultsEl = document.getElementById('drc-results') || document.getElementById('drc-output');
-    if (resultsEl) {
-      if (!violations.length) {
-        resultsEl.innerHTML = '<div style="color:#22c55e;padding:8px;">✓ No DRC violations</div>';
-      } else {
-        resultsEl.innerHTML = violations.map(v =>
-          `<div style="color:#ef4444;padding:4px 8px;border-left:3px solid #ef4444;margin:4px 0;">${v.type}: ${v.message}</div>`
-        ).join('');
-      }
-    }
+    // Store globally for panel + canvas rendering
+    window._drcViolations = violations;
     return violations;
   } catch(e) {
     console.error('DRC failed:', e);

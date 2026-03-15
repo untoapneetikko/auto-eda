@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-03-15T17:24:13.267073+00:00",
+  "saved_at": "2026-03-15T17:39:24.264436+00:00",
   "label": "v3",
   "profile": {
     "part_number": "PMA3-83LNW+",
@@ -1170,50 +1170,23 @@
           ]
         }
       ],
-      "traces": [
+      "traces": [],
+      "vias": [
         {
-          "net": "RF_IN",
-          "layer": "F.Cu",
-          "width": 0.25,
-          "segments": [
-            {
-              "start": {
-                "x": 5.5,
-                "y": 12.5
-              },
-              "end": {
-                "x": 5.5,
-                "y": 9.25
-              }
-            }
-          ]
-        },
-        {
-          "net": "RF_bias",
-          "layer": "F.Cu",
-          "width": 0.25,
-          "segments": [
-            {
-              "start": {
-                "x": 5.5,
-                "y": 5.75
-              },
-              "end": {
-                "x": 5.5,
-                "y": 3
-              }
-            }
-          ]
+          "x": 5.5,
+          "y": 3,
+          "size": 0.4,
+          "drill": 0.2,
+          "net": "RF_BIAS"
         }
       ],
-      "vias": [],
       "groups": [],
       "areas": [],
       "zones": [],
       "designRules": {
         "traceWidth": 0.25,
         "minTraceWidth": 0.15,
-        "clearance": 0.2,
+        "clearance": 0.1,
         "tracePadClearance": 0.2,
         "viaClearance": 0.25,
         "routeEdgeClearance": 0.5,

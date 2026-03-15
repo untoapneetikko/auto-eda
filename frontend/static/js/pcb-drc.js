@@ -1,5 +1,104 @@
 function openDRC(){ switchPcbSection('drc'); }
 
+// ── Side-panel DRC (right panel under Layers) ────────────────
+let _drcSidePanelOpen = false;
+function toggleDrcPanel(){
+  _drcSidePanelOpen = !_drcSidePanelOpen;
+  const el = document.getElementById('drc-side-list');
+  if(el) el.style.display = _drcSidePanelOpen ? 'block' : 'none';
+}
+
+async function runSideDRC(){
+  if(!editor?.board) return;
+  const badge = document.getElementById('drc-side-badge');
+  const list = document.getElementById('drc-side-list');
+  if(badge) badge.textContent = '...';
+  if(list) list.innerHTML = '<div style="font-size:10px;color:var(--text-muted);padding:4px 0;">Running...</div>';
+  // Open panel if closed
+  if(!_drcSidePanelOpen) toggleDrcPanel();
+
+  const violations = await runDRC(editor.board, DR, {});
+  _drcResults = violations;
+  window._drcViolations = violations;
+
+  const errs = violations.filter(v=>v.sev==='ERROR');
+  const warns = violations.filter(v=>v.sev==='WARNING');
+
+  // Update badge
+  if(badge){
+    if(!errs.length && !warns.length){
+      badge.innerHTML = '<span style="color:#22c55e;">0</span>';
+    } else {
+      let t = '';
+      if(errs.length) t += `<span style="color:#ef4444;font-weight:700;">${errs.length}E</span>`;
+      if(warns.length) t += `<span style="color:#facc15;font-weight:600;margin-left:3px;">${warns.length}W</span>`;
+      badge.innerHTML = t;
+    }
+  }
+
+  // Render list
+  if(list){
+    if(!violations.length){
+      list.innerHTML = '<div style="font-size:11px;color:#22c55e;padding:6px 0;font-weight:600;">All checks passed</div>';
+    } else {
+      // Group by category
+      const cats = {};
+      const catLabels = {clearance:'Clearance',unconnected:'Unconnected',trace:'Trace',
+        via:'Via',bounds:'Bounds',refs:'References',holes:'Holes',net:'Net Integrity',courtyard:'Courtyard'};
+      for(const v of violations){
+        const c = v.cat||'other';
+        (cats[c]||(cats[c]=[])).push(v);
+      }
+      let html = '';
+      for(const[cat,items] of Object.entries(cats)){
+        const hasErr = items.some(v=>v.sev==='ERROR');
+        html += `<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:${hasErr?'#ef4444':'#facc15'};margin-top:6px;margin-bottom:2px;">${catLabels[cat]||cat} (${items.length})</div>`;
+        for(const v of items){
+          const col = v.sev==='ERROR' ? '#ef4444' : '#facc15';
+          const hasPos = v.x!=null && v.y!=null;
+          html += `<div class="drc-side-item" style="font-size:10px;padding:3px 4px;margin:1px 0;border-left:2px solid ${col};cursor:${hasPos?'pointer':'default'};border-radius:2px;color:var(--text-dim);line-height:1.3;word-break:break-word;" ${hasPos?`onclick="drcGoto(${v.x},${v.y})"`:''}>${v.msg||v.message||v.type}</div>`;
+        }
+      }
+      list.innerHTML = html;
+    }
+  }
+
+  // Trigger canvas re-render to show markers
+  editor.render();
+  // Also update the full DRC tab if it's open
+  renderDRCTabResults();
+  renderConflictTable();
+}
+
+function _updateDrcSideBadge(violations){
+  const badge=document.getElementById('drc-side-badge');
+  if(!badge) return;
+  const errs=(violations||[]).filter(v=>v.sev==='ERROR');
+  const warns=(violations||[]).filter(v=>v.sev==='WARNING');
+  if(!errs.length&&!warns.length) badge.innerHTML='<span style="color:#22c55e;">0</span>';
+  else{
+    let t='';
+    if(errs.length) t+=`<span style="color:#ef4444;font-weight:700;">${errs.length}E</span>`;
+    if(warns.length) t+=`<span style="color:#facc15;font-weight:600;margin-left:3px;">${warns.length}W</span>`;
+    badge.innerHTML=t;
+  }
+}
+
+function drcGoto(x, y){
+  if(!editor) return;
+  // Center the view on the error position and flash highlight
+  const canvas = editor.canvas;
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  editor.panX = cx - x * editor.scale - editor.offsetX;
+  editor.panY = cy - y * editor.scale - editor.offsetY;
+  // Store highlight position for render
+  editor._drcHighlight = {x, y, time: Date.now()};
+  editor.render();
+  // Clear highlight after 2 seconds
+  setTimeout(()=>{ editor._drcHighlight = null; editor.render(); }, 2000);
+}
+
 // ── Design Rules Tab ─────────────────────────────────────────
 // Populate all DR inputs in the tab from the global DR object
 function populateDRTab(){
@@ -134,8 +233,11 @@ async function runDRCTab(){
     try{const r=await fetch(`/api/footprints/${encodeURIComponent(fp)}`);if(r.ok)fpData[fp]=await r.json();}catch(_){}
   }));
   _drcResults=await runDRC(editor.board,DR,fpData);
+  window._drcViolations=_drcResults;
   renderDRCTabResults();
   renderConflictTable();
+  // Update side panel badge too
+  _updateDrcSideBadge(_drcResults);
   editor.render();
   if(btn){btn.textContent='▶ Run DRC';btn.disabled=false;}
 }
@@ -209,8 +311,10 @@ function renderDRCTabResults(){
   let html='';
   for(const[cat,items]of Object.entries(groups)){
     html+=`<div class="drc-group-header">${catLabels[cat]||cat} <span style="font-weight:400;color:var(--text-muted);">(${items.length})</span></div>`;
-    for(const e of items)
-      html+=`<div class="drc-item ${e.sev==='ERROR'?'drc-error':'drc-warn'}"><span style="font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.7;">${e.type}</span> ${e.msg}</div>`;
+    for(const e of items){
+      const hasPos=e.x!=null&&e.y!=null;
+      html+=`<div class="drc-item ${e.sev==='ERROR'?'drc-error':'drc-warn'}" style="${hasPos?'cursor:pointer;':''}" ${hasPos?`onclick="drcGoto(${e.x},${e.y});switchPcbSection('layout')"`:''}><span style="font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.7;">${e.type}</span> ${e.msg||e.message}</div>`;
+    }
   }
   res.innerHTML=html;
 }
