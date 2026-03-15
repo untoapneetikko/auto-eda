@@ -12,6 +12,25 @@ async function fetchProfile(slug) {
   return fetch(`/api/library/${slug}`, { cache: 'no-store' }).then(r => r.json());
 }
 
+// ── Schematic sub-section switching ───────────────────────────────────────
+function switchSchSection(name) {
+  ['schematic','auto','rules','export'].forEach(s => {
+    const tb = document.getElementById('sch-toolbar-' + s);
+    const btn = document.getElementById('sch-sub-' + s);
+    if (tb) tb.style.display = s === name ? '' : 'none';
+    if (btn) btn.classList.toggle('active', s === name);
+  });
+}
+
+function switchAccSection(name) {
+  ['schematic','auto','export'].forEach(s => {
+    const tb = document.getElementById('acc-toolbar-' + s);
+    const btn = document.getElementById('acc-sub-' + s);
+    if (tb) tb.style.display = s === name ? 'flex' : 'none';
+    if (btn) btn.classList.toggle('active', s === name);
+  });
+}
+
 // ── Section switching ──────────────────────────────────────────────────────
 function switchSection(name) {
   ['library','schematic','pcb','build'].forEach(s => {
