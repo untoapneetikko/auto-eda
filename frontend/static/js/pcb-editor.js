@@ -772,8 +772,19 @@ class PCBEditor {
   // Returns {x,y} — unchanged if there are fewer than 2 points or angle is already fine.
   _clampRoutePoint(ex,ey){
     const pts=this.routePoints;
-    if(pts.length<2)return{x:ex,y:ey};
-    const prev=pts[pts.length-2], cur=pts[pts.length-1];
+    if(pts.length<1)return{x:ex,y:ey};
+    const cur=pts[pts.length-1];
+    const EPS0=0.001;
+    // First segment: snap direction to nearest allowed angle (45° increments)
+    if(pts.length<2){
+      const fdx=ex-cur.x, fdy=ey-cur.y;
+      const fl=Math.hypot(fdx,fdy); if(fl<EPS0)return{x:ex,y:ey};
+      const ang=Math.atan2(fdy,fdx);
+      const step=Math.PI/4; // 45° increments
+      const snapped=Math.round(ang/step)*step;
+      return{x:cur.x+Math.cos(snapped)*fl, y:cur.y+Math.sin(snapped)*fl};
+    }
+    const prev=pts[pts.length-2];
     const MIN_RAD=(DR.minTraceAngle??90)*Math.PI/180;
     const EPS=0.001;
     // Back-vector: from junction toward previous point
