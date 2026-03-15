@@ -3,155 +3,157 @@
   "name": "jimi2",
   "components": [
     {
-      "id": "cmmopypk69tn",
+      "id": "cmmrmdgi6asr",
       "slug": "PMA3_83LNW",
       "symType": "ic",
       "designator": "U1",
-      "value": "PMA3-83LNW+",
-      "x": 753.6363636363636,
-      "y": 444.5454545454545,
+      "value": "PMA3-83LNW+_V2",
+      "x": 600,
+      "y": 340,
       "rotation": 0,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 300,
-      "_exampleY": 270
+      "_exampleY": 260
     },
     {
-      "id": "cmmopypk67ys",
+      "id": "cmmrmdgi6y1g",
       "slug": "CAPACITOR",
       "symType": "capacitor",
       "designator": "C1",
       "value": "10pF",
-      "x": 583.6363636363636,
-      "y": 414.5454545454545,
+      "x": 430,
+      "y": 310,
       "rotation": 1,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 130,
-      "_exampleY": 240
+      "_exampleY": 230
     },
     {
-      "id": "cmmopypk6wky",
+      "id": "cmmrmdgi6vtr",
       "slug": "INDUCTOR",
       "symType": "inductor",
       "designator": "L1",
       "value": "18nH",
-      "x": 623.6363636363636,
-      "y": 454.5454545454545,
+      "x": 470,
+      "y": 350,
       "rotation": 1,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 170,
-      "_exampleY": 280
+      "_exampleY": 270,
+      "labelOffsetX": 7.432792192709428,
+      "labelOffsetY": -3.0969967469622754
     },
     {
-      "id": "cmmopypk6ftx",
+      "id": "cmmrmdgi6w5g",
       "slug": "CAPACITOR",
       "symType": "capacitor",
       "designator": "C2",
       "value": "100pF",
-      "x": 953.6363636363636,
-      "y": 454.5454545454545,
+      "x": 800,
+      "y": 350,
       "rotation": 3,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 500,
-      "_exampleY": 280
+      "_exampleY": 270
     },
     {
-      "id": "cmmopypk6zph",
+      "id": "cmmrmdgi6yhq",
       "slug": "INDUCTOR",
       "symType": "inductor",
       "designator": "L2",
       "value": "39nH",
-      "x": 893.6363636363636,
-      "y": 414.5454545454545,
+      "x": 740,
+      "y": 310,
       "rotation": 1,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 440,
-      "_exampleY": 240
+      "_exampleY": 230
     },
     {
-      "id": "cmmopypk67a3",
+      "id": "cmmrmdgi6m8e",
       "slug": "VCC",
       "symType": "vcc",
       "designator": "VDD",
-      "value": "5V/6V",
-      "x": 893.6363636363636,
-      "y": 264.5454545454545,
+      "value": "V+",
+      "x": 740,
+      "y": 170,
       "rotation": 0,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 440,
       "_exampleY": 90
     },
     {
-      "id": "cmmopypk69kc",
+      "id": "cmmrmdgi6uh6",
       "slug": "GND",
       "symType": "gnd",
       "designator": "GND",
       "value": "",
-      "x": 623.6363636363636,
-      "y": 524.5454545454545,
+      "x": 470,
+      "y": 430,
       "rotation": 0,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 170,
       "_exampleY": 350
     },
     {
-      "id": "cmmopypk6exg",
+      "id": "cmmrmdgi6tei",
       "slug": "GND",
       "symType": "gnd",
       "designator": "GND1",
       "value": "GND",
-      "x": 603.6363636363636,
-      "y": 374.5454545454545,
+      "x": 450,
+      "y": 270,
       "rotation": 1,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 150,
-      "_exampleY": 200
+      "_exampleY": 190
     },
     {
-      "id": "cmmopypk6129",
+      "id": "cmmrmdgi6ty0",
       "slug": "CAPACITOR",
       "symType": "capacitor",
       "designator": "C3",
       "value": "1uF",
-      "x": 913.6363636363636,
-      "y": 354.5454545454545,
+      "x": 760,
+      "y": 260,
       "rotation": 1,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 460,
       "_exampleY": 180
     },
     {
-      "id": "cmmopypk6geg",
+      "id": "cmmrmdgi6j8j",
       "slug": "CAPACITOR",
       "symType": "capacitor",
       "designator": "C4",
       "value": "1uF",
-      "x": 913.6363636363636,
-      "y": 314.5454545454545,
+      "x": 760,
+      "y": 220,
       "rotation": 1,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 460,
       "_exampleY": 140
     },
     {
-      "id": "cmmopypk61f7",
+      "id": "cmmrmdgi6jgp",
       "slug": "GND",
       "symType": "gnd",
       "designator": "GND2",
       "value": "GND",
-      "x": 933.6363636363636,
-      "y": 384.5454545454545,
+      "x": 780,
+      "y": 290,
       "rotation": 0,
-      "_exampleGroupId": "eg_mmopypk5zf",
+      "_exampleGroupId": "eg_mmrmdgi5rk",
       "_exampleSlug": "PMA3_83LNW",
       "_exampleX": 480,
       "_exampleY": 210
@@ -159,255 +161,314 @@
   ],
   "wires": [
     {
-      "id": "wmmopypk6ztc",
+      "id": "wmmrmdgi6o9l",
       "points": [
         {
-          "x": 493.6363636363636,
-          "y": 414.5454545454545
+          "x": 340,
+          "y": 310
         },
         {
-          "x": 563.6363636363636,
-          "y": 414.5454545454545
+          "x": 410,
+          "y": 310
         }
       ]
     },
     {
-      "id": "wmmopypk6zmf",
+      "id": "wmmrmdgi6m77",
       "points": [
         {
-          "x": 623.6363636363636,
-          "y": 494.5454545454545,
+          "x": 740,
+          "y": 190
+        },
+        {
+          "x": 740,
+          "y": 190
+        }
+      ],
+      "net": "V+"
+    },
+    {
+      "id": "wmmrmdgi6ijw",
+      "points": [
+        {
+          "x": 740,
+          "y": 190
+        },
+        {
+          "x": 740,
+          "y": 190
+        }
+      ],
+      "net": "V+"
+    },
+    {
+      "id": "wmmrmdgi6dzq",
+      "points": [
+        {
+          "x": 700,
+          "y": 350,
           "isPort": true
         },
         {
-          "x": 623.6363636363636,
-          "y": 509.5454545454545,
+          "x": 780,
+          "y": 350
+        }
+      ],
+      "net": "RF_bias"
+    },
+    {
+      "id": "wmmrmdgi6nl5",
+      "points": [
+        {
+          "x": 740,
+          "y": 270
+        },
+        {
+          "x": 740,
+          "y": 190
+        }
+      ],
+      "net": "V+"
+    },
+    {
+      "id": "wmmrmdgi62si",
+      "points": [
+        {
+          "x": 870,
+          "y": 350,
+          "isPort": true
+        },
+        {
+          "x": 870,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi6gfb",
+      "points": [
+        {
+          "x": 740,
+          "y": 350
+        },
+        {
+          "x": 740,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi60gn",
+      "points": [
+        {
+          "x": 870,
+          "y": 350,
+          "isPort": true
+        },
+        {
+          "x": 870,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi6g7a",
+      "points": [
+        {
+          "x": 820,
+          "y": 350,
+          "isPort": true
+        },
+        {
+          "x": 870,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi6rym",
+      "points": [
+        {
+          "x": 740,
+          "y": 250
+        },
+        {
+          "x": 740,
+          "y": 250
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi61ab",
+      "points": [
+        {
+          "x": 740,
+          "y": 220
+        },
+        {
+          "x": 740,
+          "y": 220
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi6zfn",
+      "points": [
+        {
+          "x": 780,
+          "y": 270
+        },
+        {
+          "x": 780,
+          "y": 270
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi67mv",
+      "points": [
+        {
+          "x": 780,
+          "y": 270,
+          "isPort": true
+        },
+        {
+          "x": 780,
+          "y": 220,
           "isPort": true
         }
       ]
     },
     {
-      "id": "wmmopypk6foz",
+      "id": "wmmrmdgi6hj2",
       "points": [
         {
-          "x": 603.6363636363636,
-          "y": 414.5454545454545,
-          "isPort": true
-        },
-        {
-          "x": 653.6363636363636,
-          "y": 414.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6u7l",
-      "points": [
-        {
-          "x": 893.6363636363636,
-          "y": 284.5454545454545
-        },
-        {
-          "x": 893.6363636363636,
-          "y": 284.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6lp1",
-      "points": [
-        {
-          "x": 893.6363636363636,
-          "y": 284.5454545454545
-        },
-        {
-          "x": 893.6363636363636,
-          "y": 284.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6081",
-      "points": [
-        {
-          "x": 853.6363636363636,
-          "y": 454.5454545454545,
-          "isPort": true
-        },
-        {
-          "x": 933.6363636363636,
-          "y": 454.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6piy",
-      "points": [
-        {
-          "x": 893.6363636363636,
-          "y": 374.5454545454545,
-          "isPort": true
-        },
-        {
-          "x": 893.6363636363636,
-          "y": 284.5454545454545,
-          "isPort": true
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6kmc",
-      "points": [
-        {
-          "x": 1050,
-          "y": 450,
-          "isPort": true
-        },
-        {
-          "x": 1050,
-          "y": 450
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6fnk",
-      "points": [
-        {
-          "x": 623.6363636363636,
-          "y": 374.5454545454545,
+          "x": 470,
+          "y": 270,
           "isPort": false
         },
         {
-          "x": 653.6363636363636,
-          "y": 374.5454545454545
+          "x": 500,
+          "y": 270
         }
-      ]
+      ],
+      "net": "GND"
     },
     {
-      "id": "wmmopypk60e4",
+      "id": "wmmrmdgi6tbw",
       "points": [
         {
-          "x": 623.6363636363636,
-          "y": 414.5454545454545
-        },
-        {
-          "x": 623.6363636363636,
-          "y": 414.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6eql",
-      "points": [
-        {
-          "x": 893.6363636363636,
-          "y": 454.5454545454545
-        },
-        {
-          "x": 893.6363636363636,
-          "y": 454.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6bb3",
-      "points": [
-        {
-          "x": 1050,
-          "y": 450,
+          "x": 450,
+          "y": 310,
           "isPort": true
         },
         {
-          "x": 1050,
-          "y": 450
+          "x": 500,
+          "y": 310
+        }
+      ],
+      "net": "RF_IN"
+    },
+    {
+      "id": "wmmrmdgi6k0e",
+      "points": [
+        {
+          "x": 470,
+          "y": 310
+        },
+        {
+          "x": 470,
+          "y": 310
         }
       ]
     },
     {
-      "id": "wmmopypk6ebc",
+      "id": "wmmrmdgi63g8",
       "points": [
         {
-          "x": 973.6363636363636,
-          "y": 454.5454545454545,
+          "x": 470,
+          "y": 410
+        },
+        {
+          "x": 470,
+          "y": 410
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi6xl7",
+      "points": [
+        {
+          "x": 470,
+          "y": 390,
           "isPort": true
         },
         {
-          "x": 1050,
-          "y": 450
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6qgb",
-      "points": [
-        {
-          "x": 893.6363636363636,
-          "y": 354.5454545454545
-        },
-        {
-          "x": 893.6363636363636,
-          "y": 354.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6ivj",
-      "points": [
-        {
-          "x": 893.6363636363636,
-          "y": 314.5454545454545
-        },
-        {
-          "x": 893.6363636363636,
-          "y": 314.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6nyb",
-      "points": [
-        {
-          "x": 933.6363636363636,
-          "y": 364.5454545454545
-        },
-        {
-          "x": 933.6363636363636,
-          "y": 364.5454545454545
-        }
-      ]
-    },
-    {
-      "id": "wmmopypk6orz",
-      "points": [
-        {
-          "x": 933.6363636363636,
-          "y": 364.5454545454545,
+          "x": 470,
+          "y": 410,
           "isPort": true
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi6mm5",
+      "points": [
+        {
+          "x": 740,
+          "y": 270
         },
         {
-          "x": 933.6363636363636,
-          "y": 314.5454545454545,
-          "isPort": true
+          "x": 740,
+          "y": 270
+        }
+      ],
+      "net": "V+"
+    },
+    {
+      "id": "wmmrmdgi60f9",
+      "points": [
+        {
+          "x": 780,
+          "y": 260
+        },
+        {
+          "x": 780,
+          "y": 260
+        }
+      ]
+    },
+    {
+      "id": "wmmrmdgi6nbv",
+      "points": [
+        {
+          "x": 740,
+          "y": 260
+        },
+        {
+          "x": 740,
+          "y": 260
         }
       ]
     }
   ],
   "labels": [
     {
-      "id": "lmmopypk6jx8",
-      "name": "RFIN",
-      "x": 493.6363636363636,
-      "y": 414.5454545454545,
+      "id": "lmmrmdgi624b",
+      "name": "RF_RFIN",
+      "x": 340,
+      "y": 310,
       "rotation": 2
     },
     {
-      "id": "lmmopypk6j3s",
-      "name": "RFOUT",
-      "x": 1050,
-      "y": 450,
+      "id": "lmmrmdgi6988",
+      "name": "RF_RFOUT",
+      "x": 870,
+      "y": 350,
       "rotation": 0
     }
   ],
   "created_at": "2026-03-12T07:44:24.037Z",
-  "updated_at": "2026-03-13T09:53:46.906932+00:00"
+  "updated_at": "2026-03-15T10:36:34.999840+00:00",
+  "groups": [],
+  "noConnects": []
 }

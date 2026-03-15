@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-03-14T17:31:31.732002+00:00",
+  "saved_at": "2026-03-14T19:55:53.048263+00:00",
   "label": "v2",
   "profile": {
     "part_number": "PMA3-83LNW+",
@@ -286,7 +286,7 @@
           "x": 300,
           "y": 260,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 300,
           "_exampleY": 260
@@ -300,7 +300,7 @@
           "x": 130,
           "y": 230,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 130,
           "_exampleY": 230
@@ -314,7 +314,7 @@
           "x": 170,
           "y": 270,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
           "_exampleY": 270,
@@ -330,7 +330,7 @@
           "x": 500,
           "y": 270,
           "rotation": 3,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 500,
           "_exampleY": 270
@@ -344,7 +344,7 @@
           "x": 440,
           "y": 230,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
           "_exampleY": 230
@@ -358,7 +358,7 @@
           "x": 440,
           "y": 90,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 440,
           "_exampleY": 90
@@ -372,7 +372,7 @@
           "x": 170,
           "y": 350,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 170,
           "_exampleY": 350
@@ -386,7 +386,7 @@
           "x": 150,
           "y": 190,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 150,
           "_exampleY": 190
@@ -400,7 +400,7 @@
           "x": 460,
           "y": 180,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 460,
           "_exampleY": 180
@@ -414,7 +414,7 @@
           "x": 460,
           "y": 140,
           "rotation": 1,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 460,
           "_exampleY": 140
@@ -428,7 +428,7 @@
           "x": 480,
           "y": 210,
           "rotation": 0,
-          "_exampleGroupId": "eg_mmqlr23l73",
+          "_exampleGroupId": "eg_mmqqwnzj7q",
           "_exampleSlug": "PMA3_83LNW",
           "_exampleX": 480,
           "_exampleY": 210
@@ -489,7 +489,7 @@
               "y": 270
             }
           ],
-          "net": "bias"
+          "net": "RF_bias"
         },
         {
           "id": "wmmjc2u79",
@@ -642,7 +642,7 @@
               "y": 230
             }
           ],
-          "net": "IN"
+          "net": "RF_IN"
         },
         {
           "id": "cwmmov7qjzeo9",
@@ -729,14 +729,14 @@
       "labels": [
         {
           "id": "lmmjcvrul",
-          "name": "RFIN",
+          "name": "RF_RFIN",
           "x": 40,
           "y": 230,
           "rotation": 2
         },
         {
           "id": "lmmjcw7li",
-          "name": "RFOUT",
+          "name": "RF_RFOUT",
           "x": 570,
           "y": 270,
           "rotation": 0
@@ -1207,78 +1207,7 @@
           ]
         }
       ],
-      "traces": [
-        {
-          "net": "N2",
-          "segments": [
-            {
-              "start": {
-                "x": 1.35,
-                "y": 1.75
-              },
-              "end": {
-                "x": 3,
-                "y": 0.5
-              }
-            },
-            {
-              "start": {
-                "x": 3,
-                "y": 0.5
-              },
-              "end": {
-                "x": -3,
-                "y": 1
-              }
-            },
-            {
-              "start": {
-                "x": 3,
-                "y": 0.5
-              },
-              "end": {
-                "x": 8.5,
-                "y": 4
-              }
-            }
-          ]
-        },
-        {
-          "net": "GND",
-          "segments": [
-            {
-              "start": {
-                "x": 2,
-                "y": 5.25
-              },
-              "end": {
-                "x": 3,
-                "y": 8
-              }
-            },
-            {
-              "start": {
-                "x": 3,
-                "y": 8
-              },
-              "end": {
-                "x": 2.325,
-                "y": 8
-              }
-            },
-            {
-              "start": {
-                "x": 3,
-                "y": 8
-              },
-              "end": {
-                "x": 7,
-                "y": 9
-              }
-            }
-          ]
-        }
-      ],
+      "traces": [],
       "vias": [],
       "groups": [],
       "areas": []

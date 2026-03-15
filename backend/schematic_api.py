@@ -2936,66 +2936,34 @@ def run_autoroute(board: dict) -> dict:
         for _pr in _net_entry.get("pads", []):
             _pad_ref_to_net_ar[_pr.upper()] = _nn
 
-    # ── Fallback: load nets from library layout_example for the board's project ──
+    # ── Fallback: compute netlist from schematic project if board has no nets ──
     # When a board was imported without a netlist, pad.net and board.nets[]
-    # are both empty.  Try using the library's layout_example (which has full
-    # net-annotated pads) to recover net information by matching component refs.
+    # are both empty.  Load the schematic project and run build_netlist()
+    # to recover net connectivity from schematic wires.
     if not _pad_ref_to_net_ar:
         project_id = board.get("projectId", "")
         if project_id:
-            # Find which library slug this board uses (from the first non-passive component)
-            _board_comps = board.get("components", [])
-            _passive_fps = {"0201", "0402", "0603", "0805", "1206", "2010", "2512"}
-            for _bc in _board_comps:
-                _bc_fp = str(_bc.get("footprint", "")).lower()
-                if _bc_fp not in _passive_fps:
-                    # Try loading the library profile
-                    _bc_ref = _bc.get("ref", "")
-                    _bc_val = str(_bc.get("value", "")).upper().replace("+", "").replace(" ", "_")
-                    # Search library dirs for a matching slug
-                    for _lib_dir_name in os.listdir(str(LIBRARY_DIR)):
-                        _lib_prof_path = LIBRARY_DIR / _lib_dir_name / "profile.json"
-                        if not _lib_prof_path.exists():
-                            continue
-                        try:
-                            _lib_prof = json.loads(_lib_prof_path.read_text("utf-8"))
-                        except Exception:
-                            continue
-                        le = _lib_prof.get("layout_example") or {}
-                        le_comps = le.get("components") or []
-                        le_nets = le.get("nets") or []
-                        if not le_comps or not le_nets:
-                            continue
-                        # Build LE ref → pad → net mapping
-                        _le_pad_net: dict[str, str] = {}
-                        for _le_net in le_nets:
-                            _le_nn = (_le_net.get("name", "") or "").upper()
-                            if not _le_nn:
-                                continue
-                            for _le_pr in _le_net.get("pads", []):
-                                _le_pad_net[_le_pr.upper()] = _le_nn
-                        # Also from component pad.net fields
-                        for _lc in le_comps:
-                            _lc_ref = str(_lc.get("ref", _lc.get("id", "")))
-                            for _lp in _lc.get("pads", []):
-                                _lpn = (_lp.get("net", "") or "").upper()
-                                if _lpn:
-                                    _lpk = f"{_lc_ref}.{_lp.get('number', '')}".upper()
-                                    _le_pad_net[_lpk] = _lpn
-                        if not _le_pad_net:
-                            continue
-                        # Match: board refs to LE refs (same designator pattern)
-                        _le_refs = {str(c.get("ref", c.get("id", ""))): c for c in le_comps}
-                        for _bc2 in _board_comps:
-                            _bc2_ref = _bc2.get("ref", "")
-                            if _bc2_ref in _le_refs:
-                                for _bp in _bc2.get("pads", []):
-                                    _bp_num = _bp.get("number", _bp.get("name", ""))
-                                    _bpk = f"{_bc2_ref}.{_bp_num}".upper()
-                                    if _bpk in _le_pad_net:
-                                        _pad_ref_to_net_ar[_bpk] = _le_pad_net[_bpk]
-                        if _pad_ref_to_net_ar:
-                            break  # found nets, stop searching libraries
+            _proj_path = Path(os.getenv("PROJECTS_DIR",
+                              str(PROJECT_ROOT_SA / "frontend" / "static" / "projects"))
+                             ) / f"{project_id}.json"
+            if _proj_path.exists():
+                try:
+                    _proj = json.loads(_proj_path.read_text("utf-8"))
+                    _netlist_result = build_netlist(
+                        _proj.get("components", []),
+                        _proj.get("wires", []),
+                        _proj.get("labels", []),
+                        _proj.get("noConnects", []),
+                    )
+                    # build_netlist returns {namedNets: {net_name: ["R1.1", ...]}, ...}
+                    _named_nets = _netlist_result.get("namedNets", {})
+                    for _nn, _pads in _named_nets.items():
+                        _nn_upper = _nn.upper()
+                        if isinstance(_pads, list):
+                            for _pr in _pads:
+                                _pad_ref_to_net_ar[str(_pr).upper()] = _nn_upper
+                except Exception:
+                    pass  # silently continue without project nets
 
     if _pad_ref_to_net_ar:
         for comp in board.get("components", []):
