@@ -67,6 +67,19 @@ class PCBEditor {
     try{
       const d=typeof json==='string'?JSON.parse(json):json;
       if(!d.board||!d.components)throw new Error('Missing board or components');
+      // Normalize: move outline-based areas into zones so _drawZones handles them
+      if(d.areas){
+        if(!d.zones) d.zones=[];
+        const kept=[];
+        for(const a of d.areas){
+          if(a.outline&&a.outline.length>=3){
+            d.zones.push({layer:a.layer||'F.Cu',net:a.net||'',points:a.outline});
+          } else {
+            kept.push(a);
+          }
+        }
+        d.areas=kept;
+      }
       this.board=d; this.selectedComp=null; this.routePoints=[];
       this.zonePoints=[]; this.fitBoard();
       return{ok:true};
@@ -168,6 +181,7 @@ class PCBEditor {
     this._drawGroups();
     this._drawDrawings();
     if(this.tool==='route'&&this.routePoints.length>0) this._drawActiveRoute();
+    if(this.tool==='route') this._drawSnapIndicator();
     if(this.tool==='zone'&&this.zonePoints.length>0) this._drawActiveZone();
     if(this.tool==='measure'&&this.measureStart) this._drawMeasure();
     if(this.tool==='area'&&this.areaStart) this._drawActiveArea();
@@ -318,7 +332,7 @@ class PCBEditor {
       const hov=this._hoverTrace===tr&&!sel;
       const isDragging=this._isDragTrace&&this._dragTrace===tr;
       const dragSegIdx=isDragging?this._dragTraceSegIdx:-1;
-      const w=Math.max(1,(tr.width||0.25)*this.scale);
+      const w=Math.max(1,(tr.width||tr.width_mm||0.25)*this.scale);
       const segs=tr.segments||[];
       // Draw path helper (optionally skip one segment)
       const drawPath=(skipIdx=-1)=>{
@@ -502,7 +516,7 @@ class PCBEditor {
       // — Trace clearances (capsule — each filled individually for reliable paths) —
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===z.net)continue;
-        const hw=(tr.width||DR.traceWidth||0.25)/2+cl;
+        const hw=(tr.width||tr.width_mm||DR.traceWidth||0.25)/2+cl;
         for(const seg of(tr.segments||[])){
           if(!seg||!seg.start||!seg.end)continue;
           const ax=seg.start.x,ay=seg.start.y,bx=seg.end.x,by=seg.end.y;
@@ -1001,7 +1015,7 @@ class PCBEditor {
       // — Trace clearances (each as its own fill to avoid complex path issues) —
       for(const tr of(this.board?.traces||[])){
         if(tr.net&&tr.net===a.net)continue;
-        const hw=(tr.width||DR.traceWidth||0.25)/2+cl;
+        const hw=(tr.width||tr.width_mm||DR.traceWidth||0.25)/2+cl;
         for(const seg of(tr.segments||[])){
           if(!seg||!seg.start||!seg.end)continue;
           const ax=seg.start.x,ay=seg.start.y,bx=seg.end.x,by=seg.end.y;
@@ -2407,7 +2421,7 @@ class PCBEditor {
         this.panX=mx-this._panS.x; this.panY=my-this._panS.y; this.render();
       } else if(this._isBoxSel&&this._boxSelStart){
         this._boxSelEnd={mx,my};this.render();
-      } else if((this.tool==='route'&&this.routePoints.length>0)||
+      } else if(this.tool==='route'||
                 (this.tool==='zone'&&this.zonePoints.length>0)||
                 (this.tool==='measure'&&this.measureStart)||
                 (this.tool==='area'&&this.areaStart)||
