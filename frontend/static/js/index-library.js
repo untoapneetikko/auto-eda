@@ -478,37 +478,38 @@ Then parse this component:
             <div style="flex:1;min-width:0;">
               <div style="background:var(--surface2);border:1px solid var(--border);border-left:none;border-right:none;border-radius:0;overflow:hidden;">
                 <!-- Sub-nav tabs -->
-                <div style="display:flex;align-items:center;gap:3px;padding:2px 8px;border-bottom:1px solid var(--border);background:var(--surface);">
-                  <button class="nav-tab active" id="acc-sub-schematic" onclick="switchAccSection('schematic')" style="font-size:10px;padding:3px 10px;">📋 Schematic</button>
-                  <button class="nav-tab" id="acc-sub-auto" onclick="switchAccSection('auto')" style="font-size:10px;padding:3px 10px;">⚙ Auto</button>
-                  <button class="nav-tab" id="acc-sub-export" onclick="switchAccSection('export')" style="font-size:10px;padding:3px 10px;">📦 Export</button>
-                  <span style="flex:1;"></span>
-                  <button onclick="accSaveExample(this)" title="Save" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);color:#22c55e;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">💾 Save</button>
-                </div>
+                <nav style="display:flex;align-items:center;gap:4px;padding:0 8px;border-bottom:1px solid var(--border);background:var(--surface);height:30px;">
+                  <button class="nav-tab active" id="acc-sub-schematic" onclick="switchAccSection('schematic')" style="font-size:12px;padding:4px 12px;">📋 Schematic</button>
+                  <button class="nav-tab" id="acc-sub-auto" onclick="switchAccSection('auto')" style="font-size:12px;padding:4px 12px;">&#9881; Auto</button>
+                  <button class="nav-tab" id="acc-sub-export" onclick="switchAccSection('export')" style="font-size:12px;padding:4px 12px;">📦 Export</button>
+                  <div style="flex:1;"></div>
+                  <button class="btn-save" onclick="accSaveExample(this)" title="Save" style="font-size:11px;padding:3px 8px;">&#128190; Save</button>
+                </nav>
                 <!-- Schematic toolbar -->
-                <div id="acc-toolbar-schematic" style="display:flex;align-items:center;gap:3px;padding:3px 8px;border-bottom:1px solid var(--border);background:var(--bg);">
-                  <button data-acc-tool="select" class="active" onclick="appCircuitEditor?.setTool('select')" title="Select — S" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">▶ Select</button>
-                  <button data-acc-tool="boxselect" onclick="appCircuitEditor?.setTool('boxselect')" title="Box Select — B" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">⬚ Box</button>
-                  <button data-acc-tool="wire" onclick="appCircuitEditor?.setTool('wire')" title="Wire — W" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">─ Wire</button>
-                  <button data-acc-tool="delete" onclick="appCircuitEditor?.setTool('delete')" title="Delete — D" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">✕ Delete</button>
-                  <span style="width:1px;height:14px;background:var(--border);display:inline-block;margin:0 1px;"></span>
-                  <button onclick="appCircuitEditor?._rotateSelected()" title="Rotate — R" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">⟳</button>
-                  <button onclick="appCircuitEditor?._fit()" title="Fit — F" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">⊞ Fit</button>
-                  <button id="acc-btn-undo" onclick="appCircuitEditor?._undo()" title="Undo" disabled style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:default;opacity:0.35;">↩</button>
-                  <button id="acc-btn-redo" onclick="appCircuitEditor?._redo()" title="Redo" disabled style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:default;opacity:0.35;">↪</button>
-                  <span style="width:1px;height:14px;background:var(--border);display:inline-block;margin:0 1px;"></span>
-                  <button data-acc-tool="label" onclick="appCircuitEditor?.setTool('label')" title="Net Label — L" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">⊳ Label</button>
-                  <button data-acc-tool="nc" onclick="appCircuitEditor?.setTool('nc')" title="No Connect — X" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;">✕ NC</button>
+                <div class="editor-toolbar" id="acc-toolbar-schematic">
+                  <button class="tool-btn active" data-acc-tool="select" onclick="appCircuitEditor?.setTool('select')" title="Select — S">&#9654; Select</button>
+                  <button class="tool-btn" data-acc-tool="boxselect" onclick="appCircuitEditor?.setTool('boxselect')" title="Box Select — B">&#9633; Box</button>
+                  <button class="tool-btn" data-acc-tool="wire" onclick="appCircuitEditor?.setTool('wire')" title="Wire — W">&#9135; Wire</button>
+                  <button class="tool-btn" data-acc-tool="delete" onclick="appCircuitEditor?.setTool('delete')" title="Delete — D">&#10005; Delete</button>
+                  <div class="toolbar-sep"></div>
+                  <button class="tool-btn" onclick="appCircuitEditor?._rotateSelected()" title="Rotate — R">&#8635;</button>
+                  <button class="tool-btn" onclick="appCircuitEditor?._fit()" title="Fit — F">&#9635;</button>
+                  <button class="tool-btn" id="acc-btn-undo" onclick="appCircuitEditor?._undo()" title="Undo — Ctrl+Z" disabled style="opacity:0.35;cursor:default;">&#8630;</button>
+                  <button class="tool-btn" id="acc-btn-redo" onclick="appCircuitEditor?._redo()" title="Redo — Ctrl+Y" disabled style="opacity:0.35;cursor:default;">&#8631;</button>
+                  <div class="toolbar-sep"></div>
+                  <button class="tool-btn" data-acc-tool="label" onclick="appCircuitEditor?.setTool('label')" title="Net Label — L">&#9657; Label</button>
+                  <button class="tool-btn" data-acc-tool="nc" onclick="appCircuitEditor?.setTool('nc')" title="No Connect — X">&#10005; NC</button>
                 </div>
                 <!-- Auto toolbar -->
-                <div id="acc-toolbar-auto" style="display:none;align-items:center;gap:3px;padding:3px 8px;border-bottom:1px solid var(--border);background:var(--bg);">
-                  <button onclick="appCircuitEditor?._fit()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">⊞ Fit View</button>
-                  <button onclick="appCircuitEditor?.autoLabelNets()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">⊳ Auto Label Nets</button>
-                  <button onclick="appCircuitEditor?.autoDesignators()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">✎ Auto Designators</button>
+                <div class="editor-toolbar" id="acc-toolbar-auto" style="display:none;">
+                  <button class="tool-btn" onclick="appCircuitEditor?._fit()" title="Fit view">&#9635; Fit View</button>
+                  <div class="toolbar-sep"></div>
+                  <button class="tool-btn" onclick="appCircuitEditor?.autoLabelNets()" title="Auto-name all unlabeled nets">&#9657; Auto Label Nets</button>
+                  <button class="tool-btn" onclick="appCircuitEditor?.autoDesignators()" title="Auto-assign designators">&#9998; Auto Designators</button>
                 </div>
                 <!-- Export toolbar -->
-                <div id="acc-toolbar-export" style="display:none;align-items:center;gap:3px;padding:3px 8px;border-bottom:1px solid var(--border);background:var(--bg);">
-                  <button onclick="openExampleInEditor()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">✏ Open in Schematic Editor</button>
+                <div class="editor-toolbar" id="acc-toolbar-export" style="display:none;">
+                  <button class="tool-btn" onclick="openExampleInEditor()" title="Open in full Schematic Editor">&#9998; Open in Editor</button>
                 </div>
                 <svg id="app-circuit-canvas" style="display:block;width:100%;height:420px;"></svg>
               </div>
