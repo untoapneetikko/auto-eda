@@ -1791,9 +1791,10 @@ class SchematicEditor {
   }
 
   _wH(wire) {
-    if (wire.points.length < 2) return '';
+    if (!wire.points?.length) return '';
     const sel = this.selected?.id === wire.id || this.multiSelected.has(wire.id);
-    const pts = wire.points.map(p => `${p.x},${p.y}`).join(' ');
+    const isDot = wire.points.length === 1 || (wire.points.length === 2 &&
+        wire.points[0].x === wire.points[1].x && wire.points[0].y === wire.points[1].y);
     let c, sw, opStr = '';
     if (sel) {
       c = '#818cf8'; sw = 2.5;
@@ -1804,12 +1805,18 @@ class SchematicEditor {
     } else if (this._highlightedComp) {
       c = '#4b9cd3'; sw = 1.8; opStr = ' opacity="0.15"';
     } else if (this.showNets) {
-      // Color each wire by its assigned net so every wire visually shows it has a net
       const wNet = this._cachedNetOverlay?.wireToNet?.get(wire.id);
       c = wNet ? this._labelColor(wNet) : '#4b9cd3'; sw = 1.8;
     } else {
       c = '#4b9cd3'; sw = 1.8;
     }
+    // Dot wire (junction): render as a filled circle so it's visible and highlights on select
+    if (isDot) {
+      const dx = wire.points[0].x, dy = wire.points[0].y;
+      const r = sel ? 3.5 : 2.5;
+      return `<circle class="se-wire" data-id="${esc(wire.id)}" cx="${dx}" cy="${dy}" r="${r}" fill="${c}" stroke="${sel ? '#a5b4fc' : 'none'}" stroke-width="${sel ? 1.5 : 0}"${opStr}/>`;
+    }
+    const pts = wire.points.map(p => `${p.x},${p.y}`).join(' ');
     return `<polyline class="se-wire" data-id="${esc(wire.id)}" points="${pts}" fill="none" stroke="${c}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"${opStr}/>`;
   }
 
