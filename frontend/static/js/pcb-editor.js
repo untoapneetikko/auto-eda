@@ -53,6 +53,7 @@ class PCBEditor {
     this._isDragTrace=false; this._dragTrace=null; this._dragTraceSegIdx=-1;
     this._dragTraceOrigSeg=null; this._dragTraceOrigAll=null; this._dragTraceOff={x:0,y:0};
     this._traceDragViolations=[];
+    this._compDragViolations=[];
     this._lastMoveMs=0; // mousemove throttle timestamp
     this._init();
   }
@@ -237,6 +238,23 @@ class PCBEditor {
       ctx.fillStyle='rgba(239,68,68,0.92)'; ctx.font='bold 11px monospace';
       ctx.textAlign='center';
       ctx.fillText(`⚠ Clearance violation (${this._traceDragViolations.length})`,W/2,H-20);
+      ctx.textAlign='left';
+      ctx.restore();
+    }
+    // Component-drag violation markers (trace crossing foreign-net pad)
+    if(this._isDrag&&this._compDragViolations&&this._compDragViolations.length>0){
+      ctx.save(); ctx.setLineDash([]);
+      for(const v of this._compDragViolations){
+        const cx=this.mmX(v.x),cy=this.mmY(v.y);
+        const r=Math.max(8,(Math.max(v.pad?.size_x||1.6,v.pad?.size_y||1.6)/2)*this.scale+4);
+        ctx.strokeStyle='rgba(239,68,68,0.9)'; ctx.lineWidth=2.5;
+        ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx-r*0.6,cy-r*0.6); ctx.lineTo(cx+r*0.6,cy+r*0.6); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx+r*0.6,cy-r*0.6); ctx.lineTo(cx-r*0.6,cy+r*0.6); ctx.stroke();
+      }
+      ctx.fillStyle='rgba(239,68,68,0.92)'; ctx.font='bold 12px monospace';
+      ctx.textAlign='center';
+      ctx.fillText(`⚠ Trace crosses foreign pad (${this._compDragViolations.length})`,W/2,H-20);
       ctx.textAlign='left';
       ctx.restore();
     }
@@ -2517,9 +2535,19 @@ class PCBEditor {
 
     cv.addEventListener('mouseup',e=>{
       const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace;
+      // If component drag caused trace-pad violations, undo the move
+      const hadCompViolations=this._compDragViolations&&this._compDragViolations.length>0;
       this._isDrag=false; this._dragC=null; this._isPan=false; this._isDragVia=false;
       this._isDragDrawing=false; this._dragDrawingStart=null; this._dragDrawingPts=null;
       this._isDragTrace=false; this._dragTrace=null; this._traceDragViolations=[];
+      this._compDragViolations=[];
+      if(hadCompViolations&&wasDragging){
+        this.undo(); // revert to pre-drag state
+        this._routeError='Blocked: trace would cross foreign-net pad';
+        this.render();
+        setTimeout(()=>{this._routeError=null;this.render();},2500);
+        return;
+      }
       if(wasDragging) this._snapshot(); // snapshot after move
       if(this._isBoxSel&&this._boxSelStart&&this._boxSelEnd){
         const bx1=Math.min(this._boxSelStart.mx,this._boxSelEnd.mx);
