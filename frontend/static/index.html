@@ -387,6 +387,30 @@
   .build-lib-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
   .build-guide-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; transition:all .15s; }
   .build-guide-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+
+  /* ── Workflow tree ── */
+  .wf-tree { display:flex; flex-direction:column; align-items:center; gap:0; }
+  .wf-node { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 20px; width:100%; max-width:560px; transition:all .15s; position:relative; }
+  .wf-node:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .wf-node.wf-accent { border-color:rgba(168,85,247,0.4); background:linear-gradient(135deg,rgba(108,99,255,0.08),rgba(168,85,247,0.08)); }
+  .wf-node.wf-accent:hover { border-color:#a855f7; }
+  .wf-node.wf-highlight { border-color:rgba(108,99,255,0.3); background:rgba(108,99,255,0.05); }
+  .wf-node.wf-done { border-color:rgba(34,197,94,0.3); background:rgba(34,197,94,0.05); }
+  .wf-icon { font-size:32px; flex-shrink:0; width:44px; text-align:center; }
+  .wf-body { flex:1; min-width:0; }
+  .wf-title { font-size:14px; font-weight:700; color:var(--text); margin-bottom:3px; }
+  .wf-desc { font-size:11px; color:var(--text-muted); line-height:1.6; }
+  .wf-badge { font-size:9px; font-weight:800; letter-spacing:.06em; padding:3px 8px; border-radius:20px; flex-shrink:0; background:rgba(108,99,255,0.15); color:var(--accent); text-transform:uppercase; }
+  .wf-badge.wf-auto { background:rgba(168,85,247,0.15); color:#c084fc; }
+  .wf-badge.wf-user { background:rgba(59,130,246,0.15); color:#60a5fa; }
+  .wf-line { width:2px; height:20px; background:linear-gradient(180deg,var(--border),rgba(108,99,255,0.3)); flex-shrink:0; }
+  .wf-split { display:flex; gap:12px; width:100%; max-width:560px; }
+  .wf-split .wf-node { flex:1; padding:12px 14px; }
+  .wf-split .wf-icon { font-size:24px; width:32px; }
+  .wf-split .wf-title { font-size:12px; }
+  .wf-split .wf-desc { font-size:10px; }
+  .wf-tip { display:inline-flex; align-items:center; gap:5px; font-size:10px; color:var(--text-muted); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:4px 10px; }
+  .wf-tip kbd { background:var(--surface2); border:1px solid var(--border); border-radius:3px; padding:1px 5px; font-size:9px; font-family:monospace; color:var(--text); }
   .agents-layout { display:flex; flex-direction:column; height:calc(100vh - 49px); overflow-y:auto; overflow-x:hidden; }
   .agents-topbar { padding:14px 24px 12px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; flex-shrink:0; background:var(--surface); }
   .agents-topbar h2 { font-size:14px; font-weight:700; color:var(--text); }
@@ -731,54 +755,146 @@
 
 <!-- ══ SECTION: BUILD ══════════════════════════════════════════════════════ -->
 <div id="section-build" class="app-section">
-  <div class="build-page">
+  <div class="build-page" style="max-width:960px;">
     <div class="build-hero">
       <h2>Auto-EDA</h2>
-      <p>AI-powered electronic design — from datasheet to routed PCB.</p>
+      <p>AI-powered electronic design — from datasheet to routed PCB</p>
     </div>
 
-    <!-- ── How it works — big icon cards ── -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:40px;">
-      <div onclick="switchSection('library')" class="build-guide-card" style="cursor:pointer;">
-        <div style="font-size:42px;margin-bottom:10px;">📚</div>
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">1. Library</div>
-        <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">Upload a datasheet PDF. The AI extracts pins, parameters, and creates a component symbol + example circuit.</div>
+    <!-- ══ WORKFLOW TREE ══════════════════════════════════════════════════════ -->
+    <div class="wf-tree">
+
+      <!-- ── ROW 1: Generate ── -->
+      <div class="wf-node wf-accent" onclick="document.getElementById('build-prompt').focus();document.getElementById('build-prompt').scrollIntoView({behavior:'smooth'})" style="cursor:pointer;">
+        <div class="wf-icon">✨</div>
+        <div class="wf-body">
+          <div class="wf-title">Generate</div>
+          <div class="wf-desc">Describe your circuit and let AI build it — or start from scratch below.</div>
+        </div>
+        <div class="wf-badge">START</div>
       </div>
-      <div onclick="switchSection('schematic')" class="build-guide-card" style="cursor:pointer;">
-        <div style="font-size:42px;margin-bottom:10px;">📐</div>
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">2. Schematic</div>
-        <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">Wire up your circuit. Place components from the library, draw wires, label nets. Save as a project.</div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 2: Upload Datasheet ── -->
+      <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+        <div class="wf-icon">📄</div>
+        <div class="wf-body">
+          <div class="wf-title">Upload Datasheet</div>
+          <div class="wf-desc">Drop a component PDF. AI reads every pin, rating, and package dimension.</div>
+        </div>
+        <div class="wf-badge wf-auto">AI</div>
       </div>
-      <div onclick="switchSection('pcb')" class="build-guide-card" style="cursor:pointer;">
-        <div style="font-size:42px;margin-bottom:10px;">🔲</div>
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;">3. PCB Layout</div>
-        <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">Place footprints, route copper traces, add vias. Design rules check keeps your board clean.</div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 3: Split — Symbol + Footprint ── -->
+      <div class="wf-split">
+        <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+          <div class="wf-icon">🔣</div>
+          <div class="wf-body">
+            <div class="wf-title">Symbol</div>
+            <div class="wf-desc">Schematic symbol auto-generated with correct pin names and types.</div>
+          </div>
+          <div class="wf-badge wf-auto">AI</div>
+        </div>
+        <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+          <div class="wf-icon">📐</div>
+          <div class="wf-body">
+            <div class="wf-title">Footprint</div>
+            <div class="wf-desc">IPC-7351 pad layout created from package dimensions in the datasheet.</div>
+          </div>
+          <div class="wf-badge wf-auto">AI</div>
+        </div>
       </div>
-      <div class="build-guide-card" style="border-color:rgba(168,85,247,0.3);background:rgba(168,85,247,0.05);">
-        <div style="font-size:42px;margin-bottom:10px;">✨</div>
-        <div style="font-size:13px;font-weight:700;color:#c084fc;margin-bottom:6px;">AI Build</div>
-        <div style="font-size:11px;color:var(--text-muted);line-height:1.6;">Describe a circuit below and let the AI agent design a complete schematic from your library.</div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 4: Example Circuit ── -->
+      <div class="wf-node" onclick="switchSection('library')" style="cursor:pointer;">
+        <div class="wf-icon">🧪</div>
+        <div class="wf-body">
+          <div class="wf-title">Example Circuit</div>
+          <div class="wf-desc">Reference application circuit extracted from the datasheet — edit it live in the built-in schematic editor.</div>
+        </div>
+        <div class="wf-badge wf-auto">AI</div>
       </div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 5: Schematic Design ── -->
+      <div class="wf-node wf-highlight" onclick="switchSection('schematic')" style="cursor:pointer;">
+        <div class="wf-icon">📋</div>
+        <div class="wf-body">
+          <div class="wf-title">Schematic Design</div>
+          <div class="wf-desc">Place components, draw wires, label nets. Full editor with undo, copy-paste, and net highlighting.</div>
+        </div>
+        <div class="wf-badge wf-user">YOU</div>
+      </div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 6: Netlist Check ── -->
+      <div class="wf-node">
+        <div class="wf-icon">🔗</div>
+        <div class="wf-body">
+          <div class="wf-title">Connectivity Check</div>
+          <div class="wf-desc">Validates every net — catches floating pins, shorts, and missing connections before layout.</div>
+        </div>
+        <div class="wf-badge wf-auto">AUTO</div>
+      </div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 7: Split — Placement + Routing ── -->
+      <div class="wf-split">
+        <div class="wf-node" onclick="switchSection('pcb')" style="cursor:pointer;">
+          <div class="wf-icon">🗺</div>
+          <div class="wf-body">
+            <div class="wf-title">Placement</div>
+            <div class="wf-desc">Components placed on the board — connectors at edges, decoupling near ICs.</div>
+          </div>
+          <div class="wf-badge wf-auto">AI</div>
+        </div>
+        <div class="wf-node" onclick="switchSection('pcb')" style="cursor:pointer;">
+          <div class="wf-icon">🛤</div>
+          <div class="wf-body">
+            <div class="wf-title">Routing</div>
+            <div class="wf-desc">Copper traces routed automatically — power nets wide, signals tight, vias where needed.</div>
+          </div>
+          <div class="wf-badge wf-auto">AI</div>
+        </div>
+      </div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 8: PCB Editor ── -->
+      <div class="wf-node wf-highlight" onclick="switchSection('pcb')" style="cursor:pointer;">
+        <div class="wf-icon">🔲</div>
+        <div class="wf-body">
+          <div class="wf-title">PCB Layout Editor</div>
+          <div class="wf-desc">Fine-tune placement, adjust routes, run DRC. Multi-layer support with copper pours.</div>
+        </div>
+        <div class="wf-badge wf-user">YOU</div>
+      </div>
+      <div class="wf-line"></div>
+
+      <!-- ── ROW 9: Export ── -->
+      <div class="wf-node wf-done">
+        <div class="wf-icon">📦</div>
+        <div class="wf-body">
+          <div class="wf-title">Export to KiCad</div>
+          <div class="wf-desc">Download .kicad_sch, .kicad_pcb, .kicad_sym, .kicad_mod — ready for fabrication.</div>
+        </div>
+        <div class="wf-badge" style="background:rgba(34,197,94,0.15);color:#22c55e;">DONE</div>
+      </div>
+
     </div>
 
     <!-- ── Quick tips ── -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:36px;">
-      <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
-        <span style="font-size:24px;flex-shrink:0;">🖱</span>
-        <div><div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;">Navigate</div><div style="font-size:10px;color:var(--text-muted);line-height:1.5;">Scroll to zoom, drag to pan. Press <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;">F</kbd> to fit view.</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
-        <span style="font-size:24px;flex-shrink:0;">⌨</span>
-        <div><div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;">Shortcuts</div><div style="font-size:10px;color:var(--text-muted);line-height:1.5;"><kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;">W</kbd> Wire <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;">R</kbd> Rotate <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;">Del</kbd> Delete</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
-        <span style="font-size:24px;flex-shrink:0;">💾</span>
-        <div><div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;">Save</div><div style="font-size:10px;color:var(--text-muted);line-height:1.5;">Projects auto-save. Use <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 4px;font-size:9px;">Ctrl+S</kbd> to force-save.</div></div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
-        <span style="font-size:24px;flex-shrink:0;">📤</span>
-        <div><div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;">Export</div><div style="font-size:10px;color:var(--text-muted);line-height:1.5;">Export schematics and PCBs to KiCad format from the toolbar.</div></div>
-      </div>
+    <div style="display:flex;gap:10px;margin:32px 0 28px;flex-wrap:wrap;">
+      <div class="wf-tip"><kbd>F</kbd> Fit view</div>
+      <div class="wf-tip"><kbd>W</kbd> Wire tool</div>
+      <div class="wf-tip"><kbd>R</kbd> Rotate</div>
+      <div class="wf-tip"><kbd>S</kbd> Select</div>
+      <div class="wf-tip"><kbd>Del</kbd> Delete</div>
+      <div class="wf-tip"><kbd>Ctrl+Z</kbd> Undo</div>
+      <div class="wf-tip"><kbd>Ctrl+S</kbd> Save</div>
+      <div class="wf-tip">Scroll to zoom</div>
+      <div class="wf-tip">Drag to pan</div>
     </div>
 
     <!-- ── AI Builder section ── -->
