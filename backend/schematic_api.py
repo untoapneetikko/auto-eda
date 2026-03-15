@@ -3101,9 +3101,20 @@ def run_autoroute(board: dict) -> dict:
     cu_clearance = float(dr.get("clearance", 0.2))  # copper-to-copper clearance
     edge_clearance = float(dr.get("routeEdgeClearance", dr.get("edgeClearance", 0.5)))
 
+    # ── Expand grid to cover all component positions (some may be outside board) ──
+    _max_comp_x = bw
+    _max_comp_y = bh
+    for _c in board.get("components", []):
+        _cx_c = float(_c.get("x", 0))
+        _cy_c = float(_c.get("y", 0))
+        _max_comp_x = max(_max_comp_x, _cx_c + 3)  # 3mm margin for pads
+        _max_comp_y = max(_max_comp_y, _cy_c + 3)
+    _eff_w = max(bw, _max_comp_x)
+    _eff_h = max(bh, _max_comp_y)
+
     # ── Occupancy grid: mark cells covered by existing traces ────────────────
-    grid_w = int(bw / GRID) + 2
-    grid_h = int(bh / GRID) + 2
+    grid_w = int(_eff_w / GRID) + 2
+    grid_h = int(_eff_h / GRID) + 2
     occupied: set[tuple[int, int]] = set()
 
     # Trace clearance expansion: each trace line is expanded by
