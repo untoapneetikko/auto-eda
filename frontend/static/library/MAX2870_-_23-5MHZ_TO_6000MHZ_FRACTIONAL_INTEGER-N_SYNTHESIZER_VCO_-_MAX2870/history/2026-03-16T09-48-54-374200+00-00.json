@@ -1,6 +1,6 @@
 {
-  "saved_at": "2026-03-16T09:51:12.942159+00:00",
-  "label": "AI \u2014 GT-027",
+  "saved_at": "2026-03-16T09:52:53.905154+00:00",
+  "label": "AI \u2014 GT-026",
   "profile": {
     "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
     "part_number": "MAX2870",
@@ -597,7 +597,1287 @@
       }
     ],
     "human_corrections": [],
-    "example_circuit": null,
+    "example_circuit": {
+      "components": [
+        {
+          "id": "u1",
+          "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+          "symType": "ic",
+          "designator": "U1",
+          "value": "MAX2870",
+          "x": 400,
+          "y": 380,
+          "rotation": 0
+        },
+        {
+          "id": "c1",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C1",
+          "value": "100nF",
+          "x": 60,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_cp_0",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_CP_1",
+          "value": "+3.3V",
+          "x": 60,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c1",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC1",
+          "value": "",
+          "x": 60,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c2",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C2",
+          "value": "1uF",
+          "x": 120,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_cp_1",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_CP_2",
+          "value": "+3.3V",
+          "x": 120,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c2",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC2",
+          "value": "",
+          "x": 120,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c3",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C3",
+          "value": "100nF",
+          "x": 240,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_pll_0",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_PLL_1",
+          "value": "+3.3V",
+          "x": 240,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c3",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC3",
+          "value": "",
+          "x": 240,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c4",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C4",
+          "value": "1uF",
+          "x": 300,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_pll_1",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_PLL_2",
+          "value": "+3.3V",
+          "x": 300,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c4",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC4",
+          "value": "",
+          "x": 300,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c5",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C5",
+          "value": "100nF",
+          "x": 420,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_rf_0",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_RF_1",
+          "value": "+3.3V",
+          "x": 420,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c5",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC5",
+          "value": "",
+          "x": 420,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c6",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C6",
+          "value": "1uF",
+          "x": 480,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_rf_1",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_RF_2",
+          "value": "+3.3V",
+          "x": 480,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c6",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC6",
+          "value": "",
+          "x": 480,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c7",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C7",
+          "value": "100nF",
+          "x": 600,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_vco_0",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_VCO_1",
+          "value": "+3.3V",
+          "x": 600,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c7",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC7",
+          "value": "",
+          "x": 600,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c8",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C8",
+          "value": "1uF",
+          "x": 660,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_vco_1",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_VCO_2",
+          "value": "+3.3V",
+          "x": 660,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c8",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC8",
+          "value": "",
+          "x": 660,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c9",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C9",
+          "value": "100nF",
+          "x": 780,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_dig_0",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_DIG_1",
+          "value": "+3.3V",
+          "x": 780,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c9",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC9",
+          "value": "",
+          "x": 780,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c10",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C10",
+          "value": "1uF",
+          "x": 840,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_dig_1",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_DIG_2",
+          "value": "+3.3V",
+          "x": 840,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c10",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC10",
+          "value": "",
+          "x": 840,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c11",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C11",
+          "value": "100nF",
+          "x": 960,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_sd_0",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_SD_1",
+          "value": "+3.3V",
+          "x": 960,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c11",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC11",
+          "value": "",
+          "x": 960,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "c12",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C12",
+          "value": "1uF",
+          "x": 1020,
+          "y": 120,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_sd_1",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_SD_2",
+          "value": "+3.3V",
+          "x": 1020,
+          "y": 60,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c12",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DC12",
+          "value": "",
+          "x": 1020,
+          "y": 200,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_r8",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_CE",
+          "value": "+3.3V",
+          "x": 120,
+          "y": 240,
+          "rotation": 0
+        },
+        {
+          "id": "r8",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R8",
+          "value": "10k\u03a9",
+          "x": 120,
+          "y": 300,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_r9",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_RFEN",
+          "value": "+3.3V",
+          "x": 220,
+          "y": 240,
+          "rotation": 0
+        },
+        {
+          "id": "r9",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R9",
+          "value": "10k\u03a9",
+          "x": 220,
+          "y": 300,
+          "rotation": 0
+        },
+        {
+          "id": "c16",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C16",
+          "value": "100nF",
+          "x": 220,
+          "y": 460,
+          "rotation": 1
+        },
+        {
+          "id": "vcc_r10",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_LD",
+          "value": "+3.3V",
+          "x": 560,
+          "y": 240,
+          "rotation": 0
+        },
+        {
+          "id": "r10",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R10",
+          "value": "10k\u03a9",
+          "x": 560,
+          "y": 300,
+          "rotation": 0
+        },
+        {
+          "id": "c13",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C13",
+          "value": "1uF",
+          "x": 560,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c13",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_NF",
+          "value": "",
+          "x": 560,
+          "y": 540,
+          "rotation": 0
+        },
+        {
+          "id": "c14",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C14",
+          "value": "1uF",
+          "x": 640,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c14",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_BF",
+          "value": "",
+          "x": 640,
+          "y": 540,
+          "rotation": 0
+        },
+        {
+          "id": "c15",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C15",
+          "value": "1uF",
+          "x": 720,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c15",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_REG",
+          "value": "",
+          "x": 720,
+          "y": 540,
+          "rotation": 0
+        },
+        {
+          "id": "r1",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R1",
+          "value": "5.1k\u03a9",
+          "x": 800,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_r1",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_RSET",
+          "value": "",
+          "x": 800,
+          "y": 540,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_ep",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_EP",
+          "value": "",
+          "x": 400,
+          "y": 480,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_l1",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_L1",
+          "value": "VCC_RF",
+          "x": 680,
+          "y": 240,
+          "rotation": 0
+        },
+        {
+          "id": "l1",
+          "slug": "INDUCTOR",
+          "symType": "inductor",
+          "designator": "L1",
+          "value": "27nH",
+          "x": 680,
+          "y": 300,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_l2",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_L2",
+          "value": "VCC_RF",
+          "x": 760,
+          "y": 240,
+          "rotation": 0
+        },
+        {
+          "id": "l2",
+          "slug": "INDUCTOR",
+          "symType": "inductor",
+          "designator": "L2",
+          "value": "27nH",
+          "x": 760,
+          "y": 300,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_l3",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_L3",
+          "value": "VCC_RF",
+          "x": 840,
+          "y": 240,
+          "rotation": 0
+        },
+        {
+          "id": "l3",
+          "slug": "INDUCTOR",
+          "symType": "inductor",
+          "designator": "L3",
+          "value": "27nH",
+          "x": 840,
+          "y": 300,
+          "rotation": 0
+        },
+        {
+          "id": "vcc_l4",
+          "slug": "VCC",
+          "symType": "vcc",
+          "designator": "VCC_L4",
+          "value": "VCC_RF",
+          "x": 920,
+          "y": 240,
+          "rotation": 0
+        },
+        {
+          "id": "l4",
+          "slug": "INDUCTOR",
+          "symType": "inductor",
+          "designator": "L4",
+          "value": "27nH",
+          "x": 920,
+          "y": 300,
+          "rotation": 0
+        },
+        {
+          "id": "r4",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R4",
+          "value": "50\u03a9",
+          "x": 680,
+          "y": 400,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_r4",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_R4",
+          "value": "",
+          "x": 680,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "r5",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R5",
+          "value": "50\u03a9",
+          "x": 760,
+          "y": 400,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_r5",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_R5",
+          "value": "",
+          "x": 760,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "r6",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R6",
+          "value": "50\u03a9",
+          "x": 840,
+          "y": 400,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_r6",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_R6",
+          "value": "",
+          "x": 840,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "r7",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R7",
+          "value": "50\u03a9",
+          "x": 920,
+          "y": 400,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_r7",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_R7",
+          "value": "",
+          "x": 920,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "c17",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C17",
+          "value": "820pF",
+          "x": 200,
+          "y": 640,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c17",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_LF1",
+          "value": "",
+          "x": 200,
+          "y": 700,
+          "rotation": 0
+        },
+        {
+          "id": "r2",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R2",
+          "value": "250\u03a9",
+          "x": 260,
+          "y": 600,
+          "rotation": 1
+        },
+        {
+          "id": "c18",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C18",
+          "value": "12nF",
+          "x": 340,
+          "y": 640,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c18",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_LF2",
+          "value": "",
+          "x": 340,
+          "y": 700,
+          "rotation": 0
+        },
+        {
+          "id": "r3",
+          "slug": "RESISTOR",
+          "symType": "resistor",
+          "designator": "R3",
+          "value": "120\u03a9",
+          "x": 400,
+          "y": 600,
+          "rotation": 1
+        },
+        {
+          "id": "c19",
+          "slug": "CAPACITOR",
+          "symType": "capacitor",
+          "designator": "C19",
+          "value": "100nF",
+          "x": 480,
+          "y": 640,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_c19",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_LF3",
+          "value": "",
+          "x": 480,
+          "y": 700,
+          "rotation": 0
+        }
+      ],
+      "wires": [
+        {
+          "id": "w_vcc_r8",
+          "points": [
+            {
+              "x": 120,
+              "y": 260
+            },
+            {
+              "x": 120,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "w_r8_ce",
+          "points": [
+            {
+              "x": 120,
+              "y": 340
+            },
+            {
+              "x": 120,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_vcc_r9",
+          "points": [
+            {
+              "x": 220,
+              "y": 260
+            },
+            {
+              "x": 220,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "w_r9_rfen",
+          "points": [
+            {
+              "x": 220,
+              "y": 340
+            },
+            {
+              "x": 220,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_refin_c16",
+          "points": [
+            {
+              "x": 120,
+              "y": 460
+            },
+            {
+              "x": 200,
+              "y": 460
+            }
+          ]
+        },
+        {
+          "id": "w_c16_refin_pin",
+          "points": [
+            {
+              "x": 260,
+              "y": 460
+            },
+            {
+              "x": 310,
+              "y": 460
+            }
+          ]
+        },
+        {
+          "id": "w_vcc_r10",
+          "points": [
+            {
+              "x": 560,
+              "y": 260
+            },
+            {
+              "x": 560,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "w_r10_ld",
+          "points": [
+            {
+              "x": 560,
+              "y": 340
+            },
+            {
+              "x": 560,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_nf_c13",
+          "points": [
+            {
+              "x": 540,
+              "y": 455
+            },
+            {
+              "x": 540,
+              "y": 460
+            }
+          ]
+        },
+        {
+          "id": "w_rset_r1",
+          "points": [
+            {
+              "x": 780,
+              "y": 460
+            },
+            {
+              "x": 760,
+              "y": 460
+            }
+          ]
+        },
+        {
+          "id": "w_vcc_l1",
+          "points": [
+            {
+              "x": 680,
+              "y": 260
+            },
+            {
+              "x": 680,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "w_l1_rf",
+          "points": [
+            {
+              "x": 680,
+              "y": 340
+            },
+            {
+              "x": 680,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_vcc_l2",
+          "points": [
+            {
+              "x": 760,
+              "y": 260
+            },
+            {
+              "x": 760,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "w_l2_rf",
+          "points": [
+            {
+              "x": 760,
+              "y": 340
+            },
+            {
+              "x": 760,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_vcc_l3",
+          "points": [
+            {
+              "x": 840,
+              "y": 260
+            },
+            {
+              "x": 840,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "w_l3_rf",
+          "points": [
+            {
+              "x": 840,
+              "y": 340
+            },
+            {
+              "x": 840,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_vcc_l4",
+          "points": [
+            {
+              "x": 920,
+              "y": 260
+            },
+            {
+              "x": 920,
+              "y": 280
+            }
+          ]
+        },
+        {
+          "id": "w_l4_rf",
+          "points": [
+            {
+              "x": 920,
+              "y": 340
+            },
+            {
+              "x": 920,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_r4_rf",
+          "points": [
+            {
+              "x": 680,
+              "y": 380
+            },
+            {
+              "x": 680,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_r5_rf",
+          "points": [
+            {
+              "x": 760,
+              "y": 380
+            },
+            {
+              "x": 760,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_r6_rf",
+          "points": [
+            {
+              "x": 840,
+              "y": 380
+            },
+            {
+              "x": 840,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_r7_rf",
+          "points": [
+            {
+              "x": 920,
+              "y": 380
+            },
+            {
+              "x": 920,
+              "y": 360
+            }
+          ]
+        },
+        {
+          "id": "w_cpout_c17_t",
+          "points": [
+            {
+              "x": 120,
+              "y": 600
+            },
+            {
+              "x": 200,
+              "y": 600
+            }
+          ]
+        },
+        {
+          "id": "w_c17_node",
+          "points": [
+            {
+              "x": 200,
+              "y": 600
+            },
+            {
+              "x": 200,
+              "y": 620
+            }
+          ]
+        },
+        {
+          "id": "w_cpout_r2",
+          "points": [
+            {
+              "x": 120,
+              "y": 600
+            },
+            {
+              "x": 240,
+              "y": 600
+            }
+          ]
+        },
+        {
+          "id": "w_r2_nodeA",
+          "points": [
+            {
+              "x": 300,
+              "y": 600
+            },
+            {
+              "x": 340,
+              "y": 600
+            }
+          ]
+        },
+        {
+          "id": "w_nodeA_c18",
+          "points": [
+            {
+              "x": 340,
+              "y": 600
+            },
+            {
+              "x": 340,
+              "y": 620
+            }
+          ]
+        },
+        {
+          "id": "w_nodeA_r3",
+          "points": [
+            {
+              "x": 340,
+              "y": 600
+            },
+            {
+              "x": 380,
+              "y": 600
+            }
+          ]
+        },
+        {
+          "id": "w_r3_nodeB",
+          "points": [
+            {
+              "x": 440,
+              "y": 600
+            },
+            {
+              "x": 480,
+              "y": 600
+            }
+          ]
+        },
+        {
+          "id": "w_nodeB_c19",
+          "points": [
+            {
+              "x": 480,
+              "y": 600
+            },
+            {
+              "x": 480,
+              "y": 620
+            }
+          ]
+        },
+        {
+          "id": "w_nodeB_tune",
+          "points": [
+            {
+              "x": 480,
+              "y": 600
+            },
+            {
+              "x": 540,
+              "y": 600
+            }
+          ]
+        }
+      ],
+      "labels": [
+        {
+          "x": 60,
+          "y": 360,
+          "text": "CE"
+        },
+        {
+          "x": 150,
+          "y": 360,
+          "text": "RFOUT_EN"
+        },
+        {
+          "x": 60,
+          "y": 380,
+          "text": "SPI_CLK"
+        },
+        {
+          "x": 60,
+          "y": 400,
+          "text": "SPI_DATA"
+        },
+        {
+          "x": 60,
+          "y": 420,
+          "text": "SPI_LE"
+        },
+        {
+          "x": 60,
+          "y": 440,
+          "text": "MUX_OUT"
+        },
+        {
+          "x": 60,
+          "y": 460,
+          "text": "REF_50MHz"
+        },
+        {
+          "x": 310,
+          "y": 460,
+          "text": "REF_IN"
+        },
+        {
+          "x": 590,
+          "y": 360,
+          "text": "LD"
+        },
+        {
+          "x": 480,
+          "y": 455,
+          "text": "NOISE_FILT"
+        },
+        {
+          "x": 560,
+          "y": 460,
+          "text": "BIAS_FILT"
+        },
+        {
+          "x": 640,
+          "y": 460,
+          "text": "REG"
+        },
+        {
+          "x": 720,
+          "y": 460,
+          "text": "RSET"
+        },
+        {
+          "x": 350,
+          "y": 475,
+          "text": "EP"
+        },
+        {
+          "x": 660,
+          "y": 360,
+          "text": "RFOUTA_P"
+        },
+        {
+          "x": 740,
+          "y": 360,
+          "text": "RFOUTA_N"
+        },
+        {
+          "x": 820,
+          "y": 360,
+          "text": "RFOUTB_P"
+        },
+        {
+          "x": 900,
+          "y": 360,
+          "text": "RFOUTB_N"
+        },
+        {
+          "x": 80,
+          "y": 600,
+          "text": "CP_OUT"
+        },
+        {
+          "x": 540,
+          "y": 600,
+          "text": "TUNE"
+        }
+      ]
+    },
     "layout_example": {
       "board": {
         "width": 65.0,
