@@ -51,28 +51,50 @@ function renderSchNets(editorRef, listId, countId) {
   }
   const hn = editorRef._highlightedNet;
 
-  // Broad power net detection — matches GND, VCC, VDD, +3.3V, 3V3, 5V, VBUS, etc.
+  // Broad power net detection
   const _isPower = name => /gnd|vcc|vdd|vss|vee|vbus|vref|vbat|pwr|power|avcc|avdd|dvcc|dvdd|\bv\d|\d+v\d*|3v3|5v0|\+[\d.]+v/i.test(name.trim());
+
+  // Assign a family name for grouping similar power nets together
+  const _family = name => {
+    const u = name.toUpperCase();
+    if (/GND|GROUND/.test(u)) return 'GND';
+    if (/VCC/.test(u)) return 'VCC';
+    if (/VDD/.test(u)) return 'VDD';
+    if (/VSS/.test(u)) return 'VSS';
+    if (/VEE/.test(u)) return 'VEE';
+    if (/VBUS/.test(u)) return 'VBUS';
+    if (/VREF/.test(u)) return 'VREF';
+    if (/VBAT/.test(u)) return 'VBAT';
+    if (/PWR|POWER/.test(u)) return 'PWR';
+    // fallback: strip digits/symbols to get root token
+    return u.replace(/[_+\-\d.V]/g, '') || 'OTHER';
+  };
 
   const power  = nets.filter(n =>  _isPower(n.name));
   const signal = nets.filter(n => !_isPower(n.name));
 
-  const _header = label => `<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;padding:5px 8px 2px;">${label}</div>`;
+  // Group power nets by family, sort families alphabetically
+  const famMap = {};
+  for (const n of power) {
+    const f = _family(n.name);
+    (famMap[f] = famMap[f] || []).push(n);
+  }
+  const families = Object.keys(famMap).sort();
 
-  // Power nets → compact chips that wrap (stacked tightly)
+  const _sectionHdr = label => `<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;padding:5px 8px 2px;">${label}</div>`;
+
   const _chip = n => {
     const col = editorRef._labelColor(n.name);
     const active = hn === n.name;
     const outline = active ? `outline:2px solid #facc15;` : '';
-    return `<div title="${esc(n.name)} (${n.ports.length} pins)" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05);border:1px solid ${col}33;${outline}max-width:100%;overflow:hidden;"
+    return `<div title="${esc(n.name)} (${n.ports.length} pins)" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.05);border:1px solid ${col}44;${outline}"
       data-net="${esc(n.name)}" data-list="${esc(listId)}" data-count="${esc(countId)}"
       onclick="_schNetClick(this.dataset.list,this.dataset.count,this.dataset.net)">
       <div style="width:6px;height:6px;border-radius:50%;background:${col};flex-shrink:0;"></div>
-      <span style="color:${col};font-size:9px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(n.name)}</span>
+      <span style="color:${col};font-size:9px;font-weight:600;white-space:nowrap;">${esc(n.name)}</span>
     </div>`;
   };
 
-  // Signal nets → slim rows
   const _row = n => {
     const col = editorRef._labelColor(n.name);
     const active = hn === n.name;
@@ -87,12 +109,32 @@ function renderSchNets(editorRef, listId, countId) {
 
   let html = '';
   if (power.length) {
-    html += _header('Power');
-    html += `<div style="display:flex;flex-wrap:wrap;gap:3px;padding:2px 6px 6px;">` + power.map(_chip).join('') + `</div>`;
+    html += _sectionHdr('Power');
+    for (const fam of families) {
+      const members = famMap[fam];
+      if (members.length === 1) {
+        // Single net — just the chip, no group header
+        html += `<div style="padding:1px 6px 2px;">${_chip(members[0])}</div>`;
+      } else {
+        // Multiple nets in family — collapsible tree node
+        const famId = `nfam_${listId}_${fam}`;
+        html += `<div style="padding:1px 4px 2px;">
+          <div onclick="const ch=document.getElementById('${famId}');const open=ch.style.display!=='none';ch.style.display=open?'none':'flex';this.querySelector('.na').textContent=open?'▶':'▼';"
+              style="cursor:pointer;display:flex;align-items:center;gap:3px;padding:1px 4px;border-radius:3px;user-select:none;">
+            <span class="na" style="font-size:8px;color:var(--text-muted);width:8px;display:inline-block;">▼</span>
+            <span style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">${esc(fam)}</span>
+            <span style="font-size:9px;color:var(--text-muted);opacity:0.55;margin-left:2px;">${members.length}</span>
+          </div>
+          <div id="${famId}" style="display:flex;flex-wrap:wrap;gap:3px;padding:2px 4px 4px 14px;">
+            ${members.map(_chip).join('')}
+          </div>
+        </div>`;
+      }
+    }
   }
   if (signal.length) {
     if (power.length) html += `<div style="height:1px;background:var(--border);margin:2px 0;opacity:0.4;"></div>`;
-    html += _header('Signals');
+    html += _sectionHdr('Signals');
     html += signal.map(_row).join('');
   }
   el.innerHTML = html;

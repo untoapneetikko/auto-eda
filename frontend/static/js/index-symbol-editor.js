@@ -810,16 +810,49 @@ function updateSchInfoPanel(comp) {
       ${comp.partNumber ? `<div style="font-size:10px;color:var(--text-muted);">Part: <span style="color:var(--text);font-family:monospace;font-size:9px;">${comp.partNumber}</span></div>` : ''}
     </div>${portRows}`;
   } else {
-    const maxShow = 20;
-    const pinsToShow = pins.length ? pins.slice(0, maxShow) : compPorts.map(p => ({ name: p.name, number: null, type: null }));
-    pinsEl.innerHTML = pinsToShow.map(p => {
+    const allPins = pins.length ? pins : compPorts.map(p => ({ name: p.name, number: null, type: null }));
+    const _pinRow = p => {
       const net = pinNetMap[`${comp.id}::${p.name}`] || '—';
-      return `<div style="display:flex;gap:4px;align-items:center;padding:2px 0;border-bottom:1px solid rgba(46,50,80,0.4);">
-        <span style="color:#4b5563;font-family:monospace;min-width:16px;">${p.number??''}</span>
-        <span style="font-family:monospace;font-weight:700;color:${typeColor[p.type]||'#fcd34d'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||''}</span>
+      return `<div style="display:flex;gap:4px;align-items:center;padding:2px 0;border-bottom:1px solid rgba(46,50,80,0.3);">
+        <span style="color:#4b5563;font-family:monospace;min-width:16px;font-size:9px;">${p.number??''}</span>
+        <span style="font-family:monospace;font-weight:700;color:${typeColor[p.type]||'#fcd34d'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;">${p.name||''}</span>
         ${netInput(`${comp.id}::${p.name}`, net, p.name)}
       </div>`;
-    }).join('') + (pins.length > maxShow ? `<div style="color:var(--text-muted);padding:4px 0;font-size:10px;">+${pins.length-maxShow} more…</div>` : '');
+    };
+    // Group by type — order: power, input, output, bidirectional, passive, nc, (unknown)
+    const typeOrder = ['power','input','output','bidirectional','passive','nc'];
+    const typeLabel = { power:'Power', input:'Input', output:'Output', bidirectional:'Bidir', passive:'Passive', nc:'NC' };
+    const groups = {};
+    for (const p of allPins) {
+      const t = p.type && typeOrder.includes(p.type) ? p.type : 'other';
+      (groups[t] = groups[t] || []).push(p);
+    }
+    const orderedGroups = [...typeOrder.filter(t => groups[t]), ...(groups.other ? ['other'] : [])];
+    if (orderedGroups.length <= 1) {
+      // No meaningful grouping — flat list with cap
+      const maxShow = 20;
+      pinsEl.innerHTML = allPins.slice(0, maxShow).map(_pinRow).join('') +
+        (allPins.length > maxShow ? `<div style="color:var(--text-muted);padding:4px 0;font-size:10px;">+${allPins.length-maxShow} more…</div>` : '');
+    } else {
+      // Tree grouped by type
+      let html = '';
+      for (const t of orderedGroups) {
+        const grpPins = groups[t];
+        const col = typeColor[t] || '#fcd34d';
+        const lbl = typeLabel[t] || t;
+        const grpId = `pig_${comp.id.replace(/[^a-z0-9]/gi,'_')}_${t}`;
+        html += `<div style="margin-bottom:1px;">
+          <div onclick="const ch=document.getElementById('${grpId}');const open=ch.style.display!=='none';ch.style.display=open?'none':'block';this.querySelector('.pa').textContent=open?'▶':'▼';"
+              style="cursor:pointer;display:flex;align-items:center;gap:4px;padding:2px 2px;border-radius:3px;user-select:none;margin-top:2px;">
+            <span class="pa" style="font-size:7px;color:var(--text-muted);width:8px;display:inline-block;">▼</span>
+            <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:${col};">${lbl}</span>
+            <span style="font-size:9px;color:var(--text-muted);opacity:0.6;">${grpPins.length}</span>
+          </div>
+          <div id="${grpId}" style="padding-left:10px;">${grpPins.map(_pinRow).join('')}</div>
+        </div>`;
+      }
+      pinsEl.innerHTML = html;
+    }
   }
 
   document.getElementById('sch-info-goto-btn').style.display = comp.slug && library[comp.slug] ? 'block' : 'none';
