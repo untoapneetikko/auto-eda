@@ -454,3 +454,56 @@ function _notifyPcbSync() {
     try { frame.contentWindow.postMessage({ type: 'schematicDirty', projectId, isDirty }, '*'); } catch(_) {}
   }
 }
+
+// ── AI Circuit Generator ─────────────────────────────────────────────────────
+function showCircuitGenerator() {
+  const modal = document.getElementById('ai-gen-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+async function runCircuitGenerator() {
+  const description = (document.getElementById('ai-gen-description')?.value || '').trim();
+  if (!description) { alert('Please describe the circuit.'); return; }
+  const apiKey = (document.getElementById('ai-gen-apikey')?.value || '').trim();
+  const btn = document.getElementById('ai-gen-btn');
+  const status = document.getElementById('ai-gen-status');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating…'; }
+  if (status) status.textContent = 'Calling AI…';
+  try {
+    const res = await fetch('/api/generate-circuit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description, api_key: apiKey })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Generation failed');
+    const sch = data.schematic;
+    // Load into editor
+    if (sch.components) {
+      sch.components.forEach(c => {
+        if (!c.id) c.id = 'c' + Math.random().toString(36).slice(2,8);
+        editor.project.components.push(c);
+      });
+    }
+    if (sch.wires) {
+      sch.wires.forEach(w => {
+        if (!w.id) w.id = 'w' + Math.random().toString(36).slice(2,8);
+        editor.project.wires.push(w);
+      });
+    }
+    if (sch.netLabels) {
+      if (!editor.project.netLabels) editor.project.netLabels = [];
+      sch.netLabels.forEach(n => {
+        if (!n.id) n.id = 'n' + Math.random().toString(36).slice(2,8);
+        editor.project.netLabels.push(n);
+      });
+    }
+    editor.render();
+    document.getElementById('ai-gen-modal').style.display = 'none';
+    if (status) status.textContent = '';
+  } catch(e) {
+    if (status) status.textContent = '❌ ' + e.message;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Generate'; }
+  }
+}

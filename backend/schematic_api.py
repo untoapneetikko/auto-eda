@@ -4,7 +4,7 @@ backend/schematic_api.py — Full port of schematic_designer server.js to FastAP
 Mounts all /api/* endpoints used by index.html and pcb.html:
   /api/library, /api/footprints, /api/projects, /api/pcb-boards,
   /api/issues, /api/gen-tickets, /api/agents, /api/events,
-  /api/upload, /api/build-from-netlist, /api/build-project,
+  /api/upload, /api/build-from-netlist, /api/build-project, /api/generate-circuit,
   /api/export-library, /api/import-library, /api/export-design, /api/import-design
 """
 from __future__ import annotations
@@ -5789,6 +5789,91 @@ Body: the complete profile JSON object.
         prompt = f"Generate {ticket_type} for {slug}.\n\nProfile:\n{profile_json}"
 
     return {"prompt": prompt}
+
+
+# ── AI Circuit Generator ───────────────────────────────────────────────────────
+@router.post("/generate-circuit")
+async def api_generate_circuit(request: Request):
+    """AI circuit generator: description → schematic JSON."""
+    body = await request.json()
+    description = (body.get("description") or "").strip()
+    if not description:
+        raise HTTPException(400, "description required")
+
+    api_key = body.get("api_key") or os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        raise HTTPException(400, "Anthropic API key required. Pass api_key in request or set ANTHROPIC_API_KEY env var.")
+
+    # Get available library slugs for context
+    try:
+        index_path = LIBRARY_DIR / "index.json"
+        available = json.loads(index_path.read_text("utf-8")) if index_path.exists() else []
+        slug_list = ", ".join(c.get("slug","") for c in available[:30] if c.get("slug"))
+    except Exception:
+        slug_list = ""
+
+    system = """You are an electronics schematic generator. Given a circuit description, output a JSON object representing a schematic.
+
+Output ONLY valid JSON, no markdown, no explanation. The JSON must have this structure:
+{
+  "components": [
+    {"id":"c1","slug":"ATMEGA328P","symType":"ic","value":"ATmega328P","designator":"U1","x":200,"y":200},
+    {"id":"r1","slug":"resistor","symType":"resistor","value":"10k","designator":"R1","x":400,"y":200}
+  ],
+  "wires": [
+    {"id":"w1","points":[{"x":440,"y":200},{"x":520,"y":200}]}
+  ],
+  "netLabels": [
+    {"id":"n1","x":200,"y":140,"name":"VCC","net":"VCC"}
+  ]
+}
+
+Rules:
+- Use symType values: "ic", "resistor", "capacitor", "capacitor_pol", "inductor", "diode", "led", "npn", "pnp", "nmos", "pmos", "vcc", "gnd"
+- For ICs, use slug from the available library if possible
+- Grid is 20px — snap all x,y to multiples of 20
+- Place components spread out (x: 100-1200, y: 100-800), no overlaps
+- Connect power/ground with netLabels (name: "VCC" or "GND") rather than wires where possible
+- Wires connect pin stubs: place wire endpoints at pin tips
+- Keep it simple: only include components essential for the described circuit
+- id values must be unique strings"""
+
+    user = f"Circuit description: {description}"
+    if slug_list:
+        user += f"\n\nAvailable library components: {slug_list}"
+    user += "\n\nGenerate the schematic JSON:"
+
+    import httpx
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            },
+            json={
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 4096,
+                "system": system,
+                "messages": [{"role": "user", "content": user}]
+            }
+        )
+    if resp.status_code != 200:
+        raise HTTPException(502, f"Claude API error: {resp.text[:200]}")
+
+    text = resp.json()["content"][0]["text"].strip()
+    # Strip markdown code fences if present
+    if text.startswith("```"):
+        text = re.sub(r"^```[a-z]*\n?", "", text)
+        text = re.sub(r"\n?```$", "", text)
+
+    try:
+        schematic = json.loads(text)
+    except json.JSONDecodeError as e:
+        raise HTTPException(502, f"AI returned invalid JSON: {e}")
+
+    return {"ok": True, "schematic": schematic}
 
 
 # ── Startup: rebuild index ─────────────────────────────────────────────────────
