@@ -1,0 +1,4023 @@
+{
+  "saved_at": "2026-03-16T08:35:29.185384+00:00",
+  "label": "AI \u2014 GT-017",
+  "profile": {
+    "part_number": "MAX2870ETJ+",
+    "description": "23.5MHz to 6000MHz Fractional/Integer-N Synthesizer/VCO with integrated VCOs, dual differential outputs, 4-wire SPI interface, 32-pin TQFN",
+    "manufacturer": "Maxim Integrated",
+    "package_types": [
+      "32-lead TQFN-EP 5x5x0.8mm"
+    ],
+    "supply_voltage_range": "3.0V to 3.6V (typ 3.3V)",
+    "frequency_range": "23.5MHz to 6000MHz",
+    "impedance": "50\u03a9",
+    "designator": "U",
+    "absolute_max": {
+      "vcc_to_gnd": "-0.3V to +3.9V",
+      "all_other_pins_to_gnd": "-0.3V to VCC + 0.3V",
+      "continuous_power_dissipation_70C": "2758.6mW (derate 34.5mW/\u00b0C above +70\u00b0C)",
+      "junction_temperature": "+150\u00b0C",
+      "operating_temp_range": "-40\u00b0C to +85\u00b0C",
+      "storage_temp": "-65\u00b0C to +150\u00b0C",
+      "lead_temperature_soldering_10s": "+300\u00b0C",
+      "reflow_temp": "+260\u00b0C"
+    },
+    "key_performance": {
+      "frequency_range": "23.5MHz to 6000MHz",
+      "vco_fundamental_range": "3000MHz to 6000MHz",
+      "output_dividers": "1/2/4/8/16/32/64/128",
+      "pfd_integer_n_max": "105MHz",
+      "pfd_fractional_n_max": "50MHz",
+      "ref_input_frequency_range": "10MHz to 200MHz",
+      "output_power_range": "-4dBm to +5dBm",
+      "supply_voltage_typ": "3.3V",
+      "supply_current_both_channels_max": "180mA",
+      "supply_current_single_channel_min": "8.5mA",
+      "supply_current_sleep": "1mA",
+      "vco_phase_noise_3GHz_10kHz": "-83.5 dBc/Hz",
+      "vco_phase_noise_3GHz_100kHz": "-111 dBc/Hz",
+      "vco_phase_noise_3GHz_1MHz": "-136 dBc/Hz",
+      "integrated_rms_jitter": "0.25ps",
+      "cp_current_max_rset_5k1": "5.12mA (CP[3:0]=1111)",
+      "cp_current_min_rset_5k1": "0.32mA (CP[3:0]=0000)",
+      "logic_compatible": "1.8V CMOS"
+    },
+    "pins": [
+      {
+        "number": 1,
+        "name": "CLK",
+        "type": "input",
+        "description": "Serial Clock Input. Data is latched into the 32-bit shift register on the rising edge of CLK.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to SPI clock. Min pulse-width high/low 25ns; max clock period 50ns.",
+        "ambiguous": false
+      },
+      {
+        "number": 2,
+        "name": "DATA",
+        "type": "input",
+        "description": "Serial Data Input. Serial data is loaded MSB first; the 3 LSBs identify the register address.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to SPI MOSI. Data setup time 25ns, hold time 25ns.",
+        "ambiguous": false
+      },
+      {
+        "number": 3,
+        "name": "LE",
+        "type": "input",
+        "description": "Load Enable Input. When LE goes high, data stored in the shift register is loaded into the appropriate latches.",
+        "active": "high",
+        "internal_pull": null,
+        "requirements": "Connect to SPI CS/LE. Setup time 20ns, hold time 10ns, minimum pulse-width high 20ns.",
+        "ambiguous": false
+      },
+      {
+        "number": 4,
+        "name": "CE",
+        "type": "input",
+        "description": "Chip Enable. A logic-low powers the part down and the charge pump becomes high impedance.",
+        "active": "high",
+        "internal_pull": null,
+        "requirements": "Pull high (to VCC_DIG via 10k\u03a9) for normal operation. Drive low for hardware shutdown.",
+        "ambiguous": false
+      },
+      {
+        "number": 5,
+        "name": "SW",
+        "type": "passive",
+        "description": "Fast-Lock Switch. Connect to the loop filter when using fast-lock mode. Leave open/no connect in normal mode.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "In normal mode: leave open. In fast-lock mode: connect to tap between R2A and R2B in the loop filter.",
+        "ambiguous": false
+      },
+      {
+        "number": 6,
+        "name": "VCC_CP",
+        "type": "power",
+        "description": "Power Supply for Charge Pump. Place decoupling capacitors as close as possible to the pin.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF capacitors to GND as close as possible.",
+        "ambiguous": false
+      },
+      {
+        "number": 7,
+        "name": "CP_OUT",
+        "type": "output",
+        "description": "Charge-Pump Output. Connect to external loop filter input.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to external passive loop filter (R2A/R2B + C1/C2/C3 network), then to TUNE pin.",
+        "ambiguous": false
+      },
+      {
+        "number": 8,
+        "name": "GND_CP",
+        "type": "power",
+        "description": "Ground for Charge-Pump. Connect to board ground, not to the exposed paddle.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect directly to board ground plane. Do NOT connect to EP paddle directly.",
+        "ambiguous": false
+      },
+      {
+        "number": 9,
+        "name": "GND_PLL",
+        "type": "power",
+        "description": "Ground for PLL. Connect to main board ground plane, not to the exposed paddle.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect directly to main board ground plane. Do NOT connect to EP paddle directly.",
+        "ambiguous": false
+      },
+      {
+        "number": 10,
+        "name": "VCC_PLL",
+        "type": "power",
+        "description": "Power Supply for PLL. Place decoupling capacitors as close as possible to the pin.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF capacitors to GND as close as possible.",
+        "ambiguous": false
+      },
+      {
+        "number": 11,
+        "name": "GND_RF",
+        "type": "power",
+        "description": "Ground for RF Outputs. Connect to board ground plane, not to the exposed paddle.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect directly to board RF ground plane. Do NOT connect to EP paddle directly.",
+        "ambiguous": false
+      },
+      {
+        "number": 12,
+        "name": "RFOUTA_P",
+        "type": "output",
+        "description": "Open Collector Positive RF Output A. Connect to supply through RF choke or 50\u03a9 load.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to VCC_RF via 27nH RF choke (or 50\u03a9 termination resistor). AC-couple output via 100pF capacitor to 50\u03a9 load.",
+        "ambiguous": false
+      },
+      {
+        "number": 13,
+        "name": "RFOUTA_N",
+        "type": "output",
+        "description": "Open Collector Negative RF Output A. Connect to supply through RF choke or 50\u03a9 load.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to VCC_RF via 27nH RF choke (or 50\u03a9 termination resistor) when used differentially. Terminate to VCC_RF via 27nH + 50\u03a9 if unused output.",
+        "ambiguous": false
+      },
+      {
+        "number": 14,
+        "name": "RFOUTB_P",
+        "type": "output",
+        "description": "Open Collector Positive RF Output B. Connect to supply through RF choke or 50\u03a9 load.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to VCC_RF via 27nH RF choke (or 50\u03a9 termination resistor). AC-couple output via 100pF capacitor to 50\u03a9 load.",
+        "ambiguous": false
+      },
+      {
+        "number": 15,
+        "name": "RFOUTB_N",
+        "type": "output",
+        "description": "Open Collector Negative RF Output B. Connect to supply through RF choke or 50\u03a9 load.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to VCC_RF via 27nH RF choke (or 50\u03a9 termination resistor) when used differentially. Terminate to VCC_RF via 27nH + 50\u03a9 if unused.",
+        "ambiguous": false
+      },
+      {
+        "number": 16,
+        "name": "VCC_RF",
+        "type": "power",
+        "description": "Power Supply for RF Output and Dividers. Place decoupling capacitors as close as possible to the pin.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to 3.0V\u20133.6V supply (dedicated LDO recommended). Decouple with 100nF + 10nF to GND. Also supplies RF output choke bias.",
+        "ambiguous": false
+      },
+      {
+        "number": 17,
+        "name": "VCC_VCO",
+        "type": "power",
+        "description": "VCO Power Supply. Place decoupling capacitors to the analog ground plane.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF capacitors to GND_VCO (analog ground).",
+        "ambiguous": false
+      },
+      {
+        "number": 18,
+        "name": "GND_VCO",
+        "type": "power",
+        "description": "Ground for VCO. Connect to main board ground plane, not directly to the paddle.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to main board analog ground plane. Do NOT connect directly to EP paddle.",
+        "ambiguous": false
+      },
+      {
+        "number": 19,
+        "name": "NOISE_FILT",
+        "type": "passive",
+        "description": "VCO Noise Decoupling. Place a 1\u00b5F capacitor to ground.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect a 1\u00b5F capacitor directly to GND as close as possible to this pin.",
+        "ambiguous": false
+      },
+      {
+        "number": 20,
+        "name": "TUNE",
+        "type": "input",
+        "description": "Control Input to the VCO. Connect to output of external loop filter.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to output node of the passive loop filter (after C3). VCO tune voltage range: 0.5V to 2.5V.",
+        "ambiguous": false
+      },
+      {
+        "number": 21,
+        "name": "GND_TUNE",
+        "type": "power",
+        "description": "Ground for Control Input to the VCO. Connect to main board ground plane, not directly to the paddle.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to main board ground plane. Do NOT connect directly to EP paddle.",
+        "ambiguous": false
+      },
+      {
+        "number": 22,
+        "name": "RSET",
+        "type": "passive",
+        "description": "Charge-Pump Current Range Input. Connect an external resistor to ground to set the minimum CP current. ICP = 1.63/RSET \u00d7 (1 + CP[3:0]).",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect resistor from this pin to GND. RSET range: 2.7k\u03a9 to 10k\u03a9. Typical value: 5.1k\u03a9.",
+        "ambiguous": false
+      },
+      {
+        "number": 23,
+        "name": "BIAS_FILT",
+        "type": "passive",
+        "description": "VCO Noise Decoupling. Place a 1\u00b5F capacitor to ground.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect a 1\u00b5F capacitor directly to GND as close as possible to this pin.",
+        "ambiguous": false
+      },
+      {
+        "number": 24,
+        "name": "REG",
+        "type": "passive",
+        "description": "Reference Voltage Compensation. Place a 1\u00b5F capacitor to ground.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect a 1\u00b5F capacitor directly to GND as close as possible to this pin.",
+        "ambiguous": false
+      },
+      {
+        "number": 25,
+        "name": "LD",
+        "type": "output",
+        "description": "Lock Detect Output. Logic-high when PLL is locked, logic-low when unlocked. In analog lock detect mode, this is an open-drain output requiring external pullup.",
+        "active": "high",
+        "internal_pull": null,
+        "requirements": "Connect to GPIO for lock monitoring. For analog lock detect mode (LD=10 in register): add 10k\u03a9 pullup to VCC_DIG.",
+        "ambiguous": false
+      },
+      {
+        "number": 26,
+        "name": "RFOUT_EN",
+        "type": "input",
+        "description": "RF Output Enable. A logic-low disables the RF outputs.",
+        "active": "high",
+        "internal_pull": null,
+        "requirements": "Drive high to enable RF outputs, low to mute. Connect to GPIO or pull high via 10k\u03a9 for always-on.",
+        "ambiguous": false
+      },
+      {
+        "number": 27,
+        "name": "GND_DIG",
+        "type": "power",
+        "description": "Ground for Digital circuitry. Connect to main board ground plane, not directly to the paddle.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to main board digital ground plane. Do NOT connect directly to EP paddle.",
+        "ambiguous": false
+      },
+      {
+        "number": 28,
+        "name": "VCC_DIG",
+        "type": "power",
+        "description": "Power Supply for Digital Circuitry. Place decoupling capacitors as close as possible to pin.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF to GND_DIG as close as possible to pin.",
+        "ambiguous": false
+      },
+      {
+        "number": 29,
+        "name": "REF_IN",
+        "type": "input",
+        "description": "Reference Frequency Input. High-impedance input with nominal bias of VCC_DIG/2. AC-couple to reference signal.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "AC-couple reference oscillator (10\u2013200MHz) via series capacitor (e.g. 100nF). Input sensitivity: 0.7 Vpp. Input capacitance: 2pF.",
+        "ambiguous": false
+      },
+      {
+        "number": 30,
+        "name": "MUX_OUT",
+        "type": "output",
+        "description": "Multiplexed Output and Serial Data Out. Configurable via MUX bits (register 2, bits 28:26) to output lock detect, digital lock, divided reference, R divider output, or serial readback data.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to GPIO for status monitoring or leave unconnected if not used. Used as MISO for register readback. Output setup time 10ns, hold time 10ns.",
+        "ambiguous": false
+      },
+      {
+        "number": 31,
+        "name": "GND_SD",
+        "type": "power",
+        "description": "Ground for Sigma-Delta Modulator. Connect to main board ground plane, not directly to the paddle.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to main board ground plane. Do NOT connect directly to EP paddle.",
+        "ambiguous": false
+      },
+      {
+        "number": 32,
+        "name": "VCC_SD",
+        "type": "power",
+        "description": "Power Supply for Sigma-Delta Modulator. Place decoupling capacitors as close as possible to the pin.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF to GND as close as possible to pin.",
+        "ambiguous": false
+      },
+      {
+        "number": 33,
+        "name": "EP",
+        "type": "power",
+        "description": "Exposed Pad (thermal/ground pad on package bottom). Must be connected to board ground.",
+        "active": null,
+        "internal_pull": null,
+        "requirements": "Solder to board ground plane via thermal vias. This is the primary heat-dissipation path and also the signal ground reference for the IC.",
+        "ambiguous": false
+      }
+    ],
+    "footprint": {
+      "standard": "Package_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.7x3.7mm",
+      "pad_count": 33,
+      "pitch_mm": 0.5,
+      "courtyard_mm": {
+        "x": 5.3,
+        "y": 5.3
+      },
+      "ipc_land_pattern": "QFN50P500X500X80-33N"
+    },
+    "electrical": {
+      "vcc_min": 3.0,
+      "vcc_max": 3.6,
+      "i_max_ma": 180
+    },
+    "example_application": {
+      "description": "Wideband PLL frequency synthesizer: MAX2870 driven by external TCXO/OCXO reference (10\u2013200MHz at REF_IN). Loop filter (R2A, R2B, C1, C2, C3) connects CP_OUT to TUNE pin for closed-loop operation. Dual differential RF outputs (RFOUTA and RFOUTB) each biased via 27nH RF choke to VCC_RF, with AC-coupled 50\u03a9 output. SPI interface (CLK, DATA, LE) controlled by MCU/FPGA. Three separate LDOs supply VCC_RF, VCC_DIG, and VCC_PLL for best noise isolation.",
+      "required_passives": [
+        "100nF + 10nF decoupling capacitors on each VCC pin (VCC_CP, VCC_PLL, VCC_RF, VCC_VCO, VCC_DIG, VCC_SD)",
+        "1\u00b5F capacitor from NOISE_FILT to GND",
+        "1\u00b5F capacitor from BIAS_FILT to GND",
+        "1\u00b5F capacitor from REG to GND",
+        "5.1k\u03a9 resistor from RSET to GND",
+        "Loop filter: R2A (30\u03a9), R2B (90\u03a9), C1 (0.012\u00b5F), C2 (0.1\u00b5F), C3 (820pF) \u2014 values depend on desired loop bandwidth",
+        "27nH RF choke from each RF output pin (RFOUTA_P, RFOUTA_N, RFOUTB_P, RFOUTB_N) to VCC_RF",
+        "100pF AC-coupling capacitor on RF output to 50\u03a9 load",
+        "100nF AC-coupling capacitor at REF_IN",
+        "10k\u03a9 pullup on LD (optional, required for analog lock detect mode)"
+      ],
+      "typical_schematic_notes": "Use star power-supply routing with large decoupling capacitor at central VCC node; branch out to each VCC_ pin with its own bypass cap. Connect all GND_ pins (GND_CP, GND_PLL, GND_RF, GND_VCO, GND_TUNE, GND_DIG, GND_SD) to main board ground plane \u2014 NOT directly to the exposed paddle. Solder EP to ground plane via thermal vias. For fast-lock mode, connect SW to the midpoint of the split shunt resistor in the loop filter. Program all registers twice after power-up with 20ms pause between writes."
+    },
+    "tags": [
+      "PLL",
+      "VCO",
+      "synthesizer",
+      "fractional-N",
+      "integer-N",
+      "RF",
+      "frequency-synthesizer",
+      "SPI",
+      "wideband",
+      "Maxim"
+    ],
+    "status": "parsed",
+    "confidence": "HIGH",
+    "extraction_note": null,
+    "filename": "MAX2870_-_23.5MHz_to_6000MHz_Fractional_Integer-N_Synthesizer_VCO_-_MAX2870.pdf",
+    "page_count": 25,
+    "raw_text_length": 41120,
+    "uploaded_at": "2026-03-16T08:17:50.957226+00:00",
+    "parsed_at": "2026-03-16T08:21:56.816372Z",
+    "human_corrections": [],
+    "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+    "layout_example": {
+      "board": {
+        "width": 50.0,
+        "height": 50.0,
+        "units": "mm"
+      },
+      "components": [
+        {
+          "id": "U1",
+          "ref": "U1",
+          "value": "MAX2870ETJ+",
+          "footprint": "QFN-32-1EP",
+          "x": 24.278,
+          "y": 24.983,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "name": "CLK",
+              "net": "SPI_CLK",
+              "x": -2.5,
+              "y": -1.75
+            },
+            {
+              "number": "2",
+              "name": "DATA",
+              "net": "SPI_DATA",
+              "x": -2.5,
+              "y": -1.25
+            },
+            {
+              "number": "3",
+              "name": "LE",
+              "net": "SPI_LE",
+              "x": -2.5,
+              "y": -0.75
+            },
+            {
+              "number": "4",
+              "name": "CE",
+              "net": "CE_NET",
+              "x": -2.5,
+              "y": -0.25
+            },
+            {
+              "number": "5",
+              "name": "SW",
+              "net": "NC",
+              "x": -2.5,
+              "y": 0.25
+            },
+            {
+              "number": "6",
+              "name": "VCC_CP",
+              "net": "VCC_CP",
+              "x": -2.5,
+              "y": 0.75
+            },
+            {
+              "number": "7",
+              "name": "CP_OUT",
+              "net": "CP_OUT_NET",
+              "x": -2.5,
+              "y": 1.25
+            },
+            {
+              "number": "8",
+              "name": "GND_CP",
+              "net": "GND",
+              "x": -2.5,
+              "y": 1.75
+            },
+            {
+              "number": "9",
+              "name": "GND_PLL",
+              "net": "GND",
+              "x": -1.75,
+              "y": 2.5
+            },
+            {
+              "number": "10",
+              "name": "VCC_PLL",
+              "net": "VCC_PLL",
+              "x": -1.25,
+              "y": 2.5
+            },
+            {
+              "number": "11",
+              "name": "GND_RF",
+              "net": "GND",
+              "x": -0.75,
+              "y": 2.5
+            },
+            {
+              "number": "12",
+              "name": "RFOUTA_P",
+              "net": "RFOUTA_P",
+              "x": -0.25,
+              "y": 2.5
+            },
+            {
+              "number": "13",
+              "name": "RFOUTA_N",
+              "net": "RFOUTA_N",
+              "x": 0.25,
+              "y": 2.5
+            },
+            {
+              "number": "14",
+              "name": "RFOUTB_P",
+              "net": "RFOUTB_P",
+              "x": 0.75,
+              "y": 2.5
+            },
+            {
+              "number": "15",
+              "name": "RFOUTB_N",
+              "net": "RFOUTB_N",
+              "x": 1.25,
+              "y": 2.5
+            },
+            {
+              "number": "16",
+              "name": "VCC_RF",
+              "net": "VCC_RF",
+              "x": 1.75,
+              "y": 2.5
+            },
+            {
+              "number": "17",
+              "name": "VCC_VCO",
+              "net": "VCC_VCO",
+              "x": 2.5,
+              "y": 1.75
+            },
+            {
+              "number": "18",
+              "name": "GND_VCO",
+              "net": "GND",
+              "x": 2.5,
+              "y": 1.25
+            },
+            {
+              "number": "19",
+              "name": "NOISE_FILT",
+              "net": "NFILT_NET",
+              "x": 2.5,
+              "y": 0.75
+            },
+            {
+              "number": "20",
+              "name": "TUNE",
+              "net": "TUNE_NET",
+              "x": 2.5,
+              "y": 0.25
+            },
+            {
+              "number": "21",
+              "name": "GND_TUNE",
+              "net": "GND",
+              "x": 2.5,
+              "y": -0.25
+            },
+            {
+              "number": "22",
+              "name": "RSET",
+              "net": "RSET_NET",
+              "x": 2.5,
+              "y": -0.75
+            },
+            {
+              "number": "23",
+              "name": "BIAS_FILT",
+              "net": "BFILT_NET",
+              "x": 2.5,
+              "y": -1.25
+            },
+            {
+              "number": "24",
+              "name": "REG",
+              "net": "REG_NET",
+              "x": 2.5,
+              "y": -1.75
+            },
+            {
+              "number": "25",
+              "name": "LD",
+              "net": "LD_NET",
+              "x": 1.75,
+              "y": -2.5
+            },
+            {
+              "number": "26",
+              "name": "RFOUT_EN",
+              "net": "RFOUT_EN_NET",
+              "x": 1.25,
+              "y": -2.5
+            },
+            {
+              "number": "27",
+              "name": "GND_DIG",
+              "net": "GND",
+              "x": 0.75,
+              "y": -2.5
+            },
+            {
+              "number": "28",
+              "name": "VCC_DIG",
+              "net": "VCC_DIG",
+              "x": 0.25,
+              "y": -2.5
+            },
+            {
+              "number": "29",
+              "name": "REF_IN",
+              "net": "REFIN_NET",
+              "x": -0.25,
+              "y": -2.5
+            },
+            {
+              "number": "30",
+              "name": "MUX_OUT",
+              "net": "MUX_OUT_NET",
+              "x": -0.75,
+              "y": -2.5
+            },
+            {
+              "number": "31",
+              "name": "GND_SD",
+              "net": "GND",
+              "x": -1.25,
+              "y": -2.5
+            },
+            {
+              "number": "32",
+              "name": "VCC_SD",
+              "net": "VCC_SD",
+              "x": -1.75,
+              "y": -2.5
+            },
+            {
+              "number": "33",
+              "name": "EP",
+              "net": "GND",
+              "x": 0.0,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C1",
+          "ref": "C1",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 23.263,
+          "y": 25.024,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_CP",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C2",
+          "ref": "C2",
+          "value": "10nF",
+          "footprint": "0402",
+          "x": 19.778,
+          "y": 25.174,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_CP",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C3",
+          "ref": "C3",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 20.278,
+          "y": 26.674,
+          "rotation": 270,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_PLL",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C4",
+          "ref": "C4",
+          "value": "10nF",
+          "footprint": "0402",
+          "x": 20.778,
+          "y": 28.174,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_PLL",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C5",
+          "ref": "C5",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 26.778,
+          "y": 29.984,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_RF",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C6",
+          "ref": "C6",
+          "value": "10nF",
+          "footprint": "0402",
+          "x": 23.278,
+          "y": 29.485,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_RF",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C7",
+          "ref": "C7",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 27.778,
+          "y": 25.424,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_VCO",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C8",
+          "ref": "C8",
+          "value": "10nF",
+          "footprint": "0402",
+          "x": 28.278,
+          "y": 23.924,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_VCO",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C9",
+          "ref": "C9",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 24.028,
+          "y": 18.476,
+          "rotation": 270,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "GND",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_DIG",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C10",
+          "ref": "C10",
+          "value": "10nF",
+          "footprint": "0402",
+          "x": 25.528,
+          "y": 18.977,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "GND",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_DIG",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C11",
+          "ref": "C11",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 20.278,
+          "y": 23.674,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "GND",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_SD",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C12",
+          "ref": "C12",
+          "value": "10nF",
+          "footprint": "0402",
+          "x": 20.278,
+          "y": 22.674,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "GND",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_SD",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C13",
+          "ref": "C13",
+          "value": "1uF",
+          "footprint": "0402",
+          "x": 28.278,
+          "y": 22.924,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "NFILT_NET",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C14",
+          "ref": "C14",
+          "value": "1uF",
+          "footprint": "0402",
+          "x": 27.028,
+          "y": 21.174,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "BFILT_NET",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "C15",
+          "ref": "C15",
+          "value": "1uF",
+          "footprint": "0402",
+          "x": 27.028,
+          "y": 20.174,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "REG_NET",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "R1",
+          "ref": "R1",
+          "value": "5.1k",
+          "footprint": "0402",
+          "x": 29.278,
+          "y": 25.424,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "RSET_NET",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "R2",
+          "ref": "R2",
+          "value": "10k",
+          "footprint": "0402",
+          "x": 22.393,
+          "y": 20.761,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_DIG",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "CE_NET",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "R3",
+          "ref": "R3",
+          "value": "10k",
+          "footprint": "0402",
+          "x": 25.028,
+          "y": 21.479,
+          "rotation": 270,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_DIG",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "RFOUT_EN_NET",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "R4",
+          "ref": "R4",
+          "value": "10k",
+          "footprint": "0402",
+          "x": 24.028,
+          "y": 19.478,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "VCC_DIG",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "LD_NET",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "R2A",
+          "ref": "R2A",
+          "value": "30R",
+          "footprint": "0402",
+          "x": 20.778,
+          "y": 20.674,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "CP_OUT_NET",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "LF_NODE_A",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "CLF2",
+          "ref": "CLF2",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 29.278,
+          "y": 28.424,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "LF_NODE_A",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "CLF1",
+          "ref": "CLF1",
+          "value": "12nF",
+          "footprint": "0402",
+          "x": 28.278,
+          "y": 29.424,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "LF_NODE_A",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "R2B",
+          "ref": "R2B",
+          "value": "90R",
+          "footprint": "0402",
+          "x": 29.278,
+          "y": 27.424,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "LF_NODE_A",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "TUNE_NET",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "CLF3",
+          "ref": "CLF3",
+          "value": "820pF",
+          "footprint": "0402",
+          "x": 29.278,
+          "y": 26.424,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "TUNE_NET",
+              "x": -0.5,
+              "y": 0.0
+            },
+            {
+              "number": "2",
+              "net": "GND",
+              "x": 0.5,
+              "y": 0.0
+            }
+          ]
+        },
+        {
+          "id": "L1",
+          "ref": "L1",
+          "value": "27nH",
+          "footprint": "0402",
+          "x": 24.278,
+          "y": 28.484,
+          "rotation": 180,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "RFOUTA_P",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_RF",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "L2",
+          "ref": "L2",
+          "value": "27nH",
+          "footprint": "0402",
+          "x": 26.278,
+          "y": 28.483,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "RFOUTA_N",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_RF",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "L3",
+          "ref": "L3",
+          "value": "27nH",
+          "footprint": "0402",
+          "x": 25.278,
+          "y": 29.485,
+          "rotation": 270,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "RFOUTB_P",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_RF",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "L4",
+          "ref": "L4",
+          "value": "27nH",
+          "footprint": "0402",
+          "x": 27.778,
+          "y": 27.674,
+          "rotation": 0,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "RFOUTB_N",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "VCC_RF",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C16",
+          "ref": "C16",
+          "value": "100pF",
+          "footprint": "0402",
+          "x": 22.278,
+          "y": 28.484,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "RFOUTA_P",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "RF_OUT_A",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C17",
+          "ref": "C17",
+          "value": "100pF",
+          "footprint": "0402",
+          "x": 25.278,
+          "y": 30.486,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "RFOUTB_P",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "RF_OUT_B",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        },
+        {
+          "id": "C18",
+          "ref": "C18",
+          "value": "100nF",
+          "footprint": "0402",
+          "x": 24.278,
+          "y": 20.478,
+          "rotation": 90,
+          "layer": "F",
+          "pads": [
+            {
+              "number": "1",
+              "net": "REFIN_SRC",
+              "x": 0.0,
+              "y": -0.5
+            },
+            {
+              "number": "2",
+              "net": "REFIN_NET",
+              "x": 0.0,
+              "y": 0.5
+            }
+          ]
+        }
+      ],
+      "nets": [
+        {
+          "name": "BFILT_NET",
+          "pads": [
+            "C14.1",
+            "U1.23"
+          ]
+        },
+        {
+          "name": "CE_NET",
+          "pads": [
+            "R2.2",
+            "U1.4"
+          ]
+        },
+        {
+          "name": "CP_OUT_NET",
+          "pads": [
+            "R2A.1",
+            "U1.7"
+          ]
+        },
+        {
+          "name": "GND",
+          "pads": [
+            "C1.2",
+            "C10.1",
+            "C11.1",
+            "C12.1",
+            "C13.2",
+            "C14.2",
+            "C15.2",
+            "C2.2",
+            "C3.2",
+            "C4.2",
+            "C5.2",
+            "C6.2",
+            "C7.2",
+            "C8.2",
+            "C9.1",
+            "CLF1.2",
+            "CLF2.2",
+            "CLF3.2",
+            "R1.2",
+            "U1.11",
+            "U1.18",
+            "U1.21",
+            "U1.27",
+            "U1.31",
+            "U1.33",
+            "U1.8",
+            "U1.9"
+          ]
+        },
+        {
+          "name": "LD_NET",
+          "pads": [
+            "R4.2",
+            "U1.25"
+          ]
+        },
+        {
+          "name": "LF_NODE_A",
+          "pads": [
+            "CLF1.1",
+            "CLF2.1",
+            "R2A.2",
+            "R2B.1"
+          ]
+        },
+        {
+          "name": "NFILT_NET",
+          "pads": [
+            "C13.1",
+            "U1.19"
+          ]
+        },
+        {
+          "name": "REFIN_NET",
+          "pads": [
+            "C18.2",
+            "U1.29"
+          ]
+        },
+        {
+          "name": "REG_NET",
+          "pads": [
+            "C15.1",
+            "U1.24"
+          ]
+        },
+        {
+          "name": "RFOUTA_N",
+          "pads": [
+            "L2.1",
+            "U1.13"
+          ]
+        },
+        {
+          "name": "RFOUTA_P",
+          "pads": [
+            "C16.1",
+            "L1.1",
+            "U1.12"
+          ]
+        },
+        {
+          "name": "RFOUTB_N",
+          "pads": [
+            "L4.1",
+            "U1.15"
+          ]
+        },
+        {
+          "name": "RFOUTB_P",
+          "pads": [
+            "C17.1",
+            "L3.1",
+            "U1.14"
+          ]
+        },
+        {
+          "name": "RFOUT_EN_NET",
+          "pads": [
+            "R3.2",
+            "U1.26"
+          ]
+        },
+        {
+          "name": "RSET_NET",
+          "pads": [
+            "R1.1",
+            "U1.22"
+          ]
+        },
+        {
+          "name": "TUNE_NET",
+          "pads": [
+            "CLF3.1",
+            "R2B.2",
+            "U1.20"
+          ]
+        },
+        {
+          "name": "VCC_CP",
+          "pads": [
+            "C1.1",
+            "C2.1",
+            "U1.6"
+          ]
+        },
+        {
+          "name": "VCC_DIG",
+          "pads": [
+            "C10.2",
+            "C9.2",
+            "R2.1",
+            "R3.1",
+            "R4.1",
+            "U1.28"
+          ]
+        },
+        {
+          "name": "VCC_PLL",
+          "pads": [
+            "C3.1",
+            "C4.1",
+            "U1.10"
+          ]
+        },
+        {
+          "name": "VCC_RF",
+          "pads": [
+            "C5.1",
+            "C6.1",
+            "L1.2",
+            "L2.2",
+            "L3.2",
+            "L4.2",
+            "U1.16"
+          ]
+        },
+        {
+          "name": "VCC_SD",
+          "pads": [
+            "C11.2",
+            "C12.2",
+            "U1.32"
+          ]
+        },
+        {
+          "name": "VCC_VCO",
+          "pads": [
+            "C7.1",
+            "C8.1",
+            "U1.17"
+          ]
+        }
+      ],
+      "traces": [
+        {
+          "net": "VCC_CP",
+          "layer": "F.Cu",
+          "width": 0.4,
+          "segments": [
+            {
+              "start": {
+                "x": 21.778,
+                "y": 25.733
+              },
+              "end": {
+                "x": 21.75,
+                "y": 25.5
+              }
+            },
+            {
+              "start": {
+                "x": 21.75,
+                "y": 25.5
+              },
+              "end": {
+                "x": 21.75,
+                "y": 25.2
+              }
+            },
+            {
+              "start": {
+                "x": 21.75,
+                "y": 25.2
+              },
+              "end": {
+                "x": 21.95,
+                "y": 25.0
+              }
+            },
+            {
+              "start": {
+                "x": 21.95,
+                "y": 25.0
+              },
+              "end": {
+                "x": 22.75,
+                "y": 25.0
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 25.0
+              },
+              "end": {
+                "x": 22.763,
+                "y": 25.024
+              }
+            },
+            {
+              "start": {
+                "x": 21.778,
+                "y": 25.733
+              },
+              "end": {
+                "x": 21.5,
+                "y": 25.75
+              }
+            },
+            {
+              "start": {
+                "x": 21.5,
+                "y": 25.75
+              },
+              "end": {
+                "x": 20.0,
+                "y": 25.75
+              }
+            },
+            {
+              "start": {
+                "x": 20.0,
+                "y": 25.75
+              },
+              "end": {
+                "x": 19.75,
+                "y": 25.5
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 25.5
+              },
+              "end": {
+                "x": 19.75,
+                "y": 24.75
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 24.75
+              },
+              "end": {
+                "x": 19.778,
+                "y": 24.674
+              }
+            }
+          ]
+        },
+        {
+          "net": "VCC_DIG",
+          "layer": "F.Cu",
+          "width": 0.4,
+          "segments": [
+            {
+              "start": {
+                "x": 24.528,
+                "y": 22.483
+              },
+              "end": {
+                "x": 24.5,
+                "y": 22.25
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 22.25
+              },
+              "end": {
+                "x": 24.5,
+                "y": 21.5
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 21.5
+              },
+              "end": {
+                "x": 24.528,
+                "y": 21.479
+              }
+            },
+            {
+              "start": {
+                "x": 24.528,
+                "y": 21.479
+              },
+              "end": {
+                "x": 24.5,
+                "y": 21.25
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 21.25
+              },
+              "end": {
+                "x": 24.5,
+                "y": 20.85
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 20.85
+              },
+              "end": {
+                "x": 24.4,
+                "y": 20.75
+              }
+            },
+            {
+              "start": {
+                "x": 24.4,
+                "y": 20.75
+              },
+              "end": {
+                "x": 24.25,
+                "y": 20.75
+              }
+            },
+            {
+              "start": {
+                "x": 24.528,
+                "y": 19.478
+              },
+              "end": {
+                "x": 24.75,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 24.75,
+                "y": 19.5
+              },
+              "end": {
+                "x": 25.5,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 25.5,
+                "y": 19.5
+              },
+              "end": {
+                "x": 25.528,
+                "y": 19.477
+              }
+            },
+            {
+              "start": {
+                "x": 24.528,
+                "y": 19.478
+              },
+              "end": {
+                "x": 24.5,
+                "y": 19.25
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 19.25
+              },
+              "end": {
+                "x": 24.5,
+                "y": 18.5
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 18.5
+              },
+              "end": {
+                "x": 24.528,
+                "y": 18.476
+              }
+            },
+            {
+              "start": {
+                "x": 24.528,
+                "y": 19.478
+              },
+              "end": {
+                "x": 24.25,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 24.25,
+                "y": 19.5
+              },
+              "end": {
+                "x": 22.75,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 19.5
+              },
+              "end": {
+                "x": 22.5,
+                "y": 19.75
+              }
+            },
+            {
+              "start": {
+                "x": 22.5,
+                "y": 19.75
+              },
+              "end": {
+                "x": 22.5,
+                "y": 20.25
+              }
+            },
+            {
+              "start": {
+                "x": 22.5,
+                "y": 20.25
+              },
+              "end": {
+                "x": 22.393,
+                "y": 20.261
+              }
+            }
+          ]
+        },
+        {
+          "net": "VCC_DIG",
+          "layer": "B.Cu",
+          "width": 0.4,
+          "segments": [
+            {
+              "start": {
+                "x": 24.25,
+                "y": 20.75
+              },
+              "end": {
+                "x": 24.25,
+                "y": 19.6
+              }
+            },
+            {
+              "start": {
+                "x": 24.25,
+                "y": 19.6
+              },
+              "end": {
+                "x": 24.35,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 24.35,
+                "y": 19.5
+              },
+              "end": {
+                "x": 24.5,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 19.5
+              },
+              "end": {
+                "x": 24.528,
+                "y": 19.478
+              }
+            }
+          ]
+        },
+        {
+          "net": "VCC_PLL",
+          "layer": "F.Cu",
+          "width": 0.4,
+          "segments": [
+            {
+              "start": {
+                "x": 23.028,
+                "y": 27.483
+              },
+              "end": {
+                "x": 22.75,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 27.5
+              },
+              "end": {
+                "x": 20.85,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 20.85,
+                "y": 27.5
+              },
+              "end": {
+                "x": 20.75,
+                "y": 27.6
+              }
+            },
+            {
+              "start": {
+                "x": 20.75,
+                "y": 27.6
+              },
+              "end": {
+                "x": 20.75,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 20.75,
+                "y": 27.75
+              },
+              "end": {
+                "x": 20.778,
+                "y": 27.674
+              }
+            },
+            {
+              "start": {
+                "x": 20.778,
+                "y": 27.674
+              },
+              "end": {
+                "x": 20.5,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 20.5,
+                "y": 27.75
+              },
+              "end": {
+                "x": 20.0,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 20.0,
+                "y": 27.75
+              },
+              "end": {
+                "x": 19.75,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 27.5
+              },
+              "end": {
+                "x": 19.75,
+                "y": 26.75
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 26.75
+              },
+              "end": {
+                "x": 19.778,
+                "y": 26.674
+              }
+            }
+          ]
+        },
+        {
+          "net": "VCC_RF",
+          "layer": "F.Cu",
+          "width": 0.4,
+          "segments": [
+            {
+              "start": {
+                "x": 26.028,
+                "y": 27.483
+              },
+              "end": {
+                "x": 26.0,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 26.0,
+                "y": 27.75
+              },
+              "end": {
+                "x": 26.0,
+                "y": 28.9
+              }
+            },
+            {
+              "start": {
+                "x": 26.0,
+                "y": 28.9
+              },
+              "end": {
+                "x": 26.1,
+                "y": 29.0
+              }
+            },
+            {
+              "start": {
+                "x": 26.1,
+                "y": 29.0
+              },
+              "end": {
+                "x": 26.25,
+                "y": 29.0
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 29.0
+              },
+              "end": {
+                "x": 26.278,
+                "y": 28.983
+              }
+            },
+            {
+              "start": {
+                "x": 26.278,
+                "y": 28.983
+              },
+              "end": {
+                "x": 26.25,
+                "y": 29.25
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 29.25
+              },
+              "end": {
+                "x": 26.25,
+                "y": 29.4
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 29.4
+              },
+              "end": {
+                "x": 26.35,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.35,
+                "y": 29.5
+              },
+              "end": {
+                "x": 26.75,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.75,
+                "y": 29.5
+              },
+              "end": {
+                "x": 26.778,
+                "y": 29.484
+              }
+            },
+            {
+              "start": {
+                "x": 26.778,
+                "y": 29.484
+              },
+              "end": {
+                "x": 26.5,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.5,
+                "y": 29.5
+              },
+              "end": {
+                "x": 25.75,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 25.75,
+                "y": 29.5
+              },
+              "end": {
+                "x": 25.778,
+                "y": 29.485
+              }
+            },
+            {
+              "start": {
+                "x": 25.778,
+                "y": 29.485
+              },
+              "end": {
+                "x": 25.5,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 25.5,
+                "y": 29.5
+              },
+              "end": {
+                "x": 23.75,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 23.75,
+                "y": 29.5
+              },
+              "end": {
+                "x": 23.778,
+                "y": 29.485
+              }
+            },
+            {
+              "start": {
+                "x": 23.778,
+                "y": 29.485
+              },
+              "end": {
+                "x": 23.75,
+                "y": 29.25
+              }
+            },
+            {
+              "start": {
+                "x": 23.75,
+                "y": 29.25
+              },
+              "end": {
+                "x": 23.75,
+                "y": 28.2
+              }
+            },
+            {
+              "start": {
+                "x": 23.75,
+                "y": 28.2
+              },
+              "end": {
+                "x": 23.95,
+                "y": 28.0
+              }
+            },
+            {
+              "start": {
+                "x": 23.95,
+                "y": 28.0
+              },
+              "end": {
+                "x": 24.25,
+                "y": 28.0
+              }
+            },
+            {
+              "start": {
+                "x": 24.25,
+                "y": 28.0
+              },
+              "end": {
+                "x": 24.278,
+                "y": 27.984
+              }
+            },
+            {
+              "start": {
+                "x": 26.278,
+                "y": 28.983
+              },
+              "end": {
+                "x": 26.25,
+                "y": 28.75
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 28.75
+              },
+              "end": {
+                "x": 26.25,
+                "y": 28.45
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 28.45
+              },
+              "end": {
+                "x": 26.45,
+                "y": 28.25
+              }
+            },
+            {
+              "start": {
+                "x": 26.45,
+                "y": 28.25
+              },
+              "end": {
+                "x": 27.75,
+                "y": 28.25
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 28.25
+              },
+              "end": {
+                "x": 27.778,
+                "y": 28.174
+              }
+            }
+          ]
+        },
+        {
+          "net": "VCC_SD",
+          "layer": "F.Cu",
+          "width": 0.4,
+          "segments": [
+            {
+              "start": {
+                "x": 22.528,
+                "y": 22.483
+              },
+              "end": {
+                "x": 22.25,
+                "y": 22.5
+              }
+            },
+            {
+              "start": {
+                "x": 22.25,
+                "y": 22.5
+              },
+              "end": {
+                "x": 19.85,
+                "y": 22.5
+              }
+            },
+            {
+              "start": {
+                "x": 19.85,
+                "y": 22.5
+              },
+              "end": {
+                "x": 19.75,
+                "y": 22.6
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 22.6
+              },
+              "end": {
+                "x": 19.75,
+                "y": 22.75
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 22.75
+              },
+              "end": {
+                "x": 19.778,
+                "y": 22.674
+              }
+            },
+            {
+              "start": {
+                "x": 19.778,
+                "y": 22.674
+              },
+              "end": {
+                "x": 19.75,
+                "y": 23.0
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 23.0
+              },
+              "end": {
+                "x": 19.75,
+                "y": 23.75
+              }
+            },
+            {
+              "start": {
+                "x": 19.75,
+                "y": 23.75
+              },
+              "end": {
+                "x": 19.778,
+                "y": 23.674
+              }
+            }
+          ]
+        },
+        {
+          "net": "VCC_VCO",
+          "layer": "F.Cu",
+          "width": 0.4,
+          "segments": [
+            {
+              "start": {
+                "x": 26.778,
+                "y": 26.733
+              },
+              "end": {
+                "x": 26.75,
+                "y": 26.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.75,
+                "y": 26.5
+              },
+              "end": {
+                "x": 26.75,
+                "y": 25.25
+              }
+            },
+            {
+              "start": {
+                "x": 26.75,
+                "y": 25.25
+              },
+              "end": {
+                "x": 27.0,
+                "y": 25.0
+              }
+            },
+            {
+              "start": {
+                "x": 27.0,
+                "y": 25.0
+              },
+              "end": {
+                "x": 27.75,
+                "y": 25.0
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 25.0
+              },
+              "end": {
+                "x": 27.778,
+                "y": 24.924
+              }
+            },
+            {
+              "start": {
+                "x": 27.778,
+                "y": 24.924
+              },
+              "end": {
+                "x": 27.75,
+                "y": 24.75
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 24.75
+              },
+              "end": {
+                "x": 27.75,
+                "y": 24.0
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 24.0
+              },
+              "end": {
+                "x": 27.778,
+                "y": 23.924
+              }
+            }
+          ]
+        },
+        {
+          "net": "BFILT_NET",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 26.778,
+                "y": 23.733
+              },
+              "end": {
+                "x": 26.5,
+                "y": 23.75
+              }
+            },
+            {
+              "start": {
+                "x": 26.5,
+                "y": 23.75
+              },
+              "end": {
+                "x": 26.5,
+                "y": 21.25
+              }
+            },
+            {
+              "start": {
+                "x": 26.5,
+                "y": 21.25
+              },
+              "end": {
+                "x": 26.528,
+                "y": 21.174
+              }
+            }
+          ]
+        },
+        {
+          "net": "CE_NET",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 21.778,
+                "y": 24.733
+              },
+              "end": {
+                "x": 21.75,
+                "y": 24.5
+              }
+            },
+            {
+              "start": {
+                "x": 21.75,
+                "y": 24.5
+              },
+              "end": {
+                "x": 21.75,
+                "y": 21.5
+              }
+            },
+            {
+              "start": {
+                "x": 21.75,
+                "y": 21.5
+              },
+              "end": {
+                "x": 22.0,
+                "y": 21.25
+              }
+            },
+            {
+              "start": {
+                "x": 22.0,
+                "y": 21.25
+              },
+              "end": {
+                "x": 22.5,
+                "y": 21.25
+              }
+            },
+            {
+              "start": {
+                "x": 22.5,
+                "y": 21.25
+              },
+              "end": {
+                "x": 22.393,
+                "y": 21.261
+              }
+            }
+          ]
+        },
+        {
+          "net": "CP_OUT_NET",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 21.778,
+                "y": 26.233
+              },
+              "end": {
+                "x": 21.5,
+                "y": 26.25
+              }
+            },
+            {
+              "start": {
+                "x": 21.5,
+                "y": 26.25
+              },
+              "end": {
+                "x": 21.2,
+                "y": 26.25
+              }
+            },
+            {
+              "start": {
+                "x": 21.2,
+                "y": 26.25
+              },
+              "end": {
+                "x": 21.0,
+                "y": 26.05
+              }
+            },
+            {
+              "start": {
+                "x": 21.0,
+                "y": 26.05
+              },
+              "end": {
+                "x": 21.0,
+                "y": 21.85
+              }
+            },
+            {
+              "start": {
+                "x": 21.0,
+                "y": 21.85
+              },
+              "end": {
+                "x": 20.9,
+                "y": 21.75
+              }
+            },
+            {
+              "start": {
+                "x": 20.9,
+                "y": 21.75
+              },
+              "end": {
+                "x": 20.81,
+                "y": 21.75
+              }
+            },
+            {
+              "start": {
+                "x": 20.81,
+                "y": 21.75
+              },
+              "end": {
+                "x": 20.75,
+                "y": 21.69
+              }
+            },
+            {
+              "start": {
+                "x": 20.75,
+                "y": 21.69
+              },
+              "end": {
+                "x": 20.75,
+                "y": 20.25
+              }
+            },
+            {
+              "start": {
+                "x": 20.75,
+                "y": 20.25
+              },
+              "end": {
+                "x": 20.778,
+                "y": 20.174
+              }
+            }
+          ]
+        },
+        {
+          "net": "LD_NET",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 26.028,
+                "y": 22.483
+              },
+              "end": {
+                "x": 26.0,
+                "y": 22.25
+              }
+            },
+            {
+              "start": {
+                "x": 26.0,
+                "y": 22.25
+              },
+              "end": {
+                "x": 26.0,
+                "y": 22.1
+              }
+            },
+            {
+              "start": {
+                "x": 26.0,
+                "y": 22.1
+              },
+              "end": {
+                "x": 26.1,
+                "y": 22.0
+              }
+            },
+            {
+              "start": {
+                "x": 26.1,
+                "y": 22.0
+              },
+              "end": {
+                "x": 27.5,
+                "y": 22.0
+              }
+            }
+          ]
+        },
+        {
+          "net": "LD_NET",
+          "layer": "B.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 27.5,
+                "y": 22.0
+              },
+              "end": {
+                "x": 28.25,
+                "y": 22.0
+              }
+            },
+            {
+              "start": {
+                "x": 28.25,
+                "y": 22.0
+              },
+              "end": {
+                "x": 28.5,
+                "y": 21.75
+              }
+            },
+            {
+              "start": {
+                "x": 28.5,
+                "y": 21.75
+              },
+              "end": {
+                "x": 28.5,
+                "y": 20.45
+              }
+            },
+            {
+              "start": {
+                "x": 28.5,
+                "y": 20.45
+              },
+              "end": {
+                "x": 28.3,
+                "y": 20.25
+              }
+            },
+            {
+              "start": {
+                "x": 28.3,
+                "y": 20.25
+              },
+              "end": {
+                "x": 28.12,
+                "y": 20.25
+              }
+            },
+            {
+              "start": {
+                "x": 28.12,
+                "y": 20.25
+              },
+              "end": {
+                "x": 28.0,
+                "y": 20.13
+              }
+            },
+            {
+              "start": {
+                "x": 28.0,
+                "y": 20.13
+              },
+              "end": {
+                "x": 28.0,
+                "y": 19.902
+              }
+            },
+            {
+              "start": {
+                "x": 28.0,
+                "y": 19.902
+              },
+              "end": {
+                "x": 27.848,
+                "y": 19.75
+              }
+            },
+            {
+              "start": {
+                "x": 27.848,
+                "y": 19.75
+              },
+              "end": {
+                "x": 26.75,
+                "y": 19.75
+              }
+            },
+            {
+              "start": {
+                "x": 26.75,
+                "y": 19.75
+              },
+              "end": {
+                "x": 26.5,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.5,
+                "y": 19.5
+              },
+              "end": {
+                "x": 26.5,
+                "y": 17.75
+              }
+            },
+            {
+              "start": {
+                "x": 26.5,
+                "y": 17.75
+              },
+              "end": {
+                "x": 26.25,
+                "y": 17.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 17.5
+              },
+              "end": {
+                "x": 22.75,
+                "y": 17.5
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 17.5
+              },
+              "end": {
+                "x": 22.5,
+                "y": 17.75
+              }
+            },
+            {
+              "start": {
+                "x": 22.5,
+                "y": 17.75
+              },
+              "end": {
+                "x": 22.5,
+                "y": 19.15
+              }
+            },
+            {
+              "start": {
+                "x": 22.5,
+                "y": 19.15
+              },
+              "end": {
+                "x": 22.6,
+                "y": 19.25
+              }
+            },
+            {
+              "start": {
+                "x": 22.6,
+                "y": 19.25
+              },
+              "end": {
+                "x": 22.69,
+                "y": 19.25
+              }
+            },
+            {
+              "start": {
+                "x": 22.69,
+                "y": 19.25
+              },
+              "end": {
+                "x": 22.75,
+                "y": 19.31
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 19.31
+              },
+              "end": {
+                "x": 22.75,
+                "y": 19.424
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 19.424
+              },
+              "end": {
+                "x": 22.826,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 22.826,
+                "y": 19.5
+              },
+              "end": {
+                "x": 23.5,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 23.5,
+                "y": 19.5
+              },
+              "end": {
+                "x": 23.528,
+                "y": 19.478
+              }
+            }
+          ]
+        },
+        {
+          "net": "LF_NODE_A",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 20.778,
+                "y": 21.174
+              },
+              "end": {
+                "x": 21.0,
+                "y": 21.25
+              }
+            },
+            {
+              "start": {
+                "x": 21.0,
+                "y": 21.25
+              },
+              "end": {
+                "x": 21.3,
+                "y": 21.25
+              }
+            },
+            {
+              "start": {
+                "x": 21.3,
+                "y": 21.25
+              },
+              "end": {
+                "x": 21.5,
+                "y": 21.05
+              }
+            },
+            {
+              "start": {
+                "x": 21.5,
+                "y": 21.05
+              },
+              "end": {
+                "x": 21.5,
+                "y": 19.35
+              }
+            },
+            {
+              "start": {
+                "x": 21.5,
+                "y": 19.35
+              },
+              "end": {
+                "x": 21.6,
+                "y": 19.25
+              }
+            },
+            {
+              "start": {
+                "x": 21.6,
+                "y": 19.25
+              },
+              "end": {
+                "x": 21.69,
+                "y": 19.25
+              }
+            },
+            {
+              "start": {
+                "x": 21.69,
+                "y": 19.25
+              },
+              "end": {
+                "x": 21.75,
+                "y": 19.19
+              }
+            },
+            {
+              "start": {
+                "x": 21.75,
+                "y": 19.19
+              },
+              "end": {
+                "x": 21.75,
+                "y": 18.926
+              }
+            },
+            {
+              "start": {
+                "x": 21.75,
+                "y": 18.926
+              },
+              "end": {
+                "x": 21.926,
+                "y": 18.75
+              }
+            },
+            {
+              "start": {
+                "x": 21.926,
+                "y": 18.75
+              },
+              "end": {
+                "x": 22.2704,
+                "y": 18.75
+              }
+            },
+            {
+              "start": {
+                "x": 22.2704,
+                "y": 18.75
+              },
+              "end": {
+                "x": 22.5,
+                "y": 18.5204
+              }
+            },
+            {
+              "start": {
+                "x": 22.5,
+                "y": 18.5204
+              },
+              "end": {
+                "x": 22.5,
+                "y": 17.75
+              }
+            },
+            {
+              "start": {
+                "x": 22.5,
+                "y": 17.75
+              },
+              "end": {
+                "x": 22.75,
+                "y": 17.5
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 17.5
+              },
+              "end": {
+                "x": 26.25,
+                "y": 17.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 17.5
+              },
+              "end": {
+                "x": 26.5,
+                "y": 17.75
+              }
+            },
+            {
+              "start": {
+                "x": 26.5,
+                "y": 17.75
+              },
+              "end": {
+                "x": 26.5,
+                "y": 19.0
+              }
+            },
+            {
+              "start": {
+                "x": 26.5,
+                "y": 19.0
+              },
+              "end": {
+                "x": 26.75,
+                "y": 19.25
+              }
+            },
+            {
+              "start": {
+                "x": 26.75,
+                "y": 19.25
+              },
+              "end": {
+                "x": 28.25,
+                "y": 19.25
+              }
+            },
+            {
+              "start": {
+                "x": 28.25,
+                "y": 19.25
+              },
+              "end": {
+                "x": 28.5,
+                "y": 19.5
+              }
+            },
+            {
+              "start": {
+                "x": 28.5,
+                "y": 19.5
+              },
+              "end": {
+                "x": 28.5,
+                "y": 21.75
+              }
+            },
+            {
+              "start": {
+                "x": 28.5,
+                "y": 21.75
+              },
+              "end": {
+                "x": 28.75,
+                "y": 22.0
+              }
+            },
+            {
+              "start": {
+                "x": 28.75,
+                "y": 22.0
+              },
+              "end": {
+                "x": 29.5,
+                "y": 22.0
+              }
+            },
+            {
+              "start": {
+                "x": 29.5,
+                "y": 22.0
+              },
+              "end": {
+                "x": 29.75,
+                "y": 22.25
+              }
+            },
+            {
+              "start": {
+                "x": 29.75,
+                "y": 22.25
+              },
+              "end": {
+                "x": 29.75,
+                "y": 24.5
+              }
+            },
+            {
+              "start": {
+                "x": 28.778,
+                "y": 27.424
+              },
+              "end": {
+                "x": 28.75,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 28.75,
+                "y": 27.75
+              },
+              "end": {
+                "x": 28.75,
+                "y": 28.25
+              }
+            },
+            {
+              "start": {
+                "x": 28.75,
+                "y": 28.25
+              },
+              "end": {
+                "x": 29.0,
+                "y": 28.5
+              }
+            },
+            {
+              "start": {
+                "x": 29.0,
+                "y": 28.5
+              },
+              "end": {
+                "x": 29.75,
+                "y": 28.5
+              }
+            },
+            {
+              "start": {
+                "x": 29.75,
+                "y": 28.5
+              },
+              "end": {
+                "x": 29.778,
+                "y": 28.424
+              }
+            },
+            {
+              "start": {
+                "x": 28.778,
+                "y": 27.424
+              },
+              "end": {
+                "x": 28.5,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 28.5,
+                "y": 27.5
+              },
+              "end": {
+                "x": 28.2,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 28.2,
+                "y": 27.5
+              },
+              "end": {
+                "x": 28.0,
+                "y": 27.7
+              }
+            },
+            {
+              "start": {
+                "x": 28.0,
+                "y": 27.7
+              },
+              "end": {
+                "x": 28.0,
+                "y": 28.65
+              }
+            },
+            {
+              "start": {
+                "x": 28.0,
+                "y": 28.65
+              },
+              "end": {
+                "x": 27.9,
+                "y": 28.75
+              }
+            },
+            {
+              "start": {
+                "x": 27.9,
+                "y": 28.75
+              },
+              "end": {
+                "x": 27.81,
+                "y": 28.75
+              }
+            },
+            {
+              "start": {
+                "x": 27.81,
+                "y": 28.75
+              },
+              "end": {
+                "x": 27.75,
+                "y": 28.81
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 28.81
+              },
+              "end": {
+                "x": 27.75,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 29.5
+              },
+              "end": {
+                "x": 27.778,
+                "y": 29.424
+              }
+            }
+          ]
+        },
+        {
+          "net": "LF_NODE_A",
+          "layer": "B.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 29.75,
+                "y": 24.5
+              },
+              "end": {
+                "x": 29.75,
+                "y": 24.65
+              }
+            },
+            {
+              "start": {
+                "x": 29.75,
+                "y": 24.65
+              },
+              "end": {
+                "x": 29.65,
+                "y": 24.75
+              }
+            },
+            {
+              "start": {
+                "x": 29.65,
+                "y": 24.75
+              },
+              "end": {
+                "x": 29.41,
+                "y": 24.75
+              }
+            },
+            {
+              "start": {
+                "x": 29.41,
+                "y": 24.75
+              },
+              "end": {
+                "x": 29.25,
+                "y": 24.91
+              }
+            },
+            {
+              "start": {
+                "x": 29.25,
+                "y": 24.91
+              },
+              "end": {
+                "x": 29.25,
+                "y": 26.55
+              }
+            },
+            {
+              "start": {
+                "x": 29.25,
+                "y": 26.55
+              },
+              "end": {
+                "x": 29.05,
+                "y": 26.75
+              }
+            },
+            {
+              "start": {
+                "x": 29.05,
+                "y": 26.75
+              },
+              "end": {
+                "x": 28.87,
+                "y": 26.75
+              }
+            },
+            {
+              "start": {
+                "x": 28.87,
+                "y": 26.75
+              },
+              "end": {
+                "x": 28.75,
+                "y": 26.87
+              }
+            },
+            {
+              "start": {
+                "x": 28.75,
+                "y": 26.87
+              },
+              "end": {
+                "x": 28.75,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 28.75,
+                "y": 27.5
+              },
+              "end": {
+                "x": 28.778,
+                "y": 27.424
+              }
+            }
+          ]
+        },
+        {
+          "net": "NFILT_NET",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 26.778,
+                "y": 25.733
+              },
+              "end": {
+                "x": 26.75,
+                "y": 25.5
+              }
+            },
+            {
+              "start": {
+                "x": 26.75,
+                "y": 25.5
+              },
+              "end": {
+                "x": 26.75,
+                "y": 23.25
+              }
+            },
+            {
+              "start": {
+                "x": 26.75,
+                "y": 23.25
+              },
+              "end": {
+                "x": 27.0,
+                "y": 23.0
+              }
+            },
+            {
+              "start": {
+                "x": 27.0,
+                "y": 23.0
+              },
+              "end": {
+                "x": 27.75,
+                "y": 23.0
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 23.0
+              },
+              "end": {
+                "x": 27.778,
+                "y": 22.924
+              }
+            }
+          ]
+        },
+        {
+          "net": "RFOUTA_N",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 24.528,
+                "y": 27.483
+              },
+              "end": {
+                "x": 24.5,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 27.75
+              },
+              "end": {
+                "x": 24.5,
+                "y": 27.9
+              }
+            },
+            {
+              "start": {
+                "x": 24.5,
+                "y": 27.9
+              },
+              "end": {
+                "x": 24.6,
+                "y": 28.0
+              }
+            },
+            {
+              "start": {
+                "x": 24.6,
+                "y": 28.0
+              },
+              "end": {
+                "x": 26.25,
+                "y": 28.0
+              }
+            },
+            {
+              "start": {
+                "x": 26.25,
+                "y": 28.0
+              },
+              "end": {
+                "x": 26.278,
+                "y": 27.983
+              }
+            }
+          ]
+        },
+        {
+          "net": "RFOUTA_P",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 24.028,
+                "y": 27.483
+              },
+              "end": {
+                "x": 24.0,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 24.0,
+                "y": 27.75
+              },
+              "end": {
+                "x": 24.0,
+                "y": 28.9
+              }
+            },
+            {
+              "start": {
+                "x": 24.0,
+                "y": 28.9
+              },
+              "end": {
+                "x": 24.1,
+                "y": 29.0
+              }
+            },
+            {
+              "start": {
+                "x": 24.1,
+                "y": 29.0
+              },
+              "end": {
+                "x": 24.25,
+                "y": 29.0
+              }
+            },
+            {
+              "start": {
+                "x": 24.25,
+                "y": 29.0
+              },
+              "end": {
+                "x": 24.278,
+                "y": 28.984
+              }
+            },
+            {
+              "start": {
+                "x": 24.278,
+                "y": 28.984
+              },
+              "end": {
+                "x": 24.0,
+                "y": 29.0
+              }
+            },
+            {
+              "start": {
+                "x": 24.0,
+                "y": 29.0
+              },
+              "end": {
+                "x": 22.95,
+                "y": 29.0
+              }
+            },
+            {
+              "start": {
+                "x": 22.95,
+                "y": 29.0
+              },
+              "end": {
+                "x": 22.75,
+                "y": 28.8
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 28.8
+              },
+              "end": {
+                "x": 22.75,
+                "y": 28.5
+              }
+            },
+            {
+              "start": {
+                "x": 22.75,
+                "y": 28.5
+              },
+              "end": {
+                "x": 22.778,
+                "y": 28.484
+              }
+            }
+          ]
+        },
+        {
+          "net": "RFOUTB_N",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 25.528,
+                "y": 27.483
+              },
+              "end": {
+                "x": 25.5,
+                "y": 27.25
+              }
+            },
+            {
+              "start": {
+                "x": 25.5,
+                "y": 27.25
+              },
+              "end": {
+                "x": 27.75,
+                "y": 27.25
+              }
+            },
+            {
+              "start": {
+                "x": 27.75,
+                "y": 27.25
+              },
+              "end": {
+                "x": 27.778,
+                "y": 27.174
+              }
+            }
+          ]
+        },
+        {
+          "net": "RFOUTB_P",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 25.028,
+                "y": 27.483
+              },
+              "end": {
+                "x": 25.0,
+                "y": 27.75
+              }
+            },
+            {
+              "start": {
+                "x": 25.0,
+                "y": 27.75
+              },
+              "end": {
+                "x": 25.0,
+                "y": 28.15
+              }
+            },
+            {
+              "start": {
+                "x": 25.0,
+                "y": 28.15
+              },
+              "end": {
+                "x": 25.1,
+                "y": 28.25
+              }
+            },
+            {
+              "start": {
+                "x": 25.1,
+                "y": 28.25
+              },
+              "end": {
+                "x": 25.25,
+                "y": 28.25
+              }
+            },
+            {
+              "start": {
+                "x": 24.778,
+                "y": 29.485
+              },
+              "end": {
+                "x": 24.75,
+                "y": 29.75
+              }
+            },
+            {
+              "start": {
+                "x": 24.75,
+                "y": 29.75
+              },
+              "end": {
+                "x": 24.75,
+                "y": 30.25
+              }
+            },
+            {
+              "start": {
+                "x": 24.75,
+                "y": 30.25
+              },
+              "end": {
+                "x": 25.0,
+                "y": 30.5
+              }
+            },
+            {
+              "start": {
+                "x": 25.0,
+                "y": 30.5
+              },
+              "end": {
+                "x": 25.75,
+                "y": 30.5
+              }
+            },
+            {
+              "start": {
+                "x": 25.75,
+                "y": 30.5
+              },
+              "end": {
+                "x": 25.778,
+                "y": 30.486
+              }
+            }
+          ]
+        },
+        {
+          "net": "RFOUTB_P",
+          "layer": "B.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 25.25,
+                "y": 28.25
+              },
+              "end": {
+                "x": 25.25,
+                "y": 28.55
+              }
+            },
+            {
+              "start": {
+                "x": 25.25,
+                "y": 28.55
+              },
+              "end": {
+                "x": 25.05,
+                "y": 28.75
+              }
+            },
+            {
+              "start": {
+                "x": 25.05,
+                "y": 28.75
+              },
+              "end": {
+                "x": 24.87,
+                "y": 28.75
+              }
+            },
+            {
+              "start": {
+                "x": 24.87,
+                "y": 28.75
+              },
+              "end": {
+                "x": 24.75,
+                "y": 28.87
+              }
+            },
+            {
+              "start": {
+                "x": 24.75,
+                "y": 28.87
+              },
+              "end": {
+                "x": 24.75,
+                "y": 29.5
+              }
+            },
+            {
+              "start": {
+                "x": 24.75,
+                "y": 29.5
+              },
+              "end": {
+                "x": 24.778,
+                "y": 29.485
+              }
+            }
+          ]
+        },
+        {
+          "net": "RFOUT_EN_NET",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 25.528,
+                "y": 22.483
+              },
+              "end": {
+                "x": 25.5,
+                "y": 22.25
+              }
+            },
+            {
+              "start": {
+                "x": 25.5,
+                "y": 22.25
+              },
+              "end": {
+                "x": 25.5,
+                "y": 21.5
+              }
+            },
+            {
+              "start": {
+                "x": 25.5,
+                "y": 21.5
+              },
+              "end": {
+                "x": 25.528,
+                "y": 21.479
+              }
+            }
+          ]
+        },
+        {
+          "net": "TUNE_NET",
+          "layer": "F.Cu",
+          "width": 0.25,
+          "segments": [
+            {
+              "start": {
+                "x": 28.778,
+                "y": 26.424
+              },
+              "end": {
+                "x": 28.75,
+                "y": 26.75
+              }
+            },
+            {
+              "start": {
+                "x": 28.75,
+                "y": 26.75
+              },
+              "end": {
+                "x": 28.75,
+                "y": 27.25
+              }
+            },
+            {
+              "start": {
+                "x": 28.75,
+                "y": 27.25
+              },
+              "end": {
+                "x": 29.0,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 29.0,
+                "y": 27.5
+              },
+              "end": {
+                "x": 29.75,
+                "y": 27.5
+              }
+            },
+            {
+              "start": {
+                "x": 29.75,
+                "y": 27.5
+              },
+              "end": {
+                "x": 29.778,
+                "y": 27.424
+              }
+            }
+          ]
+        }
+      ],
+      "vias": [
+        {
+          "x": 24.25,
+          "y": 20.75,
+          "size": 1.0,
+          "drill": 0.6,
+          "net": "VCC_DIG"
+        },
+        {
+          "x": 27.5,
+          "y": 22.0,
+          "size": 1.0,
+          "drill": 0.6,
+          "net": "LD_NET"
+        },
+        {
+          "x": 29.75,
+          "y": 24.5,
+          "size": 1.0,
+          "drill": 0.6,
+          "net": "LF_NODE_A"
+        },
+        {
+          "x": 25.25,
+          "y": 28.25,
+          "size": 1.0,
+          "drill": 0.6,
+          "net": "RFOUTB_P"
+        }
+      ]
+    },
+    "has_layout_example": true
+  }
+}

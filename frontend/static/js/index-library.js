@@ -21,7 +21,7 @@ async function uploadFile(file) {
   instructions.style.display = 'none';
 
   const form = new FormData();
-  form.append('pdf', file);
+  form.append('file', file);
 
   try {
     const res = await fetch('/api/upload', { method: 'POST', body: form });
@@ -32,14 +32,8 @@ async function uploadFile(file) {
     status.className = 'upload-status success';
     status.textContent = `✓ Uploaded — ${data.charCount.toLocaleString()} chars extracted (${data.confidence} confidence)`;
 
-    // Show Claude Code instructions
-    const prompt = buildPrompt(data.slug);
     instructions.style.display = 'block';
-    instructions.innerHTML = `
-      <strong style="color:var(--text);">Now ask Claude Code to parse it:</strong><br>
-      <div style="margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:10px;font-family:monospace;font-size:11px;color:var(--text-dim);white-space:pre-wrap;cursor:pointer;" onclick="copyPrompt(this)" title="Click to copy">${prompt}</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:5px;">Click the box to copy, then paste into your Claude Code session.</div>
-    `;
+    instructions.innerHTML = `<strong style="color:var(--text);">⏳ Parsing started automatically…</strong><div style="font-size:11px;color:var(--text-muted);margin-top:5px;">The datasheet parser is running. The component will appear in the library when complete.</div>`;
 
     await loadLibrary();
     selectPart(data.slug);

@@ -1,0 +1,1552 @@
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+General Description Benefits and Features
+The MAX2870 is an ultra-wideband phase-locked U Integer and Fractional-N Modes
+loop (PLL) with integrated voltage control oscillators
+U Manual or Automatic VCO Selection
+(VCOs) capable of operating in both integer-N and
+fractional-N modes. When combined with an external U 3000MHz to 6000MHz Fundamental VCO
+reference oscillator and loop filter, the MAX2870 is U Output Binary Buffers/Dividers for Extended
+a high-performance frequency synthesizer capable Frequency Range
+of synthesizing frequencies from 23.5MHz to 6.0GHz
+• 1/2/4/8/16/32/64/128
+while maintaining superior phase noise and spurious
+performance. • 23.5MHz to 6000MHz
+The ultra-wide frequency range is achieved with the U High-Performance PFD
+help of multiple integrated VCOs covering 3000MHz to • 105MHz in Integer-N Mode
+6000MHz, and output dividers ranging from 1 to 128.
+• 50MHz in Fractional-N Mode
+The device also provides dual differential output drivers,
+which can be independently programmable to deliver U ReferenceFrequencyUpto200MHz
+-4dBm to +5dBm output power. Both outputs can be U Operates from +3.0V to +3.6V Supply
+muted by either software or hardware control.
+U Dual Programmable Outputs
+The MAX2870 is controlled by a 4-wire serial interface and
+is compatible with 1.8V control logic. The device is available • -4dBm to +5dBm
+in a lead-free, RoHS-compliant, 5mm x 5mm, 32-pin TQFN U Analog and Digital Lock Detect Indicators
+package, and operates over an extended -40NC to +85NC
+U Hardware and Software Shutdown Control
+temperaturerange.
+U Compatible with 1.8V Control Logic
+Applications
+Wireless Infrastructure PMAR/LMAR/Public Ordering Information appears at end of data sheet.
+Test and Measurement Safety Radio
+Satellite Communications Clock Generation Typical Application Circuit appears at end of data sheet.
+Wireless LANs/CATV
+Functional Diagram
+MUX_OUT
+MUX
+MAX2870
+LD
+LOCK DETECT
+REF_IN MUX R COUNTER DIVIDE-BY-2 MUX CHARGE CP_OUT
+X2 PUMP
+CP_GND
+CLK
+TUNE
+DATA SPI AND
+LE REGISTERS
+VCO
+INTEGER FRAC MODULUS
+RFOUTA_P
+DIV-BY- DIV-BY-
+1/2/4/8/16 1/2/4/8 RFOUTA_N
+RFOUT_EN
+MAIN
+MODULATOR RFOUTB_P
+MUX RFOUTB_N
+N COUNTER
+MUX
+19-6250;Rev6;4/17
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Absolute Maximum Ratings
+VCC_to GND_ .......................................................-0.3V to +3.9V Junction Temperature .....................................................+150NC
+All Other Pins to GND_ ..............................-0.3V to VCC_ + 0.3V Operating Temperature Range ..........................-40NC to +85NC
+Continuous Power Dissipation (TA = +70NC) Storage Temperature Range ............................-65NC to +150NC
+TQFN-EP Multilayer Board Lead Temperature (soldering, 10s) .............................. +300NC
+(derate 34.5mW/NC above +70NC) .........................2758.6mW Soldering temperature (reflow) .......................................+260NC
+Stresses beyond those listed under “Absolute Maximum Ratings” may cause permanent damage to the device. These are stress ratings only, and functional opera-
+tion of the device at these or any other conditions beyond those indicated in the operational sections of the specifications is not implied. Exposure to absolute
+maximum rating conditions for extended periods may affect device reliability.
+Package Thermal Characteristics (Note 1)
+TQFN
+Junction-to-Ambient Thermal Resistance (BJA) ..........29NC/W Junction-to-Case Thermal Resistance (BJC) ..................1.7NC/W
+Note 1: Package thermal resistances were obtained using the method described in JEDEC specification JESD51-7, using a four-layer
+board. For detailed information on package thermal considerations, refer to www.maximintegrated.com/thermal-tutorial.
+DC Electrical Characteristics
+(Measured using MAX2870 EV Kit. VCC_ = 3V to 3.6V, VGND_ = 0V, fREF_IN = 50MHz, fPFD = 25MHz, TA = -40NC to +85NC. Typical
+values measured at VCC_ = 3.3V; TA = +25NC; register settings (Reg 0:5) 00780000,20000141,01005E42,00000013,610F42
+3C,01400005; unless otherwise noted.) (Note 2)
+PARAMETER CONDITIONS MIN TYP MAX UNITS
+Supply Voltage 3 3.3 3.6 V
+IRFOUT_, minimum output power, single channel 8.5
+RFOUT_ Current Consumption mA
+IRFOUT_, maximum output power, single channel 25 29
+Total, including RFOUT, both
+Both channels channel (Note 3) 144 180
+enabled,
+Supply Current Each output divide-by-2 10 15 mA
+maximum
+output power
+ICCVCO + ICCRF (Note 3) 75 95
+Low-power sleep mode 1
+AC Electrical Characteristics
+(Measured using MAX2870 EV Kit. VCC_ = 3V to 3.6V, VGND_ = 0V, fREF_IN = 50MHz, fPFD = 25MHz, fRFOUT_ = 6000MHz,
+TA = -40NC to +85NC. Typical values measured at VCC_ = 3.3V, TA = +25NC, register settings (Reg 0:5) 00780000,20000141,01005E42
+,00000013,610F423C,01400005; unless otherwise noted.) (Note 2)
+PARAMETER CONDITIONS MIN TYP MAX UNITS
+REFERENCE OSCILLATORINPUT (REF_IN)
+REF_IN Input Frequency Range 10 200 MHz
+REF_IN Input Sensitivity 0.7 VCC_ VPP
+REF_IN Input Capacitance 2 pF
+REF_IN Input Current -60 +60 FA
+PHASE DETECTOR
+Integer-N mode 105
+Phase Detector Frequency MHz
+Fractional-N mode 50
+www.maximintegrated.com MaximIntegrated │ 2
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+AC Electrical Characteristics (continued)
+(Measured using MAX2870 EV Kit. VCC_ = 3V to 3.6V, VGND_ = 0V, fREF_IN = 50MHz, fPFD = 25MHz, fRFOUT_ = 6000MHz,
+TA = -40NC to +85NC. Typical values measured at VCC_ = 3.3V, TA = +25NC, register settings (Reg 0:5) 00780000,20000141,01005E42
+,00000013,610F423C,01400005; unless otherwise noted.) (Note 2)
+PARAMETER CONDITIONS MIN TYP MAX UNITS
+CHARGEPUMP
+CP[3:0] = 1111, RSET = 5.1kI 5.12
+Sink/Source Current mA
+CP[3:0] = 0000, RSET = 5.1kI 0.32
+RSET Range 2.7 10 kI
+RF OUTPUTS
+Fundamental Frequency Range 3000 6000 MHz
+Divided Frequency Range With output dividers (1/2/4/8/16/32/64/128) 23.4375 6000 MHz
+VCO Sensitivity 100 MHz/V
+Frequency Pushing Open loop 0.7 MHz/V
+Frequency Pulling Open loop into 2:1 VSWR 70 KHz
+2nd Harmonic Fundamental VCO output 40 dBc
+3rd Harmonic Fundamental VCO output 34 dBc
+2nd Harmonic VCO output divided-by-2 20 dBc
+3rd Harmonic VCO output divided-by-2 21 dBc
+MaximumOutput Power fRFOUT_ = 3000MHz (Note 4) 5 dBm
+Minimum Output Power fRFOUT_ = 3000MHz (Note 4) -4 dBm
+-40NC P TA P +85NC 1.5
+Output Power Variation (Note 4) dB
+3V P VCC_ P 3.6V 0.2
+Muted Output Power (Note 4) -31 dBm
+VCO AND FREQUENCY SYNTHESIZER NOISE
+10kHz offset -83.5
+100kHz offset -111
+VCO at 3000MHz
+1MHz offset -136
+5MHz offset -149
+10kHz offset -75
+100kHz offset -104
+VCO Phase Noise (Note 5) VCO at 4500MHz dBc/Hz
+1MHz offset -130
+5MHz offset -145.5
+10kHz offset -71.5
+100kHz offset -100.5
+VCO at 6000MHz
+1MHz offset -128.0
+5MHz offset -143.5
+In-Band Noise Floor Normalized (Note 6) -226.4 dBc/Hz
+1/f Noise Normalized (Note 7) -116 dBc/Hz
+In-Band Phase Noise (Note 8) -95 dBc/Hz
+Integrated RMS Jitter (Note 9) 0.25 ps
+Spurious Signals Due to PFD Frequency -87 dBc
+VCO Tune Voltage 0.5 2.5 V
+www.maximintegrated.com MaximIntegrated │ 3
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Digital I/O Characteristics
+(VCC_ = +3V to +3.6V, VGND_ = 0V, TA = -40NC to +85NC. Typical values at VCC_ = 3.3V, TA = +25NC.) (Note 2)
+PARAMETER CONDITIONS MIN TYP MAX UNITS
+SERIAL INTERFACE INPUTS (CLK, DATA, LE, CE, RFOUT_EN)
+Input Logic-Level Low VIL 0.4 V
+Input Logic-Level High VIH 1.5 V
+Input Current IIH /IIL -1 +1 FA
+Input Capacitance 1 pF
+SERIAL INTERFACE OUTPUTS (MUX_OUT, LD)
+Output Logic-Level Low 0.3mA sink current 0.4 V
+Output Logic-Level High 0.3mA source current VCC - 0.4 V
+Output Current Level High 0.5 mA
+SPI Timing Characteristics
+(VCC_ = +3V to +3.6V, VGND_ = 0V, TA = -40NC to +85NC. Typical values at VCC_ = 3.3V, TA = +25NC.) (Note 2)
+PARAMETER SYMBOL CONDITIONS MIN TYP MAX UNITS
+Guaranteed by SCL pulse-width
+CLK Clock Period tCP
+low and high
+50 ns
+CLK Pulse-Width Low tCL 25 ns
+CLK Pulse-Width High tCH 25 ns
+LE Setup Time tLES 20 ns
+LE Hold Time tLEH 10 ns
+LE Minimum Pulse-Width High tLEW 20 ns
+Data Setup Time tDS 25 ns
+Data Hold Time tDH 25 ns
+MUX_OUT Setup Time tMS 10 ns
+MUX_OUT Hold Time tMH 10 ns
+Note 2: Production tested at TA = +25NC. Cold and hot are guaranteed by design and characterization.
+Note 3: fREFIN = 100MHz, phase detector frequency = 25MHz, RF output = 6000MHz.
+Register setting: 00780000, 20400061, 20011242, F8010003, 608001FC, 80440005
+Note 4: Measured single ended with 27nH to VCC_RF into 50I load. Power measured with single output enabled. Unused output
+has 27nH to VCC_RF with 50I termination.
+Note 5: VCO phase noise is measured open loop.
+Note 6: Measured at 200kHz using a 50MHz Bliley NV108C19554 OCVCXO with 2MHz loop bandwidth. Register setting
+801E0000, 8000FFF9, 80005FC2, 6C10000B, 638E80FC, 400005. EV kit loop filter: C13 = 1500pF, C14 = 33pF, R1 = 0Ω,
+R2 = 1100Ω, R0 = 0Ω, C12 = open.
+Note 7: 1/f noise contribution to the in-band phase noise is computed by using 1/fnoise + 10log(10kHz/fOFFSET) +
+20log(fRF/1GHz). Register setting: 803A0000,8000FFF9,81005F42,F4000013,6384803C,001500005
+Note 8: fREFIN = 50MHz; fPFD = 25MHz; offset frequency = 10kHz; VCO frequency = 4227MHz, output divide-by-2 enabled.
+RFOUT = 2113.5MHz; N = 169; loop BW = 40kHz, CP[3:0] = 1111; integer mode.
+Note 9: fREFIN = 50MHz; fPFD = 50MHz; VCO frequency = 4400MHz, fRFOUT_ = 4400MHz; loop BW = 65kHz. Registersetting:
+002C0000, 200303E9, 80005642, 00000133, 638E82FC, 01400005. EV kit loop filter: C13 = 0.1µF, C14 = 0.012µF, R1 =
+0Ω, R2 = 120Ω, R0 = 250Ω, C12 = 820pF.
+www.maximintegrated.com MaximIntegrated │ 4
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Typical Operating Characteristics
+(Measured with MAX2870 EV Kit. VCC_ = 3.3V, VGND_ = 0V, fREF_IN = 50MHz, TA = +25°C, see the Testing Conditions Table.)
+3.0GHz VCO OPEN-LOOP PHASE NOISE
+vs. FREQUENCY
+www.maximintegrated.com MaximIntegrated │ 5
+10cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+-40
+-50
+-60
+-70
+-80
+-90
+-100
+-110
+-120
+-130
+-140
+-150
+-160
+1 10 100 1k 10k 100k
+3.0GHz CLOSED-LOOP PHASE NOISE
+vs. FREQUENCY
+40cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+-70
+-80 DIV1
+DIV2
+-90 DIV4
+-100 DIV8
+DIV16
+-110
+DIV32
+-120 DIV64
+-130 DIV128
+-140
+-150
+-160
+-170
+1 10 100 1k 10k 100k
+1 10 100 1k 10k
+70cot
+0872XAM
+904MHz INTEGER-N MODE PHASE NOISE
+AND SPUR PERFOMANCE vs. FREQUENCY
+0
+-20
+-40
+-60
+-80
+-100
+-120
+-140
+-160
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+)cBd(
+SRUPS
+4.5GHz VCO OPEN-LOOP PHASE NOISE
+vs. FREQUENCY
+20cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+-40
+-50
+-60
+-70
+-80
+-90
+-100
+-110
+-120
+-130
+-140
+-150
+-160
+1 10 100 1k 10k 100k
+4.5GHz CLOSED-LOOP PHASE NOISE
+vs. FREQUENCY
+50cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+-70
+-80 DIV1
+DIV2
+-90 DIV4
+-100 DIV8
+DIV16
+-110
+DIV32
+-120 DIV64
+-130 DIV128
+-140
+-150
+-160
+-170
+1 10 100 1k 10k 100k
+1 10 100 1k 10k
+80cot
+0872XAM
+2687.5MHz INTEGER-N MODE PHASE NOISE
+AND SPUR PERFOMANCE vs. FREQUENCY
+0
+-20
+-40
+-60
+-80
+-100
+-120
+-140
+-160
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+)cBd(
+SRUPS
+6.0GHz VCO OPEN-LOOP PHASE NOISE
+vs. FREQUENCY
+30cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+-40
+-50
+-60
+-70
+-80
+-90
+-100
+-110
+-120
+-130
+-140
+-150
+-160
+1 10 100 1k 10k 100k
+6.0GHz CLOSED-LOOP PHASE NOISE
+vs. FREQUENCY
+60cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+-70
+-80 DIV1
+DIV2
+-90 DIV4
+-100 DIV8
+DIV16
+-110
+DIV32
+-120 DIV64
+-130 DIV128
+-140
+-150
+-160
+-170
+1 10 100 1k 10k 100k
+2113.5MHz FRACTIONAL-N PHASE NOISE
+(LOW-NOISE MODE) vs. FREQUENCY
+1 10 100 1k 10k
+90cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+-70
+-80
+-90
+-100
+-110
+-120
+-130
+-140
+-150
+-160
+-170
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Typical Operating Characteristics (continued)
+(Measured with MAX2870 EV Kit. VCC_ = 3.3V, VGND_ = 0V, fREF_IN = 50MHz, TA = +25°C, see the Testing Conditions Table.)
+1 10 100 1k 10k
+www.maximintegrated.com MaximIntegrated │ 6
+01cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+2113.5MHz FRACTIONAL-N PHASE NOISE
+vs. FREQUENCY (LOW-SPUR MODE)
+-70
+-80
+-90
+-100
+-110
+-120
+-130
+-140
+-150
+-160
+-170
+1 10 100 1k 10k
+11cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+2679.4MHz FRACTIONAL-N PHASE NOISE
+vs. FREQUENCY (LOW-NOISE MODE)
+-70
+-80
+-90
+-100
+-110
+-120
+-130
+-140
+-150
+-160
+-170
+SUPPLY CURRENT vs. OUTPUT POWER
+SETTING (ONE CHANNEL ACTIVE, 3GHz)
+)Am(
+TNERRUC
+YLPPUS
+31cot
+0872XAM
+1 10 100 1k 10k
+140
+130 TA = +25°C
+120 TA =+85°C
+110
+100 TA = -40°C
+90
+80
+70
+60
+00 01 10 11
+PWR SETTING
+21cot
+0872XAM
+FREQUENCY (kHz)
+)zH/cBd(
+ESION
+ESAHP
+2679.4MHz FRACTIONAL-N PHASE NOISE
+vs. FREQUENCY (LOW-SPUR MODE)
+-70
+-80
+-90
+-100
+-110
+-120
+-130
+-140
+-150
+-160
+-170
+SUPPLY CURRENT vs. FREQUENCY
+(ONE CHANNEL ACTIVE,
+MAXIMUM OUTPUT POWER)
+41cot
+0872XAM
+FREQUENCY (MHz)
+)Am(
+TNERRUC
+YLPPUS
+SUPPLY CURRENT vs. OUTPUT POWER
+SETTING (TWO CHANNELS ACTIVE)
+250
+230
+210
+TA = +85°C
+190
+170
+150 TA = +25°C
+130 TA = -40°C
+110
+90
+70
+50
+10 100 1k 10k
+)Am(
+TNERRUC
+YLPPUS
+51cot
+0872XAM
+180
+170
+TA = +85°C
+160 TA = +25°C
+150
+140
+TA = -40°C 130
+120
+110
+100
+90
+80
+00 01 10 11
+PWR SETTING
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Typical Operating Characteristics (continued)
+(Measured with MAX2870 EV Kit. VCC_ = 3.3V, VGND_ = 0V, fREF_IN = 50MHz, TA = +25°C, see the Testing Conditions Table.)
+SUPPLY CURRENT vs. FREQUENCY
+(TWO CHANNELS ACTIVE,
+MAXIMUM OUTPUT POWER)
+Typical Operating Characteristics Testing Conditions Table
+REGISTER LOOP MAX2870 EV KIT COMPONENT VALUES
+fREF fPFD
+TOC TITLE SETTINGS FILTER C2 R2A + C1 R3 C3 COMMENTS
+(MHz) (MHz)
+(hex) BW (Hz) (F) R2B (I) (F) (I) (F)
+80B40000,
+3.0GHz VCO 80000141, VCO bits set
+OPEN-LOOP 0000405A, for3GHz
+N/A N/A N/A N/A N/A N/A N/A N/A
+PHASE NOISE XX00013, output,
+vs. FREQUENCY 648020FC, VAS_SHDN = 1
+00000005
+80B40000,
+4.5GHz VCO 80000141, VCO bits set
+OPEN-LOOP 0000405A, for4.5GHz
+N/A N/A N/A N/A N/A N/A N/A N/A
+PHASE NOISE XX00013 output,
+vs. FREQUENCY 648020FC, VAS_SHDN = 1
+00000005
+80B40000,
+6.0GHz VCO 80000141 VCO bits set
+OPEN-LOOP 0000405A for6.0GHz
+N/A N/A N/A N/A N/A N/A N/A N/A
+PHASE NOISE XX00013, output,
+vs. FREQUENCY 648020FC VAS_SHDN = 1
+00000005
+www.maximintegrated.com MaximIntegrated │ 7
+61cot
+0872XAM
+FREQUENCY (MHz)
+)Am(
+TNERRUC
+YLPPUS
+PLL LOCK vs. TIME
+300
+280
+260
+TA = +85°C
+240
+220
+200 TA = +25°C
+180
+TA = -40°C
+160
+140
+120
+100
+10 100 1k 10k
+71cot
+0872XAM
+TIME (µs)
+)zHG(
+YCNEUQERF
+3.08
+3.06
+3.04
+FASTLOCK OFF
+3.02
+3.00
+FASTLOCK ON
+2.98
+0 50 100 150 200
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Typical Operating Characteristics Testing Conditions Table
+REGISTER Loop MAX2870 EV KIT COMPONENT VALUES
+fREF fPFD
+TOC TITLE SETTINGS Filter BW C2 R2A + C1 R3 C3 COMMENTS
+(MHz) (MHz)
+(hex) (Hz) (F) R2B (I) (F) (I) (F)
+803C0000
+3.0GHz 80000141
+CLOSED-LOOP 00009E42,
+50 25 40k 0.1F 120 0.012F 250 820p
+PHASE NOISE E8000013,
+vs. FREQUENCY 618160FC,
+00400005
+805A0000,
+4.5GHz 80000141,
+CLOSED-LOOP 00009E42,
+50 25 40k 0.1F 120 0.012F 250 820p
+PHASE NOISE E8000013,
+vs. FREQUENCY 618160FC,
+00400005
+80780000,
+6.0GHz 0080000141,
+CLOSED-LOOP 00009E42,
+50 25 40k 0.1F 120 0.012F 250 820p
+PHASE NOISE EA000013,
+vs. FREQUENCY 608C80FC,
+00400005
+82350000,
+904MHz INTEGER-N
+800007D1
+MODE PHASE
+E1065FC2,
+NOISE AND SPUR 40 0.8 16k 0.1F 806 3300p 1201 470p
+2C000013
+PERFOMANCE
+6020803C
+vs. FREQUENCY
+00400005
+2687.5MHz 94FF0000,
+INTEGER-N PHASE 803207D1,
+NOISE 010A1E42,
+40 0.5 5k 0.1F 1000 6800p 300 0.01F
+AND SPUR B00000A3,
+PERFORMANCE vs. 6090803C,
+FREQUENCY 00400005
+00548050,
+2113.5MHz
+400003E9,
+FRACTIONAL-N
+81005FC2,
+PHASE NOISE 50 25 40k 0.1F 120 0.012F 250 820p
+E8000013,
+(LOW-NOISE MODE)
+609C80FC,
+vs. FREQUENCY
+00400005
+00548050,
+2113.5MHz
+400003E9,
+FRACTIONAL-N
+E1005FC2,
+PHASE NOISE vs. 50 25 40k 0.1F 120 0.012F 250 820p
+E8000013,
+FREQUENCY
+609C80FC,
+(LOW-SPUR MODE)
+00400005
+www.maximintegrated.com MaximIntegrated │ 8
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Typical Operating Characteristics Testing Conditions Table
+REGISTER Loop MAX2870 EV KIT COMPONENT VALUES
+fREF fPFD
+TOC TITLE SETTINGS Filter BW C2 R2A + C1 R3 C3 COMMENTS
+(MHz) (MHz)
+(hex) (Hz) (F) R2B (I) (F) (I) (F)
+00358160,
+2679.4MHz
+203207D1,
+FRACTIONAL-N
+01005E42,
+PHASE NOISE vs. 50 25 40k 0.1F 120 0.012F 250 820p
+B20000A3,
+FREQUENCY
+6010003C,
+(LOW-NOISE MODE)
+00400005
+00358160,
+2679.4MHz
+203207D1,
+FRACTIONAL-N
+41005E42,
+PHASE NOISE vs. 50 25 40k 0.1F 120 0.012F 250 820p
+B20000A3,
+FREQUENCY
+6010003C,
+(LOW-SPUR MODE)
+00400005
+003C0000,
+SUPPLY CURRENT
+20000321,
+vs. OUTPUT POWER
+01005E42, APWR swept
+SETTING 50 25
+00000013, from 00 to 11
+(ONE CHANNEL
+610F423C,
+ACTIVE, 3GHz)
+01400005,
+003C0000,
+SUPPLY CURRENT
+20000321,
+vs. FREQUENCY N and F values
+01005E42,
+(ONE CHANNEL 50 25 changed for
+00000013,
+ACTIVE, MAXIMUM each frequency
+610F423C,
+OUTPUT POWER)
+01400005
+003C0000,
+SUPPLY CURRENT 20000321,
+APWR and
+vs. OUTPUT POWER 01005E42,
+50 25 BPWR swept
+SETTING (TWO 00000013,
+from 00 to 11
+CHANNELS ACTIVE) 610F43FC,
+01400005
+003C0000,
+SUPPLY CURRENT
+20000321,
+vs. FREQUENCY N and F values
+01005E42,
+(TWO CHANNELS 50 25 swept foreach
+00000013,
+ACTIVE MAXIMUM frequency
+610F43FC,
+OUTPUT POWER)
+01400005
+00250120,
+20320141,
+00004042, CDM changed
+PLL LOCK vs. TIME 40 40 40k 0.1F 120 0.012F 250 820p
+000000A3, from 00 to 01
+0184023C,
+01400005
+www.maximintegrated.com MaximIntegrated │ 9
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Pin Configuration
+TOP VIEW
+27
+28 13
+MAX2870
+29 12
+30 11
+TQFN
+Pin Description
+PIN NAME FUNCTION
+Serial Clock Input. The data is latched into the 32-bit shift register on the rising edge of the
+1 CLK
+CLK line.
+2 DATA Serial Data Input. The serial data is loaded MSB first. The 3 LSBs identify the register address.
+Load Enable Input. When LE goes high the data stored in the shift register is loaded into the
+3 LE
+appropriate latches.
+Chip Enable. A logic-low powers the part down and the chargepump becomes high
+4 CE
+impedance.
+Fast-Lock Switch. Connect to the loop filter when using the fast-lock mode. No connect in
+5 SW
+Normal mode
+6 VCC_CP Power Supply for Charge Pump. Place decoupling capacitors as close as possible to the pin.
+7 CP_OUT Charge-Pump Output. Connect to external loop filter input.
+8 GND_CP Ground for Charge-Pump. Connect to board ground, not to the paddle.
+9 GND_PLL Ground for PLL. Connect to main board ground plane, not to the paddle.
+10 VCC_PLL Power Supply for PLL. Place decoupling capacitors as close as possible to the pin.
+11 GND_RF Ground for RF Outputs. Connect to board ground plane, not to the paddle.
+12 RFOUTA_P Open Collector Positive RF Output A. Connect to supply through RF choke or 50I load.
+www.maximintegrated.com MaximIntegrated │ 10
+ATAD EC WS PC_CCV TUO_PC
+14
+GER
+KLC
+TLIF_SAIB ENUT_DNG
+ENUT
+TLIF_ESION OCV_DNG
+24 23 22 20 19 18
+RFOUTB_P
+VCC_DIG RFOUTA_N
+REF_IN RFOUTA_P
+MUX_OUT GND_RF
+1 2 4 5 6 7
+TESR
+EL
+21
+25 16 VCC_RF
+RFOUT_EN 26 15 RFOUTB_N
+GND_DIG
+GND_SD 31
++
+EP 10 VCC_PLL
+VDD_SD 32 9 GND_PLL
+3
+OCV_CCV
+PC_DNG
+17
+LD
+8
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Pin Description (continued)
+PIN NAME FUNCTION
+13 RFOUTA_N Open Collector Negative RF Output A. Connect to supply through RF choke or 50I load.
+14 RFOUTB_P Open Collector Positive RF Output B. Connect to supply through RF choke or 50I load.
+15 RFOUTB_N Open Collector Negative RF Output B. Connect to supply through RF choke or 50I load.
+Power Supply for RF Output and Dividers. Place decoupling capacitors as close as possible
+16 VCC_RF
+to the pin.
+17 VCC_VCO VCO Power Supply. Place decoupling capacitors to the analog ground plane.
+18 GND_VCO Ground for VCO. Connect to main board ground plane, not directly to the paddle.
+19 NOISE_FILT VCO Noise Decoupling. Place a 1FF capacitor to ground.
+20 TUNE Control Input to the VCO. Connect to external loop filter.
+Ground for Control Input to the VCO. Connect to main board ground plane, not directly to the
+21 GND_TUNE
+paddle.
+Charge-Pump Current Range Input.Connect an external resistor to ground to set the minimum
+22 RSET
+CP current. ICP = 1.63/RSET x (1 + CP)
+23 BIAS_FILT VCO Noise Decoupling. Place a 1FF capacitor to ground.
+24 REG Reference Voltage Compensation. Place a 1FF capacitor to ground.
+Lock Detect Output. Logic-high when locked, and logic-low when unlocked. See register
+25 LD
+description for more details (Table 9).
+26 RFOUT_EN RF Output Enable. A logic-low disables the RF outputs.
+27 GND_DIG Ground for Digital circuitry. Connect to main board ground plane, not directly to the paddle.
+28 VCC_DIG Power Supply for Digital Circuitry. Place decoupling capacitors as close as possible to pin.
+Reference Frequency Input. This is a high-impedance input with a nominal bias voltage of
+29 REF_IN
+VCC_DIG/2. AC-couple to reference signal.
+30 MUX_OUT Multiplexed Output and Serial Data Out. See Table 6.
+Ground for Sigma-Delta Modulator. Connect to main board ground plane, not directly to
+31 GND_SD
+the paddle.
+Power Supply for Sigma-Delta Modulator. Place decoupling capacitors as close as possible
+32 VCC_SD
+to the pin.
+— EP Exposed Pad. Connect to board ground.
+www.maximintegrated.com MaximIntegrated │ 11
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Detailed Description LE is logic-low, the logic level at DATA is shifted at the
+rising edge of CLK. At the rising edge of LE, the 29 data
+4-Wire Serial Interface
+bits are latched into the register selected by the address
+The MAX2870 can be controlled by 3- wire SPI for write
+bits. The user must program all register values after
+operation using CLK, DATA, LE pins, refer Figure 1. For
+power-up.
+read operation, in addition to the above 3 pins, MUX_
+Upon power-up, the registers should be programmed
+OUT pin can be used to access Reg, 0x06, refer figure 2.
+twice with at least a 20ms pause between writes. The first
+The MAX2870 serial interface contains six write-only and
+write ensures that the device is enabled, and the second
+one read-only 32-bit registers. The 29 most-significant
+write starts the VCO selection process. Recommended to
+bits (MSBs) are data, and the three least-significant bits
+turn-off the outputs during this sequence and then turn-
+(LSBs) are the register address. Register data is loaded
+on the outputs using RFA_EN, RFB_EN.
+MSB first through the 4-wire serial interface (SPI). When
+tLES tLEH
+LE tCP
+tLEW
+tCL
+CLK
+tCH
+tDS tDH
+IDATA BIT31 BIT30 BIT29 BIT1 BIT0
+Figure 1. SPI Timing Diagram
+DATA DON’T CARE
+LE
+tMH
+CLK
+1 29 30 31 32 33 34 35 36
+MUX_OUT
+tMS
+Figure 2. Initiating Readback
+www.maximintegrated.com MaximIntegrated │ 12
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+REF_IN MUX R COUNTER DIVIDE-BY-2 MUX PFD
+X2
+Figure 3. Reference Input
+For a clean clock at start up, after power on, follow this Read Sequence
+sequence of programming: Register 0x06 can be read back through MUX_OUT.
+• Register 5, Address 0X05. Wait 20ms The user must set MUX = 1100. To begin the read
+sequence, set LE to logic-low, send 32 periods of CLK,
+• Register 4, set bit 4 and 8 to 0 to keep RFOUT
+and set LE to logic-high. While the CLK is running, the
+disabled
+DATA pin can be held at logic-high or logic-low for 29
+• Register 3, Address 0X03
+clocks, but the last 3 bits must be 110 to indicate regis-
+• Register 2, Address 0X02 ter 6. Then finally, send 1 period of the clock. The MSB
+ofregister 0x06 appears on the falling edge of the next
+• Register 1, Address 0X01
+clock and continues to shift out for the next 29 clock
+• Register 0, Address 0X00
+cycles (Figure 2). After the LSB of register 0x06 has
+• Register5,Address0X05 been read, the user can reset MUX = 0000.
+• Register 4, set bit 4 and 8 to 0 to keep RFOUT
+Power Modes
+disabled
+The MAX2870 can be put into low-power mode by set-
+• Register 3, Address 0X03
+ting SHDN = 1 (register 2, bit 5)or by setting the CE pin
+• Register 2, Address 0X02 to logic-low. In low-power mode, all blocks except SPI
+• Register 1, Address 0X01 are off.
+• Register 0, Address 0X00 After exiting low-power mode, allow at least 20ms for
+external capacitors to charge to their final values before
+To enable RFOUT, Register 4, Address 0X04, set bit 4
+programming the final VCO frequency.
+and 8 to 0.
+Reference Input
+Register programming order should be address 0x05,
+0x04, 0x03, 0x02, 0x01, and 0x00. Several bits are The reference input stage is configured as a CMOS
+double-buffered to update the settings at the same time. inverter with shunt resistance from input to output. In
+Seetheregisterdescriptionsfordouble-bufferedsettings. shutdown mode this input is set to high impedance to
+prevent loading of the reference source.
+The reference input signal path also includes optional x2
+and ÷2 blocks. When the reference doubler is enabled
+(DBR = 1), the maximum reference input frequency is lim-
+ited to 100MHz. When the doubler is disabled, the refer-
+ence input frequency is limited to 200MHz. The minimum
+reference frequency is 10MHz. The minimum R counter
+divide ratio is 1, and the maximum divide ratio is 1023.
+www.maximintegrated.com MaximIntegrated │ 13
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+PFD Frequency The RF B output frequency is determined as follows:
+The phase-detector frequency is determined as follows:
+If BDIV = 0 (register 4, bit 9), fRFOUTB = fRFOUTA.
+fPFD = fREF O [(1 + DBR)/(R x (1 + RDIV2))] If BDIV = 1, fRFOUTB = fVCO.
+fREF represents the external reference input frequency.
+Int-N/Frac-N Modes
+DBR (register 2, bit 25) sets the fREF input frequency
+doubler mode (0 or 1). RDIV2 (register 2, bit 24) sets Integer-N mode is selected by setting bit INT = 1 (regis-
+the fREF divide-by-2 mode (0 or 1). R (register 2, ter 0, bit 31). When operating in integer-N mode, it is also
+bits 23:14) is the value of the 10-bit programmable necessary to set bit LDF (register 2, bit 8) to set the lock
+reference counter (1 to 1023). The maximum fPFD is detect to integer-N mode.
+50MHz for frac-N mode and 105MHz for int-N mode. The The device’s frac-N mode is selected by setting bit INT = 0
+R-divider can be held in reset when RST (register 2, (register 0, bit 31). Additionally, set bit LDF = 0 (register
+bit 3) = 1.
+2, bit 8) for frac-N lock-detect mode.
+Int, Frac, Mod, and R Counter If the device is in frac-N mode, it will remain in frac-N
+Relationship mode when fractional division value F = 0, which can
+The VCO frequency (fVCO), N, F, and M can be deter- result in unwanted spurs. To avoid this condition, the
+mined based on desired RF output frequency (fRFOUTA) device can automatically switch to integer-N mode when
+as follows: F = 0 if the bit F01 = 1 (register 5, bit 24).
+Set DIVA value property based on fRFOUTA and DIVA Phase Detector and Charge Pump
+register table (register 4[22.20])
+The device’s charge-pump current is determined by the
+fVCO = fRFOUTA x DIVA value of the resistor from pin RSET to ground and the
+If bit FB = 1, (DIVA is not in PLL feedback loop): value of bits CP (register 2, bits 12:9) as follows:
+N + (F/M) = fVCO/fPFD ICP = 1.63/RSET x (1 + CP)
+If bit FB = 0, (DIVA is in PLL feedback loop) and DIVA To reduce spurious in frac-N mode, set charge-pump
+≤ 16: linearity bit CPL = 1 (register 1, bits 30:29). For int-N
+N + (F/M) = (fVCO/fPFD)/DIVA mode, set CPL = 0. For lower noise operation in int-N
+If bit FB = 0, (DIVA is in PLL feedback loop) and DIVA > 16: mode, set charge-pump output clamp bit CPOC = 1
+(register 1, bit 31) to prevent leakage current onto the
+N + (F/M) = (fVCO / fPFD)/16
+loop filter. For frac-N mode, set CPOC = 0.
+N is the value of the 16-bit N counter (16 to 65535),
+The charge-pump output can be put into high-imped-
+programmable through bits 30:15 of register 0. M is the
+ance mode when TRI = 1 (register 2, bit 4). The output is
+fractional modulus value (2 to 4095), programmable
+in normal mode when TRI = 0.
+through bits 14:3 of register 1. F is the fractional division
+value (0 to MOD - 1), programmable through bits 14:3 of The phase detector polarity can be changed if an active
+register 0. In frac-N mode, the minimum N value is 19 and inverting loop filter topology is used. For noninverting
+maximum N value is 4091. The N counter is held in reset loop filters, set PDP = 1 (register 2, bit 6). For inverting
+when RST = 1 (register 2, bit 3). DIVA is the RF output loop filters, set PDP = 0.
+divider setting (0 to 7), programmable through bits 22:20
+of register 4. The division ratio is set by 2DIVA.
+www.maximintegrated.com MaximIntegrated │ 14
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+MUX_OUT and Lock Detect 3/4th the total resistance. The larger resistor should be
+MUX_OUT is a multipurpose test output for observing connected from SW to ground, and the smaller resistor
+various internal functions of the MAX2870. MUX_OUT from SW to the loop filter capacitor. When CDM = 01
+can also be configured as serial data output. Bits MUX (register 3, bits 16:15), fast-lock is active after the VAS
+(register 2, bit 28:26) are used to select the desired has completed. During fast-lock, the charge pump is
+MUX_OUT signal (see Table 6). increased to CP = 1111 and the shunt loop filter resis-
+tance is set to 1/4th the total resistance by changing pin
+Lock detect can be monitored through the LD output by
+SW from high impedance to ground. Fast-lock deacti-
+setting the LD bits (register 5, bits 23:22). For digital lock
+vates after a timeout set by the user. This timeout is loop
+detect, set LD = 01. The digital lock detect is dependent
+filterdependent,andissetby:
+on the mode of the synthesizer. In frac-N mode set LDF =
+0, and in int-N mode set LDF = 1. To set the accuracy of tFAST-LOCK = M x CDIV/fPFD
+the digital lock detect, see Table 1 and Table 2. where M is the modulus setting and CDIV is the clock
+Analog lock detect can be set with LD = 10. In this mode, divider setting. The user must determine the CDIV setting
+LD is an open-drain output and requires an external based on their loop filter time constant. The SW pin can
+pullup resistor of typical value, 10KΩ. be left open/ no connect when fast lock mode is not used.
+The lock detect output validity is dependent on many
+factors. The lock detect output is not valid during the
+R3
+VCO auto selection process. After the VCO auto selec-
+7 CP_OUT
+tion process has completed, the lock detect output is not
+C3 C2 C1
+valid until the TUNE voltage has settled. TUNE voltage
+MAX2870
+settling time is dependent on loop filter bandwidth, and
+R2A
+can be calculated using the EE-SimSimulation tool found
+at www.maximintegrated.com. 5 SW
+Fast-Lock R2B
+The device uses a fast-lock mode to decrease lock time.
+This mode requires that CP = 0000 (register 2, bits 12:9)
+20 TUNE
+and that the shunt resistive portion of the loop filter be
+segmented into two parts, where one resistor (R2A) is
+1/4th the total resistance, and the other resistor (R2B) is
+Figure 4. Fast Lock Filter Topology
+Table 1. Frac-N Digital Lock-Detect Settings
+LOCKED UP/DOWN NUMBER OF LOCKED UP/DOWNTIME SKEW
+PFD FREQUENCY LDS LDP
+TIME SKEW (ns) CYCLES TO SET LD TO UNSET LD (ns)
+P 32MHz 0 0 10 40 15
+P 32MHz 0 1 6 40 15
+> 32MHz 1 X 4 40 4
+Table 2. Int-N Digital Lock-Detect Settings
+LOCKED UP/DOWN NUMBER OF LOCKED UP/DOWNTIME SKEW
+PFD FREQUENCY LDS LDP
+TIME SKEW (ns) CYCLES TO SET LD TO UNSET LD (ns)
+P 32MHz 0 0 10 5 15
+P 32MHz 0 1 6 5 15
+> 32MHz 1 X 4 5 4
+www.maximintegrated.com MaximIntegrated │ 15
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+RFOUTA± and RFOUTB± BS = 1023. If fPFD is lower than 50kHz, then set BS = 1.
+The device has dual differential open-collector RF out- The time needed to select the correct VCO is 10/fBS.
+puts that require an external RF choke 50I resistor to The RETUNE (register 3, bit 24) bit is used to enable or
+supply for each output. Each differential output can disable the VAS auto-retune function. Should the 3-bit
+be independently enabled or disabled by setting bits TUNE ADC detect that the VCO control voltage (VTUNE)
+RFA_EN (register 4, bit 5) and RFB_EN (register 4, bit 8). has drifted into the 000 or 111 state, the VAS will initiate
+Both outputs are also controlled by applying a logic-high an auto-retune if RETUNE = 1. If RETUNE = 0, then this
+(enabled) or logic-low (disabled) to pin RFOUT_EN. function is disabled.
+The output power of each output can be individually If VAS_SHDN = 1, then the VCO can be manually
+controlled with APWR (register 4, bits 4:3) for RFOUTA selected by bits VCO (register 3, bits 31:26). Refer to the
+and BPWR (register 4, bits 7:6) for RFOUTB. The avail- Applications Information section for detailed implementation
+able differential output power settings are from -4dBm of VCO manual selection.
+to +5dBm, in 3dB steps with 50I pullup to supply. The
+Phase Shift Mode
+available single-ended output power ranges from -4dBm
+to +5dBm in 3dB steps with a RF choke to supply. Across After achieving lock, the phase of the MAX2870 device’s
+the entire frequency range different pullup elements (L RF output can be changed in increments of P/M x 360N.
+or R) are required for optimal output power. If the output The absolute phase cannot be determined, but it can be
+is used single ended, the unused output should be termi- changed relative to the current phase.
+nated in a corresponding load.
+To change the phase, do the following:
+Voltage-Controlled Oscillator 1) Achieve lock at the desired frequency.
+The fundamental VCO frequency of the device guarantees 2) Set the increment of phase relative to the current phase
+gap-free coverage from 3.0GHz to 6.0GHz using four by setting P = M x {desired_phase_change}/360N.
+individual VCO core blocks with 16 sub-bands within
+3) Enable the phase change by setting CDM = 10.
+each block. Connect the output of the loop filter to the
+4) Reset CDM = 00.
+TUNE input. The TUNE input is used to control the VCO.
+Low-Spur Mode
+TuneADC
+The device offers three modes for the sigma-delta modu-
+A 3-bit ADC is used to read the VCO tuning voltage. The
+lator. Low-noise mode offers lower in-band noise at the
+ADC value can be read back by bits 22:20 in register 6.
+expense of spurs. The spurs can be reduced by setting
+The ADC uses the ranges shown in Table 3.
+SDN = 10 (register 2, bits 30:29) or SDN = 11 for different
+Note that the digital or analog lock detect might still be
+modes of dithering. The user can determine which mode
+valid when the tuning voltage is out of the compliance
+works best for their application.
+range.
+Table 3. ADC VCO Status
+VCOAutoselect (VAS) State Machine
+An internal VCO autoselect state machine is initiated
+ADC VCO STATUS
+when register 0 is programmed to automatically select
+the correct VCO if bit VAS_SHDN = 0 (register 3, bit 25).
+000 Out-of-lock, VTUNE < 0.5V
+The state machine clock, fBS, must be set to 50kHz. This
+001 In-lock, 0.5V < VTUNE < 0.7V
+is set by the BS bits. The formula for setting BS is: 010 In-lock, 0.7V < VTUNE < 1.3V
+BS = fPFD/50kHz 011 Not used
+where fPFD is the phase-detector frequency. The BS (regis- 100 Not used
+ter 4, bits19:12) value should be rounded to the nearest
+101 In-lock, 1.3V < VTUNE < 2.1V
+integer. If the calculated BS is higher than 1023, then set
+110 In-lock, 2.1V < VTUNE < 2.5V
+111 Out-of-lock, VTUNE > 2.5V
+www.maximintegrated.com MaximIntegrated │ 16
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Register and Bit Descriptions
+The operating mode of the device is controlled by six on-chip registers.
+Defaults are not guaranteed upon power-up and are provided for reference only. All reserved bits should only be writ-
+ten with default values. In low-power mode, the register values are retained. Upon power-up, the registers should be
+programmed twice with at least a 20ms pause between writes. The first write ensures that the device is enabled, and
+the second write starts the VCO selection process.
+Table 4. Register 0 (Address: 000, Default: 007D0000HEX)
+BIT LOCATION BIT ID NAME DEFINITION
+0 = Enables the fractional-N mode
+Int-N or Frac-N
+31 INT 1 = Enables the integer-N mode
+ModeControl
+The LDF bit must also be set to the appropriate mode.
+Sets integer part (N-divider) of the feedback divider factor. All integer
+Integer Division
+30:15 N[15:0] values from 16 to 65,535 are allowed for integer mode. Integer values
+Value
+from19 to 4,091 are allowed for fractional mode.
+Sets fractional value:
+000000000000 = 0 (see F0Ibit description)
+Fractional 000000000001 = 1
+14:3 FRAC[11:0]
+Division Value ----
+111111111110 = 4094
+111111111111 = 4095
+2:0 ADDR[2:0] Address Bits Register address bits 000
+Table 5. Register 1 (Address: 001, Default: 2000FFF9HEX)
+BIT LOCATION BIT ID NAME DEFINITION
+Sets charge-pump output clamp mode.
+CP Output 0 = Disables clamping of the CP output when the CP is off
+31 CPOC
+Clamp 1 = Enables the clamping of the CP output when the CP is off (improved
+integer-N in-band phase noise)
+Sets CP linearity mode.
+00 = Disables the CP linearity mode (integer-N mode)
+30:29 CPL[1:0] CP Linearity 01 = Enables the CP linearity mode (frac-N mode)
+10 = Reserved
+11 = Reserved
+Sets charge-pump test modes.
+Charge Pump 00 = Normal mode
+28:27 CPT[1:0] Test 01 = Reserved
+10 = Force CP into source mode
+11 = Force CP into sink mode
+Sets phase value. See the Phase Shift Mode section.
+000000000000 = 0
+26:15 P[11:0] Phase Value 000000000001 = 1 (recommended)
+-----
+111111111111 = 4095
+www.maximintegrated.com MaximIntegrated │ 17
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Table 5. Register 1 (Address: 001, Default: 2000FFF9HEX) (continued)
+BIT LOCATION BIT ID NAME DEFINITION
+Fractional modulus value used to program fVCO. See the Int, Frac, Mod,
+and R Counter Relationship section. Double buffered by register 0.
+000000000000 = Unused
+Modulus Value
+14:3 M[11:0] 000000000001 = Unused
+(M)
+000000000010 = 2
+-----
+111111111111 = 4095
+2:0 ADDR[2:0] Address Bits Register address bits 001
+Table 6. Register 2 (Address: 010, Default: 00004042HEX)
+BIT LOCATION BIT ID NAME DEFINITION
+Lock-detect speed adjustment.
+Lock-Detect
+31 LDS 0 = fPFD P 32MHz
+Speed
+1 = fPFD > 32MHz
+Sets noise mode (See the Low-Spur Mode section.)
+00 = Low-noise mode
+Frac-N Noise
+30:29 SDN[1:0] 01 = Reserved
+Mode
+10 = Low-spur mode 1
+11 = Low-spur mode 2
+Sets MUX_OUT pin configuration (MSB bit located register 05).
+0000 = Three-state output
+0001 = D_VDD
+0010 = D_GND
+0011 = R-divider output
+MUX_OUT
+28:26 MUX[3:0] 0100 = N-divider output/2
+Configuration
+0101 = Analog lock detect
+0110 = Digital lock detect
+0111:1011 = Reserved
+1100 = Read register 06 MUX_OUT is configured as serial data out.
+1101:1111 = Reserved
+Sets reference doubler mode.
+Reference
+25 DBR 0 = Disable reference doubler
+Doubler Mode
+1 = Enable reference doubler
+Sets reference divider mode.
+Reference Div2
+24 RDIV2 0 = Disable reference divide-by-2
+Mode
+1 = Enable reference divide-by-2
+Sets reference divide value (R). Double buffered by register 0.
+0000000000 = 0 (unused)
+Reference
+23:14 R[9:0] 0000000001 = 1
+Divider Mode
+-----
+1111111111 = 1023
+www.maximintegrated.com MaximIntegrated │ 18
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Table 6. Register 2 (Address: 010, Default: 00004042HEX) (continued)
+BIT LOCATION BIT ID NAME DEFINITION
+Sets double buffer mode.
+13 REG4DB Double Buffer 0 = Disabled
+1 = Enabled
+Sets charge-pump current in mA (RSET = 5.1kI). Double buffered by
+register 0.
+0000 = 0.32
+0001 = 0.64
+0010 = 0.96
+0011 = 1.28
+0100 = 1.60
+0101 = 1.92
+Charge-Pump 0110 = 2.24
+12:9 CP[3:0]
+Current 0111 = 2.56 [ICP = 1.63/RSET x (1 + CP<3:0>)]
+1000 = 2.88
+1001 = 3.20
+1010 = 3.52
+1011 = 3.84
+1100 = 4.16
+1101 = 4.48
+1110 = 4.80
+1111 = 5.12
+Sets lock-detect function.
+Lock-Detect
+8 LDF 0 = Frac-N lock detect
+Function
+1 = Int-N lock detect
+Sets lock-detect precision.
+Lock-Detect
+7 LDP 0 = 10nS
+Precision
+1 = 6nS
+Sets phase detector polarity.
+Phase Detector 0 = Negative (for use with inverting active loop filters)
+6 PDP
+Polarity 1 = Positive (for use with passive loop filers and noninverting
+active loop filters)
+Sets power-down mode.
+Power-Down
+5 SHDN 0 = Normal mode
+Mode
+1 = Device shutdown
+Charge-Pump Sets charge-pump three-state mode.
+4 TRI Three-State 0 = Disabled
+Mode 1 = Enabled
+Sets counter reset mode.
+3 RST Counter Reset 0 = Normal operation
+1 = R and N counters reset
+2:0 ADDR Address Bits Register address 010
+www.maximintegrated.com MaximIntegrated │ 19
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Table 7. Register 3 (Address: 011, Default: 0000000BHEX)
+BIT LOCATION BIT ID NAME DEFINITION
+Manual selection of VCO and VCO sub-band when VAS is disabled.
+000000 = VCO0
+31:26 VCO[5:0] VCO
+….
+111111 = VCO63
+Sets VAS state machine mode.
+25 VAS_SHDN VAS_SHDN 0 = VAS enabled
+1 = VAS disabled
+Sets VAS response to temperature drift.
+24 RETUNE RETUNE 0 = VAS auto-retune over temp disabled
+1 = VAS auto-retune over temp enabled
+23:18 Reserved Reserved Reserved. Program to 000000.
+17 Reserved Reserved Reserved. Program to 0.
+Sets clock divider mode.
+00 = Clock divider off
+Clock Divider
+16:15 CDM[1:0] 01 = Fast-lock enabled
+Mode
+10 = Phase mode
+11 = Reserved
+Sets 12-bit clock divider value.
+000000000000 = Unused
+Clock Divider 000000000001 = 1
+14:3 CDIV[11:0]
+Value 000000000010 = 2
+-----
+111111111111 = 4095
+2:0 ADDR[2:0] Address Bits Register address 011
+www.maximintegrated.com MaximIntegrated │ 20
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Table 8. Register 4 (Address: 100, Default: 6180B23CHEX)
+BIT LOCATION BIT ID NAME DEFINITION
+31:26 Reserved Reserved Reserved. Program to 011000.
+25:24 BS_MSBs[1:0] Band-Select MSBs Band-select MSBs. See bits [19:12].
+Sets VCO to N counter feedback mode.
+VCO Feedback
+23 FB 0 = Divided
+Mode
+1 = Fundamental
+Sets RFOUT_ output divider mode. Double buffered by register 0
+when REG4DB = 1.
+000 = Divide by 1, if 3000MHz ≤ fRFOUTA ≤ 6000MHz
+001 = Divide by 2, if 1500MHz ≤ fRFOUTA< 3000MHz
+RFOUT_ Output 010 = Divide by 4, if 750MHz ≤ fRFOUTA< 1500MHz
+22:20 DIVA[2:0]
+Divider Mode 011 = Divide by 8, if 375MHz ≤ fRFOUTA< 750MHz
+100 = Divide by 16, if 187.5MHz ≤ fRFOUTA< 375MHz
+101 = Divide by 32, if 93.75MHz ≤ fRFOUTA < 187.5MHz
+110 = Divide by 64, if 46.875MHz ≤ fRFOUTA < 93.75MHz
+111 = Divide by 128, if 23.5MHz ≤ fRFOUTA < 46.875MHz
+Sets band select clock divider value. MSB are located in bits [25:24].
+0000000000 = Reserved
+0000000001 =1
+19:12 BS[7:0] Band Select 0000000010 = 2
+----
+1111111111 = 1023
+See details in VASsection
+11 Reserved Reserved Reserved. Program to 0.
+10 Reserved Reserved Reserved. Program to 0.
+Sets RFOUTB output path select.
+RFOUTB Output
+9 BDIV 0 = VCO divided output
+Path Select
+1 = VCO fundamental frequency
+Sets RFOUTB output mode.
+RFOUTB Output
+8 RFB_EN 0 = Disabled
+Mode
+1 = Enabled
+Sets RFOUTB single-ended output power. See the RFOUTAQ and
+RFOUTBQ section.
+RFOUTB Output 00 = -4dBm
+7:6 BPWR[1:0]
+Power 01 = -1dBm
+10 = +2dBm
+11 = +5dBm
+Sets RFOUTA output mode.
+RFOUTA Output
+5 RFA_EN 0 = Disabled
+Mode
+1 = Enabled
+Sets RFOUTA single-ended output power. See the RFOUTAQ and
+RFOUTBQ section.
+RFOUTA Output 00 = -4dBm
+4:3 APWR[1:0]
+Power 01 = -1dBm
+10 = +2dBm
+11 = +5dBm
+2:0 ADDR[2:0] Register Address Register address 100
+www.maximintegrated.com MaximIntegrated │ 21
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Table 9. Register 5 (Address: 101, Default: 00400005HEX)
+BIT LOCATION BIT ID NAME DEFINITION
+31:25 Reserved Reserved Reserved. Program to 0000000.
+Sets integer mode for F = 0.
+24 F01 F01 0 = If F[11:0] = 0, then fractional-N mode is set
+1 = If F[11:0] = 0, then integer-N mode is auto set
+Sets lock-detect pin function.
+00 = Low
+Lock-Detect Pin
+23:22 LD[1:0] 01 = Digital lock detect
+Function
+10 = Analog lock detect
+11 = High
+21:19 Reserved Reserved Reserved. Program to 000.
+18 MUX MUX MSB Sets mode at MUX_OUT pin (see register 2 [28:26])
+17:3 Reserved Reserved Reserved. Program to 000000000000000.
+Register
+2:0 ADDR[2:0] Register address bits 101
+Address
+Table 10. Register 6 (Address: 110, Read-Only Register)
+BIT LOCATION BIT ID NAME DEFINITION
+31:24 — Reserved Reserved
+POR readback status.
+Power_On_
+23 POR 0 = POR has been read back
+Reset
+1 = POR has not been read back (registers at default)
+22:20 ADC[2:0] VTUNE_ADC Reads back the ADC reading of the VTUNE (see the Tune ADC section)
+19:9 — Reserved Reserved
+Reads back the current active VCO.
+000000 = VCO0
+8:3 V[5:0] Active VCO
+……
+111111 = VCO63
+Register
+2:0 ADDR[2:0] Register address bits 110
+Address
+www.maximintegrated.com MaximIntegrated │ 22
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Typical Application Circuit
+24 23 22 21 20 19 18 17
+LD
+TO GPIO
+RFOUT_EN
+FROM GPIO
+GND_DIG
+VCC_DIG
+REF_IN
+MUX_OUT
+11
+GND_SD
+EP 10
+VDD_SD
+9
+1 2 3 4 5 6 7 8
+FOR BEST PERFORMANCE GENERATE
+THREE SUPPLIES USING SEPARATE LDOS
+VCC_RF
+VCC_DIG
+VCC_PLL
+www.maximintegrated.com MaximIntegrated │ 23
+KLC ATAD EL EC WS PC_CCV TUO_PC PC_DNG
+VCC_RF
+RFOUTB_N
+RFOUTB
+RFOUTB_P
+RFOUTA_N
+RFOUTA
+RFOUTA_P
+GND_RF
+GND_PLL
+OCV_CCV
+VCC_RF
+VCC_RF
+VCC_DIG
+VCC_PLL
+VCC_PLL
+VCC_DIG
+VCC_RF
+VCC_PLL
+SPI
+INTERFACE
+GER
+TLIF_SAIB
+TESR
+ENUT_DNG
+ENUT
+TLIF_ESION OCV_DNG
+25 16
+26 15
+27 14
+28 13
+MAX2870
+29 12
+30
+31
+32
+R3
+FROM
+GPIO
+C1 C2 C3
+R2A
+R2B
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Applications Information Layout Issues
+VCO manual selection operation (VAS_SHDN = 1) allows The MAX2870 EV kit can be used as a starting point for
+shorter lock time, typically 200 µSec saving. layout. For best performance, take into consideration
+grounding and routing of RF, baseband, and power
+The following steps need to be implemented:
+supply PCB proper line. Make connections from vias
+1) Building VCO lookup table (Required ONLY once
+to the ground plane as short as possible. On the high
+after each power cycle)
+impedance ports, keep traces short to minimize shunt
+• Set VAS_SHDN = 0, follow “VCO Autoselect (VAS) capacitance. EV kit Gerber files can be requested at
+State Machine” section to set BS bits properly www.maximintegrated.com.
+• Write proper N and Frac value to Reg 0, triggering Power-Supply Layout
+MAX2870 to first desired frequency point, i.e freq1.
+To minimize coupling between different sections of the
+Wait for PLL to lock
+IC, a star power-supply routing configuration with a large
+• Read back register 6[8:3] from MUX_OUT pin and decoupling capacitor at a central VCC_ node is recom-
+save the value to memory as vco1, see detail at mended. The VCC_ traces branch out from this node,
+4-Wire Serial Interface section about register read- each going to a separate VCC_ node in the circuit. Place
+back a bypass capacitor as close as possible to each supply
+• Repeat above steps for all desired frequency pin This arrangement provides local decoupling at each
+points VCC_ pin. Use at least one via per bypass capacitor for
+a low-inductance ground connection. Do not share the
+2) VCO manual selection normal operation
+capacitor ground vias with any other branch.
+• Set VAS_SHDN = 1
+Refer to Maxim’s Wireless and RF Application Notes for
+• Based on the VCO lookup table obtained from step more information.
+1, write desired frequency’s corresponding VCO
+value to reg3[31:26]
+• Write proper N and Frac value to reg0, triggering
+MAX2870 to desired frequency
+Ordering Information Package Information
+For the latest package outline information and land patterns (foot-
+PART TEMP RANGE PIN-PACKAGE
+prints), go to www.maximintegrated.com/packages. Note that a
+MAX2870ETJ+ -40NC to +85NC 32 TQFN-EP*
+“+”, “#”, or “-” in the package code indicates RoHS status only.
++Denotes a lead(Pb)-free/RoHS-compliant package. Package drawings may show a different suffix character, but the
+*EP = Exposed pad. drawing pertains to the package regardless of RoHS status.
+PACKAGE PACKAGE OUTLINE LAND
+TYPE CODE NO. PATTERN NO.
+32 TQFN-EP T3255+5 21-0140 90-0013
+www.maximintegrated.com MaximIntegrated │ 24
+MAX2870 23.5MHz to 6000MHz Fractional/
+Integer-N Synthesizer/VCO
+Revision History
+REVISION REVISION PAGES
+DESCRIPTION
+NUMBER DATE CHANGED
+0 4/12 Initial release —
+Updated Int, Frac, Mod and R Counter Relationship section; updated formula in
+1 7/12 13, 15, 20
+VCO Autoselect (VAS) State Machine section, updated Table 8
+Updated Applications section, Note 3, Typical Operating Characteristics Testing
+2 11/12
+Conditions Table, and Figure 1
+1, 4, 7, 12
+Updated AC Electrical Characteristics table; updated SPI Characteristics, Pin
+3 4/13 Description, Fast-Lock, and VCO Autoselect State Machine sections. Replaced 3, 4, 11, 12, 14
+Figure 2
+4 8/13 Updated Fast-Lock Section and Digital I/O Characteristics table 4, 14
+Updated the Four-Wire Serial Interface, MUX_OUT and Lock Detect, Register and Bit
+5 3/14 12–16, 21
+Descriptions sections, and Table 9
+6 4/17 Added VCO Manual Selection section and other general updates/corrections 1–3, 7–10, 12–24
+Forpricing,delivery,andorderinginformation,pleasecontactMaximDirectat1-888-629-4642,orvisitMaximIntegrated’swebsiteatwww.maximintegrated.com.
+MaximIntegratedcannotassumeresponsibilityforuseofanycircuitryotherthancircuitryentirelyembodiedinaMaximIntegratedproduct.Nocircuitpatentlicenses
+areimplied.MaximIntegratedreservestherighttochangethecircuitryandspecificationswithoutnoticeatanytime.Theparametricvalues(minandmaxlimits)
+shownintheElectricalCharacteristicstableareguaranteed.Otherparametricvaluesquotedinthisdatasheetareprovidedforguidance.
+MaximIntegratedandtheMaximIntegratedlogoaretrademarksofMaximIntegratedProducts,Inc. © 2017MaximIntegratedProducts,Inc. │ 25

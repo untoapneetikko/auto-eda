@@ -161,9 +161,7 @@ async function doDeleteProject() {
 }
 
 // ── AI Project Builder ────────────────────────────────────────────────────────
-let _buildGenTicketId = null;
 let _buildProjectId = null;
-let _buildPollTimer = null;
 
 async function buildLoad() {
   // Populate library chips
@@ -197,58 +195,26 @@ async function buildSubmit() {
   const btn = document.getElementById('build-submit-btn');
   btn.disabled = true;
 
-  buildSetStatus('⏳', 'Queuing your build request…', 10, false, false);
+  buildSetStatus('⏳', 'Sending to orchestrator…', 10, false, false);
   document.getElementById('build-status').classList.add('visible');
 
   try {
-    const res = await fetch('/api/build-project', {
+    const res = await fetch('/api/pipeline/agents/orchestrator/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    }).then(r => r.json());
-
-    if (!res.genTicketId) throw new Error(res.error || 'Failed to queue build');
-    _buildGenTicketId = res.genTicketId;
-    _buildProjectId = null;
-    buildSetStatus('🤖', 'Agent is designing your circuit… This usually takes 1–2 minutes.', 30, false, false);
-    buildStartPoll();
+      body: JSON.stringify({ message: prompt })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.error || 'Failed to start orchestrator');
+    }
+    buildSetStatus('🤖', 'Orchestrator is running — watch the Agents panel for live progress.', 60, false, true);
   } catch(e) {
     buildSetStatus('❌', `Error: ${e.message}`, 0, false, false);
     btn.disabled = false;
   }
 }
 
-function buildStartPoll() {
-  if (_buildPollTimer) clearInterval(_buildPollTimer);
-  _buildPollTimer = setInterval(buildPoll, 4000);
-}
-
-async function buildPoll() {
-  if (!_buildGenTicketId) return;
-  try {
-    const data = await fetch('/api/gen-tickets').then(r => r.json());
-    const ticket = (data.tickets || []).find(t => t.id === _buildGenTicketId);
-    if (!ticket) return;
-    if (ticket.status === 'done') {
-      clearInterval(_buildPollTimer);
-      _buildPollTimer = null;
-      // Extract project ID from observations: "PROJECT_ID:xxx"
-      const match = (ticket.observations || '').match(/PROJECT_ID:(\S+)/);
-      if (match) {
-        _buildProjectId = match[1];
-        buildSetStatus('✅', 'Your project is ready!', 100, true, true);
-      } else {
-        buildSetStatus('⚠️', 'Build completed but no project was returned. The AI may not have found suitable components.', 100, false, true);
-      }
-    } else if (ticket.status === 'cancelled') {
-      clearInterval(_buildPollTimer);
-      _buildPollTimer = null;
-      buildSetStatus('❌', `Build failed: ${ticket.observations || 'Unknown error'}`, 0, false, true);
-    } else if (ticket.status === 'inprogress') {
-      buildSetStatus('🤖', `Agent is working… ${ticket.observations ? '— ' + ticket.observations : ''}`, 60, false, false);
-    }
-  } catch(e) { /* network glitch, keep polling */ }
-}
 
 function buildSetStatus(icon, msg, pct, showOpen, showReset) {
   const el = {
@@ -271,8 +237,6 @@ async function buildOpenProject() {
 }
 
 function buildReset() {
-  if (_buildPollTimer) { clearInterval(_buildPollTimer); _buildPollTimer = null; }
-  _buildGenTicketId = null;
   _buildProjectId = null;
   document.getElementById('build-status')?.classList.remove('visible');
   document.getElementById('build-submit-btn').disabled = false;

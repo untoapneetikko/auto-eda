@@ -236,6 +236,20 @@ async def api_upload(file: UploadFile):
     _update_index()
     _broadcast("library_updated", {"slug": slug, "status": "pending_parse"})
 
+    # Auto-queue the datasheet parser — no manual Claude Code step needed
+    gt = _read_gen_tickets()
+    gt["tickets"].append({
+        "id": gt["nextId"],
+        "type": "datasheet",
+        "slug": slug,
+        "title": f"Parse {slug}",
+        "prompt": f"parse datasheet {slug}",
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    gt["nextId"] += 1
+    _save_gen_tickets(gt)
+
     return {"slug": slug, "confidence": confidence, "extractionNote": extraction_note,
             "charCount": profile["raw_text_length"]}
 
