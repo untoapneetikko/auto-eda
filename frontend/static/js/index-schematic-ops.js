@@ -50,7 +50,13 @@ function renderSchNets(editorRef, listId, countId) {
     return;
   }
   const hn = editorRef._highlightedNet;
-  el.innerHTML = nets.map(n => {
+
+  const _isPower = name => /^(GND|AGND|DGND|PGND|VCC|VDD|VSS|VEE|VBUS|VREF|VBAT|V\d|3\.?3V?|5V|1\.?8V?|1\.?2V?|2\.?5V?|3V3|5V0|PWR|POWER|AVCC|AVDD|DVCC|DVDD)$/i.test(name.trim());
+
+  const power = nets.filter(n => _isPower(n.name));
+  const signal = nets.filter(n => !_isPower(n.name));
+
+  const _row = n => {
     const col = editorRef._labelColor(n.name);
     const active = hn === n.name;
     const bg = active ? 'background:rgba(250,204,21,0.13);' : '';
@@ -66,7 +72,21 @@ function renderSchNets(editorRef, listId, countId) {
       <span class="sch-net-name" style="color:${col};" title="${esc(n.name)}">${esc(n.name)}</span>
       <span class="sch-net-pins">${n.ports.length}</span>
     </div>`;
-  }).join('');
+  };
+
+  const _groupHeader = label => `<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;padding:5px 8px 2px;opacity:0.6;">${label}</div>`;
+
+  let html = '';
+  if (power.length) {
+    html += _groupHeader('Power');
+    html += `<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:3px;">` + power.map(_row).join('') + `</div>`;
+  }
+  if (signal.length) {
+    if (power.length) html += `<div style="height:1px;background:var(--border);margin:2px 0;opacity:0.4;"></div>`;
+    html += _groupHeader('Signals');
+    html += signal.map(_row).join('');
+  }
+  el.innerHTML = html;
 }
 
 // ── SVG / PNG Export ───────────────────────────────────────────────────────
