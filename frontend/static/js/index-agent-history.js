@@ -332,17 +332,17 @@ async function gtCreateTicket(type, slug, profile, rawText = null, extraNotes = 
     throw new Error(`Failed to build prompt for ${type} — API may be unreachable`);
   }
   if (extraNotes) basePrompt += `\n\nADDITIONAL INSTRUCTIONS FROM USER:\n${extraNotes}`;
-  // Create ticket first to get the ID
+  // Create as draft first so dispatcher doesn't pick it up before the prompt is ready
   const res = await fetch('/api/gen-tickets', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ type, slug, title, prompt: basePrompt, status: 'pending' })
+    body: JSON.stringify({ type, slug, title, prompt: basePrompt, status: 'draft' })
   });
   const ticket = await res.json();
-  // Patch prompt to include ticket close instruction
+  // Build full prompt with completion instruction, then atomically set status to pending
   const fullPrompt = basePrompt + `\n\nWHEN DONE — mark this ticket complete:\nPUT http://localhost:8000/api/gen-tickets/${ticket.id}\nBody: { "status": "done" }`;
   await fetch(`/api/gen-tickets/${ticket.id}`, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ prompt: fullPrompt })
+    body: JSON.stringify({ prompt: fullPrompt, status: 'pending' })
   });
   showGenToast(`🎫 GT-${String(ticket.id).padStart(3,'0')} — ${title}`);
   // Refresh Agent History tab if it's currently open

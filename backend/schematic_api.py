@@ -2398,7 +2398,45 @@ async def _ticket_dispatcher():
                 _save_gen_tickets(data)
                 print(f"[ticket-dispatcher] GT-{ticket['id']:03d} ({ticket.get('type')}) → {agent_name}", flush=True)
                 try:
-                    await _agent_send(agent_name, ticket["prompt"])
+                    result = await _agent_send(agent_name, ticket["prompt"])
+                    actual_name = result.get("actual_name", agent_name)
+                    agent_task = _pipeline_tasks.get(actual_name)
+                    ticket_id = ticket["id"]
+
+                    async def _ticket_watcher(tid=ticket_id, t=agent_task):
+                        if t is None:
+                            return
+                        try:
+                            await t
+                            d = _read_gen_tickets()
+                            for i, tk in enumerate(d["tickets"]):
+                                if tk["id"] == tid and tk.get("status") == "running":
+                                    d["tickets"][i]["status"] = "done"
+                                    d["tickets"][i]["finished_at"] = datetime.now(timezone.utc).isoformat()
+                                    _save_gen_tickets(d)
+                                    _broadcast("gen_ticket_updated", {"id": tid, "status": "done"})
+                                    print(f"[ticket-dispatcher] GT-{tid:03d} → done", flush=True)
+                                    break
+                        except asyncio.CancelledError:
+                            d = _read_gen_tickets()
+                            for i, tk in enumerate(d["tickets"]):
+                                if tk["id"] == tid and tk.get("status") == "running":
+                                    d["tickets"][i]["status"] = "error"
+                                    d["tickets"][i]["error"] = "agent cancelled"
+                                    _save_gen_tickets(d)
+                                    _broadcast("gen_ticket_updated", {"id": tid, "status": "error"})
+                                    break
+                        except Exception as watcher_err:
+                            d = _read_gen_tickets()
+                            for i, tk in enumerate(d["tickets"]):
+                                if tk["id"] == tid and tk.get("status") == "running":
+                                    d["tickets"][i]["status"] = "error"
+                                    d["tickets"][i]["error"] = str(watcher_err)
+                                    _save_gen_tickets(d)
+                                    _broadcast("gen_ticket_updated", {"id": tid, "status": "error"})
+                                    break
+
+                    asyncio.create_task(_ticket_watcher())
                 except Exception as dispatch_err:
                     print(f"[ticket-dispatcher] GT-{ticket['id']:03d} dispatch failed: {dispatch_err}", flush=True)
                     data = _read_gen_tickets()
