@@ -2052,7 +2052,7 @@ async def _agent_send(
                 return ClaudeAgentOptions(
                     cwd=_pa_cwd(_agent_base),
                     allowed_tools=["Bash", "Read", "Write", "Edit", "Glob", "Grep", "WebFetch", "WebSearch"],
-                    permission_mode="default",
+                    permission_mode="bypassPermissions",
                     max_turns=40,
                     resume=session_id,
                     env={"IS_SANDBOX": "1", "CLAUDECODE": ""},

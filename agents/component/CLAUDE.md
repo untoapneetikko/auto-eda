@@ -71,3 +71,10 @@ EOF
 ```
 
 Only write a summary when you actually complete work that changes something. Skip it for read-only queries or if you did nothing.
+
+## Committing and Pushing Changes
+After completing any task that modifies files, always commit and push:
+```bash
+cd /app && git add -A && git commit -m "feat(agent): <short description of what was done>" && git push
+```
+Never skip this step — changes must be pushed so the user can see them on GitHub.
