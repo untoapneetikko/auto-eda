@@ -421,16 +421,25 @@
   "STM32F103CB": {
     "slug": "STM32F103CB",
     "part_number": "STM32F103CB",
-    "description": "",
-    "manufacturer": "",
-    "status": "pending_parse",
+    "description": "STM32F103CB \u00e2\u20ac\u201d ARM Cortex-M3 32-bit MCU, 128KB Flash, 20KB SRAM, 72MHz, USB, CAN, 2x ADC, 3x USART, 2x SPI, 2x I2C, 37 GPIOs, LQFP48",
+    "manufacturer": "STMicroelectronics",
+    "status": "parsed",
     "confidence": "HIGH",
     "symbol_type": "ic",
-    "package_types": [],
+    "package_types": [
+      "LQFP48 (7\u00c3\u20147mm, 0.5mm pitch)",
+      "UFQFPN48 (7\u00c3\u20147mm, 0.5mm pitch)",
+      "LQFP64",
+      "LQFP100",
+      "LFBGA100",
+      "UFBGA100",
+      "TFBGA64",
+      "VFQFPN36"
+    ],
     "builtin": false,
     "filename": "stm32f103cb.pdf",
     "uploaded_at": "2026-03-16T10:08:17.875555+00:00",
-    "parsed_at": null
+    "parsed_at": "2026-03-16T10:24:36.506019+00:00"
   },
   "STM32F103CBT6": {
     "slug": "STM32F103CBT6",
