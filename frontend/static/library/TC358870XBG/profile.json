@@ -1771,2548 +1771,3017 @@
   },
   "category": "bridge",
   "layout_example": {
+    "version": "1.0",
+    "title": "TC358870XBG VFBGA-80 Layout Example with Full Decoupling Network",
     "board": {
-      "width": 50.0,
-      "height": 50.0
+      "width": 30,
+      "height": 22,
+      "units": "mm"
     },
+    "component": {
+      "ref": "U1",
+      "value": "TC358870XBG",
+      "footprint": "VFBGA-80 (P-VFBGA80-0707-0.65-001)",
+      "package": "80-ball VFBGA, 7x7mm body, 0.65mm pitch, 9 rows (A-J) x 7 cols",
+      "x": 15.0,
+      "y": 11.0,
+      "rotation": 0
+    },
+    "recommended_clearances": {
+      "bga_pad_to_pad": 0.25,
+      "bga_escape_trace": 0.1,
+      "bga_escape_space": 0.1,
+      "diff_pair_width": 0.1,
+      "diff_pair_gap": 0.12,
+      "diff_pair_clearance": 0.15,
+      "power_trace": 0.25,
+      "via_drill": 0.25,
+      "via_pad": 0.5,
+      "pad_to_mask": 0.05,
+      "min_annular_ring": 0.125,
+      "bga_breakout_channel": 0.1
+    },
+    "layout_notes": [
+      "BGA PACKAGE: P-VFBGA80-0707-0.65-001. Body 7x7mm, 0.65mm pitch, 80 balls. Requires 4-layer PCB minimum with controlled impedance stackup.",
+      "BGA PAD STYLE: Use NSMD (Non Solder Mask Defined) pads, 0.35mm diameter circles. Solder mask opening 0.45mm. Do NOT use SMD (solder mask defined) pads -- Cu defined for fine-pitch BGA.",
+      "VIA FANOUT: Dogbone vias, 0.25mm drill / 0.5mm pad. Single escape trace 0.1mm width between ball pads. Via fence spacing must be >0.15mm from BGA pads. For power balls use shorter traces (<0.3mm) before via.",
+      "LAYER STACKUP (4-layer): F.Cu (components + fanout) / In1.Cu (GND plane, solid copper pour) / In2.Cu (power planes: +3V3, +1V2, +1V8 pours) / B.Cu (back-side decoupling caps + signal routing). Target impedance: 50 Ohm single-ended, 100 Ohm differential.",
+      "DECOUPLING CAPS (C9-C15): All placed on B.Cu (back side of PCB) directly below their respective power balls. They connect through the BGA fanout vias on F.Cu via the power plane on In2.Cu. Place within 1mm of associated via.",
+      "POWER SEQUENCING: DVDD33 must come up FIRST before VDD12 and VDDIO18. Use power-enable sequencing via STM32 GPIOs or an RC delay. VDD12 and VDDIO18 can come up simultaneously.",
+      "MIPI DSI ROUTING (F1-G7 area, right side): Route CDSI0 lanes as 100 Ohm differential pairs. Match lengths within pair to +-5mil. Match all 5 pairs (D0-D3 + CLK) to within +-50mil. DSI1 balls (H1-J7) leave as NC (no-connects) for single-link operation.",
+      "HDMI TMDS ROUTING (A2-B7 area, left side): Route as 100 Ohm differential pairs toward HDMI connector. Match TMDS pair lengths within +-5mil. Match all 4 pairs to within +-100mil. Shield pins (A4, A7, B2, B5) connect directly to GND plane via.",
+      "REXT RESISTOR (R11, 4.7k): Place within 2mm of C4 ball. Short trace from C4 via to R11, then short stub to GND via. This is a mandatory bias calibration resistor -- do not omit.",
+      "I2C LINES (D1=SCL, D2=SDA): Route through B.Cu via vias. Pull-ups R3/R4 (4.7k to +1V8) placed near TC358870. Trace length to STM32 is non-critical (I2C is slow), max 10cm.",
+      "INT/BOOT-STRAP (D3): At power-on, this pin is sampled to set I2C address. Pulled high (via R5 10k to +1V8) = address 0x1F. For 0x0F, add 0R to GND (R6 -- populate to force low at boot). After boot, INT becomes open-drain interrupt output -- R5 pull-up remains active.",
+      "RESET_N (D4): Connect to STM32 PA8 via 0.15mm trace. Add 100nF cap to GND within 5mm (not shown separately -- part of STM32 area). Drive low for >=100us to reset TC358870.",
+      "HDMI 5V DETECT (D5): HDMI connector pin 18 (+5V from source) connects via R8/R9 voltage divider (47k/10k) to this ball. TC358870 VDDIO18=1.8V, so max input at D5 must be <=1.8V. 5V * 10k/(47k+10k) = 0.88V -- within spec.",
+      "HPD (C3): Hot Plug Detect output. Drive high when TC358870 is ready. Connect to HDMI connector pin 19 via R7 (1k series) for source current limiting. Pull-up on HDMI source side is ~100k to 5V.",
+      "DDC LINES (C1=DDC_SCL, C2=DDC_SDA): Connect directly to HDMI connector DDC pins. No pull-up needed here -- source provides pull-ups. Optionally add 4.7k to +3.3V for robustness.",
+      "BOARD SIZE TARGET: <43mm x 27mm. Suggested placement: TC358870 in center-right area, STM32 center-left, LDOs at left, HDMI connector at bottom-left edge, USB-C at top-left, FPC at right edge.",
+      "BGA INSPECTION: Use X-ray or AXI after reflow to verify BGA solder joint quality. Thermal profile critical for 0.65mm pitch. Use standard Sn-Ag-Cu (SAC305) solder paste."
+    ],
     "components": [
       {
         "id": "U1",
         "ref": "U1",
-        "slug": "TC358870XBG",
         "value": "TC358870XBG",
-        "x": 25.0,
-        "y": 25.0,
+        "footprint": "VFBGA-80 (P-VFBGA80-0707-0.65-001)",
+        "package": "80-ball VFBGA, 7x7mm body, 0.65mm pitch",
+        "x": 15.0,
+        "y": 11.0,
         "rotation": 0,
         "layer": "F",
         "pads": [
           {
             "number": "A1",
-            "x": -2.925,
-            "y": -2.925,
+            "name": "DVDD33",
+            "x": -1.95,
+            "y": -2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "REXT"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+3V3"
           },
           {
             "number": "A2",
-            "x": -2.275,
-            "y": -2.925,
+            "name": "TMDS_D2P",
+            "x": -1.3,
+            "y": -2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CEC"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_D2P"
           },
           {
             "number": "A3",
-            "x": -1.625,
-            "y": -2.925,
+            "name": "TMDS_D2N",
+            "x": -0.65,
+            "y": -2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "DDC_SCL"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_D2N"
           },
           {
             "number": "A4",
-            "x": -0.975,
-            "y": -2.925,
+            "name": "GND",
+            "x": 0.0,
+            "y": -2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HPDI"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "A5",
-            "x": -0.325,
-            "y": -2.925,
+            "name": "TMDS_D1P",
+            "x": 0.65,
+            "y": -2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D3P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_D1P"
           },
           {
             "number": "A6",
-            "x": 0.325,
-            "y": -2.925,
+            "name": "TMDS_D1N",
+            "x": 1.3,
+            "y": -2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D2P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_D1N"
           },
           {
             "number": "A7",
-            "x": 0.975,
-            "y": -2.925,
+            "name": "GND",
+            "x": 1.95,
+            "y": -2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1CP"
-          },
-          {
-            "number": "A8",
-            "x": 1.625,
-            "y": -2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D1P"
-          },
-          {
-            "number": "A9",
-            "x": 2.275,
-            "y": -2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D0P"
-          },
-          {
-            "number": "A10",
-            "x": 2.925,
-            "y": -2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "B1",
-            "x": -2.925,
-            "y": -2.275,
+            "name": "DVDD33",
+            "x": -1.95,
+            "y": -1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDD33_HDMI"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+3V3"
           },
           {
             "number": "B2",
-            "x": -2.275,
-            "y": -2.275,
+            "name": "GND",
+            "x": -1.3,
+            "y": -1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDD11_HDMI"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "B3",
-            "x": -1.625,
-            "y": -2.275,
+            "name": "TMDS_D0P",
+            "x": -0.65,
+            "y": -1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "DDC_SDA"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_D0P"
           },
           {
             "number": "B4",
-            "x": -0.975,
-            "y": -2.275,
+            "name": "TMDS_D0N",
+            "x": 0.0,
+            "y": -1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HPDO"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_D0N"
           },
           {
             "number": "B5",
-            "x": -0.325,
-            "y": -2.275,
+            "name": "GND",
+            "x": 0.65,
+            "y": -1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D3N"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "B6",
-            "x": 0.325,
-            "y": -2.275,
+            "name": "TMDS_CLKP",
+            "x": 1.3,
+            "y": -1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D2N"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_CLKP"
           },
           {
             "number": "B7",
-            "x": 0.975,
-            "y": -2.275,
+            "name": "TMDS_CLKN",
+            "x": 1.95,
+            "y": -1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1CN"
-          },
-          {
-            "number": "B8",
-            "x": 1.625,
-            "y": -2.275,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D1N"
-          },
-          {
-            "number": "B9",
-            "x": 2.275,
-            "y": -2.275,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI1D0N"
-          },
-          {
-            "number": "B10",
-            "x": 2.925,
-            "y": -2.275,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDD12_MIPI1"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TMDS_CLKN"
           },
           {
             "number": "C1",
-            "x": -2.925,
-            "y": -1.625,
+            "name": "DDC_SCL",
+            "x": -1.95,
+            "y": -1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMICP"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DDC_SCL"
           },
           {
             "number": "C2",
-            "x": -2.275,
-            "y": -1.625,
+            "name": "DDC_SDA",
+            "x": -1.3,
+            "y": -1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMICN"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DDC_SDA"
           },
           {
-            "number": "C9",
-            "x": 2.275,
-            "y": -1.625,
+            "number": "C3",
+            "name": "HPD",
+            "x": -0.65,
+            "y": -1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "HPD"
           },
           {
-            "number": "C10",
-            "x": 2.925,
-            "y": -1.625,
+            "number": "C4",
+            "name": "REXT",
+            "x": 0.0,
+            "y": -1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDDC11"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "REXT_BIAS"
+          },
+          {
+            "number": "C5",
+            "name": "AVDD12",
+            "x": 0.65,
+            "y": -1.3,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V2"
+          },
+          {
+            "number": "C6",
+            "name": "AVDD12",
+            "x": 1.3,
+            "y": -1.3,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V2"
+          },
+          {
+            "number": "C7",
+            "name": "CEC",
+            "x": 1.95,
+            "y": -1.3,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
             "number": "D1",
-            "x": -2.925,
-            "y": -0.975,
+            "name": "SCL",
+            "x": -1.95,
+            "y": -0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMID0P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "I2C1_SCL"
           },
           {
             "number": "D2",
-            "x": -2.275,
-            "y": -0.975,
+            "name": "SDA",
+            "x": -1.3,
+            "y": -0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMID0N"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "I2C1_SDA"
+          },
+          {
+            "number": "D3",
+            "name": "INT",
+            "x": -0.65,
+            "y": -0.65,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TC_INT_N"
           },
           {
             "number": "D4",
-            "x": -0.975,
-            "y": -0.975,
+            "name": "RESET_N",
+            "x": 0.0,
+            "y": -0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "TC_RESET_N"
           },
           {
             "number": "D5",
-            "x": -0.325,
-            "y": -0.975,
+            "name": "HDMI5V",
+            "x": 0.65,
+            "y": -0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "HDMI_5V"
           },
           {
             "number": "D6",
-            "x": 0.325,
-            "y": -0.975,
+            "name": "VDDIO18",
+            "x": 1.3,
+            "y": -0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V8"
           },
           {
             "number": "D7",
-            "x": 0.975,
-            "y": -0.975,
+            "name": "VDDIO18",
+            "x": 1.95,
+            "y": -0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
-          },
-          {
-            "number": "D9",
-            "x": 2.275,
-            "y": -0.975,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D3N"
-          },
-          {
-            "number": "D10",
-            "x": 2.925,
-            "y": -0.975,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D3P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V8"
           },
           {
             "number": "E1",
-            "x": -2.925,
-            "y": -0.325,
+            "name": "VDD12",
+            "x": -1.95,
+            "y": 0.0,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMID1P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V2"
           },
           {
             "number": "E2",
-            "x": -2.275,
-            "y": -0.325,
+            "name": "VDD12",
+            "x": -1.3,
+            "y": 0.0,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMID1N"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V2"
+          },
+          {
+            "number": "E3",
+            "name": "GND",
+            "x": -0.65,
+            "y": 0.0,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "E4",
-            "x": -0.975,
-            "y": -0.325,
+            "name": "GND",
+            "x": 0.0,
+            "y": 0.0,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "E5",
-            "x": -0.325,
-            "y": -0.325,
+            "name": "GND",
+            "x": 0.65,
+            "y": 0.0,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "E6",
-            "x": 0.325,
-            "y": -0.325,
+            "name": "VDD12",
+            "x": 1.3,
+            "y": 0.0,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V2"
           },
           {
             "number": "E7",
-            "x": 0.975,
-            "y": -0.325,
+            "name": "VDDIO18",
+            "x": 1.95,
+            "y": 0.0,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
-          },
-          {
-            "number": "E9",
-            "x": 2.275,
-            "y": -0.325,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D2N"
-          },
-          {
-            "number": "E10",
-            "x": 2.925,
-            "y": -0.325,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D2P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "+1V8"
           },
           {
             "number": "F1",
-            "x": -2.925,
-            "y": 0.325,
+            "name": "CDSI0D0N",
+            "x": -1.95,
+            "y": 0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMID2P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D0N"
           },
           {
             "number": "F2",
-            "x": -2.275,
-            "y": 0.325,
+            "name": "CDSI0D0P",
+            "x": -1.3,
+            "y": 0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "HDMID2N"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D0P"
+          },
+          {
+            "number": "F3",
+            "name": "GND",
+            "x": -0.65,
+            "y": 0.65,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "F4",
-            "x": -0.975,
-            "y": 0.325,
+            "name": "CDSI0D1N",
+            "x": 0.0,
+            "y": 0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D1N"
           },
           {
             "number": "F5",
-            "x": -0.325,
-            "y": 0.325,
+            "name": "CDSI0D1P",
+            "x": 0.65,
+            "y": 0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D1P"
           },
           {
             "number": "F6",
-            "x": 0.325,
-            "y": 0.325,
+            "name": "GND",
+            "x": 1.3,
+            "y": 0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "F7",
-            "x": 0.975,
-            "y": 0.325,
+            "name": "CDSI0CLKN",
+            "x": 1.95,
+            "y": 0.65,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
-          },
-          {
-            "number": "F9",
-            "x": 2.275,
-            "y": 0.325,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0CN"
-          },
-          {
-            "number": "F10",
-            "x": 2.925,
-            "y": 0.325,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0CP"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_CLKN"
           },
           {
             "number": "G1",
-            "x": -2.925,
-            "y": 0.975,
+            "name": "CDSI0CLKP",
+            "x": -1.95,
+            "y": 1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDD33_HDMI"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_CLKP"
           },
           {
             "number": "G2",
-            "x": -2.275,
-            "y": 0.975,
+            "name": "GND",
+            "x": -1.3,
+            "y": 1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDD11_HDMI"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
+          },
+          {
+            "number": "G3",
+            "name": "CDSI0D2N",
+            "x": -0.65,
+            "y": 1.3,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D2N"
           },
           {
             "number": "G4",
-            "x": -0.975,
-            "y": 0.975,
+            "name": "CDSI0D2P",
+            "x": 0.0,
+            "y": 1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D2P"
           },
           {
             "number": "G5",
-            "x": -0.325,
-            "y": 0.975,
+            "name": "GND",
+            "x": 0.65,
+            "y": 1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "TEST"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "G6",
-            "x": 0.325,
-            "y": 0.975,
+            "name": "CDSI0D3N",
+            "x": 1.3,
+            "y": 1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "IR"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D3N"
           },
           {
             "number": "G7",
-            "x": 0.975,
-            "y": 0.975,
+            "name": "CDSI0D3P",
+            "x": 1.95,
+            "y": 1.3,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
-          },
-          {
-            "number": "G9",
-            "x": 2.275,
-            "y": 0.975,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D1N"
-          },
-          {
-            "number": "G10",
-            "x": 2.925,
-            "y": 0.975,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D1P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "DSI_D3P"
           },
           {
             "number": "H1",
-            "x": -2.925,
-            "y": 1.625,
+            "name": "CDSI1D0N",
+            "x": -1.95,
+            "y": 1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
             "number": "H2",
-            "x": -2.275,
-            "y": 1.625,
+            "name": "CDSI1D0P",
+            "x": -1.3,
+            "y": 1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDDIO33"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
-            "number": "H9",
-            "x": 2.275,
-            "y": 1.625,
+            "number": "H3",
+            "name": "GND",
+            "x": -0.65,
+            "y": 1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D0N"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
-            "number": "H10",
-            "x": 2.925,
-            "y": 1.625,
+            "number": "H4",
+            "name": "CDSI1D1N",
+            "x": 0.0,
+            "y": 1.95,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "CDSI0D0P"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
+          },
+          {
+            "number": "H5",
+            "name": "CDSI1D1P",
+            "x": 0.65,
+            "y": 1.95,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
+          },
+          {
+            "number": "H6",
+            "name": "GND",
+            "x": 1.3,
+            "y": 1.95,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
+          },
+          {
+            "number": "H7",
+            "name": "CDSI1CLKN",
+            "x": 1.95,
+            "y": 1.95,
+            "type": "smd",
+            "shape": "circle",
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
             "number": "J1",
-            "x": -2.925,
-            "y": 2.275,
+            "name": "CDSI1CLKP",
+            "x": -1.95,
+            "y": 2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "BIASDA"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
             "number": "J2",
-            "x": -2.275,
-            "y": 2.275,
+            "name": "GND",
+            "x": -1.3,
+            "y": 2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "DAOUT"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "J3",
-            "x": -1.625,
-            "y": 2.275,
+            "name": "CDSI1D2N",
+            "x": -0.65,
+            "y": 2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "INT"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
             "number": "J4",
-            "x": -0.975,
-            "y": 2.275,
+            "name": "CDSI1D2P",
+            "x": 0.0,
+            "y": 2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "A_OSCK"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
             "number": "J5",
-            "x": -0.325,
-            "y": 2.275,
+            "name": "GND",
+            "x": 0.65,
+            "y": 2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "A_SD3"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "GND"
           },
           {
             "number": "J6",
-            "x": 0.325,
-            "y": 2.275,
+            "name": "CDSI1D3N",
+            "x": 1.3,
+            "y": 2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "A_SD2"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           },
           {
             "number": "J7",
-            "x": 0.975,
-            "y": 2.275,
+            "name": "CDSI1D3P",
+            "x": 1.95,
+            "y": 2.6,
             "type": "smd",
             "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDDIO18"
-          },
-          {
-            "number": "J8",
-            "x": 1.625,
-            "y": 2.275,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "A_SD1"
-          },
-          {
-            "number": "J9",
-            "x": 2.275,
-            "y": 2.275,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "A_SD0"
-          },
-          {
-            "number": "J10",
-            "x": 2.925,
-            "y": 2.275,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDD12_MIPI0"
-          },
-          {
-            "number": "K1",
-            "x": -2.925,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "PCKIN"
-          },
-          {
-            "number": "K2",
-            "x": -2.275,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "PFIL"
-          },
-          {
-            "number": "K3",
-            "x": -1.625,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "I2C_SDA"
-          },
-          {
-            "number": "K4",
-            "x": -0.975,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "I2C_SCL"
-          },
-          {
-            "number": "K5",
-            "x": -0.325,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "A_WFS"
-          },
-          {
-            "number": "K6",
-            "x": 0.325,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VDDC11"
-          },
-          {
-            "number": "K7",
-            "x": 0.975,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "A_SCK"
-          },
-          {
-            "number": "K8",
-            "x": 1.625,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "RESETN"
-          },
-          {
-            "number": "K9",
-            "x": 2.275,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "REFCLK"
-          },
-          {
-            "number": "K10",
-            "x": 2.925,
-            "y": 2.925,
-            "type": "smd",
-            "shape": "circle",
-            "size_x": 0.4,
-            "size_y": 0.4,
-            "net": "VSS"
+            "size_x": 0.35,
+            "size_y": 0.35,
+            "net": "NC"
           }
         ]
       },
       {
-        "id": "C1",
-        "ref": "C1",
-        "slug": "CAPACITOR",
-        "value": "100nF",
-        "x": 18.5,
-        "y": 22.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDD33_HDMI"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C2",
-        "ref": "C2",
-        "slug": "CAPACITOR_POL",
-        "value": "10uF",
-        "x": 18.5,
-        "y": 23.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDD33_HDMI"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C3",
-        "ref": "C3",
-        "slug": "CAPACITOR",
-        "value": "100nF",
-        "x": 18.5,
-        "y": 24.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDD11_HDMI"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C4",
-        "ref": "C4",
-        "slug": "CAPACITOR_POL",
-        "value": "10uF",
-        "x": 18.5,
-        "y": 25.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDD11_HDMI"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C5",
-        "ref": "C5",
-        "slug": "CAPACITOR",
-        "value": "100nF",
-        "x": 18.5,
-        "y": 26.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDC11"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C6",
-        "ref": "C6",
-        "slug": "CAPACITOR_POL",
-        "value": "1uF",
-        "x": 18.5,
-        "y": 27.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDC11"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C7",
-        "ref": "C7",
-        "slug": "CAPACITOR",
-        "value": "100nF",
-        "x": 31.5,
-        "y": 22.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDIO33"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C8",
-        "ref": "C8",
-        "slug": "CAPACITOR",
-        "value": "100nF",
-        "x": 31.5,
-        "y": 23.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDIO18"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "GND"
-          }
-        ]
-      },
-      {
-        "id": "C9",
         "ref": "C9",
-        "slug": "CAPACITOR_POL",
-        "value": "10uF",
-        "x": 31.5,
-        "y": 24.0,
+        "value": "100nF 10V X7R 0402",
+        "footprint": "C_0402",
+        "x": 12.1,
+        "y": 8.7,
         "rotation": 0,
-        "layer": "F",
+        "layer": "B",
         "pads": [
           {
             "number": "1",
             "x": -0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDIO18"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "+3V3"
           },
           {
             "number": "2",
             "x": 0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
+            "size_x": 0.5,
+            "size_y": 0.5,
             "net": "GND"
           }
         ]
       },
       {
-        "id": "C10",
         "ref": "C10",
-        "slug": "CAPACITOR",
-        "value": "100nF",
-        "x": 31.5,
-        "y": 26.0,
+        "value": "10uF 10V X5R 0805",
+        "footprint": "C_0805",
+        "x": 11.0,
+        "y": 8.7,
         "rotation": 0,
-        "layer": "F",
+        "layer": "B",
         "pads": [
           {
             "number": "1",
-            "x": -0.5,
-            "y": 0.0,
+            "x": -0.9,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDD12_MIPI0"
+            "size_x": 0.9,
+            "size_y": 1.0,
+            "net": "+3V3"
           },
           {
             "number": "2",
-            "x": 0.5,
-            "y": 0.0,
+            "x": 0.9,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
+            "size_x": 0.9,
+            "size_y": 1.0,
             "net": "GND"
           }
         ]
       },
       {
-        "id": "C11",
         "ref": "C11",
-        "slug": "CAPACITOR",
-        "value": "100nF",
-        "x": 31.5,
-        "y": 27.0,
+        "value": "100nF 0402",
+        "footprint": "C_0402",
+        "x": 12.1,
+        "y": 11.0,
         "rotation": 0,
-        "layer": "F",
+        "layer": "B",
         "pads": [
           {
             "number": "1",
             "x": -0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDD12_MIPI1"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "+1V2"
           },
           {
             "number": "2",
             "x": 0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
+            "size_x": 0.5,
+            "size_y": 0.5,
             "net": "GND"
           }
         ]
       },
       {
-        "id": "R1",
-        "ref": "R1",
-        "slug": "RESISTOR",
-        "value": "2k 1%",
-        "x": 18.5,
-        "y": 20.0,
+        "ref": "C12",
+        "value": "10uF 0805",
+        "footprint": "C_0805",
+        "x": 11.0,
+        "y": 11.0,
         "rotation": 0,
-        "layer": "F",
+        "layer": "B",
         "pads": [
           {
             "number": "1",
-            "x": -0.5,
-            "y": 0.0,
+            "x": -0.9,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDD33_HDMI"
+            "size_x": 0.9,
+            "size_y": 1.0,
+            "net": "+1V2"
           },
           {
             "number": "2",
-            "x": 0.5,
-            "y": 0.0,
+            "x": 0.9,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "REXT"
+            "size_x": 0.9,
+            "size_y": 1.0,
+            "net": "GND"
           }
         ]
       },
       {
-        "id": "R2",
-        "ref": "R2",
-        "slug": "RESISTOR",
-        "value": "1k",
-        "x": 31.5,
-        "y": 18.0,
+        "ref": "C13",
+        "value": "100nF 0402",
+        "footprint": "C_0402",
+        "x": 17.9,
+        "y": 10.7,
         "rotation": 0,
-        "layer": "F",
+        "layer": "B",
         "pads": [
           {
             "number": "1",
             "x": -0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VCC5V"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "+1V8"
           },
           {
             "number": "2",
             "x": 0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "DDC_SCL"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "GND"
           }
         ]
       },
       {
-        "id": "R3",
-        "ref": "R3",
-        "slug": "RESISTOR",
-        "value": "4.7k",
-        "x": 31.5,
-        "y": 19.5,
+        "ref": "C14",
+        "value": "10uF 0805",
+        "footprint": "C_0805",
+        "x": 19.0,
+        "y": 10.7,
         "rotation": 0,
-        "layer": "F",
+        "layer": "B",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.9,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 1.0,
+            "net": "+1V8"
+          },
+          {
+            "number": "2",
+            "x": 0.9,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 1.0,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "ref": "C15",
+        "value": "1uF 0402",
+        "footprint": "C_0402",
+        "x": 16.0,
+        "y": 8.5,
+        "rotation": 0,
+        "layer": "B",
         "pads": [
           {
             "number": "1",
             "x": -0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VCC5V"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "+1V2"
           },
           {
             "number": "2",
             "x": 0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "DDC_SDA"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "GND"
           }
         ]
       },
       {
-        "id": "R4",
-        "ref": "R4",
-        "slug": "RESISTOR",
-        "value": "4.7k",
-        "x": 31.5,
-        "y": 29.0,
-        "rotation": 0,
+        "ref": "R11",
+        "value": "4.7k 0402",
+        "footprint": "R_0402",
+        "x": 15.0,
+        "y": 8.15,
+        "rotation": 1,
         "layer": "F",
         "pads": [
           {
             "number": "1",
-            "x": -0.5,
-            "y": 0.0,
+            "x": 0,
+            "y": -0.5,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDIO18"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "REXT_BIAS"
           },
           {
             "number": "2",
-            "x": 0.5,
-            "y": 0.0,
+            "x": 0,
+            "y": 0.5,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "I2C_SCL"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "GND"
           }
         ]
       },
       {
-        "id": "R5",
-        "ref": "R5",
-        "slug": "RESISTOR",
-        "value": "4.7k",
-        "x": 31.5,
-        "y": 30.0,
-        "rotation": 0,
-        "layer": "F",
-        "pads": [
-          {
-            "number": "1",
-            "x": -0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDIO18"
-          },
-          {
-            "number": "2",
-            "x": 0.5,
-            "y": 0.0,
-            "type": "smd",
-            "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "I2C_SDA"
-          }
-        ]
-      },
-      {
-        "id": "R6",
         "ref": "R6",
-        "slug": "RESISTOR",
-        "value": "10k",
-        "x": 31.5,
-        "y": 31.5,
+        "value": "0R 0402",
+        "footprint": "R_0402",
+        "x": 13.0,
+        "y": 10.35,
         "rotation": 0,
         "layer": "F",
         "pads": [
           {
             "number": "1",
             "x": -0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "VDDIO18"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "SLAVE_ADDR_LO"
           },
           {
             "number": "2",
             "x": 0.5,
-            "y": 0.0,
+            "y": 0,
             "type": "smd",
             "shape": "rect",
-            "size_x": 0.6,
-            "size_y": 0.6,
-            "net": "INT"
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "ref": "R5",
+        "value": "10k 0402",
+        "footprint": "R_0402",
+        "x": 13.0,
+        "y": 9.7,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "+1V8"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "TC_INT_N"
+          }
+        ]
+      },
+      {
+        "ref": "R3",
+        "value": "4.7k 0402",
+        "footprint": "R_0402",
+        "x": 10.8,
+        "y": 10.1,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "+1V8"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "I2C1_SCL"
+          }
+        ]
+      },
+      {
+        "ref": "R4",
+        "value": "4.7k 0402",
+        "footprint": "R_0402",
+        "x": 10.8,
+        "y": 10.8,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "+1V8"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "I2C1_SDA"
+          }
+        ]
+      },
+      {
+        "ref": "R7",
+        "value": "1k 0402",
+        "footprint": "R_0402",
+        "x": 12.0,
+        "y": 9.7,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "HPD_OUT"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "HPD"
+          }
+        ]
+      },
+      {
+        "ref": "R8",
+        "value": "47k 0402",
+        "footprint": "R_0402",
+        "x": 12.0,
+        "y": 10.35,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "HDMI5V_RAW"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "HDMI5V_DIV"
+          }
+        ]
+      },
+      {
+        "ref": "R9",
+        "value": "10k 0402",
+        "footprint": "R_0402",
+        "x": 12.0,
+        "y": 11.05,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "HDMI5V_DIV"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.5,
+            "size_y": 0.5,
+            "net": "GND"
           }
         ]
       }
     ],
     "nets": [
       {
-        "name": "A_OSCK",
+        "name": "+1V2",
         "pads": [
-          "U1.J4"
+          "U1.C5",
+          "U1.C6",
+          "U1.E1",
+          "U1.E2",
+          "U1.E6"
         ]
       },
       {
-        "name": "A_SCK",
+        "name": "+1V8",
         "pads": [
-          "U1.K7"
+          "U1.D6",
+          "U1.D7",
+          "U1.E7"
         ]
       },
       {
-        "name": "A_SD0",
+        "name": "+3V3",
         "pads": [
-          "U1.J9"
-        ]
-      },
-      {
-        "name": "A_SD1",
-        "pads": [
-          "U1.J8"
-        ]
-      },
-      {
-        "name": "A_SD2",
-        "pads": [
-          "U1.J6"
-        ]
-      },
-      {
-        "name": "A_SD3",
-        "pads": [
-          "U1.J5"
-        ]
-      },
-      {
-        "name": "A_WFS",
-        "pads": [
-          "U1.K5"
-        ]
-      },
-      {
-        "name": "BIASDA",
-        "pads": [
-          "U1.J1"
-        ]
-      },
-      {
-        "name": "CDSI0CN",
-        "pads": [
-          "U1.F9"
-        ]
-      },
-      {
-        "name": "CDSI0CP",
-        "pads": [
-          "U1.F10"
-        ]
-      },
-      {
-        "name": "CDSI0D0N",
-        "pads": [
-          "U1.H9"
-        ]
-      },
-      {
-        "name": "CDSI0D0P",
-        "pads": [
-          "U1.H10"
-        ]
-      },
-      {
-        "name": "CDSI0D1N",
-        "pads": [
-          "U1.G9"
-        ]
-      },
-      {
-        "name": "CDSI0D1P",
-        "pads": [
-          "U1.G10"
-        ]
-      },
-      {
-        "name": "CDSI0D2N",
-        "pads": [
-          "U1.E9"
-        ]
-      },
-      {
-        "name": "CDSI0D2P",
-        "pads": [
-          "U1.E10"
-        ]
-      },
-      {
-        "name": "CDSI0D3N",
-        "pads": [
-          "U1.D9"
-        ]
-      },
-      {
-        "name": "CDSI0D3P",
-        "pads": [
-          "U1.D10"
-        ]
-      },
-      {
-        "name": "CDSI1CN",
-        "pads": [
-          "U1.B7"
-        ]
-      },
-      {
-        "name": "CDSI1CP",
-        "pads": [
-          "U1.A7"
-        ]
-      },
-      {
-        "name": "CDSI1D0N",
-        "pads": [
-          "U1.B9"
-        ]
-      },
-      {
-        "name": "CDSI1D0P",
-        "pads": [
-          "U1.A9"
-        ]
-      },
-      {
-        "name": "CDSI1D1N",
-        "pads": [
-          "U1.B8"
-        ]
-      },
-      {
-        "name": "CDSI1D1P",
-        "pads": [
-          "U1.A8"
-        ]
-      },
-      {
-        "name": "CDSI1D2N",
-        "pads": [
-          "U1.B6"
-        ]
-      },
-      {
-        "name": "CDSI1D2P",
-        "pads": [
-          "U1.A6"
-        ]
-      },
-      {
-        "name": "CDSI1D3N",
-        "pads": [
-          "U1.B5"
-        ]
-      },
-      {
-        "name": "CDSI1D3P",
-        "pads": [
-          "U1.A5"
-        ]
-      },
-      {
-        "name": "CEC",
-        "pads": [
-          "U1.A2"
-        ]
-      },
-      {
-        "name": "DAOUT",
-        "pads": [
-          "U1.J2"
+          "U1.A1",
+          "U1.B1"
         ]
       },
       {
         "name": "DDC_SCL",
         "pads": [
-          "U1.A3",
-          "R2.2"
+          "U1.C1"
         ]
       },
       {
         "name": "DDC_SDA",
         "pads": [
-          "U1.B3",
-          "R3.2"
-        ]
-      },
-      {
-        "name": "GND",
-        "pads": [
-          "C1.2",
-          "C2.2",
-          "C3.2",
-          "C4.2",
-          "C5.2",
-          "C6.2",
-          "C7.2",
-          "C8.2",
-          "C9.2",
-          "C10.2",
-          "C11.2"
-        ]
-      },
-      {
-        "name": "HDMICN",
-        "pads": [
           "U1.C2"
         ]
       },
       {
-        "name": "HDMICP",
+        "name": "DSI_CLKN",
         "pads": [
-          "U1.C1"
+          "U1.F7"
         ]
       },
       {
-        "name": "HDMID0N",
+        "name": "DSI_CLKP",
         "pads": [
-          "U1.D2"
+          "U1.G1"
         ]
       },
       {
-        "name": "HDMID0P",
-        "pads": [
-          "U1.D1"
-        ]
-      },
-      {
-        "name": "HDMID1N",
-        "pads": [
-          "U1.E2"
-        ]
-      },
-      {
-        "name": "HDMID1P",
-        "pads": [
-          "U1.E1"
-        ]
-      },
-      {
-        "name": "HDMID2N",
-        "pads": [
-          "U1.F2"
-        ]
-      },
-      {
-        "name": "HDMID2P",
+        "name": "DSI_D0N",
         "pads": [
           "U1.F1"
         ]
       },
       {
-        "name": "HPDI",
+        "name": "DSI_D0P",
         "pads": [
-          "U1.A4"
+          "U1.F2"
         ]
       },
       {
-        "name": "HPDO",
+        "name": "DSI_D1N",
         "pads": [
-          "U1.B4"
+          "U1.F4"
         ]
       },
       {
-        "name": "I2C_SCL",
+        "name": "DSI_D1P",
         "pads": [
-          "U1.K4",
-          "R4.2"
+          "U1.F5"
         ]
       },
       {
-        "name": "I2C_SDA",
+        "name": "DSI_D2N",
         "pads": [
-          "U1.K3",
-          "R5.2"
+          "U1.G3"
         ]
       },
       {
-        "name": "INT",
+        "name": "DSI_D2P",
         "pads": [
-          "U1.J3",
-          "R6.2"
+          "U1.G4"
         ]
       },
       {
-        "name": "IR",
+        "name": "DSI_D3N",
         "pads": [
           "U1.G6"
         ]
       },
       {
-        "name": "PCKIN",
+        "name": "DSI_D3P",
         "pads": [
-          "U1.K1"
+          "U1.G7"
         ]
       },
       {
-        "name": "PFIL",
+        "name": "GND",
         "pads": [
-          "U1.K2"
-        ]
-      },
-      {
-        "name": "REFCLK",
-        "pads": [
-          "U1.K9"
-        ]
-      },
-      {
-        "name": "RESETN",
-        "pads": [
-          "U1.K8"
-        ]
-      },
-      {
-        "name": "REXT",
-        "pads": [
-          "U1.A1",
-          "R1.2"
-        ]
-      },
-      {
-        "name": "TEST",
-        "pads": [
-          "U1.G5"
-        ]
-      },
-      {
-        "name": "VCC5V",
-        "pads": [
-          "R2.1",
-          "R3.1"
-        ]
-      },
-      {
-        "name": "VDD11_HDMI",
-        "pads": [
+          "U1.A4",
+          "U1.A7",
           "U1.B2",
-          "U1.G2",
-          "C3.1",
-          "C4.1"
-        ]
-      },
-      {
-        "name": "VDD12_MIPI0",
-        "pads": [
-          "U1.J10",
-          "C10.1"
-        ]
-      },
-      {
-        "name": "VDD12_MIPI1",
-        "pads": [
-          "U1.B10",
-          "C11.1"
-        ]
-      },
-      {
-        "name": "VDD33_HDMI",
-        "pads": [
-          "U1.B1",
-          "U1.G1",
-          "C1.1",
-          "C2.1",
-          "R1.1"
-        ]
-      },
-      {
-        "name": "VDDC11",
-        "pads": [
-          "U1.C10",
-          "U1.K6",
-          "C5.1",
-          "C6.1"
-        ]
-      },
-      {
-        "name": "VDDIO18",
-        "pads": [
-          "U1.J7",
-          "C8.1",
-          "C9.1",
-          "R4.1",
-          "R5.1",
-          "R6.1"
-        ]
-      },
-      {
-        "name": "VDDIO33",
-        "pads": [
-          "U1.H2",
-          "C7.1"
-        ]
-      },
-      {
-        "name": "VSS",
-        "pads": [
-          "U1.A10",
-          "U1.C9",
-          "U1.D4",
-          "U1.D5",
-          "U1.D6",
-          "U1.D7",
+          "U1.B5",
+          "U1.E3",
           "U1.E4",
           "U1.E5",
-          "U1.E6",
-          "U1.E7",
-          "U1.F4",
-          "U1.F5",
+          "U1.F3",
           "U1.F6",
-          "U1.F7",
-          "U1.G4",
-          "U1.G7",
+          "U1.G2",
+          "U1.G5",
+          "U1.H3",
+          "U1.H6",
+          "U1.J2",
+          "U1.J5"
+        ]
+      },
+      {
+        "name": "HDMI_5V",
+        "pads": [
+          "U1.D5"
+        ]
+      },
+      {
+        "name": "HPD",
+        "pads": [
+          "U1.C3"
+        ]
+      },
+      {
+        "name": "I2C1_SCL",
+        "pads": [
+          "U1.D1"
+        ]
+      },
+      {
+        "name": "I2C1_SDA",
+        "pads": [
+          "U1.D2"
+        ]
+      },
+      {
+        "name": "NC",
+        "pads": [
+          "U1.C7",
           "U1.H1",
-          "U1.K10"
+          "U1.H2",
+          "U1.H4",
+          "U1.H5",
+          "U1.H7",
+          "U1.J1",
+          "U1.J3",
+          "U1.J4",
+          "U1.J6",
+          "U1.J7"
+        ]
+      },
+      {
+        "name": "REXT_BIAS",
+        "pads": [
+          "U1.C4"
+        ]
+      },
+      {
+        "name": "TC_INT_N",
+        "pads": [
+          "U1.D3"
+        ]
+      },
+      {
+        "name": "TC_RESET_N",
+        "pads": [
+          "U1.D4"
+        ]
+      },
+      {
+        "name": "TMDS_CLKN",
+        "pads": [
+          "U1.B7"
+        ]
+      },
+      {
+        "name": "TMDS_CLKP",
+        "pads": [
+          "U1.B6"
+        ]
+      },
+      {
+        "name": "TMDS_D0N",
+        "pads": [
+          "U1.B4"
+        ]
+      },
+      {
+        "name": "TMDS_D0P",
+        "pads": [
+          "U1.B3"
+        ]
+      },
+      {
+        "name": "TMDS_D1N",
+        "pads": [
+          "U1.A6"
+        ]
+      },
+      {
+        "name": "TMDS_D1P",
+        "pads": [
+          "U1.A5"
+        ]
+      },
+      {
+        "name": "TMDS_D2N",
+        "pads": [
+          "U1.A3"
+        ]
+      },
+      {
+        "name": "TMDS_D2P",
+        "pads": [
+          "U1.A2"
         ]
       }
     ],
     "traces": [
       {
-        "net": "VDD33_HDMI",
-        "start": {
-          "x": 22.075,
-          "y": 22.725
-        },
-        "end": {
-          "x": 18.0,
-          "y": 22.725
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+3V3",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 13.05,
+              "y": 8.4
+            },
+            "end": {
+              "x": 12.753,
+              "y": 8.103
+            }
+          }
+        ]
       },
       {
-        "net": "VDD33_HDMI",
-        "start": {
-          "x": 18.0,
-          "y": 22.725
-        },
-        "end": {
-          "x": 18.0,
-          "y": 22.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+3V3",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 13.05,
+              "y": 9.05
+            },
+            "end": {
+              "x": 12.753,
+              "y": 8.753
+            }
+          }
+        ]
       },
       {
-        "net": "VDD33_HDMI",
-        "start": {
-          "x": 22.075,
-          "y": 25.975
-        },
-        "end": {
-          "x": 18.0,
-          "y": 25.975
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+3V3",
+        "layer": "B.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 12.1,
+              "y": 8.2
+            },
+            "end": {
+              "x": 12.1,
+              "y": 8.7
+            }
+          }
+        ]
       },
       {
-        "net": "VDD33_HDMI",
-        "start": {
-          "x": 18.0,
-          "y": 25.975
-        },
-        "end": {
-          "x": 18.0,
-          "y": 23.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V2",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 13.05,
+              "y": 11.0
+            },
+            "end": {
+              "x": 12.753,
+              "y": 10.703
+            }
+          }
+        ]
       },
       {
-        "net": "VDD11_HDMI",
-        "start": {
-          "x": 22.725,
-          "y": 22.725
-        },
-        "end": {
-          "x": 18.0,
-          "y": 22.725
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V2",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 11.0
+            },
+            "end": {
+              "x": 13.403,
+              "y": 10.703
+            }
+          }
+        ]
       },
       {
-        "net": "VDD11_HDMI",
-        "start": {
-          "x": 18.0,
-          "y": 22.725
-        },
-        "end": {
-          "x": 18.0,
-          "y": 24.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V2",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 11.0
+            },
+            "end": {
+              "x": 16.597,
+              "y": 10.703
+            }
+          }
+        ]
       },
       {
-        "net": "VDD11_HDMI",
-        "start": {
-          "x": 22.725,
-          "y": 25.975
-        },
-        "end": {
-          "x": 18.0,
-          "y": 25.975
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V2",
+        "layer": "B.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 12.1,
+              "y": 11.5
+            },
+            "end": {
+              "x": 12.1,
+              "y": 11.0
+            }
+          }
+        ]
       },
       {
-        "net": "VDD11_HDMI",
-        "start": {
-          "x": 18.0,
-          "y": 25.975
-        },
-        "end": {
-          "x": 18.0,
-          "y": 25.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V2",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 9.7
+            },
+            "end": {
+              "x": 15.947,
+              "y": 9.403
+            }
+          }
+        ]
       },
       {
-        "net": "VDDC11",
-        "start": {
-          "x": 27.925,
-          "y": 23.375
-        },
-        "end": {
-          "x": 18.0,
-          "y": 23.375
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V2",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 9.7
+            },
+            "end": {
+              "x": 16.597,
+              "y": 9.403
+            }
+          }
+        ]
       },
       {
-        "net": "VDDC11",
-        "start": {
-          "x": 18.0,
-          "y": 23.375
-        },
-        "end": {
-          "x": 18.0,
-          "y": 26.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V2",
+        "layer": "B.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 16.0,
+              "y": 9.3
+            },
+            "end": {
+              "x": 16.0,
+              "y": 8.5
+            }
+          }
+        ]
       },
       {
-        "net": "VDDC11",
-        "start": {
-          "x": 25.325,
-          "y": 27.925
-        },
-        "end": {
-          "x": 18.0,
-          "y": 27.925
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V8",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 10.35
+            },
+            "end": {
+              "x": 16.597,
+              "y": 10.053
+            }
+          }
+        ]
       },
       {
-        "net": "VDDC11",
-        "start": {
-          "x": 18.0,
-          "y": 27.925
-        },
-        "end": {
-          "x": 18.0,
-          "y": 27.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V8",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 16.95,
+              "y": 10.35
+            },
+            "end": {
+              "x": 17.247,
+              "y": 10.053
+            }
+          }
+        ]
       },
       {
-        "net": "VDDIO33",
-        "start": {
-          "x": 22.725,
-          "y": 26.625
-        },
-        "end": {
-          "x": 31.0,
-          "y": 26.625
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V8",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 16.95,
+              "y": 11.0
+            },
+            "end": {
+              "x": 17.247,
+              "y": 10.703
+            }
+          }
+        ]
       },
       {
-        "net": "VDDIO33",
-        "start": {
-          "x": 31.0,
-          "y": 26.625
-        },
-        "end": {
-          "x": 31.0,
-          "y": 22.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDDIO18",
-        "start": {
-          "x": 25.975,
-          "y": 27.275
-        },
-        "end": {
-          "x": 31.0,
-          "y": 27.275
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDDIO18",
-        "start": {
-          "x": 31.0,
-          "y": 27.275
-        },
-        "end": {
-          "x": 31.0,
-          "y": 23.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDDIO18",
-        "start": {
-          "x": 25.975,
-          "y": 27.275
-        },
-        "end": {
-          "x": 31.0,
-          "y": 27.275
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDDIO18",
-        "start": {
-          "x": 31.0,
-          "y": 27.275
-        },
-        "end": {
-          "x": 31.0,
-          "y": 24.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDD12_MIPI0",
-        "start": {
-          "x": 27.925,
-          "y": 27.275
-        },
-        "end": {
-          "x": 31.0,
-          "y": 27.275
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDD12_MIPI0",
-        "start": {
-          "x": 31.0,
-          "y": 27.275
-        },
-        "end": {
-          "x": 31.0,
-          "y": 26.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDD12_MIPI1",
-        "start": {
-          "x": 27.925,
-          "y": 22.725
-        },
-        "end": {
-          "x": 31.0,
-          "y": 22.725
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "VDD12_MIPI1",
-        "start": {
-          "x": 31.0,
-          "y": 22.725
-        },
-        "end": {
-          "x": 31.0,
-          "y": 27.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "+1V8",
+        "layer": "B.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 17.9,
+              "y": 11.2
+            },
+            "end": {
+              "x": 17.9,
+              "y": 10.7
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 19.0,
-          "y": 22.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 22.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 15.0,
+              "y": 8.4
+            },
+            "end": {
+              "x": 14.703,
+              "y": 8.103
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 22.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 16.95,
+              "y": 8.4
+            },
+            "end": {
+              "x": 17.247,
+              "y": 8.103
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 19.0,
-          "y": 23.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 23.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 9.05
+            },
+            "end": {
+              "x": 13.403,
+              "y": 8.753
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 23.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 9.05
+            },
+            "end": {
+              "x": 15.947,
+              "y": 8.753
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 19.0,
-          "y": 24.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 24.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 14.35,
+              "y": 11.0
+            },
+            "end": {
+              "x": 14.053,
+              "y": 10.703
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 24.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 15.0,
+              "y": 11.0
+            },
+            "end": {
+              "x": 14.703,
+              "y": 10.703
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 19.0,
-          "y": 25.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 25.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 11.0
+            },
+            "end": {
+              "x": 15.947,
+              "y": 10.703
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 25.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 14.35,
+              "y": 11.65
+            },
+            "end": {
+              "x": 14.053,
+              "y": 11.947
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 19.0,
-          "y": 26.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 26.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 11.65
+            },
+            "end": {
+              "x": 16.597,
+              "y": 11.947
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 26.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 12.3
+            },
+            "end": {
+              "x": 13.403,
+              "y": 12.597
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 19.0,
-          "y": 27.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 27.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 12.3
+            },
+            "end": {
+              "x": 15.947,
+              "y": 12.597
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 27.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 14.35,
+              "y": 12.95
+            },
+            "end": {
+              "x": 14.053,
+              "y": 13.247
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 32.0,
-          "y": 22.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 22.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 12.95
+            },
+            "end": {
+              "x": 16.597,
+              "y": 13.247
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 22.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 13.6
+            },
+            "end": {
+              "x": 13.403,
+              "y": 13.897
+            }
+          }
+        ]
       },
       {
         "net": "GND",
-        "start": {
-          "x": 32.0,
-          "y": 23.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 23.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 13.6
+            },
+            "end": {
+              "x": 15.947,
+              "y": 13.897
+            }
+          }
+        ]
       },
       {
-        "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 23.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "REXT_BIAS",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 15.0,
+              "y": 9.7
+            },
+            "end": {
+              "x": 15.0,
+              "y": 9.3
+            }
+          },
+          {
+            "start": {
+              "x": 15.0,
+              "y": 9.3
+            },
+            "end": {
+              "x": 15.0,
+              "y": 8.65
+            }
+          }
+        ]
       },
       {
-        "net": "GND",
-        "start": {
-          "x": 32.0,
-          "y": 24.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 24.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "HPD",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 14.35,
+              "y": 9.7
+            },
+            "end": {
+              "x": 13.5,
+              "y": 9.7
+            }
+          },
+          {
+            "start": {
+              "x": 13.5,
+              "y": 9.7
+            },
+            "end": {
+              "x": 12.5,
+              "y": 9.7
+            }
+          }
+        ]
       },
       {
-        "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 24.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "HDMI_5V",
+        "layer": "F.Cu",
+        "width": 0.15,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 10.35
+            },
+            "end": {
+              "x": 13.5,
+              "y": 10.35
+            }
+          },
+          {
+            "start": {
+              "x": 13.5,
+              "y": 10.35
+            },
+            "end": {
+              "x": 12.5,
+              "y": 10.35
+            }
+          }
+        ]
       },
       {
-        "net": "GND",
-        "start": {
-          "x": 32.0,
-          "y": 26.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 26.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "HDMI5V_DIV",
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 11.5,
+              "y": 10.35
+            },
+            "end": {
+              "x": 11.5,
+              "y": 10.55
+            }
+          },
+          {
+            "start": {
+              "x": 11.5,
+              "y": 10.55
+            },
+            "end": {
+              "x": 12.0,
+              "y": 10.55
+            }
+          },
+          {
+            "start": {
+              "x": 12.0,
+              "y": 10.55
+            },
+            "end": {
+              "x": 12.0,
+              "y": 10.95
+            }
+          }
+        ]
       },
       {
-        "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 26.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "I2C1_SCL",
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 13.05,
+              "y": 10.35
+            },
+            "end": {
+              "x": 12.3,
+              "y": 10.1
+            }
+          }
+        ]
       },
       {
-        "net": "GND",
-        "start": {
-          "x": 32.0,
-          "y": 27.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 27.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "I2C1_SCL",
+        "layer": "B.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 12.3,
+              "y": 10.1
+            },
+            "end": {
+              "x": 11.3,
+              "y": 10.1
+            }
+          }
+        ]
       },
       {
-        "net": "GND",
-        "start": {
-          "x": 25.0,
-          "y": 27.0
-        },
-        "end": {
-          "x": 25.0,
-          "y": 33.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "I2C1_SDA",
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 10.35
+            },
+            "end": {
+              "x": 12.3,
+              "y": 10.8
+            }
+          }
+        ]
       },
       {
-        "net": "REXT",
-        "start": {
-          "x": 22.075,
-          "y": 22.075
-        },
-        "end": {
-          "x": 19.0,
-          "y": 22.075
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
+        "net": "I2C1_SDA",
+        "layer": "B.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 12.3,
+              "y": 10.8
+            },
+            "end": {
+              "x": 11.3,
+              "y": 10.8
+            }
+          }
+        ]
       },
       {
-        "net": "REXT",
-        "start": {
-          "x": 19.0,
-          "y": 22.075
-        },
-        "end": {
-          "x": 19.0,
-          "y": 20.0
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
+        "net": "DSI_D0N",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 13.05,
+              "y": 11.65
+            },
+            "end": {
+              "x": 19.0,
+              "y": 11.65
+            }
+          }
+        ]
       },
       {
-        "net": "VDD33_HDMI",
-        "start": {
-          "x": 18.0,
-          "y": 20.0
-        },
-        "end": {
-          "x": 18.0,
-          "y": 22.0
-        },
-        "width": 0.3,
-        "layer": "F.Cu"
+        "net": "DSI_D0P",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 11.65
+            },
+            "end": {
+              "x": 19.0,
+              "y": 11.65
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_D1N",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 15.0,
+              "y": 11.65
+            },
+            "end": {
+              "x": 19.0,
+              "y": 11.65
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_D1P",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 11.65
+            },
+            "end": {
+              "x": 19.0,
+              "y": 11.65
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_CLKN",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 16.95,
+              "y": 11.65
+            },
+            "end": {
+              "x": 19.0,
+              "y": 11.65
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_CLKP",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 13.05,
+              "y": 12.3
+            },
+            "end": {
+              "x": 19.0,
+              "y": 12.3
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_D2N",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 14.35,
+              "y": 12.3
+            },
+            "end": {
+              "x": 19.0,
+              "y": 12.3
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_D2P",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 15.0,
+              "y": 12.3
+            },
+            "end": {
+              "x": 19.0,
+              "y": 12.3
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_D3N",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 12.3
+            },
+            "end": {
+              "x": 19.0,
+              "y": 12.3
+            }
+          }
+        ]
+      },
+      {
+        "net": "DSI_D3P",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 16.95,
+              "y": 12.3
+            },
+            "end": {
+              "x": 19.0,
+              "y": 12.3
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_D2P",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 8.4
+            },
+            "end": {
+              "x": 11.0,
+              "y": 8.4
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_D2N",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 14.35,
+              "y": 8.4
+            },
+            "end": {
+              "x": 11.0,
+              "y": 8.4
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_D1P",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 15.65,
+              "y": 8.4
+            },
+            "end": {
+              "x": 11.0,
+              "y": 8.4
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_D1N",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 8.4
+            },
+            "end": {
+              "x": 11.0,
+              "y": 8.4
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_D0P",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 14.35,
+              "y": 9.05
+            },
+            "end": {
+              "x": 11.0,
+              "y": 9.05
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_D0N",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 15.0,
+              "y": 9.05
+            },
+            "end": {
+              "x": 11.0,
+              "y": 9.05
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_CLKP",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 16.3,
+              "y": 9.05
+            },
+            "end": {
+              "x": 11.0,
+              "y": 9.05
+            }
+          }
+        ]
+      },
+      {
+        "net": "TMDS_CLKN",
+        "layer": "F.Cu",
+        "width": 0.1,
+        "segments": [
+          {
+            "start": {
+              "x": 16.95,
+              "y": 9.05
+            },
+            "end": {
+              "x": 11.0,
+              "y": 9.05
+            }
+          }
+        ]
       },
       {
         "net": "DDC_SCL",
-        "start": {
-          "x": 23.375,
-          "y": 22.075
-        },
-        "end": {
-          "x": 32.0,
-          "y": 22.075
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "DDC_SCL",
-        "start": {
-          "x": 32.0,
-          "y": 22.075
-        },
-        "end": {
-          "x": 32.0,
-          "y": 18.0
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 13.05,
+              "y": 9.7
+            },
+            "end": {
+              "x": 11.0,
+              "y": 9.7
+            }
+          }
+        ]
       },
       {
         "net": "DDC_SDA",
-        "start": {
-          "x": 23.375,
-          "y": 22.725
-        },
-        "end": {
-          "x": 32.0,
-          "y": 22.725
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "DDC_SDA",
-        "start": {
-          "x": 32.0,
-          "y": 22.725
-        },
-        "end": {
-          "x": 32.0,
-          "y": 19.5
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "I2C_SCL",
-        "start": {
-          "x": 24.025,
-          "y": 27.925
-        },
-        "end": {
-          "x": 32.0,
-          "y": 27.925
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "I2C_SCL",
-        "start": {
-          "x": 32.0,
-          "y": 27.925
-        },
-        "end": {
-          "x": 32.0,
-          "y": 29.0
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "I2C_SDA",
-        "start": {
-          "x": 23.375,
-          "y": 27.925
-        },
-        "end": {
-          "x": 32.0,
-          "y": 27.925
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "I2C_SDA",
-        "start": {
-          "x": 32.0,
-          "y": 27.925
-        },
-        "end": {
-          "x": 32.0,
-          "y": 30.0
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "INT",
-        "start": {
-          "x": 23.375,
-          "y": 27.275
-        },
-        "end": {
-          "x": 32.0,
-          "y": 27.275
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
-      },
-      {
-        "net": "INT",
-        "start": {
-          "x": 32.0,
-          "y": 27.275
-        },
-        "end": {
-          "x": 32.0,
-          "y": 31.5
-        },
-        "width": 0.2,
-        "layer": "F.Cu"
+        "layer": "F.Cu",
+        "width": 0.12,
+        "segments": [
+          {
+            "start": {
+              "x": 13.7,
+              "y": 9.7
+            },
+            "end": {
+              "x": 11.0,
+              "y": 9.7
+            }
+          }
+        ]
       }
     ],
     "vias": [
       {
-        "x": 25.0,
-        "y": 33.0,
-        "drill": 0.3,
-        "size": 0.6,
+        "net": "+3V3",
+        "x": 12.753,
+        "y": 8.103,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "TMDS_D2P",
+        "x": 13.403,
+        "y": 8.103,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "TMDS_D2N",
+        "x": 14.053,
+        "y": 8.103,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
         "net": "GND",
-        "layers": [
-          "F.Cu",
-          "B.Cu"
-        ]
+        "x": 14.703,
+        "y": 8.103,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "TMDS_D1P",
+        "x": 15.947,
+        "y": 8.103,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "TMDS_D1N",
+        "x": 16.597,
+        "y": 8.103,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 17.247,
+        "y": 8.103,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "+3V3",
+        "x": 12.753,
+        "y": 8.753,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 13.403,
+        "y": 8.753,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "TMDS_D0P",
+        "x": 14.053,
+        "y": 8.753,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "TMDS_D0N",
+        "x": 14.703,
+        "y": 8.753,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 15.947,
+        "y": 8.753,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "TMDS_CLKP",
+        "x": 16.597,
+        "y": 8.753,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "TMDS_CLKN",
+        "x": 17.247,
+        "y": 8.753,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "DDC_SCL",
+        "x": 12.753,
+        "y": 9.403,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "DDC_SDA",
+        "x": 13.403,
+        "y": 9.403,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "HPD",
+        "x": 14.053,
+        "y": 9.403,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "REXT_BIAS",
+        "x": 14.703,
+        "y": 9.403,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "+1V2",
+        "x": 15.947,
+        "y": 9.403,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "+1V2",
+        "x": 16.597,
+        "y": 9.403,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 17.247,
+        "y": 9.403,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "I2C1_SCL",
+        "x": 12.753,
+        "y": 10.053,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "I2C1_SDA",
+        "x": 13.403,
+        "y": 10.053,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "TC_INT_N",
+        "x": 14.053,
+        "y": 10.053,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "TC_RESET_N",
+        "x": 14.703,
+        "y": 10.053,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "HDMI_5V",
+        "x": 15.947,
+        "y": 10.053,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "+1V8",
+        "x": 16.597,
+        "y": 10.053,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "+1V8",
+        "x": 17.247,
+        "y": 10.053,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "+1V2",
+        "x": 12.753,
+        "y": 10.703,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "+1V2",
+        "x": 13.403,
+        "y": 10.703,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 14.053,
+        "y": 10.703,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 14.703,
+        "y": 10.703,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 15.947,
+        "y": 10.703,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "+1V2",
+        "x": 16.597,
+        "y": 10.703,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "+1V8",
+        "x": 17.247,
+        "y": 10.703,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In2.Cu"
+      },
+      {
+        "net": "DSI_D0N",
+        "x": 12.753,
+        "y": 11.947,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "DSI_D0P",
+        "x": 13.403,
+        "y": 11.947,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 14.053,
+        "y": 11.947,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "DSI_D1N",
+        "x": 14.703,
+        "y": 11.947,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "DSI_D1P",
+        "x": 15.947,
+        "y": 11.947,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 16.597,
+        "y": 11.947,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "DSI_CLKN",
+        "x": 17.247,
+        "y": 11.947,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "DSI_CLKP",
+        "x": 12.753,
+        "y": 12.597,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 13.403,
+        "y": 12.597,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "DSI_D2N",
+        "x": 14.053,
+        "y": 12.597,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "DSI_D2P",
+        "x": 14.703,
+        "y": 12.597,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 15.947,
+        "y": 12.597,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "DSI_D3N",
+        "x": 16.597,
+        "y": 12.597,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "DSI_D3P",
+        "x": 17.247,
+        "y": 12.597,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 12.753,
+        "y": 13.247,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 13.403,
+        "y": 13.247,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 14.053,
+        "y": 13.247,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 14.703,
+        "y": 13.247,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 15.947,
+        "y": 13.247,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 16.597,
+        "y": 13.247,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 17.247,
+        "y": 13.247,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 12.753,
+        "y": 13.897,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 13.403,
+        "y": 13.897,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 14.053,
+        "y": 13.897,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 14.703,
+        "y": 13.897,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "GND",
+        "x": 15.947,
+        "y": 13.897,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-In1.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 16.597,
+        "y": 13.897,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      },
+      {
+        "net": "NC",
+        "x": 17.247,
+        "y": 13.897,
+        "drill": 0.25,
+        "annular_ring": 0.125,
+        "layers": "F.Cu-B.Cu"
+      }
+    ],
+    "thermal_notes": "TC358870XBG theta_JA not specified in extracted data. Typical VFBGA-80 7x7mm: ~30-45 C/W. Under max load (HDMI 1.4b 4K, full DSI Tx): estimated Pdiss ~800mW-1.2W. At 40C/W: delta_T = 40C at 1W. PCB copper pours on +3V3/+1V2/+1V8 planes under BGA act as heatspreader. No external heatsink required for typical 1080p operation at <=75C ambient.",
+    "areas": [
+      {
+        "name": "BGA_KEEPOUT",
+        "type": "keepout",
+        "layer": "B.Cu",
+        "rect": {
+          "x": 11.0,
+          "y": 7.0,
+          "w": 8.0,
+          "h": 8.0
+        },
+        "rules": "No through-hole vias inside BGA body + 0.5mm margin. SMD vias (blind/buried) OK for via-in-pad."
+      },
+      {
+        "name": "DSI_ROUTING_ZONE",
+        "type": "routing_zone",
+        "layer": "F.Cu",
+        "rect": {
+          "x": 18.5,
+          "y": 8.0,
+          "w": 11.5,
+          "h": 8.0
+        },
+        "rules": "100 Ohm differential pairs (CDSI0 lanes). Single-track BGA escape then route as matched pair. Keep-away from TMDS and power traces."
+      },
+      {
+        "name": "TMDS_ROUTING_ZONE",
+        "type": "routing_zone",
+        "layer": "F.Cu",
+        "rect": {
+          "x": 0,
+          "y": 7.5,
+          "w": 11.0,
+          "h": 7.0
+        },
+        "rules": "100 Ohm differential pairs (TMDS). Single-track BGA escape then route as matched pair."
       }
     ]
   }
