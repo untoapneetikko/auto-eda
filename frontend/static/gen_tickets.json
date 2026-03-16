@@ -1,5 +1,5 @@
 {
-  "nextId": 24,
+  "nextId": 25,
   "tickets": [
     {
       "id": 1,
@@ -249,6 +249,17 @@
       "created_at": "2026-03-16T09:17:24.287302+00:00",
       "started_at": "2026-03-16T09:17:26.499950+00:00",
       "agent": "layout-example"
+    },
+    {
+      "id": 24,
+      "type": "datasheet",
+      "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+      "title": "Parse MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+      "prompt": "Parse the datasheet for component MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870.\nPDF file: data/uploads/MAX2870_-_23.5MHz_to_6000MHz_Fractional_Integer-N_Synthesizer_VCO_-_MAX2870.pdf\nRaw text already extracted: frontend/static/library/MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870/raw_text.txt\nWrite the structured profile to: frontend/static/library/MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870/profile.json\n\nIMPORTANT: Set part_number to the SHORT part number only (e.g. 'MAX2870', 'LM358'). No descriptions, no suffixes, no series names.",
+      "status": "running",
+      "created_at": "2026-03-16T09:36:40.603331+00:00",
+      "started_at": "2026-03-16T09:36:40.607587+00:00",
+      "agent": "datasheet-parser"
     }
   ]
 }
