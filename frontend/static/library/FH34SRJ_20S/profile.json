@@ -1,0 +1,143 @@
+{
+  "part_number": "FH34SRJ-20S-0.5SH(50)",
+  "slug": "FH34SRJ_20S",
+  "description": "Hirose FH34SRJ series 20-pin 0.5mm pitch ZIF FPC/FFC connector, SMD, bottom contact, for MIPI DSI 4-lane flat cable to display/camera module",
+  "manufacturer": "Hirose Electric",
+  "package_types": [
+    "20-pin ZIF FPC SMD (13.4\u00c3\u20143.3mm footprint)"
+  ],
+  "footprint": "FH34SRJ_20S_0.5mm",
+  "supply_voltage_range": "N/A (connector)",
+  "designator": "J",
+  "symbol_type": "connector",
+  "status": "parsed",
+  "pins": [
+    {
+      "number": "1",
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground"
+    },
+    {
+      "number": "2",
+      "name": "DSI_D0N",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 0 Negative"
+    },
+    {
+      "number": "3",
+      "name": "DSI_D0P",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 0 Positive"
+    },
+    {
+      "number": "4",
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground"
+    },
+    {
+      "number": "5",
+      "name": "DSI_D1N",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 1 Negative"
+    },
+    {
+      "number": "6",
+      "name": "DSI_D1P",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 1 Positive"
+    },
+    {
+      "number": "7",
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground"
+    },
+    {
+      "number": "8",
+      "name": "DSI_D2N",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 2 Negative"
+    },
+    {
+      "number": "9",
+      "name": "DSI_D2P",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 2 Positive"
+    },
+    {
+      "number": "10",
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground"
+    },
+    {
+      "number": "11",
+      "name": "DSI_D3N",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 3 Negative"
+    },
+    {
+      "number": "12",
+      "name": "DSI_D3P",
+      "type": "passive",
+      "description": "MIPI DSI Data Lane 3 Positive"
+    },
+    {
+      "number": "13",
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground"
+    },
+    {
+      "number": "14",
+      "name": "DSI_CLKN",
+      "type": "passive",
+      "description": "MIPI DSI Clock Lane Negative"
+    },
+    {
+      "number": "15",
+      "name": "DSI_CLKP",
+      "type": "passive",
+      "description": "MIPI DSI Clock Lane Positive"
+    },
+    {
+      "number": "16",
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground"
+    },
+    {
+      "number": "17",
+      "name": "CAM_SDA",
+      "type": "passive",
+      "description": "Camera module I2C SDA (optional \u00e2\u20ac\u201d connect to STM32 or leave NC)"
+    },
+    {
+      "number": "18",
+      "name": "CAM_SCL",
+      "type": "passive",
+      "description": "Camera module I2C SCL (optional \u00e2\u20ac\u201d connect to STM32 or leave NC)"
+    },
+    {
+      "number": "19",
+      "name": "CAM_PWDN",
+      "type": "passive",
+      "description": "Camera/module power-down GPIO (connect to STM32 GPIO or pull to GND)"
+    },
+    {
+      "number": "20",
+      "name": "VCAM",
+      "type": "power",
+      "description": "Camera/module power supply (1.8V from VDDIO rail). 100nF decoupling to GND."
+    }
+  ],
+  "notes": "ZIF (Zero Insertion Force) actuator \u00e2\u20ac\u201d lift actuator before inserting FPC cable. MIPI CSI-2 signals are 100\u00ce\u00a9 differential. All GND pins must be connected. Pin 20 (VCAM) provides 1.8V to the downstream module \u00e2\u20ac\u201d size power supply accordingly. Pins 17-19 are optional control signals from STM32.",
+  "human_corrections": [],
+  "example_circuit": {
+    "components": [],
+    "wires": [],
+    "labels": []
+  }
+}

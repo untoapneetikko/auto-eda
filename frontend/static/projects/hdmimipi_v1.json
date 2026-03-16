@@ -1,0 +1,1513 @@
+{
+  "id": "hdmimipi_v1",
+  "name": "HDMI to MIPI CSI-2 Converter (TC358870XBG + STM32F103CBT6)",
+  "components": [
+    {
+      "id": "u1_tc358870",
+      "slug": "TC358870XBG",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "TC358870XBG",
+      "x": 100,
+      "y": 50,
+      "rotation": 0
+    },
+    {
+      "id": "u2_stm32",
+      "slug": "STM32F103CBT6",
+      "symType": "ic",
+      "designator": "U2",
+      "value": "STM32F103CBT6",
+      "x": -240,
+      "y": 360,
+      "rotation": 0
+    },
+    {
+      "id": "u3_ams",
+      "slug": "AMS1117-3.3",
+      "symType": "ic",
+      "designator": "U3",
+      "value": "AMS1117-3.3",
+      "x": -420,
+      "y": -180,
+      "rotation": 0
+    },
+    {
+      "id": "u4_ap18",
+      "slug": "AP2112",
+      "symType": "ic",
+      "designator": "U4",
+      "value": "AP2112K-1.8",
+      "x": -420,
+      "y": -60,
+      "rotation": 0
+    },
+    {
+      "id": "u5_ap12",
+      "slug": "AP2112",
+      "symType": "ic",
+      "designator": "U5",
+      "value": "AP2112K-1.2",
+      "x": -420,
+      "y": 60,
+      "rotation": 0
+    },
+    {
+      "id": "j1_hdmi",
+      "slug": "HDMI_MICRO_D",
+      "symType": "connector",
+      "designator": "J1",
+      "value": "Micro-HDMI D",
+      "x": -680,
+      "y": 50,
+      "rotation": 0
+    },
+    {
+      "id": "j2_fpc",
+      "slug": "FH34SRJ_20S",
+      "symType": "connector",
+      "designator": "J2",
+      "value": "FH34SRJ-20S",
+      "x": 520,
+      "y": 50,
+      "rotation": 0
+    },
+    {
+      "id": "j3_usbc",
+      "slug": "USB_C_CONN",
+      "symType": "connector",
+      "designator": "J3",
+      "value": "USB-C 5V",
+      "x": -680,
+      "y": -300,
+      "rotation": 0
+    },
+    {
+      "id": "y1_27m",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "Y1",
+      "value": "27MHz Xtal",
+      "x": 220,
+      "y": 250,
+      "rotation": 1
+    },
+    {
+      "id": "y2_8m",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "Y2",
+      "value": "8MHz Xtal",
+      "x": -380,
+      "y": 500,
+      "rotation": 1
+    },
+    {
+      "id": "r1_cc1",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R1",
+      "value": "5.1k",
+      "x": -760,
+      "y": -270,
+      "rotation": 0
+    },
+    {
+      "id": "r2_cc2",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R2",
+      "value": "5.1k",
+      "x": -760,
+      "y": -230,
+      "rotation": 0
+    },
+    {
+      "id": "r3_scl",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R3",
+      "value": "4.7k",
+      "x": -60,
+      "y": 170,
+      "rotation": 1
+    },
+    {
+      "id": "r4_sda",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R4",
+      "value": "4.7k",
+      "x": -20,
+      "y": 170,
+      "rotation": 1
+    },
+    {
+      "id": "r5_int",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R5",
+      "value": "10k",
+      "x": 20,
+      "y": 170,
+      "rotation": 1
+    },
+    {
+      "id": "r6_addr",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R6",
+      "value": "0R",
+      "x": 60,
+      "y": 200,
+      "rotation": 0
+    },
+    {
+      "id": "r7_hpd",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R7",
+      "value": "1k",
+      "x": -160,
+      "y": 80,
+      "rotation": 0
+    },
+    {
+      "id": "r8_5vt",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R8",
+      "value": "47k",
+      "x": -160,
+      "y": 120,
+      "rotation": 0
+    },
+    {
+      "id": "r9_5vb",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R9",
+      "value": "10k",
+      "x": -160,
+      "y": 160,
+      "rotation": 0
+    },
+    {
+      "id": "r10_boot",
+      "slug": "RESISTOR",
+      "symType": "resistor",
+      "designator": "R10",
+      "value": "10k",
+      "x": -100,
+      "y": 310,
+      "rotation": 0
+    },
+    {
+      "id": "c1_vbus_b",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C1",
+      "value": "10uF 10V",
+      "x": -560,
+      "y": -260,
+      "rotation": 1
+    },
+    {
+      "id": "c2_vbus_s",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C2",
+      "value": "100nF",
+      "x": -520,
+      "y": -260,
+      "rotation": 1
+    },
+    {
+      "id": "c3_u3in",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C3",
+      "value": "100nF",
+      "x": -520,
+      "y": -160,
+      "rotation": 1
+    },
+    {
+      "id": "c4_u3out",
+      "slug": "CAPACITOR_POL",
+      "symType": "capacitor",
+      "designator": "C4",
+      "value": "10uF 10V",
+      "x": -320,
+      "y": -160,
+      "rotation": 1
+    },
+    {
+      "id": "c5_u4in",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C5",
+      "value": "1uF",
+      "x": -520,
+      "y": -40,
+      "rotation": 1
+    },
+    {
+      "id": "c6_u4out",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C6",
+      "value": "1uF",
+      "x": -320,
+      "y": -40,
+      "rotation": 1
+    },
+    {
+      "id": "c7_u5in",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C7",
+      "value": "1uF",
+      "x": -520,
+      "y": 80,
+      "rotation": 1
+    },
+    {
+      "id": "c8_u5out",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C8",
+      "value": "1uF",
+      "x": -320,
+      "y": 80,
+      "rotation": 1
+    },
+    {
+      "id": "c9_v33a",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C9",
+      "value": "100nF",
+      "x": 20,
+      "y": -100,
+      "rotation": 1
+    },
+    {
+      "id": "c10_v33b",
+      "slug": "CAPACITOR_POL",
+      "symType": "capacitor",
+      "designator": "C10",
+      "value": "10uF",
+      "x": 60,
+      "y": -100,
+      "rotation": 1
+    },
+    {
+      "id": "c11_v12a",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C11",
+      "value": "100nF",
+      "x": 100,
+      "y": -100,
+      "rotation": 1
+    },
+    {
+      "id": "c12_v12b",
+      "slug": "CAPACITOR_POL",
+      "symType": "capacitor",
+      "designator": "C12",
+      "value": "10uF",
+      "x": 140,
+      "y": -100,
+      "rotation": 1
+    },
+    {
+      "id": "c13_via_a",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C13",
+      "value": "100nF",
+      "x": 180,
+      "y": -100,
+      "rotation": 1
+    },
+    {
+      "id": "c14_vio_b",
+      "slug": "CAPACITOR_POL",
+      "symType": "capacitor",
+      "designator": "C14",
+      "value": "10uF",
+      "x": 220,
+      "y": -100,
+      "rotation": 1
+    },
+    {
+      "id": "c15_pll",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C15",
+      "value": "1uF",
+      "x": 260,
+      "y": -100,
+      "rotation": 1
+    },
+    {
+      "id": "c16_y1a",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C16",
+      "value": "12pF",
+      "x": 180,
+      "y": 280,
+      "rotation": 1
+    },
+    {
+      "id": "c17_y1b",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C17",
+      "value": "12pF",
+      "x": 260,
+      "y": 280,
+      "rotation": 1
+    },
+    {
+      "id": "c18_st1",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C18",
+      "value": "100nF",
+      "x": -120,
+      "y": 440,
+      "rotation": 1
+    },
+    {
+      "id": "c19_st2",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C19",
+      "value": "100nF",
+      "x": -80,
+      "y": 440,
+      "rotation": 1
+    },
+    {
+      "id": "c20_st3",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C20",
+      "value": "100nF",
+      "x": -40,
+      "y": 440,
+      "rotation": 1
+    },
+    {
+      "id": "c21_stb",
+      "slug": "CAPACITOR_POL",
+      "symType": "capacitor",
+      "designator": "C21",
+      "value": "4.7uF",
+      "x": 0,
+      "y": 440,
+      "rotation": 1
+    },
+    {
+      "id": "c22_vdda",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C22",
+      "value": "1uF",
+      "x": -200,
+      "y": 440,
+      "rotation": 1
+    },
+    {
+      "id": "c23_nrst",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C23",
+      "value": "100nF",
+      "x": -300,
+      "y": 310,
+      "rotation": 1
+    },
+    {
+      "id": "c24_y2a",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C24",
+      "value": "20pF",
+      "x": -420,
+      "y": 530,
+      "rotation": 1
+    },
+    {
+      "id": "c25_y2b",
+      "slug": "CAPACITOR",
+      "symType": "capacitor",
+      "designator": "C25",
+      "value": "20pF",
+      "x": -340,
+      "y": 530,
+      "rotation": 1
+    },
+    {
+      "id": "pwr1",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR1",
+      "value": "+5V",
+      "x": -660,
+      "y": -380,
+      "rotation": 0
+    },
+    {
+      "id": "pwr2",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR2",
+      "value": "+5V",
+      "x": -460,
+      "y": -220,
+      "rotation": 0
+    },
+    {
+      "id": "pwr3",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR3",
+      "value": "+5V",
+      "x": -460,
+      "y": -100,
+      "rotation": 0
+    },
+    {
+      "id": "pwr4",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR4",
+      "value": "+3V3",
+      "x": -460,
+      "y": 20,
+      "rotation": 0
+    },
+    {
+      "id": "pwr5",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR5",
+      "value": "+3V3",
+      "x": 30,
+      "y": -140,
+      "rotation": 0
+    },
+    {
+      "id": "pwr6",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR6",
+      "value": "+1V8",
+      "x": 170,
+      "y": -140,
+      "rotation": 0
+    },
+    {
+      "id": "pwr7",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR7",
+      "value": "+1V2",
+      "x": 270,
+      "y": -140,
+      "rotation": 0
+    },
+    {
+      "id": "pwr8",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR8",
+      "value": "+3V3",
+      "x": -280,
+      "y": 300,
+      "rotation": 0
+    },
+    {
+      "id": "pwr9",
+      "slug": "VCC",
+      "symType": "vcc",
+      "designator": "PWR9",
+      "value": "+1V8",
+      "x": 560,
+      "y": -20,
+      "rotation": 0
+    },
+    {
+      "id": "gnd01",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND1",
+      "value": "GND",
+      "x": -660,
+      "y": -240,
+      "rotation": 0
+    },
+    {
+      "id": "gnd02",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND2",
+      "value": "GND",
+      "x": -760,
+      "y": -230,
+      "rotation": 0
+    },
+    {
+      "id": "gnd03",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND3",
+      "value": "GND",
+      "x": -760,
+      "y": -190,
+      "rotation": 0
+    },
+    {
+      "id": "gnd04",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND4",
+      "value": "GND",
+      "x": -560,
+      "y": -220,
+      "rotation": 0
+    },
+    {
+      "id": "gnd05",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND5",
+      "value": "GND",
+      "x": -420,
+      "y": -120,
+      "rotation": 0
+    },
+    {
+      "id": "gnd06",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND6",
+      "value": "GND",
+      "x": -320,
+      "y": -120,
+      "rotation": 0
+    },
+    {
+      "id": "gnd07",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND7",
+      "value": "GND",
+      "x": -420,
+      "y": 0,
+      "rotation": 0
+    },
+    {
+      "id": "gnd08",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND8",
+      "value": "GND",
+      "x": -420,
+      "y": 120,
+      "rotation": 0
+    },
+    {
+      "id": "gnd09",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND9",
+      "value": "GND",
+      "x": 60,
+      "y": 240,
+      "rotation": 0
+    },
+    {
+      "id": "gnd10",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND10",
+      "value": "GND",
+      "x": 100,
+      "y": -140,
+      "rotation": 0
+    },
+    {
+      "id": "gnd11",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND11",
+      "value": "GND",
+      "x": 180,
+      "y": 310,
+      "rotation": 0
+    },
+    {
+      "id": "gnd12",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND12",
+      "value": "GND",
+      "x": 260,
+      "y": 310,
+      "rotation": 0
+    },
+    {
+      "id": "gnd13",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND13",
+      "value": "GND",
+      "x": -280,
+      "y": 440,
+      "rotation": 0
+    },
+    {
+      "id": "gnd14",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND14",
+      "value": "GND",
+      "x": -420,
+      "y": 560,
+      "rotation": 0
+    },
+    {
+      "id": "gnd15",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND15",
+      "value": "GND",
+      "x": -340,
+      "y": 560,
+      "rotation": 0
+    },
+    {
+      "id": "gnd16",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND16",
+      "value": "GND",
+      "x": -100,
+      "y": 350,
+      "rotation": 0
+    },
+    {
+      "id": "gnd17",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND17",
+      "value": "GND",
+      "x": -680,
+      "y": 140,
+      "rotation": 0
+    },
+    {
+      "id": "gnd18",
+      "slug": "GND",
+      "symType": "gnd",
+      "designator": "GND18",
+      "value": "GND",
+      "x": 520,
+      "y": 140,
+      "rotation": 0
+    }
+  ],
+  "wires": [
+    {
+      "id": "w_vbus_out",
+      "points": [
+        {
+          "x": -600,
+          "y": -340
+        },
+        {
+          "x": -560,
+          "y": -340
+        },
+        {
+          "x": -560,
+          "y": -260
+        }
+      ]
+    },
+    {
+      "id": "w_u3_cin",
+      "points": [
+        {
+          "x": -520,
+          "y": -180
+        },
+        {
+          "x": -500,
+          "y": -180
+        },
+        {
+          "x": -500,
+          "y": -160
+        },
+        {
+          "x": -480,
+          "y": -160
+        }
+      ]
+    },
+    {
+      "id": "w_u3_cout",
+      "points": [
+        {
+          "x": -360,
+          "y": -160
+        },
+        {
+          "x": -340,
+          "y": -160
+        },
+        {
+          "x": -340,
+          "y": -140
+        },
+        {
+          "x": -320,
+          "y": -140
+        }
+      ]
+    },
+    {
+      "id": "w_u4_cin",
+      "points": [
+        {
+          "x": -520,
+          "y": -60
+        },
+        {
+          "x": -480,
+          "y": -60
+        }
+      ]
+    },
+    {
+      "id": "w_u4_cout",
+      "points": [
+        {
+          "x": -360,
+          "y": -60
+        },
+        {
+          "x": -320,
+          "y": -60
+        }
+      ]
+    },
+    {
+      "id": "w_u5_cin",
+      "points": [
+        {
+          "x": -520,
+          "y": 60
+        },
+        {
+          "x": -480,
+          "y": 60
+        }
+      ]
+    },
+    {
+      "id": "w_u5_cout",
+      "points": [
+        {
+          "x": -360,
+          "y": 60
+        },
+        {
+          "x": -320,
+          "y": 60
+        }
+      ]
+    },
+    {
+      "id": "w_y1_in",
+      "points": [
+        {
+          "x": 200,
+          "y": 220
+        },
+        {
+          "x": 200,
+          "y": 260
+        }
+      ]
+    },
+    {
+      "id": "w_y1_out",
+      "points": [
+        {
+          "x": 240,
+          "y": 260
+        },
+        {
+          "x": 240,
+          "y": 220
+        }
+      ]
+    },
+    {
+      "id": "w_y2_in",
+      "points": [
+        {
+          "x": -380,
+          "y": 460
+        },
+        {
+          "x": -380,
+          "y": 510
+        }
+      ]
+    },
+    {
+      "id": "w_y2_out",
+      "points": [
+        {
+          "x": -360,
+          "y": 510
+        },
+        {
+          "x": -360,
+          "y": 460
+        }
+      ]
+    },
+    {
+      "id": "w_r3_top",
+      "points": [
+        {
+          "x": -60,
+          "y": 150
+        },
+        {
+          "x": -60,
+          "y": 130
+        }
+      ]
+    },
+    {
+      "id": "w_r3_bot",
+      "points": [
+        {
+          "x": -60,
+          "y": 190
+        },
+        {
+          "x": -60,
+          "y": 210
+        }
+      ]
+    },
+    {
+      "id": "w_r4_top",
+      "points": [
+        {
+          "x": -20,
+          "y": 150
+        },
+        {
+          "x": -20,
+          "y": 130
+        }
+      ]
+    },
+    {
+      "id": "w_r4_bot",
+      "points": [
+        {
+          "x": -20,
+          "y": 190
+        },
+        {
+          "x": -20,
+          "y": 210
+        }
+      ]
+    },
+    {
+      "id": "w_r5_top",
+      "points": [
+        {
+          "x": 20,
+          "y": 150
+        },
+        {
+          "x": 20,
+          "y": 130
+        }
+      ]
+    },
+    {
+      "id": "w_r5_bot",
+      "points": [
+        {
+          "x": 20,
+          "y": 190
+        },
+        {
+          "x": 20,
+          "y": 210
+        }
+      ]
+    },
+    {
+      "id": "w_r6_gnd",
+      "points": [
+        {
+          "x": 60,
+          "y": 220
+        },
+        {
+          "x": 60,
+          "y": 240
+        }
+      ]
+    },
+    {
+      "id": "w_r10_gnd",
+      "points": [
+        {
+          "x": -100,
+          "y": 330
+        },
+        {
+          "x": -100,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "id": "w_r7_j1",
+      "points": [
+        {
+          "x": -220,
+          "y": 80
+        },
+        {
+          "x": -200,
+          "y": 80
+        }
+      ]
+    },
+    {
+      "id": "w_r7_u1",
+      "points": [
+        {
+          "x": -120,
+          "y": 80
+        },
+        {
+          "x": -80,
+          "y": 80
+        }
+      ]
+    },
+    {
+      "id": "w_r8r9",
+      "points": [
+        {
+          "x": -160,
+          "y": 140
+        },
+        {
+          "x": -160,
+          "y": 152
+        }
+      ]
+    },
+    {
+      "id": "w_r9_gnd",
+      "points": [
+        {
+          "x": -160,
+          "y": 178
+        },
+        {
+          "x": -160,
+          "y": 200
+        }
+      ]
+    },
+    {
+      "id": "w_c23_nrst",
+      "points": [
+        {
+          "x": -300,
+          "y": 290
+        },
+        {
+          "x": -300,
+          "y": 310
+        }
+      ]
+    },
+    {
+      "id": "w_r8_h5vin",
+      "points": [
+        {
+          "x": -160,
+          "y": 100
+        },
+        {
+          "x": -160,
+          "y": 80
+        },
+        {
+          "x": -280,
+          "y": 80
+        },
+        {
+          "x": -280,
+          "y": 110
+        }
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "id": "lbl_5v_u3",
+      "name": "+5V",
+      "x": -480,
+      "y": -220
+    },
+    {
+      "id": "lbl_5v_u4",
+      "name": "+5V",
+      "x": -480,
+      "y": -100
+    },
+    {
+      "id": "lbl_33_u3out",
+      "name": "+3V3",
+      "x": -360,
+      "y": -200
+    },
+    {
+      "id": "lbl_33_u5in",
+      "name": "+3V3",
+      "x": -480,
+      "y": 20
+    },
+    {
+      "id": "lbl_33_r3",
+      "name": "+3V3",
+      "x": -60,
+      "y": 120
+    },
+    {
+      "id": "lbl_33_r4",
+      "name": "+3V3",
+      "x": -20,
+      "y": 120
+    },
+    {
+      "id": "lbl_33_r5",
+      "name": "+3V3",
+      "x": 20,
+      "y": 120
+    },
+    {
+      "id": "lbl_33_u2",
+      "name": "+3V3",
+      "x": -280,
+      "y": 300
+    },
+    {
+      "id": "lbl_18_u4out",
+      "name": "+1V8",
+      "x": -360,
+      "y": -80
+    },
+    {
+      "id": "lbl_18_u1io",
+      "name": "+1V8",
+      "x": 140,
+      "y": -140
+    },
+    {
+      "id": "lbl_18_j2",
+      "name": "+1V8",
+      "x": 560,
+      "y": -20
+    },
+    {
+      "id": "lbl_12_u5out",
+      "name": "+1V2",
+      "x": -360,
+      "y": 40
+    },
+    {
+      "id": "lbl_12_u1",
+      "name": "+1V2",
+      "x": 260,
+      "y": -140
+    },
+    {
+      "id": "lbl_d0p_j1",
+      "name": "TMDS_D0P",
+      "x": -580,
+      "y": 10
+    },
+    {
+      "id": "lbl_d0n_j1",
+      "name": "TMDS_D0N",
+      "x": -580,
+      "y": 22
+    },
+    {
+      "id": "lbl_d1p_j1",
+      "name": "TMDS_D1P",
+      "x": -580,
+      "y": 34
+    },
+    {
+      "id": "lbl_d1n_j1",
+      "name": "TMDS_D1N",
+      "x": -580,
+      "y": 46
+    },
+    {
+      "id": "lbl_d2p_j1",
+      "name": "TMDS_D2P",
+      "x": -580,
+      "y": 58
+    },
+    {
+      "id": "lbl_d2n_j1",
+      "name": "TMDS_D2N",
+      "x": -580,
+      "y": 70
+    },
+    {
+      "id": "lbl_ckp_j1",
+      "name": "TMDS_CLKP",
+      "x": -580,
+      "y": 82
+    },
+    {
+      "id": "lbl_ckn_j1",
+      "name": "TMDS_CLKN",
+      "x": -580,
+      "y": 94
+    },
+    {
+      "id": "lbl_d0p_u1",
+      "name": "TMDS_D0P",
+      "x": -30,
+      "y": 10
+    },
+    {
+      "id": "lbl_d0n_u1",
+      "name": "TMDS_D0N",
+      "x": -30,
+      "y": 22
+    },
+    {
+      "id": "lbl_d1p_u1",
+      "name": "TMDS_D1P",
+      "x": -30,
+      "y": 34
+    },
+    {
+      "id": "lbl_d1n_u1",
+      "name": "TMDS_D1N",
+      "x": -30,
+      "y": 46
+    },
+    {
+      "id": "lbl_d2p_u1",
+      "name": "TMDS_D2P",
+      "x": -30,
+      "y": 58
+    },
+    {
+      "id": "lbl_d2n_u1",
+      "name": "TMDS_D2N",
+      "x": -30,
+      "y": 70
+    },
+    {
+      "id": "lbl_ckp_u1",
+      "name": "TMDS_CLKP",
+      "x": -30,
+      "y": 82
+    },
+    {
+      "id": "lbl_ckn_u1",
+      "name": "TMDS_CLKN",
+      "x": -30,
+      "y": 94
+    },
+    {
+      "id": "lbl_d0p_u1c",
+      "name": "DSI_D0P",
+      "x": 230,
+      "y": 10
+    },
+    {
+      "id": "lbl_d0n_u1c",
+      "name": "DSI_D0N",
+      "x": 230,
+      "y": 22
+    },
+    {
+      "id": "lbl_d1p_u1c",
+      "name": "DSI_D1P",
+      "x": 230,
+      "y": 34
+    },
+    {
+      "id": "lbl_d1n_u1c",
+      "name": "DSI_D1N",
+      "x": 230,
+      "y": 46
+    },
+    {
+      "id": "lbl_d2p_u1c",
+      "name": "DSI_D2P",
+      "x": 230,
+      "y": 58
+    },
+    {
+      "id": "lbl_d2n_u1c",
+      "name": "DSI_D2N",
+      "x": 230,
+      "y": 70
+    },
+    {
+      "id": "lbl_d3p_u1c",
+      "name": "DSI_D3P",
+      "x": 230,
+      "y": 82
+    },
+    {
+      "id": "lbl_d3n_u1c",
+      "name": "DSI_D3N",
+      "x": 230,
+      "y": 94
+    },
+    {
+      "id": "lbl_ckp_u1c",
+      "name": "DSI_CLKP",
+      "x": 230,
+      "y": 106
+    },
+    {
+      "id": "lbl_ckn_u1c",
+      "name": "DSI_CLKN",
+      "x": 230,
+      "y": 118
+    },
+    {
+      "id": "lbl_d0p_j2",
+      "name": "DSI_D0P",
+      "x": 480,
+      "y": 10
+    },
+    {
+      "id": "lbl_d0n_j2",
+      "name": "DSI_D0N",
+      "x": 480,
+      "y": 22
+    },
+    {
+      "id": "lbl_d1p_j2",
+      "name": "DSI_D1P",
+      "x": 480,
+      "y": 34
+    },
+    {
+      "id": "lbl_d1n_j2",
+      "name": "DSI_D1N",
+      "x": 480,
+      "y": 46
+    },
+    {
+      "id": "lbl_d2p_j2",
+      "name": "DSI_D2P",
+      "x": 480,
+      "y": 58
+    },
+    {
+      "id": "lbl_d2n_j2",
+      "name": "DSI_D2N",
+      "x": 480,
+      "y": 70
+    },
+    {
+      "id": "lbl_d3p_j2",
+      "name": "DSI_D3P",
+      "x": 480,
+      "y": 82
+    },
+    {
+      "id": "lbl_d3n_j2",
+      "name": "DSI_D3N",
+      "x": 480,
+      "y": 94
+    },
+    {
+      "id": "lbl_ckp_j2",
+      "name": "DSI_CLKP",
+      "x": 480,
+      "y": 106
+    },
+    {
+      "id": "lbl_ckn_j2",
+      "name": "DSI_CLKN",
+      "x": 480,
+      "y": 118
+    },
+    {
+      "id": "lbl_scl_u1",
+      "name": "I2C1_SCL",
+      "x": 90,
+      "y": 210
+    },
+    {
+      "id": "lbl_sda_u1",
+      "name": "I2C1_SDA",
+      "x": 90,
+      "y": 230
+    },
+    {
+      "id": "lbl_scl_u2",
+      "name": "I2C1_SCL",
+      "x": -140,
+      "y": 330
+    },
+    {
+      "id": "lbl_sda_u2",
+      "name": "I2C1_SDA",
+      "x": -140,
+      "y": 350
+    },
+    {
+      "id": "lbl_r3_bot",
+      "name": "I2C1_SCL",
+      "x": -60,
+      "y": 220
+    },
+    {
+      "id": "lbl_r4_bot",
+      "name": "I2C1_SDA",
+      "x": -20,
+      "y": 220
+    },
+    {
+      "id": "lbl_rst_u1",
+      "name": "TC_RESET_N",
+      "x": 90,
+      "y": 250
+    },
+    {
+      "id": "lbl_rst_u2",
+      "name": "TC_RESET_N",
+      "x": -140,
+      "y": 370
+    },
+    {
+      "id": "lbl_int_u1",
+      "name": "TC_INT_N",
+      "x": 90,
+      "y": 270
+    },
+    {
+      "id": "lbl_int_u2",
+      "name": "TC_INT_N",
+      "x": -140,
+      "y": 390
+    },
+    {
+      "id": "lbl_hpd_j1",
+      "name": "HPD",
+      "x": -580,
+      "y": 100
+    },
+    {
+      "id": "lbl_hpd_r7",
+      "name": "HPD",
+      "x": -220,
+      "y": 80
+    },
+    {
+      "id": "lbl_h5v_j1",
+      "name": "HDMI5V_RAW",
+      "x": -580,
+      "y": 112
+    },
+    {
+      "id": "lbl_h5v_r8",
+      "name": "HDMI5V_RAW",
+      "x": -200,
+      "y": 120
+    },
+    {
+      "id": "lbl_h5v_u1",
+      "name": "HDMI_5V",
+      "x": 90,
+      "y": 290
+    },
+    {
+      "id": "lbl_r9_div",
+      "name": "HDMI_5V",
+      "x": -120,
+      "y": 165
+    },
+    {
+      "id": "lbl_ddcscl_j",
+      "name": "DDC_SCL",
+      "x": -580,
+      "y": 124
+    },
+    {
+      "id": "lbl_ddcsda_j",
+      "name": "DDC_SDA",
+      "x": -580,
+      "y": 136
+    },
+    {
+      "id": "lbl_ddcscl_u",
+      "name": "DDC_SCL",
+      "x": 90,
+      "y": 310
+    },
+    {
+      "id": "lbl_ddcsda_u",
+      "name": "DDC_SDA",
+      "x": 90,
+      "y": 330
+    },
+    {
+      "id": "lbl_swdio",
+      "name": "SWDIO",
+      "x": -140,
+      "y": 410
+    },
+    {
+      "id": "lbl_swclk",
+      "name": "SWCLK",
+      "x": -140,
+      "y": 430
+    }
+  ],
+  "groups": {},
+  "noConnects": [],
+  "created_at": "2026-03-16T00:00:00.000Z",
+  "updated_at": "2026-03-16T01:00:00.000Z"
+}

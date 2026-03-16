@@ -1,178 +1,4 @@
 {
-  "STM32F103C8": {
-    "slug": "STM32F103C8",
-    "part_number": "STM32F103C8T6",
-    "description": "STM32F103C8T6 ARM Cortex-M3 32-bit MCU, 72MHz, 64KB Flash, 20KB SRAM, LQFP-48",
-    "manufacturer": "STMicroelectronics",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "LQFP-48"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-10T00:00:00.000Z"
-  },
-  "LED": {
-    "slug": "LED",
-    "part_number": "LED",
-    "description": "Light Emitting Diode \u2014 emits light in forward bias. Requires current limiting resistor.",
-    "manufacturer": "Generic",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "led",
-    "package_types": [
-      "5mm THT",
-      "3mm THT",
-      "0402 SMD",
-      "0603 SMD",
-      "0805 SMD"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
-  "ESP32_WROOM_32": {
-    "slug": "ESP32_WROOM_32",
-    "part_number": "ESP32-WROOM-32",
-    "description": "Wi-Fi + Bluetooth SoC module, dual-core 240 MHz Xtensa LX6, 4MB flash, integrated antenna \u2014 the standard ESP32 module",
-    "manufacturer": "Espressif Systems",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "38-pad SMD module (18\u00d725.5\u00d73.1mm)"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-09T00:00:00.000Z"
-  },
-  "PMA3_83LNW": {
-    "slug": "PMA3_83LNW",
-    "part_number": "PMA3-83LNW+",
-    "description": "PHEMT-based wideband low-noise MMIC amplifier, 0.4\u20138 GHz, 1.2 dB NF at 2 GHz, +37 dBm OIP3, single 5V/6V supply",
-    "manufacturer": "Mini-Circuits",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "12-lead MCLP 3x3x0.89mm (DQ1225)"
-    ],
-    "builtin": false,
-    "filename": "PMA3_83LNW.pdf",
-    "uploaded_at": "2026-03-08T16:52:47.739Z",
-    "parsed_at": "2026-03-09T00:00:00.000Z"
-  },
-  "QPA9510_DATA_SHEET": {
-    "slug": "QPA9510_DATA_SHEET",
-    "part_number": "QPA9510",
-    "description": "3V GaAs PHEMT high-power amplifier, 100\u20131000 MHz, 34 dB gain, +35 dBm P1dB, 55% efficiency, analog power control",
-    "manufacturer": "Qorvo",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "16-Pad 3x3mm QFN"
-    ],
-    "builtin": false,
-    "filename": "QPA9510_Data_Sheet.pdf",
-    "uploaded_at": "2026-03-08T17:48:59.741Z",
-    "parsed_at": "2026-03-10T00:00:00.000Z"
-  },
-  "LM7805": {
-    "slug": "LM7805",
-    "part_number": "LM7805",
-    "description": "5V 1A positive linear voltage regulator \u2014 fixed output, requires input \u22657V",
-    "manufacturer": "Texas Instruments / ST / On Semi",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "TO-220",
-      "TO-92",
-      "D2PAK",
-      "SOT-223"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
-  "IRF540N": {
-    "slug": "IRF540N",
-    "part_number": "IRF540N",
-    "description": "N-channel power MOSFET \u2014 100V, 33A, 44m\u03a9 Rds(on), logic-level gate (4.5V drive capable)",
-    "manufacturer": "Vishay / International Rectifier",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "nmos",
-    "package_types": [
-      "TO-220AB",
-      "D2PAK (surface mount)"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
-  "DIODE": {
-    "slug": "DIODE",
-    "part_number": "D",
-    "description": "Rectifier diode \u2014 blocks reverse current, passes forward current above ~0.7V (silicon) or ~0.3V (Schottky)",
-    "manufacturer": "Generic",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "diode",
-    "package_types": [
-      "DO-41",
-      "DO-214AC (SMA)",
-      "DO-214AB (SMC)",
-      "SOD-123"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
-  "CAPACITOR_POL": {
-    "slug": "CAPACITOR_POL",
-    "part_number": "C_POL",
-    "description": "Capacitor (polarized) \u2014 electrolytic or tantalum, bulk decoupling, power supply filtering",
-    "manufacturer": "Generic",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "capacitor_pol",
-    "package_types": [
-      "THT radial",
-      "SMD electrolytic",
-      "tantalum"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
-  "L298N": {
-    "slug": "L298N",
-    "part_number": "L298N",
-    "description": "Dual full H-bridge motor driver \u2014 46V, 2A per channel, logic-level inputs, enable pins, current sensing",
-    "manufacturer": "STMicroelectronics",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "Multiwatt15",
-      "PowerSO20"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
   "AMS1117-3.3": {
     "slug": "AMS1117-3.3",
     "part_number": "AMS1117-3.3",
@@ -190,43 +16,6 @@
     "filename": "",
     "uploaded_at": null,
     "parsed_at": null
-  },
-  "CAPACITOR": {
-    "slug": "CAPACITOR",
-    "part_number": "C",
-    "description": "Capacitor (non-polarized) \u2014 decoupling, filtering, coupling, timing",
-    "manufacturer": "Generic",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "capacitor",
-    "package_types": [
-      "0402",
-      "0603",
-      "0805",
-      "1206",
-      "THT disc"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
-  "DRV8833": {
-    "slug": "DRV8833",
-    "part_number": "DRV8833",
-    "description": "Dual H-bridge motor driver \u2014 2.7V\u201310.8V, 1.5A/channel, integrated decay modes, fault output, WSON-16 or HTSSOP-16",
-    "manufacturer": "Texas Instruments",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
-    "package_types": [
-      "WSON-16 (3mm\u00d73mm)",
-      "HTSSOP-16 (PowerPAD)"
-    ],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
   },
   "AP2112": {
     "slug": "AP2112",
@@ -265,23 +54,127 @@
     "uploaded_at": null,
     "parsed_at": "2026-03-09T00:00:00.000Z"
   },
-  "NE555": {
-    "slug": "NE555",
-    "part_number": "NE555",
-    "description": "555 timer IC \u2014 monostable, astable, and bistable multivibrator. One of the most widely used ICs ever made.",
-    "manufacturer": "Texas Instruments / ST / NXP / Many",
+  "BC547": {
+    "slug": "BC547",
+    "part_number": "BC547",
+    "description": "NPN general-purpose BJT transistor \u2014 small signal, 45V, 100mA, low noise. European complement to 2N2222 (lower current rating).",
+    "manufacturer": "Fairchild / ST / Many",
     "status": "parsed",
     "confidence": "HIGH",
-    "symbol_type": "ic",
+    "symbol_type": "npn",
     "package_types": [
-      "DIP-8",
-      "SOIC-8",
-      "SOT-23-5 (TLC555)"
+      "TO-92"
     ],
     "builtin": true,
     "filename": "builtin",
     "uploaded_at": null,
     "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "CAPACITOR": {
+    "slug": "CAPACITOR",
+    "part_number": "C",
+    "description": "Capacitor (non-polarized) \u2014 decoupling, filtering, coupling, timing",
+    "manufacturer": "Generic",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "capacitor",
+    "package_types": [
+      "0402",
+      "0603",
+      "0805",
+      "1206",
+      "THT disc"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "CAPACITOR_POL": {
+    "slug": "CAPACITOR_POL",
+    "part_number": "C_POL",
+    "description": "Capacitor (polarized) \u2014 electrolytic or tantalum, bulk decoupling, power supply filtering",
+    "manufacturer": "Generic",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "capacitor_pol",
+    "package_types": [
+      "THT radial",
+      "SMD electrolytic",
+      "tantalum"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "DIODE": {
+    "slug": "DIODE",
+    "part_number": "D",
+    "description": "Rectifier diode \u2014 blocks reverse current, passes forward current above ~0.7V (silicon) or ~0.3V (Schottky)",
+    "manufacturer": "Generic",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "diode",
+    "package_types": [
+      "DO-41",
+      "DO-214AC (SMA)",
+      "DO-214AB (SMC)",
+      "SOD-123"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "DRV8833": {
+    "slug": "DRV8833",
+    "part_number": "DRV8833",
+    "description": "Dual H-bridge motor driver \u2014 2.7V\u201310.8V, 1.5A/channel, integrated decay modes, fault output, WSON-16 or HTSSOP-16",
+    "manufacturer": "Texas Instruments",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "WSON-16 (3mm\u00d73mm)",
+      "HTSSOP-16 (PowerPAD)"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "ESP32_WROOM_32": {
+    "slug": "ESP32_WROOM_32",
+    "part_number": "ESP32-WROOM-32",
+    "description": "Wi-Fi + Bluetooth SoC module, dual-core 240 MHz Xtensa LX6, 4MB flash, integrated antenna \u2014 the standard ESP32 module",
+    "manufacturer": "Espressif Systems",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "38-pad SMD module (18\u00d725.5\u00d73.1mm)"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-09T00:00:00.000Z"
+  },
+  "FH34SRJ_20S": {
+    "slug": "FH34SRJ_20S",
+    "part_number": "FH34SRJ-20S-0.5SH(50)",
+    "description": "Hirose FH34SRJ series 20-pin 0.5mm pitch ZIF FPC/FFC connector, SMD, bottom contact, for MIPI CSI-2 4-lane flat cable to display/camera module",
+    "manufacturer": "Hirose Electric",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "connector",
+    "package_types": [
+      "20-pin ZIF FPC SMD (13.4\u00d73.3mm footprint)"
+    ],
+    "builtin": false,
+    "filename": "",
+    "uploaded_at": null,
+    "parsed_at": null
   },
   "GND": {
     "slug": "GND",
@@ -297,55 +190,21 @@
     "uploaded_at": null,
     "parsed_at": "2026-03-08T00:00:00.000Z"
   },
-  "VCC": {
-    "slug": "VCC",
-    "part_number": "VCC",
-    "description": "Power supply symbol \u2014 marks a named voltage rail on the schematic",
-    "manufacturer": "Generic",
+  "HDMI_MICRO_D": {
+    "slug": "HDMI_MICRO_D",
+    "part_number": "47053-1001",
+    "description": "Micro HDMI Type D SMD receptacle, 19-pin, right-angle, Molex 47053-1001 \u2014 compact HDMI for space-constrained designs",
+    "manufacturer": "Molex",
     "status": "parsed",
     "confidence": "HIGH",
-    "symbol_type": "vcc",
-    "package_types": [],
-    "builtin": true,
-    "filename": "builtin",
-    "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
-  },
-  "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870": {
-    "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
-    "part_number": "MAX2870ETJ+",
-    "description": "23.5MHz to 6000MHz Fractional/Integer-N Synthesizer/VCO with integrated VCOs, dual differential outputs, 4-wire SPI interface, 32-pin TQFN",
-    "manufacturer": "Maxim Integrated",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "ic",
+    "symbol_type": "connector",
     "package_types": [
-      "32-lead TQFN-EP 5x5x0.8mm"
+      "19-pin SMD right-angle (6.5\u00d74.5mm footprint)"
     ],
     "builtin": false,
-    "filename": "MAX2870_-_23.5MHz_to_6000MHz_Fractional_Integer-N_Synthesizer_VCO_-_MAX2870.pdf",
-    "uploaded_at": "2026-03-16T08:17:50.957226+00:00",
-    "parsed_at": "2026-03-16T08:21:56.816372Z"
-  },
-  "RESISTOR": {
-    "slug": "RESISTOR",
-    "part_number": "R",
-    "description": "Resistor \u2014 limits current, sets voltage dividers, pull-up/down, current sense",
-    "manufacturer": "Generic",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "resistor",
-    "package_types": [
-      "0402",
-      "0603",
-      "0805",
-      "1206",
-      "THT axial"
-    ],
-    "builtin": true,
-    "filename": "builtin",
+    "filename": "",
     "uploaded_at": null,
-    "parsed_at": "2026-03-08T00:00:00.000Z"
+    "parsed_at": null
   },
   "INDUCTOR": {
     "slug": "INDUCTOR",
@@ -360,6 +219,60 @@
       "0603",
       "0805",
       "THT"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "IRF540N": {
+    "slug": "IRF540N",
+    "part_number": "IRF540N",
+    "description": "N-channel power MOSFET \u2014 100V, 33A, 44m\u03a9 Rds(on), logic-level gate (4.5V drive capable)",
+    "manufacturer": "Vishay / International Rectifier",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "nmos",
+    "package_types": [
+      "TO-220AB",
+      "D2PAK (surface mount)"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "L298N": {
+    "slug": "L298N",
+    "part_number": "L298N",
+    "description": "Dual full H-bridge motor driver \u2014 46V, 2A per channel, logic-level inputs, enable pins, current sensing",
+    "manufacturer": "STMicroelectronics",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "Multiwatt15",
+      "PowerSO20"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "LED": {
+    "slug": "LED",
+    "part_number": "LED",
+    "description": "Light Emitting Diode \u2014 emits light in forward bias. Requires current limiting resistor.",
+    "manufacturer": "Generic",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "led",
+    "package_types": [
+      "5mm THT",
+      "3mm THT",
+      "0402 SMD",
+      "0603 SMD",
+      "0805 SMD"
     ],
     "builtin": true,
     "filename": "builtin",
@@ -384,17 +297,182 @@
     "uploaded_at": null,
     "parsed_at": "2026-03-08T00:00:00.000Z"
   },
-  "BC547": {
-    "slug": "BC547",
-    "part_number": "BC547",
-    "description": "NPN general-purpose BJT transistor \u2014 small signal, 45V, 100mA, low noise. European complement to 2N2222 (lower current rating).",
-    "manufacturer": "Fairchild / ST / Many",
+  "LM7805": {
+    "slug": "LM7805",
+    "part_number": "LM7805",
+    "description": "5V 1A positive linear voltage regulator \u2014 fixed output, requires input \u22657V",
+    "manufacturer": "Texas Instruments / ST / On Semi",
     "status": "parsed",
     "confidence": "HIGH",
-    "symbol_type": "npn",
+    "symbol_type": "ic",
     "package_types": [
-      "TO-92"
+      "TO-220",
+      "TO-92",
+      "D2PAK",
+      "SOT-223"
     ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870": {
+    "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+    "part_number": "MAX2870ETJ+",
+    "description": "23.5MHz to 6000MHz Fractional/Integer-N Synthesizer/VCO with integrated VCOs, dual differential outputs, 4-wire SPI interface, 32-pin TQFN",
+    "manufacturer": "Maxim Integrated",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "32-lead TQFN-EP 5x5x0.8mm"
+    ],
+    "builtin": false,
+    "filename": "MAX2870_-_23.5MHz_to_6000MHz_Fractional_Integer-N_Synthesizer_VCO_-_MAX2870.pdf",
+    "uploaded_at": "2026-03-16T08:17:50.957226+00:00",
+    "parsed_at": "2026-03-16T08:21:56.816372Z"
+  },
+  "NE555": {
+    "slug": "NE555",
+    "part_number": "NE555",
+    "description": "555 timer IC \u2014 monostable, astable, and bistable multivibrator. One of the most widely used ICs ever made.",
+    "manufacturer": "Texas Instruments / ST / NXP / Many",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "DIP-8",
+      "SOIC-8",
+      "SOT-23-5 (TLC555)"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "PMA3_83LNW": {
+    "slug": "PMA3_83LNW",
+    "part_number": "PMA3-83LNW+",
+    "description": "PHEMT-based wideband low-noise MMIC amplifier, 0.4\u20138 GHz, 1.2 dB NF at 2 GHz, +37 dBm OIP3, single 5V/6V supply",
+    "manufacturer": "Mini-Circuits",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "12-lead MCLP 3x3x0.89mm (DQ1225)"
+    ],
+    "builtin": false,
+    "filename": "PMA3_83LNW.pdf",
+    "uploaded_at": "2026-03-08T16:52:47.739Z",
+    "parsed_at": "2026-03-09T00:00:00.000Z"
+  },
+  "QPA9510_DATA_SHEET": {
+    "slug": "QPA9510_DATA_SHEET",
+    "part_number": "QPA9510",
+    "description": "3V GaAs PHEMT high-power amplifier, 100\u20131000 MHz, 34 dB gain, +35 dBm P1dB, 55% efficiency, analog power control",
+    "manufacturer": "Qorvo",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "16-Pad 3x3mm QFN"
+    ],
+    "builtin": false,
+    "filename": "QPA9510_Data_Sheet.pdf",
+    "uploaded_at": "2026-03-08T17:48:59.741Z",
+    "parsed_at": "2026-03-10T00:00:00.000Z"
+  },
+  "RESISTOR": {
+    "slug": "RESISTOR",
+    "part_number": "R",
+    "description": "Resistor \u2014 limits current, sets voltage dividers, pull-up/down, current sense",
+    "manufacturer": "Generic",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "resistor",
+    "package_types": [
+      "0402",
+      "0603",
+      "0805",
+      "1206",
+      "THT axial"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "STM32F103C8": {
+    "slug": "STM32F103C8",
+    "part_number": "STM32F103C8T6",
+    "description": "STM32F103C8T6 ARM Cortex-M3 32-bit MCU, 72MHz, 64KB Flash, 20KB SRAM, LQFP-48",
+    "manufacturer": "STMicroelectronics",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "LQFP-48"
+    ],
+    "builtin": true,
+    "filename": "builtin",
+    "uploaded_at": null,
+    "parsed_at": "2026-03-10T00:00:00.000Z"
+  },
+  "STM32F103CBT6": {
+    "slug": "STM32F103CBT6",
+    "part_number": "STM32F103CBT6",
+    "description": "STM32F103CBT6 ARM Cortex-M3 32-bit MCU, 72MHz, 128KB Flash, 20KB SRAM, LQFP-48 \u2014 identical pinout to STM32F103C8T6 but with 2\u00d7 flash",
+    "manufacturer": "STMicroelectronics",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [
+      "LQFP-48 (7\u00d77mm, 0.5mm pitch)"
+    ],
+    "builtin": false,
+    "filename": "",
+    "uploaded_at": null,
+    "parsed_at": null
+  },
+  "TC358870XBG": {
+    "slug": "TC358870XBG",
+    "part_number": "TC358870XBG",
+    "description": "",
+    "manufacturer": "",
+    "status": "pending_parse",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [],
+    "builtin": false,
+    "filename": "TC358870XBG.pdf",
+    "uploaded_at": "2026-03-16T08:41:16.629369+00:00",
+    "parsed_at": null
+  },
+  "USB_C_CONN": {
+    "slug": "USB_C_CONN",
+    "part_number": "USB4085-GF-A",
+    "description": "GCT USB4085-GF-A USB Type-C SMD receptacle, 16-pin + shield, bottom-mount \u2014 5V power input only (no USB data required)",
+    "manufacturer": "GCT (Global Connector Technology)",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "connector",
+    "package_types": [
+      "16-pin SMD + 4 shield tabs (8.94\u00d73.4mm)"
+    ],
+    "builtin": false,
+    "filename": "",
+    "uploaded_at": null,
+    "parsed_at": null
+  },
+  "VCC": {
+    "slug": "VCC",
+    "part_number": "VCC",
+    "description": "Power supply symbol \u2014 marks a named voltage rail on the schematic",
+    "manufacturer": "Generic",
+    "status": "parsed",
+    "confidence": "HIGH",
+    "symbol_type": "vcc",
+    "package_types": [],
     "builtin": true,
     "filename": "builtin",
     "uploaded_at": null,
