@@ -13,7 +13,7 @@ services:
       # Mount live .git so agents can commit/push from inside the container
       - ./.git:/app/.git
       # Mount Claude Code config (writable so agents can save session history)
-      - ${CLAUDE_CONFIG_DIR:-${HOME}/.claude}:/root/.claude
+      - ${CLAUDE_CONFIG_DIR:-C:/Users/jimi/.claude}:/root/.claude
       # Mount Docker socket so agents can rebuild/restart containers
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -22,9 +22,11 @@ services:
       - OUTPUT_DIR=/app/data/outputs
       - UPLOAD_DIR=/app/data/uploads
       - GITHUB_TOKEN=${AUTOEDA_GITHUB_TOKEN:-}
-      - ANTHROPIC_API_KEY=${AUTOEDA_ANTHROPIC_API_KEY}
+      - ANTHROPIC_API_KEY=${AUTOEDA_ANTHROPIC_API_KEY:-}
       # Project name for agent self-rebuild via docker compose
       - COMPOSE_PROJECT_NAME=autoeda
+    ports:
+      - "8000:8000"
     depends_on:
       - autoeda-redis
     restart: unless-stopped
@@ -42,7 +44,7 @@ services:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
       - ./.git:/app/.git
-      - ${CLAUDE_CONFIG_DIR:-${HOME}/.claude}:/root/.claude
+      - ${CLAUDE_CONFIG_DIR:-C:/Users/jimi/.claude}:/root/.claude
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - REDIS_URL=redis://autoeda-redis:6379
@@ -50,7 +52,7 @@ services:
       - OUTPUT_DIR=/app/data/outputs
       - UPLOAD_DIR=/app/data/uploads
       - GITHUB_TOKEN=${AUTOEDA_GITHUB_TOKEN:-}
-      - ANTHROPIC_API_KEY=${AUTOEDA_ANTHROPIC_API_KEY}
+      - ANTHROPIC_API_KEY=${AUTOEDA_ANTHROPIC_API_KEY:-}
     depends_on:
       - autoeda-redis
     restart: unless-stopped
