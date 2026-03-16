@@ -3985,5 +3985,362 @@
       }
     ]
   },
-  "has_layout_example": true
+  "has_layout_example": true,
+  "footprint": {
+    "name": "MAX2870_TQFN-32-EP",
+    "description": "MAX2870 23.5MHz-6GHz Fractional/Integer-N Synthesizer/VCO, TQFN-32-EP 5x5mm 0.5mm pitch",
+    "pin_count": 33,
+    "pitch": 0.5,
+    "pads": [
+      {
+        "number": "1",
+        "name": "CLK",
+        "x": -2.875,
+        "y": -1.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "2",
+        "name": "DATA",
+        "x": -2.875,
+        "y": -1.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "3",
+        "name": "LE",
+        "x": -2.875,
+        "y": -0.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "4",
+        "name": "CE",
+        "x": -2.875,
+        "y": -0.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "5",
+        "name": "SW",
+        "x": -2.875,
+        "y": 0.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "6",
+        "name": "VCC_CP",
+        "x": -2.875,
+        "y": 0.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "7",
+        "name": "CP_OUT",
+        "x": -2.875,
+        "y": 1.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "8",
+        "name": "GND_CP",
+        "x": -2.875,
+        "y": 1.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "9",
+        "name": "GND_PLL",
+        "x": -1.75,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "10",
+        "name": "VCC_PLL",
+        "x": -1.25,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "11",
+        "name": "GND_RF",
+        "x": -0.75,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "12",
+        "name": "RFOUTA_P",
+        "x": -0.25,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "13",
+        "name": "RFOUTA_N",
+        "x": 0.25,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "14",
+        "name": "RFOUTB_P",
+        "x": 0.75,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "15",
+        "name": "RFOUTB_N",
+        "x": 1.25,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "16",
+        "name": "VCC_RF",
+        "x": 1.75,
+        "y": 2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "17",
+        "name": "VCC_VCO",
+        "x": 2.875,
+        "y": 1.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "18",
+        "name": "GND_VCO",
+        "x": 2.875,
+        "y": 1.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "19",
+        "name": "NOISE_FILT",
+        "x": 2.875,
+        "y": 0.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "20",
+        "name": "TUNE",
+        "x": 2.875,
+        "y": 0.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "21",
+        "name": "GND_TUNE",
+        "x": 2.875,
+        "y": -0.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "22",
+        "name": "RSET",
+        "x": 2.875,
+        "y": -0.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "23",
+        "name": "BIAS_FILT",
+        "x": 2.875,
+        "y": -1.25,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "24",
+        "name": "REG",
+        "x": 2.875,
+        "y": -1.75,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.85,
+        "size_y": 0.3
+      },
+      {
+        "number": "25",
+        "name": "LD",
+        "x": 1.75,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "26",
+        "name": "RFOUT_EN",
+        "x": 1.25,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "27",
+        "name": "GND_DIG",
+        "x": 0.75,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "28",
+        "name": "VCC_DIG",
+        "x": 0.25,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "29",
+        "name": "REF_IN",
+        "x": -0.25,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "30",
+        "name": "MUX_OUT",
+        "x": -0.75,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "31",
+        "name": "GND_SD",
+        "x": -1.25,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "32",
+        "name": "VCC_SD",
+        "x": -1.75,
+        "y": -2.875,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 0.3,
+        "size_y": 0.85
+      },
+      {
+        "number": "EP",
+        "name": "EP",
+        "x": 0,
+        "y": 0,
+        "type": "smd",
+        "shape": "rect",
+        "size_x": 3.5,
+        "size_y": 3.5
+      }
+    ],
+    "courtyard": {
+      "x": -3.55,
+      "y": -3.55,
+      "w": 7.1,
+      "h": 7.1
+    },
+    "fab": {
+      "x": -2.5,
+      "y": -2.5,
+      "w": 5.0,
+      "h": 5.0
+    },
+    "format": "kicad_mod",
+    "sources": {
+      "package_body": "Maxim TQFN-32 5x5mm per MAX2870 datasheet",
+      "pad_dimensions": "IPC-7351B density B + 0.1mm tolerance: 0.85mm (radial) x 0.30mm (tangential)",
+      "ep_size": "3.5x3.5mm IPC-7351 TQFN-32 nominal exposed pad",
+      "pad_center": "2.875mm from package center (inner edge 0.05mm inside 5mm body)"
+    }
+  }
 }
