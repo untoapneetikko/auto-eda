@@ -323,7 +323,7 @@ async function gtCreateTicket(type, slug, profile, rawText = null, extraNotes = 
   const partNum = profile.part_number || slug;
   const tabLabel = GT_TAB_LABEL[type] || type;
   const title = `Library → Component → ${partNum} → ${tabLabel}`;
-  let basePrompt = type === 'footprint' ? buildFootprintPrompt(slug, profile)
+  let basePrompt = type === 'footprint' ? await buildFootprintPrompt(slug, profile)
                  : type === 'example'   ? await buildExampleRebuildPrompt(slug, profile, rawText)
                  : type === 'layout'    ? await buildLayoutPrompt(slug, profile)
                  : type === 'datasheet' ? await buildRebuildPrompt(slug, profile, rawText)
