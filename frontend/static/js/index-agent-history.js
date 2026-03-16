@@ -328,6 +328,9 @@ async function gtCreateTicket(type, slug, profile, rawText = null, extraNotes = 
                  : type === 'layout'    ? await buildLayoutPrompt(slug, profile)
                  : type === 'datasheet' ? await buildRebuildPrompt(slug, profile, rawText)
                  : '';
+  if (!basePrompt || typeof basePrompt !== 'string') {
+    throw new Error(`Failed to build prompt for ${type} — API may be unreachable`);
+  }
   if (extraNotes) basePrompt += `\n\nADDITIONAL INSTRUCTIONS FROM USER:\n${extraNotes}`;
   // Create ticket first to get the ID
   const res = await fetch('/api/gen-tickets', {

@@ -259,7 +259,17 @@ _static_dir = _PROJECT_ROOT / "frontend" / "static"
 _static_dir.mkdir(parents=True, exist_ok=True)
 
 from starlette.staticfiles import StaticFiles as _SF
-app.mount("/static", _SF(directory=str(_static_dir)), name="assets")
+from starlette.responses import Response as _Resp
+
+class _NoCacheJS(_SF):
+    """Static files — always revalidate .js and .html so browsers pick up updates."""
+    async def get_response(self, path: str, scope):
+        resp = await super().get_response(path, scope)
+        if path.endswith(('.js', '.html')):
+            resp.headers['Cache-Control'] = 'no-cache, must-revalidate'
+        return resp
+
+app.mount("/static", _NoCacheJS(directory=str(_static_dir)), name="assets")
 
 # Serve HTML pages at their natural paths via explicit routes
 @app.get("/", include_in_schema=False)
