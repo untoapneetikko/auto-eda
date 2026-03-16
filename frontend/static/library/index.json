@@ -224,18 +224,18 @@
   "TC358870XBG": {
     "slug": "TC358870XBG",
     "part_number": "TC358870XBG",
-    "description": "HDMI 1.4b to MIPI DSI bridge IC (Ultra HD to DSI), up to 4K x 2K 30fps, dual-link MIPI DSI Tx 1Gbps/lane, 80-pin VFBGA P-VFBGA80-0707-0.65-001",
-    "manufacturer": "Toshiba",
+    "description": "HDMI 1.4b to MIPI DSI dual-link bridge IC; converts up to 4K\u00d72K/30fps HDMI stream (max 297 MHz, 7.2 Gbps) to dual-link MIPI DSI Tx at 1 Gbps/lane per lane, 80-pin VFBGA.",
+    "manufacturer": "Toshiba Electronic Devices & Storage Corporation",
     "status": "parsed",
     "confidence": "HIGH",
     "symbol_type": "ic",
     "package_types": [
-      "P-VFBGA80-0707-0.65-001 (80-ball BGA, 7x7mm, 0.65mm pitch)"
+      "P-VFBGA80-0707-0.65-001 (80-ball BGA, 7.0\u00d77.0mm, 0.65mm pitch, 1.0mm height)"
     ],
     "builtin": false,
-    "filename": "",
-    "uploaded_at": null,
-    "parsed_at": null
+    "filename": "TC358870XBG.pdf",
+    "uploaded_at": "2026-03-16T08:41:16.629369+00:00",
+    "parsed_at": "2026-03-16T08:52:07.657186+00:00"
   },
   "AMS1117-3.3": {
     "slug": "AMS1117-3.3",
@@ -402,7 +402,7 @@
     "package_types": [],
     "builtin": false,
     "filename": "MAX2870_-_23.5MHz_to_6000MHz_Fractional_Integer-N_Synthesizer_VCO_-_MAX2870.pdf",
-    "uploaded_at": "2026-03-16T08:54:08.054545+00:00",
+    "uploaded_at": "2026-03-16T09:02:05.779645+00:00",
     "parsed_at": null
   },
   "RESISTOR": {

@@ -1,426 +1,513 @@
 {
-  "part_number": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
-  "description": "23.5MHz to 6000MHz Fractional/Integer-N Synthesizer/VCO with integrated VCOs, dual differential outputs, 4-wire SPI interface",
+  "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+  "part_number": "MAX2870",
+  "name": "MAX2870",
+  "description": "23.5MHz to 6000MHz Fractional/Integer-N Synthesizer/VCO with integrated VCOs, dual differential outputs, 4-wire SPI interface, 32-pin TQFN",
   "manufacturer": "Maxim Integrated",
-  "package_types": [
-    "32-lead TQFN-EP 5x5x0.8mm"
-  ],
-  "supply_voltage_range": "3.0V to 3.6V (typ 3.3V)",
-  "frequency_range": "23.5MHz to 6000MHz",
-  "impedance": "50\u03a9",
+  "package_types": ["TQFN-32-EP"],
+  "supply_voltage_range": "3.0–3.6V",
+  "frequency_range": "23.5MHz–6000MHz",
   "designator": "U",
   "absolute_max": {
-    "vcc_to_gnd": "-0.3V to +3.9V",
-    "all_other_pins_to_gnd": "-0.3V to VCC + 0.3V",
-    "continuous_power_dissipation_70C": "2758.6mW (derate 34.5mW/\u00b0C above +70\u00b0C)",
-    "junction_temperature": "+150\u00b0C",
-    "operating_temp_range": "-40\u00b0C to +85\u00b0C",
-    "storage_temp": "-65\u00b0C to +150\u00b0C",
-    "lead_temperature_soldering_10s": "+300\u00b0C",
-    "reflow_temp": "+260\u00b0C"
+    "vdd": "3.9V (VCC_ to GND_)",
+    "all_other_pins": "VCC_ + 0.3V to GND_ − 0.3V",
+    "operating_temp": "−40°C to +85°C",
+    "junction_temp": "+150°C",
+    "lead_temp_soldering": "+300°C (10s)"
   },
   "key_performance": {
-    "frequency_range": "23.5MHz to 6000MHz",
-    "vco_fundamental_range": "3000MHz to 6000MHz",
+    "pll_modes": "Integer-N and Fractional-N",
+    "vco_range": "3000MHz to 6000MHz (fundamental), 23.5MHz to 6000MHz with dividers",
     "output_dividers": "1/2/4/8/16/32/64/128",
-    "pfd_integer_n_max": "105MHz",
-    "pfd_fractional_n_max": "50MHz",
-    "ref_input_frequency_range": "10MHz to 200MHz",
-    "output_power_range": "-4dBm to +5dBm",
-    "supply_voltage_typ": "3.3V",
-    "supply_current_both_channels_max": "180mA",
-    "supply_current_single_channel_min": "8.5mA",
-    "supply_current_sleep": "1mA",
-    "vco_phase_noise_3GHz_10kHz": "-83.5 dBc/Hz",
-    "vco_phase_noise_3GHz_100kHz": "-111 dBc/Hz",
-    "vco_phase_noise_3GHz_1MHz": "-136 dBc/Hz",
-    "integrated_rms_jitter": "0.25ps",
-    "cp_current_max_rset_5k1": "5.12mA (CP[3:0]=1111)",
-    "cp_current_min_rset_5k1": "0.32mA (CP[3:0]=0000)",
-    "logic_compatible": "1.8V CMOS"
+    "pfd_frequency": "105MHz (Integer-N), 50MHz (Fractional-N)",
+    "reference_input": "10MHz to 200MHz (100MHz max with doubler enabled)",
+    "output_power": "−4dBm to +5dBm, each output independently programmable",
+    "outputs": "Dual differential open-collector RF outputs (RFOUTA, RFOUTB)",
+    "supply": "+3.0V to +3.6V",
+    "logic_level": "1.8V SPI compatible",
+    "sleep_current": "1mA",
+    "max_supply_current": "180mA (both channels, maximum output power)",
+    "interface": "4-wire SPI (CLK, DATA, LE, MUX_OUT for readback)"
   },
   "pins": [
     {
-      "number": 1,
+      "number": "1",
       "name": "CLK",
       "type": "input",
       "description": "Serial Clock Input. Data is latched into the 32-bit shift register on the rising edge of CLK.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to SPI clock. Minimum pulse-width high/low 25ns; max clock period 50ns.",
-      "ambiguous": false
+      "requirements": "Connect to SPI master clock. Maximum clock frequency per SPI timing specs. Compatible with 1.8V logic levels.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 2,
+      "number": "2",
       "name": "DATA",
       "type": "input",
-      "description": "Serial Data Input. Serial data is loaded MSB first; the 3 LSBs identify the register address.",
+      "description": "Serial Data Input. Serial data loaded MSB first. The 3 LSBs identify the register address.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to SPI MOSI. Data setup time 25ns, hold time 25ns.",
-      "ambiguous": false
+      "requirements": "Connect to SPI master MOSI. Data must be valid tDS before rising CLK edge and held tDH after.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 3,
+      "number": "3",
       "name": "LE",
       "type": "input",
-      "description": "Load Enable Input. When LE goes high, data stored in the shift register is loaded into the appropriate latches.",
+      "description": "Load Enable Input. When LE goes high, the data stored in the shift register is loaded into the appropriate latches.",
       "active": "high",
       "internal_pull": null,
-      "requirements": "Connect to SPI CS/LE. Setup time 20ns, hold time 10ns, minimum pulse-width high 20ns.",
-      "ambiguous": false
+      "requirements": "Connect to SPI chip-select (active-high latch). Observe tLES setup and tLEH hold times relative to CLK.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 4,
+      "number": "4",
       "name": "CE",
       "type": "input",
-      "description": "Chip Enable. A logic-low powers the part down and the charge pump becomes high impedance.",
-      "active": "high",
+      "description": "Chip Enable. Logic-low powers the part down and the charge pump becomes high impedance.",
+      "active": "low",
       "internal_pull": null,
-      "requirements": "Pull high (to VCC_DIG via 10k\u03a9) for normal operation. Drive low for hardware shutdown.",
-      "ambiguous": false
+      "requirements": "Pull high (to VCC_DIG level) for normal operation. Drive low to enter low-power shutdown mode. After CE goes high, wait ≥20ms before programming.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 5,
+      "number": "5",
       "name": "SW",
       "type": "passive",
       "description": "Fast-Lock Switch. Connect to the loop filter when using fast-lock mode. No connect in normal mode.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Normal mode: leave open/no connect. Fast-lock mode: connect to midpoint between R2A and R2B in the loop filter.",
-      "ambiguous": false
+      "requirements": "Leave unconnected (NC) in normal operation. In fast-lock mode, connect to loop filter node as described in register 4 fast-lock bits.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 6,
+      "number": "6",
       "name": "VCC_CP",
       "type": "power",
-      "description": "Power Supply for Charge Pump. Place decoupling capacitors as close as possible to the pin.",
+      "description": "Power Supply for Charge Pump.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF capacitors to GND as close as possible to pin.",
-      "ambiguous": false
+      "requirements": "Connect to 3.0–3.6V supply. Place 100nF + 1µF decoupling capacitors as close as possible to the pin.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 7,
+      "number": "7",
       "name": "CP_OUT",
       "type": "output",
       "description": "Charge-Pump Output. Connect to external loop filter input.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to external passive loop filter (R2A/R2B + C1/C2/C3 network), then to TUNE pin.",
-      "ambiguous": false
+      "requirements": "Connect directly to loop filter (typically R2 + C2 + C1 + R3 + C3 network). This node connects to TUNE (pin 20) via the loop filter.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 8,
+      "number": "8",
       "name": "GND_CP",
-      "type": "power",
-      "description": "Ground for Charge-Pump. Connect to board ground, not to the exposed paddle.",
+      "type": "gnd",
+      "description": "Ground for Charge Pump.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect directly to board ground plane. Do NOT connect to EP paddle directly.",
-      "ambiguous": false
+      "requirements": "Connect to PCB board ground plane. Do NOT connect directly to the exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 9,
+      "number": "9",
       "name": "GND_PLL",
-      "type": "power",
-      "description": "Ground for PLL. Connect to main board ground plane, not to the exposed paddle.",
+      "type": "gnd",
+      "description": "Ground for PLL.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect directly to main board ground plane. Do NOT connect to EP paddle directly.",
-      "ambiguous": false
+      "requirements": "Connect to main PCB board ground plane. Do NOT connect directly to the exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 10,
+      "number": "10",
       "name": "VCC_PLL",
       "type": "power",
-      "description": "Power Supply for PLL. Place decoupling capacitors as close as possible to the pin.",
+      "description": "Power Supply for PLL.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF capacitors to GND as close as possible to pin.",
-      "ambiguous": false
+      "requirements": "Connect to 3.0–3.6V supply. Place 100nF + 1µF decoupling capacitors as close as possible to the pin.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 11,
+      "number": "11",
       "name": "GND_RF",
-      "type": "power",
-      "description": "Ground for RF Outputs. Connect to board ground plane, not to the exposed paddle.",
+      "type": "gnd",
+      "description": "Ground for RF Outputs.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect directly to board RF ground plane. Do NOT connect to EP paddle directly.",
-      "ambiguous": false
+      "requirements": "Connect to PCB board ground plane. Do NOT connect directly to the exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 12,
+      "number": "12",
       "name": "RFOUTA_P",
       "type": "output",
-      "description": "Open Collector Positive RF Output A. Connect to supply through RF choke or 50\u03a9 load.",
+      "description": "Open Collector Positive RF Output A. Differential positive output of RF output channel A.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to VCC_RF via 27nH RF choke (or 50\u03a9 termination). AC-couple to 50\u03a9 load via 100pF capacitor.",
-      "ambiguous": false
+      "requirements": "Connect to supply through 27nH RF choke (or AC-coupled to 50Ω load). Unused output: connect 27nH choke to VCC_RF and terminate with 50Ω to GND.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 13,
+      "number": "13",
       "name": "RFOUTA_N",
       "type": "output",
-      "description": "Open Collector Negative RF Output A. Connect to supply through RF choke or 50\u03a9 load.",
+      "description": "Open Collector Negative RF Output A. Differential negative output of RF output channel A.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to VCC_RF via 27nH RF choke when used differentially. If single-ended, terminate unused output with 27nH + 50\u03a9 to VCC_RF.",
-      "ambiguous": false
+      "requirements": "Connect to supply through 27nH RF choke (or AC-coupled to 50Ω load). Unused output: connect 27nH choke to VCC_RF and terminate with 50Ω to GND.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 14,
+      "number": "14",
       "name": "RFOUTB_P",
       "type": "output",
-      "description": "Open Collector Positive RF Output B. Connect to supply through RF choke or 50\u03a9 load.",
+      "description": "Open Collector Positive RF Output B. Differential positive output of RF output channel B.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to VCC_RF via 27nH RF choke (or 50\u03a9 termination). AC-couple to 50\u03a9 load via 100pF capacitor.",
-      "ambiguous": false
+      "requirements": "Connect to supply through 27nH RF choke (or AC-coupled to 50Ω load). Unused output: connect 27nH choke to VCC_RF and terminate with 50Ω to GND.",
+      "ambiguous": false,
+      "datasheet_page": 10
     },
     {
-      "number": 15,
+      "number": "15",
       "name": "RFOUTB_N",
       "type": "output",
-      "description": "Open Collector Negative RF Output B. Connect to supply through RF choke or 50\u03a9 load.",
+      "description": "Open Collector Negative RF Output B. Differential negative output of RF output channel B.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to VCC_RF via 27nH RF choke when used differentially. If single-ended, terminate unused output with 27nH + 50\u03a9 to VCC_RF.",
-      "ambiguous": false
+      "requirements": "Connect to supply through 27nH RF choke (or AC-coupled to 50Ω load). Unused output: connect 27nH choke to VCC_RF and terminate with 50Ω to GND.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 16,
+      "number": "16",
       "name": "VCC_RF",
       "type": "power",
-      "description": "Power Supply for RF Output and Dividers. Place decoupling capacitors as close as possible to the pin.",
+      "description": "Power Supply for RF Output and Dividers.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0V\u20133.6V supply (dedicated LDO recommended). Decouple with 100nF + 10nF to GND. Also supplies RF output choke bias.",
-      "ambiguous": false
+      "requirements": "Connect to 3.0–3.6V supply. Place 100nF + 1µF decoupling capacitors as close as possible to the pin. Also serves as bias supply for open-collector RF outputs via 27nH chokes.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 17,
+      "number": "17",
       "name": "VCC_VCO",
       "type": "power",
-      "description": "VCO Power Supply. Place decoupling capacitors to the analog ground plane.",
+      "description": "VCO Power Supply.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF capacitors to GND_VCO.",
-      "ambiguous": false
+      "requirements": "Connect to 3.0–3.6V supply. Place decoupling capacitors to the analog ground plane (not the digital ground plane). Use 100nF + 1µF caps.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 18,
+      "number": "18",
       "name": "GND_VCO",
-      "type": "power",
-      "description": "Ground for VCO. Connect to main board ground plane, not directly to the paddle.",
+      "type": "gnd",
+      "description": "Ground for VCO.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to main board analog ground plane. Do NOT connect directly to EP paddle.",
-      "ambiguous": false
+      "requirements": "Connect to main PCB board ground plane. Do NOT connect directly to the exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 19,
+      "number": "19",
       "name": "NOISE_FILT",
       "type": "passive",
-      "description": "VCO Noise Decoupling. Place a 1\u00b5F capacitor to ground.",
+      "description": "VCO Noise Decoupling. Internal VCO bias decoupling node.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect a 1\u00b5F capacitor directly to GND as close as possible to this pin.",
-      "ambiguous": false
+      "requirements": "Place a 1µF capacitor from this pin to ground. Keep trace as short as possible.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 20,
+      "number": "20",
       "name": "TUNE",
       "type": "input",
-      "description": "Control Input to the VCO. Connect to output of external loop filter.",
+      "description": "Control Voltage Input to the VCO. Connected to the output of the external loop filter.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to output node of the passive loop filter (after C3). VCO tune voltage range: 0.5V to 2.5V.",
-      "ambiguous": false
+      "requirements": "Connect to the output of the loop filter (which is driven by CP_OUT via the loop filter network). Do not connect directly to CP_OUT.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 21,
+      "number": "21",
       "name": "GND_TUNE",
-      "type": "power",
-      "description": "Ground for Control Input to the VCO. Connect to main board ground plane, not directly to the paddle.",
+      "type": "gnd",
+      "description": "Ground for Control Input to the VCO.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to main board ground plane. Do NOT connect directly to EP paddle.",
-      "ambiguous": false
+      "requirements": "Connect to main PCB board ground plane. Do NOT connect directly to the exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 22,
+      "number": "22",
       "name": "RSET",
       "type": "passive",
-      "description": "Charge-Pump Current Range Input. Connect an external resistor to ground to set the minimum CP current. ICP = 1.63/RSET \u00d7 (1 + CP[3:0]).",
+      "description": "Charge-Pump Current Range Input. An external resistor to ground sets the minimum CP current. ICP = 1.63/RSET × (1 + CP[3:0]).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect resistor from this pin to GND. RSET range: 2.7k\u03a9 to 10k\u03a9. Typical value: 5.1k\u03a9 sets full-scale ICP = 5.12mA.",
-      "ambiguous": false
+      "requirements": "Connect a resistor (2.7kΩ to 10kΩ) from this pin to GND. Typical value: 5.1kΩ sets IMIN = 0.32mA. Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 23,
+      "number": "23",
       "name": "BIAS_FILT",
       "type": "passive",
-      "description": "VCO Noise Decoupling. Place a 1\u00b5F capacitor to ground.",
+      "description": "VCO Noise Decoupling. Internal VCO bias filter node.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect a 1\u00b5F capacitor directly to GND as close as possible to this pin.",
-      "ambiguous": false
+      "requirements": "Place a 1µF capacitor from this pin to ground. Keep trace as short as possible.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 24,
+      "number": "24",
       "name": "REG",
       "type": "passive",
-      "description": "Reference Voltage Compensation. Place a 1\u00b5F capacitor to ground.",
+      "description": "Reference Voltage Compensation. Internal voltage reference decoupling node.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect a 1\u00b5F capacitor directly to GND as close as possible to this pin.",
-      "ambiguous": false
+      "requirements": "Place a 1µF capacitor from this pin to ground. Keep trace as short as possible.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 25,
+      "number": "25",
       "name": "LD",
       "type": "output",
-      "description": "Lock Detect Output. Logic-high when PLL is locked, logic-low when unlocked. In analog lock detect mode (LD[1:0]=10), this is an open-drain output requiring external pullup.",
+      "description": "Lock Detect Output. Logic-high when PLL is locked; logic-low when unlocked. Behaviour configurable via Register 5 (LDP, LDF bits).",
       "active": "high",
       "internal_pull": null,
-      "requirements": "Connect to GPIO for lock monitoring. For analog lock detect mode: add 10k\u03a9 pullup to VCC_DIG. Configurable via register 5 bits 23:22.",
-      "ambiguous": false
+      "requirements": "Can drive an LED (via series resistor) or MCU GPIO to indicate lock status. Output logic-high is VCC − 0.4V at 0.3mA source.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 26,
+      "number": "26",
       "name": "RFOUT_EN",
       "type": "input",
-      "description": "RF Output Enable. A logic-low disables all RF outputs.",
+      "description": "RF Output Enable. Logic-low disables both RF outputs (RFOUTA and RFOUTB).",
       "active": "high",
       "internal_pull": null,
-      "requirements": "Drive high to enable RF outputs, low to mute. Connect to GPIO or pull high via 10k\u03a9 for always-on operation.",
-      "ambiguous": false
+      "requirements": "Pull high for normal RF output operation. Can be driven low by MCU to mute outputs without full shutdown. RFA_EN and RFB_EN register bits provide per-output control.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 27,
+      "number": "27",
       "name": "GND_DIG",
-      "type": "power",
-      "description": "Ground for Digital circuitry. Connect to main board ground plane, not directly to the paddle.",
+      "type": "gnd",
+      "description": "Ground for Digital Circuitry.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to main board digital ground plane. Do NOT connect directly to EP paddle.",
-      "ambiguous": false
+      "requirements": "Connect to main PCB board ground plane. Do NOT connect directly to the exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 28,
+      "number": "28",
       "name": "VCC_DIG",
       "type": "power",
-      "description": "Power Supply for Digital Circuitry. Place decoupling capacitors as close as possible to pin.",
+      "description": "Power Supply for Digital Circuitry.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF to GND_DIG as close as possible to pin.",
-      "ambiguous": false
+      "requirements": "Connect to 3.0–3.6V supply. Place 100nF + 1µF decoupling capacitors as close as possible to the pin.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 29,
+      "number": "29",
       "name": "REF_IN",
       "type": "input",
-      "description": "Reference Frequency Input. High-impedance CMOS inverter input with nominal bias of VCC_DIG/2. AC-couple to reference signal.",
+      "description": "Reference Frequency Input. High-impedance CMOS inverter input with nominal bias of VCC_DIG/2. Reference path includes optional ×2 doubler and ÷2 divider. Input range 10–200MHz.",
       "active": null,
       "internal_pull": null,
-      "requirements": "AC-couple reference oscillator (10\u2013200MHz) via series capacitor (e.g. 100nF). Input sensitivity: 0.7 Vpp min. Input capacitance: 2pF.",
-      "ambiguous": false
+      "requirements": "AC-couple to reference signal. Input sensitivity: 0.7×VCC_DIG (VPP). Input capacitance: 2pF. In shutdown mode, input is high-impedance.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 30,
+      "number": "30",
       "name": "MUX_OUT",
       "type": "output",
-      "description": "Multiplexed Output and Serial Data Out. Configurable via MUX bits (register 2 bits 28:26 and register 5 bit 18) to output lock detect, divided reference, N-divider output, or serial readback of register 6.",
+      "description": "Multiplexed Output and Serial Data Out. Function selected by MUX[3:0] bits in Register 5. Can output lock detect, SDO for register readback, divided reference, etc.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to GPIO for status monitoring or leave unconnected if not used. Used as MISO for register 6 readback. Output setup time 10ns, hold time 10ns.",
-      "ambiguous": false
+      "requirements": "Connect to MCU GPIO for lock detect or SPI MISO for register readback. Output logic-high is VCC − 0.4V at 0.3mA source. Set MUX = 1100 to enable Register 6 readback.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 31,
+      "number": "31",
       "name": "GND_SD",
-      "type": "power",
-      "description": "Ground for Sigma-Delta Modulator. Connect to main board ground plane, not directly to the paddle.",
+      "type": "gnd",
+      "description": "Ground for Sigma-Delta Modulator.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to main board ground plane. Do NOT connect directly to EP paddle.",
-      "ambiguous": false
+      "requirements": "Connect to main PCB board ground plane. Do NOT connect directly to the exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 32,
+      "number": "32",
       "name": "VCC_SD",
       "type": "power",
-      "description": "Power Supply for Sigma-Delta Modulator. Place decoupling capacitors as close as possible to the pin.",
+      "description": "Power Supply for Sigma-Delta Modulator.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0V\u20133.6V supply. Decouple with 100nF + 10nF to GND as close as possible to pin.",
-      "ambiguous": false
+      "requirements": "Connect to 3.0–3.6V supply. Place 100nF + 1µF decoupling capacitors as close as possible to the pin.",
+      "ambiguous": false,
+      "datasheet_page": 11
     },
     {
-      "number": 33,
+      "number": "EP",
       "name": "EP",
-      "type": "power",
-      "description": "Exposed Pad (thermal/ground pad on package bottom). Must be connected to board ground.",
+      "type": "gnd",
+      "description": "Exposed Pad (thermal/ground pad). Must be soldered to board ground for proper electrical and thermal performance.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Solder to board ground plane via thermal vias. Primary heat-dissipation path and signal ground reference for the IC.",
-      "ambiguous": false
+      "requirements": "Connect to PCB ground plane with multiple vias. The separate GND_ signal pins (GND_CP, GND_PLL, GND_RF, GND_VCO, GND_TUNE, GND_DIG, GND_SD) should connect to the board ground plane — NOT be routed directly to EP. Let the ground plane connect them all.",
+      "ambiguous": false,
+      "datasheet_page": 11
     }
   ],
-  "footprint": {
-    "standard": "Package_QFN:QFN-32-1EP_5x5mm_P0.5mm_EP3.7x3.7mm",
-    "pad_count": 33,
-    "pitch_mm": 0.5,
-    "courtyard_mm": {
-      "x": 5.3,
-      "y": 5.3
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "100nF + 1µF (per VCC pin)",
+      "placement": "VCC_CP (6), VCC_PLL (10), VCC_RF (16), VCC_VCO (17), VCC_DIG (28), VCC_SD (32) — each to GND",
+      "reason": "Supply decoupling — place as close as possible to each power pin. 100nF for high-frequency, 1µF bulk.",
+      "datasheet_page": 10
     },
-    "ipc_land_pattern": "QFN50P500X500X80-33N"
-  },
-  "electrical": {
-    "vcc_min": 3.0,
-    "vcc_max": 3.6,
-    "i_max_ma": 180
-  },
-  "example_application": {
-    "description": "Wideband PLL frequency synthesizer: MAX2870 driven by external TCXO/OCXO reference (10\u2013200MHz) AC-coupled to REF_IN. Passive loop filter (R2A, R2B, C1, C2, C3) connects CP_OUT to TUNE pin. Dual differential open-collector RF outputs (RFOUTA\u00b1 and RFOUTB\u00b1) each biased via 27nH RF choke to VCC_RF, AC-coupled to 50\u03a9 loads. SPI interface (CLK, DATA, LE) driven by MCU or FPGA. Three separate LDOs supply VCC_RF, VCC_DIG, and VCC_PLL for best isolation. RFOUT_EN and CE controlled via GPIO.",
-    "required_passives": [
-      "100nF + 10nF decoupling capacitors on each VCC_ pin (VCC_CP, VCC_PLL, VCC_RF, VCC_VCO, VCC_DIG, VCC_SD)",
-      "1\u00b5F capacitor from NOISE_FILT to GND",
-      "1\u00b5F capacitor from BIAS_FILT to GND",
-      "1\u00b5F capacitor from REG to GND",
-      "5.1k\u03a9 resistor from RSET to GND",
-      "Loop filter: R2A (30\u03a9), R2B (90\u03a9), C1 (12nF), C2 (100nF), C3 (820pF) \u2014 typical values for 40kHz loop BW at 25MHz PFD",
-      "27nH RF choke from each RF output pin (RFOUTA_P, RFOUTA_N, RFOUTB_P, RFOUTB_N) to VCC_RF",
-      "100pF AC-coupling capacitor on each used RF output to 50\u03a9 load",
-      "100nF AC-coupling capacitor at REF_IN",
-      "10k\u03a9 pullup on LD (optional; required for analog lock detect mode)"
-    ],
-    "typical_schematic_notes": "Use star power-supply routing with large bypass capacitor at central VCC node; branch to each VCC_ pin with its own local bypass cap. Connect all separate GND_ pins (GND_CP, GND_PLL, GND_RF, GND_VCO, GND_TUNE, GND_DIG, GND_SD) to main board ground plane \u2014 NOT directly to the exposed paddle. Solder EP to ground plane via thermal vias. Program registers in order 5\u21924\u21923\u21922\u21921\u21920, then repeat with 20ms pause between the two full sequences after power-up. For fast-lock: segment shunt resistor into R2A (1/4 of total) and R2B (3/4 of total), connect SW between them."
-  },
-  "tags": [
-    "PLL",
-    "VCO",
-    "synthesizer",
-    "fractional-N",
-    "integer-N",
-    "RF",
-    "frequency-synthesizer",
-    "SPI",
-    "wideband",
-    "Maxim"
+    {
+      "type": "capacitor",
+      "value": "1µF",
+      "placement": "NOISE_FILT (19) to GND",
+      "reason": "VCO noise decoupling — required for VCO phase noise performance. Do not omit.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "capacitor",
+      "value": "1µF",
+      "placement": "BIAS_FILT (23) to GND",
+      "reason": "VCO bias filter — required for VCO phase noise performance. Do not omit.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "capacitor",
+      "value": "1µF",
+      "placement": "REG (24) to GND",
+      "reason": "Reference voltage compensation — required for stable internal voltage reference. Do not omit.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "resistor",
+      "value": "5.1kΩ (2.7kΩ–10kΩ range)",
+      "placement": "RSET (22) to GND",
+      "reason": "Sets minimum charge-pump current. ICP_min = 1.63V / RSET. 5.1kΩ gives IMIN = 0.32mA with CP[3:0]=0000, IMAX = 5.12mA with CP[3:0]=1111.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "placement": "REF_IN (29) AC-coupling capacitor",
+      "reason": "REF_IN must be AC-coupled to the reference clock source. The pin has an internal bias at VCC_DIG/2.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "inductor",
+      "value": "27nH RF choke",
+      "placement": "VCC_RF (16) to each RF output pin (12, 13, 14, 15)",
+      "reason": "Open-collector RF output bias. Power RF outputs via RF choke from VCC_RF. Provides DC bias while blocking RF from supply.",
+      "datasheet_page": 16
+    },
+    {
+      "type": "resistor",
+      "value": "50Ω",
+      "placement": "Each RF output (RFOUTA_P/N, RFOUTB_P/N) to GND (AC or DC)",
+      "reason": "RF load termination. Unused outputs: add 27nH choke to VCC_RF + 50Ω termination to GND.",
+      "datasheet_page": 16
+    },
+    {
+      "type": "network",
+      "value": "Loop filter: C2=0.1µF, R2=120Ω, C1=0.012µF, R3=250Ω, C3=820pF (typical at 40kHz BW, 25MHz PFD)",
+      "placement": "Between CP_OUT (7) and TUNE (20)",
+      "reason": "PLL loop filter sets loop bandwidth and phase margin. Values from EV kit for 40kHz bandwidth at fPFD=25MHz.",
+      "datasheet_page": 9
+    }
   ],
+  "application_circuits": [
+    {
+      "name": "Typical MAX2870 PLL frequency synthesiser",
+      "description": "VCC_ pins (CP, PLL, RF, VCO, DIG, SD) all connected to 3.0–3.6V with 100nF + 1µF decoupling caps on each. REF_IN AC-coupled via 100nF to 10–200MHz reference oscillator. CP_OUT connected to loop filter (C2/R2/C1/R3/C3 passive network) with output driving TUNE. RFOUTA_P/N and RFOUTB_P/N each biased via 27nH choke from VCC_RF and AC-coupled to 50Ω load. NOISE_FILT, BIAS_FILT, REG each have 1µF cap to GND. RSET has 5.1kΩ to GND. CLK/DATA/LE connected to SPI master; CE pulled high; RFOUT_EN pulled high. MUX_OUT and LD to MCU GPIOs. Exposed pad soldered to ground plane with vias.",
+      "page": 9
+    }
+  ],
+  "common_mistakes": [
+    "GND_CP, GND_PLL, GND_RF, GND_VCO, GND_TUNE, GND_DIG, GND_SD must NOT be connected directly to the exposed paddle (EP) — each must connect to the board ground plane independently; the ground plane then connects EP",
+    "TUNE (pin 20) must NOT be connected directly to CP_OUT (pin 7) — it connects to the output of the external loop filter network",
+    "After power-up or CE assertion, registers must be programmed TWICE: once to enable the device, then again (≥20ms later) to start VCO calibration",
+    "Register programming order is mandatory: 5→4→3→2→1→0 (both times). Out-of-order writes cause undefined behaviour",
+    "NOISE_FILT (19), BIAS_FILT (23), and REG (24) MUST have 1µF caps to GND — leaving them floating causes VCO instability and degraded phase noise",
+    "RF outputs are open-collector — they require a 27nH choke to VCC_RF for bias. Do NOT connect directly to a DC supply without choke or to GND",
+    "Unused RF outputs still require 27nH choke to VCC_RF and 50Ω termination to GND — do not leave floating",
+    "REF_IN must be AC-coupled — it has an internal bias of VCC_DIG/2 which will be disturbed by DC coupling",
+    "VCC_VCO decoupling caps should connect to the analog ground plane, not the digital ground plane, for best phase noise",
+    "RSET must have a resistor to GND (2.7kΩ–10kΩ) — do not leave floating or tie directly to GND",
+    "Software shutdown (SHDN bit in Register 2) and CE pin both power down the device — after exiting, wait ≥20ms before programming",
+    "Keep loop filter components close to CP_OUT (pin 7) and TUNE (pin 20) with short, shielded traces to minimise noise coupling"
+  ],
+  "notes": "Six write-only and one read-only 32-bit SPI registers (addresses 0x00–0x06). Register 0x06 can be read back via MUX_OUT when MUX[3:0]=1100. Lock detect polarity and behaviour configurable via Register 5. Fast-lock mode requires SW (pin 5) connection to loop filter. VCO auto-selects from multiple internal sub-bands. Fractional-N mode supports MOD values 2–4095 and FRAC values 0 to MOD−1.",
+  "symbol_type": "ic",
   "status": "parsed",
   "confidence": "HIGH",
   "extraction_note": null,
   "filename": "MAX2870_-_23.5MHz_to_6000MHz_Fractional_Integer-N_Synthesizer_VCO_-_MAX2870.pdf",
   "page_count": 25,
   "raw_text_length": 41120,
-  "uploaded_at": "2026-03-16T08:54:08.054545+00:00",
-  "parsed_at": "2026-03-16T08:54:20.496708Z",
-  "human_corrections": []
+  "uploaded_at": "2026-03-16T09:02:05.779645+00:00",
+  "parsed_at": "2026-03-16T09:30:00.000Z",
+  "builtin": false,
+  "package": "TQFN-32-EP",
+  "passives": [
+    { "type": "capacitor", "value": "100nF", "description": "VCC supply decoupling (×6, one per VCC pin)" },
+    { "type": "capacitor", "value": "1µF", "description": "VCC bulk decoupling (×6, one per VCC pin)" },
+    { "type": "capacitor", "value": "1µF", "description": "NOISE_FILT (pin 19) to GND" },
+    { "type": "capacitor", "value": "1µF", "description": "BIAS_FILT (pin 23) to GND" },
+    { "type": "capacitor", "value": "1µF", "description": "REG (pin 24) to GND" },
+    { "type": "capacitor", "value": "100nF", "description": "REF_IN AC-coupling cap" },
+    { "type": "resistor", "value": "5.1kΩ", "description": "RSET (pin 22) to GND — sets CP current" },
+    { "type": "inductor", "value": "27nH", "description": "RF choke, VCC_RF to each RF output pin (×4)" },
+    { "type": "resistor", "value": "50Ω", "description": "RF output load termination (×4)" },
+    { "type": "capacitor", "value": "0.1µF", "description": "Loop filter C2 (CP_OUT to TUNE)" },
+    { "type": "resistor", "value": "120Ω", "description": "Loop filter R2" },
+    { "type": "capacitor", "value": "0.012µF", "description": "Loop filter C1" },
+    { "type": "resistor", "value": "250Ω", "description": "Loop filter R3" },
+    { "type": "capacitor", "value": "820pF", "description": "Loop filter C3" }
+  ],
+  "human_corrections": [],
+  "example_circuit": null
 }
