@@ -145,6 +145,94 @@ function computeNetOverlay(editorRef) {
   return editorRef._cachedNetOverlay || { nets: [], wireToNet: new Map() };
 }
 
+// ── Power Budget ────────────────────────────────────────────────────────────
+function showPowerBudget() {
+  const comps = editor.project.components;
+  const skipTypes = new Set(['vcc', 'gnd', 'wire', 'label', 'nc', 'power', 'pwr_flag']);
+
+  const rows = [];
+  let grandTotal = 0;
+
+  comps.forEach(c => {
+    const symType = (c.symType || '').toLowerCase();
+    const slug = (c.slug || c.symType || '').toUpperCase();
+
+    // Skip power symbols, GND, wire/label primitives
+    if (skipTypes.has(symType)) return;
+    if (symType === 'vcc' || symType === 'gnd') return;
+
+    // Look up profile in window.library
+    const profile = (window.library && window.library[slug]) ? window.library[slug] : null;
+    const currentMa = profile && typeof profile.typical_current_ma === 'number'
+      ? profile.typical_current_ma
+      : 0;
+
+    // Determine voltage rail hint from supply_voltage_range
+    let rail = '—';
+    if (profile && profile.supply_voltage_range) {
+      const svr = profile.supply_voltage_range;
+      if (/3\.3/i.test(svr)) rail = '3.3V';
+      else if (/5v|5\.0/i.test(svr)) rail = '5V';
+      else if (/12v/i.test(svr)) rail = '12V';
+      else if (/1\.8/i.test(svr)) rail = '1.8V';
+      else rail = svr.split(/[,;]/)[0].trim().substring(0, 16);
+    }
+
+    grandTotal += currentMa;
+    rows.push({ name: slug, designator: c.designator || '?', currentMa, rail });
+  });
+
+  // Build modal HTML
+  const rowsHtml = rows.length
+    ? rows.map(r => `
+      <tr>
+        <td style="padding:5px 10px;border-bottom:1px solid #1e2130;">${esc(r.name)}</td>
+        <td style="padding:5px 10px;border-bottom:1px solid #1e2130;font-family:monospace;">${esc(r.designator)}</td>
+        <td style="padding:5px 10px;border-bottom:1px solid #1e2130;text-align:right;font-family:monospace;">${r.currentMa > 0 ? r.currentMa.toFixed(3).replace(/\.?0+$/, '') : '—'}</td>
+        <td style="padding:5px 10px;border-bottom:1px solid #1e2130;color:#94a3b8;">${esc(r.rail)}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="4" style="padding:12px 10px;color:#6b7280;text-align:center;">No components placed.</td></tr>`;
+
+  const totalHtml = rows.length ? `
+    <tr style="font-weight:700;background:#0d0f17;">
+      <td colspan="2" style="padding:6px 10px;">Total</td>
+      <td style="padding:6px 10px;text-align:right;font-family:monospace;color:#facc15;">${grandTotal.toFixed(1)} mA</td>
+      <td></td>
+    </tr>` : '';
+
+  const html = `
+    <div id="power-budget-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;" onclick="if(event.target===this)document.getElementById('power-budget-overlay').remove()">
+      <div style="background:#0f1120;border:1px solid #2a2d3a;border-radius:10px;min-width:480px;max-width:680px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,0.7);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1e2130;">
+          <span style="font-size:14px;font-weight:700;color:#e2e8f0;">&#9889; Power Budget</span>
+          <button onclick="document.getElementById('power-budget-overlay').remove()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:18px;line-height:1;padding:0 4px;">&times;</button>
+        </div>
+        <div style="overflow-y:auto;flex:1;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;color:#cbd5e1;">
+            <thead>
+              <tr style="background:#0d0f17;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">
+                <th style="padding:6px 10px;text-align:left;font-weight:600;">Component</th>
+                <th style="padding:6px 10px;text-align:left;font-weight:600;">Ref</th>
+                <th style="padding:6px 10px;text-align:right;font-weight:600;">Typ. Current (mA)</th>
+                <th style="padding:6px 10px;text-align:left;font-weight:600;">Rail</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+            <tfoot>${totalHtml}</tfoot>
+          </table>
+        </div>
+        <div style="padding:10px 16px;border-top:1px solid #1e2130;font-size:11px;color:#6b7280;font-style:italic;">
+          Estimate only. Actual draw depends on operating conditions.
+        </div>
+      </div>
+    </div>`;
+
+  // Remove any existing overlay then insert
+  const existing = document.getElementById('power-budget-overlay');
+  if (existing) existing.remove();
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
 // ── PCB sync notification ────────────────────────────────────────────────────
 // Called from _status() and after saveProject() — keeps PCB frame aware of
 // whether the schematic is ahead of the last imported PCB board.

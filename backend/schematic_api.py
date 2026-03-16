@@ -1093,6 +1093,113 @@ YOUR TASKS:
     _spawn_build_agent(gen_prompt, issue["id"])
     return {"issueId": issue["id"], "genTicketId": gen_ticket["id"]}
 
+# ── Generate Circuit ──────────────────────────────────────────────────────────
+@router.post("/generate-circuit")
+async def api_generate_circuit(request: Request):
+    body = await request.json()
+    prompt = (body.get("prompt") or "").strip()
+    if not prompt:
+        raise HTTPException(400, "prompt required")
+    library_slugs: list[str] = body.get("library_slugs") or []
+
+    # Look up profiles for requested slugs
+    profiles: list[dict] = []
+    for slug in library_slugs:
+        try:
+            p = _read_profile(slug)
+            # Include a trimmed version without raw_text
+            profiles.append({k: v for k, v in p.items() if k != "raw_text"})
+        except Exception:
+            pass
+
+    # If no slugs specified, provide a summary of the full library
+    if not profiles:
+        try:
+            idx = _read_index()
+            profiles = list(idx.values())
+        except Exception:
+            pass
+
+    profile_summary = json.dumps(profiles, indent=2)
+
+    now = datetime.now(timezone.utc).isoformat()
+    gen_prompt = f"""CIRCUIT GENERATOR REQUEST
+
+USER DESCRIPTION:
+{prompt}
+
+AVAILABLE LIBRARY PROFILES:
+{profile_summary}
+
+INSTRUCTIONS:
+You are a schematic layout generator. Create a complete circuit schematic based on the user description above.
+
+1. Choose appropriate components from the library profiles provided.
+2. Design the net connections between them (wires and net labels).
+3. Create a new project by POSTing to http://localhost:8000/api/projects with Content-Type: application/json.
+
+The project JSON must follow this format:
+{{
+  "name": "A descriptive circuit name",
+  "components": [
+    {{
+      "id": "c1",
+      "slug": "COMPONENT_SLUG",
+      "symType": "ic",
+      "designator": "U1",
+      "value": "part number or value",
+      "x": 200,
+      "y": 200,
+      "rotation": 0
+    }}
+  ],
+  "wires": [
+    {{
+      "id": "w1",
+      "points": [{{"x": 100, "y": 100}}, {{"x": 200, "y": 100}}]
+    }}
+  ],
+  "labels": [
+    {{
+      "id": "l1",
+      "name": "VCC",
+      "x": 150,
+      "y": 80,
+      "rotation": 0
+    }}
+  ]
+}}
+
+LAYOUT RULES:
+- Grid: 20 units. All x/y coordinates MUST be multiples of 20.
+- Spread components 200-400 units apart horizontally, 150-300 units vertically.
+- symType values: "ic", "resistor", "capacitor", "capacitor_pol", "inductor", "vcc", "gnd", "diode", "led", "npn", "nmos"
+- For passives: use "resistor", "capacitor", etc. For ICs: use "ic". For power: use "vcc" or "gnd".
+- Wires use polyline points — route through intermediate points for L-shapes.
+- Use net labels for power rails (VCC, GND, 3V3) instead of wiring every component to the same rail.
+- Place decoupling capacitors close (within 60 units) to their associated IC power pins.
+- designator: R1, R2, C1, C2, U1, U2, etc. — unique per component.
+- Only use slugs from the AVAILABLE LIBRARY PROFILES above.
+
+After POSTing, the frontend will detect the new project and offer to open it.
+Generate wiring that makes electrical sense for the described circuit.
+Execute the POST request now."""
+
+    gt = _read_gen_tickets()
+    ticket = {
+        "id": gt["nextId"],
+        "type": "circuit",
+        "slug": "",
+        "title": f"Circuit: {prompt[:60]}",
+        "prompt": gen_prompt,
+        "status": "pending",
+        "created_at": now,
+    }
+    gt["nextId"] += 1
+    gt["tickets"].append(ticket)
+    _save_gen_tickets(gt)
+    return {"ticket_id": ticket["id"]}
+
 # ── Export / Import library ───────────────────────────────────────────────────
 @router.get("/export-library")
 def api_export_library():
@@ -1949,6 +2056,7 @@ _TICKET_AGENT_MAP: dict[str, str] = {
     "footprint":     "footprint",
     "layout":        "layout-example",
     "build-project": "orchestrator",
+    "circuit":       "orchestrator",
 }
 
 

@@ -81,13 +81,14 @@
       "id": 7,
       "title": "Tag / category filtering in library",
       "description": "Add category tags and filter chips.",
-      "status": "inprogress",
+      "status": "done",
       "priority": "medium",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-16T11:21:12.731599+00:00",
-      "locked": true,
-      "locked_by": "Claude Code",
-      "locked_at": "2026-03-16T11:21:07.699053+00:00"
+      "updated_at": "2026-03-16T11:23:23.666432+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null,
+      "observations": "Added category field to all profiles. Added category filter chips in library UI."
     },
     {
       "id": 8,
@@ -108,10 +109,10 @@
       "status": "inprogress",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-16T11:22:22.913624+00:00",
-      "locked": true,
-      "locked_by": "Claude Code",
-      "locked_at": "2026-03-16T11:22:22.655398+00:00"
+      "updated_at": "2026-03-16T11:23:37.546354+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null
     },
     {
       "id": 10,
@@ -120,10 +121,10 @@
       "status": "inprogress",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-16T11:21:42.660714+00:00",
-      "locked": true,
-      "locked_by": "Claude Code",
-      "locked_at": "2026-03-16T11:21:42.400287+00:00"
+      "updated_at": "2026-03-16T11:23:37.814991+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null
     },
     {
       "id": 11,
@@ -132,10 +133,10 @@
       "status": "inprogress",
       "priority": "medium",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-16T11:21:25.336360+00:00",
-      "locked": true,
-      "locked_by": "Claude Code",
-      "locked_at": "2026-03-16T11:21:25.097684+00:00"
+      "updated_at": "2026-03-16T11:23:38.071037+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null
     },
     {
       "id": 12,
