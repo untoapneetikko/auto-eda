@@ -1,0 +1,739 @@
+{
+  "board": {
+    "width": 30.0,
+    "height": 30.0,
+    "units": "mm"
+  },
+  "components": [
+    {
+      "id": "u1",
+      "ref": "U1",
+      "slug": "PMA3_83LNW",
+      "value": "PMA3-83LNW+",
+      "footprint": "MCLP-12",
+      "x": 15.879,
+      "y": 13.193,
+      "rotation": 0,
+      "layer": "F.Cu",
+      "pads": [
+        {
+          "number": "1",
+          "x": -1,
+          "y": -1,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "2",
+          "x": -1,
+          "y": -0.6,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "RF_INT"
+        },
+        {
+          "number": "3",
+          "x": -1,
+          "y": -0.2,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "4",
+          "x": -1,
+          "y": 0.2,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "5",
+          "x": -1,
+          "y": 0.6,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "6",
+          "x": -1,
+          "y": 1,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "7",
+          "x": 1,
+          "y": 1,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "8",
+          "x": 1,
+          "y": 0.6,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "RF_OUT_INT"
+        },
+        {
+          "number": "9",
+          "x": 1,
+          "y": 0.2,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "10",
+          "x": 1,
+          "y": -0.2,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": "GND"
+        },
+        {
+          "number": "11",
+          "x": 1,
+          "y": -0.6,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": ""
+        },
+        {
+          "number": "12",
+          "x": 1,
+          "y": -1,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.55,
+          "size_y": 0.25,
+          "net": ""
+        }
+      ]
+    },
+    {
+      "id": "c2",
+      "ref": "C2",
+      "slug": "CAPACITOR",
+      "value": "10pF",
+      "footprint": "0402",
+      "x": 11.704,
+      "y": 12.693,
+      "rotation": 270,
+      "layer": "F.Cu",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RF_IN"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RF_INT"
+        }
+      ]
+    },
+    {
+      "id": "l1",
+      "ref": "L1",
+      "slug": "INDUCTOR",
+      "value": "18nH",
+      "footprint": "0402",
+      "x": 13.304,
+      "y": 12.693,
+      "rotation": 270,
+      "layer": "F.Cu",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RF_INT"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "GND"
+        }
+      ]
+    },
+    {
+      "id": "c3",
+      "ref": "C3",
+      "slug": "CAPACITOR",
+      "value": "100pF",
+      "footprint": "0402",
+      "x": 16.879,
+      "y": 16.118,
+      "rotation": 270,
+      "layer": "F.Cu",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RF_OUT_INT"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RF_OUT"
+        }
+      ]
+    },
+    {
+      "id": "l2",
+      "ref": "L2",
+      "slug": "INDUCTOR",
+      "value": "39nH",
+      "footprint": "0402",
+      "x": 18.979,
+      "y": 16.118,
+      "rotation": 0,
+      "layer": "F.Cu",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "VDD"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "RF_OUT_INT"
+        }
+      ]
+    },
+    {
+      "id": "c1",
+      "ref": "C1",
+      "slug": "CAPACITOR",
+      "value": "1\u00b5F",
+      "footprint": "0402",
+      "x": 14.379,
+      "y": 18.118,
+      "rotation": 0,
+      "layer": "F.Cu",
+      "pads": [
+        {
+          "number": "1",
+          "x": -0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "VDD"
+        },
+        {
+          "number": "2",
+          "x": 0.5,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 0.6,
+          "size_y": 0.6,
+          "net": "GND"
+        }
+      ]
+    },
+    {
+      "id": "c4",
+      "ref": "C4",
+      "slug": "CAPACITOR_POL",
+      "value": "100\u00b5F",
+      "footprint": "0805",
+      "x": 13.879,
+      "y": 16.068,
+      "rotation": 0,
+      "layer": "F.Cu",
+      "pads": [
+        {
+          "number": "1",
+          "x": -1.0,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 1.3,
+          "size_y": 1.5,
+          "net": "VDD"
+        },
+        {
+          "number": "2",
+          "x": 1.0,
+          "y": 0,
+          "type": "smd",
+          "shape": "rect",
+          "size_x": 1.3,
+          "size_y": 1.5,
+          "net": "GND"
+        }
+      ]
+    }
+  ],
+  "nets": [
+    {
+      "name": "RF_INT",
+      "pads": [
+        "U1.2",
+        "C2.2",
+        "L1.1"
+      ]
+    },
+    {
+      "name": "RF_OUT_INT",
+      "pads": [
+        "U1.8",
+        "C3.1",
+        "L2.2"
+      ]
+    },
+    {
+      "name": "GND",
+      "pads": [
+        "U1.13",
+        "U1.1",
+        "U1.3",
+        "U1.4",
+        "U1.5",
+        "U1.6",
+        "U1.7",
+        "U1.9",
+        "U1.10",
+        "L1.2",
+        "C1.2",
+        "C4.2"
+      ]
+    },
+    {
+      "name": "RF_IN",
+      "pads": [
+        "C2.1"
+      ]
+    },
+    {
+      "name": "RF_OUT",
+      "pads": [
+        "C3.2"
+      ]
+    },
+    {
+      "name": "VDD",
+      "pads": [
+        "L2.1",
+        "C1.1",
+        "C4.1"
+      ]
+    }
+  ],
+  "traces": [
+    {
+      "net": "VDD",
+      "layer": "F.Cu",
+      "width": 0.4,
+      "segments": [
+        {
+          "start": {
+            "x": 18.479,
+            "y": 16.118
+          },
+          "end": {
+            "x": 18.25,
+            "y": 16.0
+          }
+        },
+        {
+          "start": {
+            "x": 18.25,
+            "y": 16.0
+          },
+          "end": {
+            "x": 18.1,
+            "y": 16.0
+          }
+        },
+        {
+          "start": {
+            "x": 18.1,
+            "y": 16.0
+          },
+          "end": {
+            "x": 18.0,
+            "y": 16.1
+          }
+        },
+        {
+          "start": {
+            "x": 18.0,
+            "y": 16.1
+          },
+          "end": {
+            "x": 18.0,
+            "y": 17.25
+          }
+        },
+        {
+          "start": {
+            "x": 18.0,
+            "y": 17.25
+          },
+          "end": {
+            "x": 17.75,
+            "y": 17.5
+          }
+        },
+        {
+          "start": {
+            "x": 17.75,
+            "y": 17.5
+          },
+          "end": {
+            "x": 13.25,
+            "y": 17.5
+          }
+        },
+        {
+          "start": {
+            "x": 13.25,
+            "y": 17.5
+          },
+          "end": {
+            "x": 13.0,
+            "y": 17.25
+          }
+        },
+        {
+          "start": {
+            "x": 13.0,
+            "y": 17.25
+          },
+          "end": {
+            "x": 13.0,
+            "y": 16.0
+          }
+        },
+        {
+          "start": {
+            "x": 13.0,
+            "y": 16.0
+          },
+          "end": {
+            "x": 12.879,
+            "y": 16.068
+          }
+        },
+        {
+          "start": {
+            "x": 12.879,
+            "y": 16.068
+          },
+          "end": {
+            "x": 13.0,
+            "y": 16.25
+          }
+        },
+        {
+          "start": {
+            "x": 13.0,
+            "y": 16.25
+          },
+          "end": {
+            "x": 13.0,
+            "y": 17.75
+          }
+        },
+        {
+          "start": {
+            "x": 13.0,
+            "y": 17.75
+          },
+          "end": {
+            "x": 13.25,
+            "y": 18.0
+          }
+        },
+        {
+          "start": {
+            "x": 13.25,
+            "y": 18.0
+          },
+          "end": {
+            "x": 14.0,
+            "y": 18.0
+          }
+        },
+        {
+          "start": {
+            "x": 14.0,
+            "y": 18.0
+          },
+          "end": {
+            "x": 13.879,
+            "y": 18.118
+          }
+        }
+      ]
+    },
+    {
+      "net": "RF_INT",
+      "layer": "F.Cu",
+      "width": 0.25,
+      "segments": [
+        {
+          "start": {
+            "x": 14.879,
+            "y": 12.593
+          },
+          "end": {
+            "x": 14.75,
+            "y": 12.5
+          }
+        },
+        {
+          "start": {
+            "x": 14.75,
+            "y": 12.5
+          },
+          "end": {
+            "x": 13.5,
+            "y": 12.5
+          }
+        },
+        {
+          "start": {
+            "x": 13.5,
+            "y": 12.5
+          },
+          "end": {
+            "x": 13.25,
+            "y": 12.75
+          }
+        },
+        {
+          "start": {
+            "x": 13.25,
+            "y": 12.75
+          },
+          "end": {
+            "x": 13.25,
+            "y": 13.25
+          }
+        },
+        {
+          "start": {
+            "x": 13.25,
+            "y": 13.25
+          },
+          "end": {
+            "x": 13.304,
+            "y": 13.193
+          }
+        },
+        {
+          "start": {
+            "x": 13.304,
+            "y": 13.193
+          },
+          "end": {
+            "x": 13.0,
+            "y": 13.25
+          }
+        },
+        {
+          "start": {
+            "x": 13.0,
+            "y": 13.25
+          },
+          "end": {
+            "x": 12.0,
+            "y": 13.25
+          }
+        },
+        {
+          "start": {
+            "x": 12.0,
+            "y": 13.25
+          },
+          "end": {
+            "x": 11.75,
+            "y": 13.0
+          }
+        },
+        {
+          "start": {
+            "x": 11.75,
+            "y": 13.0
+          },
+          "end": {
+            "x": 11.75,
+            "y": 12.25
+          }
+        },
+        {
+          "start": {
+            "x": 11.75,
+            "y": 12.25
+          },
+          "end": {
+            "x": 11.704,
+            "y": 12.193
+          }
+        }
+      ]
+    },
+    {
+      "net": "RF_OUT_INT",
+      "layer": "F.Cu",
+      "width": 0.25,
+      "segments": [
+        {
+          "start": {
+            "x": 16.879,
+            "y": 13.793
+          },
+          "end": {
+            "x": 17.0,
+            "y": 14.0
+          }
+        },
+        {
+          "start": {
+            "x": 17.0,
+            "y": 14.0
+          },
+          "end": {
+            "x": 17.0,
+            "y": 16.5
+          }
+        },
+        {
+          "start": {
+            "x": 17.0,
+            "y": 16.5
+          },
+          "end": {
+            "x": 16.879,
+            "y": 16.618
+          }
+        },
+        {
+          "start": {
+            "x": 16.879,
+            "y": 16.618
+          },
+          "end": {
+            "x": 17.0,
+            "y": 16.25
+          }
+        },
+        {
+          "start": {
+            "x": 17.0,
+            "y": 16.25
+          },
+          "end": {
+            "x": 17.0,
+            "y": 16.1
+          }
+        },
+        {
+          "start": {
+            "x": 17.0,
+            "y": 16.1
+          },
+          "end": {
+            "x": 17.1,
+            "y": 16.0
+          }
+        },
+        {
+          "start": {
+            "x": 17.1,
+            "y": 16.0
+          },
+          "end": {
+            "x": 19.5,
+            "y": 16.0
+          }
+        },
+        {
+          "start": {
+            "x": 19.5,
+            "y": 16.0
+          },
+          "end": {
+            "x": 19.479,
+            "y": 16.118
+          }
+        }
+      ]
+    }
+  ],
+  "vias": []
+}

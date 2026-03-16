@@ -1,13 +1,13 @@
 {
   "part_number": "PMA3-83LNW+",
-  "description": "PHEMT-based wideband low-noise MMIC amplifier, 0.4–8 GHz, 1.2 dB NF at 2 GHz, +37 dBm OIP3, single 5V/6V supply",
+  "description": "PHEMT-based wideband low-noise MMIC amplifier, 0.4\u20138 GHz, 1.2 dB NF at 2 GHz, +37 dBm OIP3, single 5V/6V supply",
   "manufacturer": "Mini-Circuits",
   "package_types": [
     "12-lead MCLP 3x3x0.89mm (DQ1225)"
   ],
-  "supply_voltage_range": "5V or 6V (4.75–5.25V or 5.75–6.75V)",
+  "supply_voltage_range": "5V or 6V (4.75\u20135.25V or 5.75\u20136.75V)",
   "frequency_range": "0.4 to 8.0 GHz",
-  "impedance": "50Ω",
+  "impedance": "50\u03a9",
   "designator": "U",
   "absolute_max": {
     "dc_voltage": "7V",
@@ -15,10 +15,10 @@
     "input_power_continuous_04_to_05GHz": "+9 dBm",
     "input_power_5min_max": "+19 dBm",
     "total_power_dissipation": "0.95 W",
-    "junction_temperature": "150°C",
-    "operating_temp_ground_lead": "-40°C to +105°C",
-    "storage_temp": "-65°C to +150°C",
-    "esd_hbm": "Class 1A (250–500V)"
+    "junction_temperature": "150\u00b0C",
+    "operating_temp_ground_lead": "-40\u00b0C to +105\u00b0C",
+    "storage_temp": "-65\u00b0C to +150\u00b0C",
+    "esd_hbm": "Class 1A (250\u2013500V)"
   },
   "key_performance": {
     "noise_figure_2GHz": "1.2 dB (typ)",
@@ -36,7 +36,7 @@
       "description": "RF signal input (pad 2). Connects to RF input and to ground via L1. Optional 100pF blocking capacitor may be added in series before C2 for extra DC isolation.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect RF source via C2 (10pF series coupling cap). Add L1 (18nH shunt inductor) from this pad to GND as DC bias return and ESD path. Optional separate 100pF series cap for additional DC isolation — see datasheet p.3.",
+      "requirements": "Connect RF source via C2 (10pF series coupling cap). Add L1 (18nH shunt inductor) from this pad to GND as DC bias return and ESD path. Optional separate 100pF series cap for additional DC isolation \u2014 see datasheet p.3.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -47,7 +47,7 @@
       "description": "Combined RF output and DC supply input (pad 8). RF output exits via C3 (100pF DC block). VDD supplied via L2 (39nH RF choke). Both functions share this single pad.",
       "active": null,
       "internal_pull": null,
-      "requirements": "MANDATORY: connect VDD through L2 (39nH RF choke) to this pad. Connect RF output through C3 (100pF DC block). Both must be present — missing L2 means no bias; missing C3 puts VDD on RF output and damages downstream components. See Fig.1 p.4.",
+      "requirements": "MANDATORY: connect VDD through L2 (39nH RF choke) to this pad. Connect RF output through C3 (100pF DC block). Both must be present \u2014 missing L2 means no bias; missing C3 puts VDD on RF output and damages downstream components. See Fig.1 p.4.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -55,10 +55,10 @@
       "number": 0,
       "name": "GND (Paddle)",
       "type": "gnd",
-      "description": "Exposed thermal and electrical ground paddle on bottom of package. Both thermal and electrical ground — primary current return and heat dissipation path.",
+      "description": "Exposed thermal and electrical ground paddle on bottom of package. Both thermal and electrical ground \u2014 primary current return and heat dissipation path.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Must be soldered to PCB ground plane with full solder coverage. Primary thermal path — poor or partial solder contact causes thermal failure. Use Mini-Circuits suggested PCB layout PL-628. Add ground vias under paddle.",
+      "requirements": "Must be soldered to PCB ground plane with full solder coverage. Primary thermal path \u2014 poor or partial solder contact causes thermal failure. Use Mini-Circuits suggested PCB layout PL-628. Add ground vias under paddle.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -154,7 +154,7 @@
       "number": 11,
       "name": "NC (float!)",
       "type": "passive",
-      "description": "No internal connection (pad 11). NOT connected to ground on test board — explicitly different from all other NC pads.",
+      "description": "No internal connection (pad 11). NOT connected to ground on test board \u2014 explicitly different from all other NC pads.",
       "active": null,
       "internal_pull": null,
       "requirements": "MUST be left floating. Do NOT connect to ground. Datasheet p.3 specifically calls out pads 11 and 12 as exceptions to the grounded-NC rule.",
@@ -165,7 +165,7 @@
       "number": 12,
       "name": "NC (float!)",
       "type": "passive",
-      "description": "No internal connection (pad 12). NOT connected to ground on test board — explicitly different from all other NC pads.",
+      "description": "No internal connection (pad 12). NOT connected to ground on test board \u2014 explicitly different from all other NC pads.",
       "active": null,
       "internal_pull": null,
       "requirements": "MUST be left floating. Do NOT connect to ground. Datasheet p.3 specifically calls out pads 11 and 12 as exceptions to the grounded-NC rule.",
@@ -179,7 +179,7 @@
       "value": "18nH 0402",
       "part_number": "Murata LQP15MN18NJ02D",
       "placement": "RF-IN (pad 2) to GND",
-      "reason": "L1 — input shunt RF choke providing DC bias return path and ESD protection. Required per application circuit Fig.1 p.4.",
+      "reason": "L1 \u2014 input shunt RF choke providing DC bias return path and ESD protection. Required per application circuit Fig.1 p.4.",
       "datasheet_page": 4
     },
     {
@@ -187,22 +187,22 @@
       "value": "39nH 0402",
       "part_number": "Coilcraft 0402CS-39NXGLW",
       "placement": "VDD rail to RF-OUT/DC-IN (pad 8)",
-      "reason": "L2 — RF choke for DC bias injection. The ONLY DC path to the device. Mandatory — without it the amplifier will not operate. Required per Fig.1 p.4.",
+      "reason": "L2 \u2014 RF choke for DC bias injection. The ONLY DC path to the device. Mandatory \u2014 without it the amplifier will not operate. Required per Fig.1 p.4.",
       "datasheet_page": 4
     },
     {
       "type": "capacitor",
-      "value": "0.01µF 0402",
+      "value": "0.01\u00b5F 0402",
       "part_number": "Murata GRM155R71E103KA01D",
       "placement": "VDD rail to GND, close to L2 connection",
-      "reason": "C1 — VDD supply bypass decoupling capacitor. Required per Fig.1 p.4.",
+      "reason": "C1 \u2014 VDD supply bypass decoupling capacitor. Required per Fig.1 p.4.",
       "datasheet_page": 4
     },
     {
       "type": "capacitor",
       "value": "100nF 0402",
       "placement": "VDD rail to GND, bulk bypass (parallel with C1)",
-      "reason": "C4 — second VDD bypass cap for low-frequency supply decoupling. Standard RF PCB practice alongside C1 (0.01µF HF cap). Present in example_circuit.",
+      "reason": "C4 \u2014 second VDD bypass cap for low-frequency supply decoupling. Standard RF PCB practice alongside C1 (0.01\u00b5F HF cap). Present in example_circuit.",
       "datasheet_page": 4
     },
     {
@@ -210,7 +210,7 @@
       "value": "10pF 0402",
       "part_number": "Murata GJM1555C1H100JB01D",
       "placement": "Series between RF source and RF-IN (pad 2)",
-      "reason": "C2 — input series coupling and DC-block. Value confirmed 10pF — not 100pF. Required per Fig.1 p.4.",
+      "reason": "C2 \u2014 input series coupling and DC-block. Value confirmed 10pF \u2014 not 100pF. Required per Fig.1 p.4.",
       "datasheet_page": 4
     },
     {
@@ -218,30 +218,30 @@
       "value": "100pF 0402",
       "part_number": "Murata GRM1555C1H101JA01D",
       "placement": "RF-OUT/DC-IN (pad 8) to RF output trace",
-      "reason": "C3 — mandatory output DC block. Without this VDD appears on RF output, damaging downstream components. Required per Fig.1 p.4.",
+      "reason": "C3 \u2014 mandatory output DC block. Without this VDD appears on RF output, damaging downstream components. Required per Fig.1 p.4.",
       "datasheet_page": 4
     }
   ],
   "application_circuits": [
     {
       "name": "Typical application and characterization test circuit (Fig. 1, p.4)",
-      "description": "RF path: RF source → C2 (10pF series) → pad 2 → [device] → pad 8 → C3 (100pF DC block) → RF output. Bias path: VDD → L2 (39nH choke) → pad 8. C1 (0.01µF) VDD bypass to GND. L1 (18nH) shunt pad 2 to GND. Pads 1,3–7,9–10 and Paddle tied to GND. Pads 11,12 left floating.",
+      "description": "RF path: RF source \u2192 C2 (10pF series) \u2192 pad 2 \u2192 [device] \u2192 pad 8 \u2192 C3 (100pF DC block) \u2192 RF output. Bias path: VDD \u2192 L2 (39nH choke) \u2192 pad 8. C1 (0.01\u00b5F) VDD bypass to GND. L1 (18nH) shunt pad 2 to GND. Pads 1,3\u20137,9\u201310 and Paddle tied to GND. Pads 11,12 left floating.",
       "page": 4
     }
   ],
   "common_mistakes": [
-    "Pads 11 and 12 must NOT be connected to ground — unlike all other NC pads, the datasheet explicitly calls these out as floating on the test board (p.3).",
-    "DC supply voltage must not exceed 7V — permanent damage above this limit.",
-    "Exposed paddle MUST be fully soldered to PCB ground plane — primary thermal path. Partial solder contact causes thermal failure.",
-    "L2 (39nH) is mandatory — it is the only DC bias path to the device. Without it the amplifier will not operate.",
-    "C3 (100pF output block) is mandatory — without it VDD appears directly on RF output, damaging downstream components.",
-    "Input power must not exceed +16 dBm continuous (0.5–8 GHz) or +9 dBm continuous (0.4–0.5 GHz). +19 dBm is only permitted for 5 minutes maximum.",
-    "ESD Class 1A — handle with ESD precautions at all times.",
-    "C2 is 10pF (not 100pF) — the optional 100pF in the pad 2 description is a separate series cap that may be added before C2, not a replacement.",
-    "Device draws 75mA at 6V or 58mA at 5V — size power supply trace width accordingly.",
-    "Thermal resistance junction-to-ground is 47°C/W — verify Tj stays below 150°C at max operating conditions."
+    "Pads 11 and 12 must NOT be connected to ground \u2014 unlike all other NC pads, the datasheet explicitly calls these out as floating on the test board (p.3).",
+    "DC supply voltage must not exceed 7V \u2014 permanent damage above this limit.",
+    "Exposed paddle MUST be fully soldered to PCB ground plane \u2014 primary thermal path. Partial solder contact causes thermal failure.",
+    "L2 (39nH) is mandatory \u2014 it is the only DC bias path to the device. Without it the amplifier will not operate.",
+    "C3 (100pF output block) is mandatory \u2014 without it VDD appears directly on RF output, damaging downstream components.",
+    "Input power must not exceed +16 dBm continuous (0.5\u20138 GHz) or +9 dBm continuous (0.4\u20130.5 GHz). +19 dBm is only permitted for 5 minutes maximum.",
+    "ESD Class 1A \u2014 handle with ESD precautions at all times.",
+    "C2 is 10pF (not 100pF) \u2014 the optional 100pF in the pad 2 description is a separate series cap that may be added before C2, not a replacement.",
+    "Device draws 75mA at 6V or 58mA at 5V \u2014 size power supply trace width accordingly.",
+    "Thermal resistance junction-to-ground is 47\u00b0C/W \u2014 verify Tj stays below 150\u00b0C at max operating conditions."
   ],
-  "notes": "RF MMIC — standard RF PCB layout rules apply: 50Ω controlled impedance traces, short RF paths, ground vias adjacent to every ground connection, no sharp corners on RF traces. Use Mini-Circuits suggested PCB layout PL-628. Evaluation board TB-PMA3-83LNW+ available. BOM from p.4: L1=LQP15MN18NJ02D (18nH), L2=0402CS-39NXGLW (39nH), C1=GRM155R71E103KA01D (0.01µF), C2=GJM1555C1H100JB01D (10pF), C3=GRM1555C1H101JA01D (100pF).",
+  "notes": "RF MMIC \u2014 standard RF PCB layout rules apply: 50\u03a9 controlled impedance traces, short RF paths, ground vias adjacent to every ground connection, no sharp corners on RF traces. Use Mini-Circuits suggested PCB layout PL-628. Evaluation board TB-PMA3-83LNW+ available. BOM from p.4: L1=LQP15MN18NJ02D (18nH), L2=0402CS-39NXGLW (39nH), C1=GRM155R71E103KA01D (0.01\u00b5F), C2=GJM1555C1H100JB01D (10pF), C3=GRM1555C1H101JA01D (100pF).",
   "symbol_type": "ic",
   "status": "parsed",
   "confidence": "HIGH",
@@ -268,8 +268,8 @@
     {
       "date": "2026-03-09",
       "original": "Profile had 7 garbage PNaN pins with null numbers from a failed re-parse attempt.",
-      "correction": "Removed all 7 spurious pins. Expanded all NC groups to individual pin entries (one per pad number) as required — device has 13 pads total: pad 2 (RF-IN), pad 8 (RF-OUT/DC-IN), paddle (GND), pads 1/3/4/5/6/7/9/10 (NC, tie to GND), pads 11/12 (NC, must float). Added designator U. symbol_type = ic for square box rendering.",
-      "reason": "Rebuild — pin count and assignments cross-checked against datasheet p.3 pad table. Every pad on the device now has an individual entry."
+      "correction": "Removed all 7 spurious pins. Expanded all NC groups to individual pin entries (one per pad number) as required \u2014 device has 13 pads total: pad 2 (RF-IN), pad 8 (RF-OUT/DC-IN), paddle (GND), pads 1/3/4/5/6/7/9/10 (NC, tie to GND), pads 11/12 (NC, must float). Added designator U. symbol_type = ic for square box rendering.",
+      "reason": "Rebuild \u2014 pin count and assignments cross-checked against datasheet p.3 pad table. Every pad on the device now has an individual entry."
     }
   ],
   "typical_current_ma": 40,
@@ -810,7 +810,7 @@
       {
         "id": "C1",
         "ref": "C1",
-        "value": "0.01µF 0402",
+        "value": "0.01\u00b5F 0402",
         "footprint": "0402",
         "x": 0,
         "y": 3,
@@ -1712,5 +1712,6 @@
   },
   "slug": "PMA3_83LNW",
   "value": "PMA3-83LNW+_V2",
-  "category": "rf"
+  "category": "rf",
+  "has_layout_example": true
 }
