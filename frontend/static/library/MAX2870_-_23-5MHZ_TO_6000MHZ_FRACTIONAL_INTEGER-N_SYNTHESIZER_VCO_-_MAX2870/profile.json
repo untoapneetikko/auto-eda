@@ -1,12 +1,3989 @@
 {
-  "part_number": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
-  "status": "pending_parse",
+  "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+  "part_number": "MAX2870",
+  "name": "MAX2870",
+  "description": "23.5MHz to 6000MHz Fractional/Integer-N Synthesizer/VCO with integrated VCOs, dual differential RF outputs, 4-wire SPI, 32-pin TQFN",
+  "manufacturer": "Maxim Integrated",
+  "package_types": [
+    "TQFN-32-EP"
+  ],
+  "supply_voltage_range": "3.0\u20133.6V",
+  "frequency_range": "23.5MHz\u20136000MHz",
+  "designator": "U",
+  "absolute_max": {
+    "vdd": "3.9V (VCC_ to GND_)",
+    "all_other_pins": "VCC_ + 0.3V to GND_ \u2212 0.3V",
+    "operating_temp": "\u221240\u00b0C to +85\u00b0C",
+    "junction_temp": "+150\u00b0C",
+    "storage_temp": "\u221265\u00b0C to +150\u00b0C",
+    "lead_temp_soldering_10s": "+300\u00b0C",
+    "reflow_temp": "+260\u00b0C",
+    "thermal_resistance_ja": "29\u00b0C/W (TQFN, 4-layer board)",
+    "thermal_resistance_jc": "1.7\u00b0C/W"
+  },
+  "key_performance": {
+    "pll_modes": "Integer-N and Fractional-N",
+    "vco_range_fundamental": "3000MHz to 6000MHz (4 VCO cores, 16 sub-bands each)",
+    "output_dividers": "1/2/4/8/16/32/64/128 \u2014 extends output range down to 23.5MHz",
+    "pfd_frequency_integer_n": "105MHz max",
+    "pfd_frequency_frac_n": "50MHz max",
+    "reference_input_range": "10MHz to 200MHz (100MHz max with \u00d72 doubler enabled)",
+    "output_power_range": "\u22124dBm to +5dBm in 3dB steps, each output independently controlled",
+    "outputs": "Dual differential open-collector: RFOUTA\u00b1 and RFOUTB\u00b1. RFOUTB selectable as divided or VCO fundamental (BDIV bit)",
+    "muted_output_power": "\u221231dBm",
+    "supply": "3.0V to 3.6V",
+    "logic_compatibility": "1.8V SPI (VIL<0.4V, VIH>1.5V)",
+    "supply_current_both_ch_max": "180mA (typ 144mA, both channels, max power, \u00f72)",
+    "supply_current_vco_rf_only": "95mA max (typ 75mA)",
+    "supply_current_sleep": "1mA",
+    "vco_phase_noise_3ghz": "\u221283.5dBc/Hz @10kHz, \u2212111dBc/Hz @100kHz, \u2212136dBc/Hz @1MHz",
+    "vco_phase_noise_4500mhz": "\u221275dBc/Hz @10kHz, \u2212104dBc/Hz @100kHz, \u2212130dBc/Hz @1MHz",
+    "vco_phase_noise_6ghz": "\u221271.5dBc/Hz @10kHz, \u2212100.5dBc/Hz @100kHz, \u2212128dBc/Hz @1MHz",
+    "integrated_rms_jitter": "0.25ps",
+    "in_band_phase_noise": "\u221295dBc/Hz",
+    "pfd_spurs": "\u221287dBc",
+    "vco_sensitivity": "100MHz/V",
+    "tune_voltage_range": "0.5V to 2.5V",
+    "cp_current_range": "0.32mA to 5.12mA (RSET=5.1k\u03a9, CP[3:0]=0000 to 1111)",
+    "interface": "4-wire SPI: CLK, DATA, LE (write); MUX_OUT for Reg6 readback",
+    "registers": "6 write-only (Reg0\u20135) + 1 read-only (Reg6) 32-bit registers",
+    "ordering": "MAX2870ETJ+ (TQFN-EP, \u221240\u00b0C to +85\u00b0C, RoHS)"
+  },
+  "pins": [
+    {
+      "number": "1",
+      "name": "CLK",
+      "type": "input",
+      "description": "Serial Clock Input. Data is latched into the 32-bit shift register on the rising edge of CLK.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to SPI master clock. Min clock period 50ns (tCL=25ns low, tCH=25ns high). Compatible with 1.8V logic.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "2",
+      "name": "DATA",
+      "type": "input",
+      "description": "Serial Data Input. Loaded MSB first; the 3 LSBs identify the register address.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to SPI MOSI. tDS=25ns setup and tDH=25ns hold relative to rising CLK edge.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "3",
+      "name": "LE",
+      "type": "input",
+      "description": "Load Enable. Rising edge latches shift register contents into the addressed register.",
+      "active": "high",
+      "internal_pull": null,
+      "requirements": "Connect to SPI CS (active-high latch). tLES=20ns setup, tLEH=10ns hold, tLEW=20ns min pulse-width.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "4",
+      "name": "CE",
+      "type": "input",
+      "description": "Chip Enable. Logic-low powers down the device; charge pump goes high-impedance. All blocks except SPI are off in low-power mode.",
+      "active": "low",
+      "internal_pull": null,
+      "requirements": "Pull high for normal operation. After CE returns high, wait \u226520ms before programming registers.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "5",
+      "name": "SW",
+      "type": "passive",
+      "description": "Fast-Lock Switch. Connect to loop filter mid-point (between R2A and R2B) when using fast-lock mode. No connect in normal operation.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Leave unconnected (NC) in normal mode. For fast-lock: split loop filter shunt resistor into R2A (\u00bc total) and R2B (\u00be total); connect SW to their junction. Set CDM=01 in Reg3.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "6",
+      "name": "VCC_CP",
+      "type": "power",
+      "description": "Power Supply for Charge Pump.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to 3.0\u20133.6V. Place 100nF + 1\u00b5F decoupling caps as close as possible to pin. Star routing from central VCC node recommended.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "7",
+      "name": "CP_OUT",
+      "type": "output",
+      "description": "Charge-Pump Output. Current-source/sink output that drives the external loop filter.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to loop filter input (C3 shunt cap, then R3+C1||R2, then C2 to TUNE). Keep trace short. Tri-stated when TRI=1 (Reg2 bit4).",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "8",
+      "name": "GND_CP",
+      "type": "gnd",
+      "description": "Ground for Charge Pump.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane. Do NOT connect directly to exposed paddle (EP). Each GND_ pin routes independently to the ground plane.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "9",
+      "name": "GND_PLL",
+      "type": "gnd",
+      "description": "Ground for PLL.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to main PCB ground plane. Do NOT connect directly to exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "10",
+      "name": "VCC_PLL",
+      "type": "power",
+      "description": "Power Supply for PLL.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to 3.0\u20133.6V. Separate LDO recommended for best performance. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "11",
+      "name": "GND_RF",
+      "type": "gnd",
+      "description": "Ground for RF Outputs.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to PCB ground plane. Do NOT connect directly to exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "12",
+      "name": "RFOUTA_P",
+      "type": "output",
+      "description": "Open Collector Positive RF Output A. Differential output. Output power set by APWR[1:0] in Reg4: 00=\u22124dBm, 01=\u22121dBm, 10=+2dBm, 11=+5dBm.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Bias via 27nH RF choke to VCC_RF. Enable with RFA_EN (Reg4 bit5)=1 and RFOUT_EN pin high. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "ambiguous": false,
+      "datasheet_page": 10
+    },
+    {
+      "number": "13",
+      "name": "RFOUTA_N",
+      "type": "output",
+      "description": "Open Collector Negative RF Output A. Differential complement of RFOUTA_P.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Bias via 27nH RF choke to VCC_RF. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "14",
+      "name": "RFOUTB_P",
+      "type": "output",
+      "description": "Open Collector Positive RF Output B. BDIV=0 (Reg4 bit9): same frequency as RFOUTA. BDIV=1: VCO fundamental frequency.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Bias via 27nH RF choke to VCC_RF. Enable with RFB_EN (Reg4 bit8)=1. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "15",
+      "name": "RFOUTB_N",
+      "type": "output",
+      "description": "Open Collector Negative RF Output B. Differential complement of RFOUTB_P.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Bias via 27nH RF choke to VCC_RF. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "16",
+      "name": "VCC_RF",
+      "type": "power",
+      "description": "Power Supply for RF Output and Dividers. Also serves as DC bias supply for all four open-collector RF output pins via 27nH RF chokes.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to 3.0\u20133.6V. Separate LDO recommended. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "17",
+      "name": "VCC_VCO",
+      "type": "power",
+      "description": "VCO Power Supply.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to 3.0\u20133.6V. Decoupling caps must connect to the analog ground plane (not digital) for best phase noise. Use 100nF + 1\u00b5F.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "18",
+      "name": "GND_VCO",
+      "type": "gnd",
+      "description": "Ground for VCO.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to main PCB ground plane. Do NOT connect directly to exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "19",
+      "name": "NOISE_FILT",
+      "type": "passive",
+      "description": "VCO Noise Decoupling. Internal VCO bias node requiring external decoupling.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Place 1\u00b5F capacitor to GND as close as possible to pin. Mandatory \u2014 omitting degrades VCO phase noise significantly.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "20",
+      "name": "TUNE",
+      "type": "input",
+      "description": "VCO Control Voltage Input. Connected to the output of the external loop filter. Compliance range 0.5V\u20132.5V. Internal 3-bit ADC monitors this voltage for VCO autoselect.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to loop filter output node (not directly to CP_OUT). ADC codes 000 (VTUNE<0.5V) and 111 (VTUNE>2.5V) indicate out-of-lock.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "21",
+      "name": "GND_TUNE",
+      "type": "gnd",
+      "description": "Ground for VCO Control Input.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to main PCB ground plane. Do NOT connect directly to exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "22",
+      "name": "RSET",
+      "type": "passive",
+      "description": "Charge-Pump Current Range Input. External resistor to GND sets CP current: ICP = 1.63V/RSET \u00d7 (1 + CP[3:0]).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect resistor 2.7k\u03a9\u201310k\u03a9 to GND. Typical 5.1k\u03a9: ICP_min=0.32mA (CP=0000), ICP_max=5.12mA (CP=1111). Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "23",
+      "name": "BIAS_FILT",
+      "type": "passive",
+      "description": "VCO Bias Filter. Internal VCO bias decoupling node.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Place 1\u00b5F capacitor to GND as close as possible to pin. Mandatory \u2014 omitting degrades VCO phase noise.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "24",
+      "name": "REG",
+      "type": "passive",
+      "description": "Reference Voltage Compensation. Internal bandgap reference decoupling node.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Place 1\u00b5F capacitor to GND as close as possible to pin. Mandatory.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "25",
+      "name": "LD",
+      "type": "output",
+      "description": "Lock Detect Output. Behaviour set by LD[1:0] in Reg5 bits 23:22. 01=digital lock detect (push-pull), 10=analog lock detect (open-drain), 00=always low, 11=always high.",
+      "active": "high",
+      "internal_pull": null,
+      "requirements": "For digital LD (LD=01): connect to MCU GPIO. For analog LD (LD=10): add 10k\u03a9 pull-up to VCC \u2014 output is open-drain. VOH=VCC\u22120.4V at 0.3mA, VOL=0.4V at 0.3mA.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "26",
+      "name": "RFOUT_EN",
+      "type": "input",
+      "description": "RF Output Enable (hardware). Logic-low disables both RFOUTA and RFOUTB regardless of register settings.",
+      "active": "high",
+      "internal_pull": null,
+      "requirements": "Pull high for normal RF output operation. Keep low during register init sequence; enable outputs only after second complete programming pass. Per-output control also via RFA_EN (Reg4 bit5) and RFB_EN (Reg4 bit8).",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "27",
+      "name": "GND_DIG",
+      "type": "gnd",
+      "description": "Ground for Digital Circuitry.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to main PCB ground plane. Do NOT connect directly to exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "28",
+      "name": "VCC_DIG",
+      "type": "power",
+      "description": "Power Supply for Digital Circuitry. Also sets the internal bias level VCC_DIG/2 for the REF_IN input.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to 3.0\u20133.6V. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "29",
+      "name": "REF_IN",
+      "type": "input",
+      "description": "Reference Frequency Input. High-impedance CMOS inverter with internal DC bias at VCC_DIG/2. Range 10\u2013200MHz (100MHz max with doubler). High-impedance in shutdown.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Must be AC-coupled (internal bias at VCC_DIG/2). Min sensitivity 0.7\u00d7VCC_DIG Vpp. Input capacitance 2pF, input current \u00b160\u00b5A.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "30",
+      "name": "MUX_OUT",
+      "type": "output",
+      "description": "Multiplexed Output / Serial Data Out. Function set by MUX[3:0] (Reg2 bits 28:26 + Reg5 bit18 MSB). Options: tri-state, D_VDD, D_GND, R-divider, N-divider/2, analog LD, digital LD, or Reg6 readback (MUX=1100).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to MCU GPIO. For Reg6 readback: set MUX=1100, drive 32 CLK cycles with LE low then high, last 3 DATA bits = 110. VOH=VCC\u22120.4V, VOL=0.4V at 0.3mA. tMS=10ns setup, tMH=10ns hold.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "31",
+      "name": "GND_SD",
+      "type": "gnd",
+      "description": "Ground for Sigma-Delta Modulator.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to main PCB ground plane. Do NOT connect directly to exposed paddle (EP).",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "32",
+      "name": "VCC_SD",
+      "type": "power",
+      "description": "Power Supply for Sigma-Delta Modulator.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to 3.0\u20133.6V. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    },
+    {
+      "number": "EP",
+      "name": "EP",
+      "type": "gnd",
+      "description": "Exposed Pad. Thermal and electrical ground pad. Must be soldered to PCB ground plane.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Solder to PCB ground plane with via array (min 9 vias in 3\u00d73 pattern). The seven separate GND_ signal pins each connect to the ground plane independently \u2014 do NOT route any GND_ pin directly to EP; the ground plane ties them together.",
+      "ambiguous": false,
+      "datasheet_page": 11
+    }
+  ],
+  "required_passives": [
+    {
+      "type": "capacitor",
+      "value": "100nF ceramic 0402",
+      "placement": "Each VCC_ pin (VCC_CP p6, VCC_PLL p10, VCC_RF p16, VCC_VCO p17, VCC_DIG p28, VCC_SD p32) to adjacent GND \u2014 one per pin",
+      "reason": "High-frequency supply decoupling. Dedicated via per cap to ground plane. Do not share vias.",
+      "datasheet_page": 10
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F ceramic",
+      "placement": "Each VCC_ pin (\u00d76) to GND \u2014 star routing from central VCC node",
+      "reason": "Bulk supply decoupling. Star topology minimises coupling between IC sections.",
+      "datasheet_page": 10
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F",
+      "placement": "NOISE_FILT (pin 19) to GND",
+      "reason": "Mandatory VCO noise decoupling. Omitting causes severe phase noise degradation.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F",
+      "placement": "BIAS_FILT (pin 23) to GND",
+      "reason": "Mandatory VCO bias filter. Omitting causes VCO instability.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F",
+      "placement": "REG (pin 24) to GND",
+      "reason": "Mandatory internal reference voltage compensation.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "placement": "REF_IN (pin 29) \u2014 series AC-coupling to reference oscillator",
+      "reason": "REF_IN has internal DC bias at VCC_DIG/2. DC coupling will disturb bias and cause malfunction.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "resistor",
+      "value": "5.1k\u03a9 (range: 2.7k\u03a9\u201310k\u03a9)",
+      "placement": "RSET (pin 22) to GND",
+      "reason": "Sets CP current range. ICP=1.63V/RSET\u00d7(1+CP). 5.1k\u03a9 gives 0.32mA\u20135.12mA range.",
+      "datasheet_page": 11
+    },
+    {
+      "type": "inductor",
+      "value": "27nH RF choke",
+      "placement": "VCC_RF (pin 16) to RFOUTA_P (12), RFOUTA_N (13), RFOUTB_P (14), RFOUTB_N (15) \u2014 one choke per output pin",
+      "reason": "Open-collector RF output bias. Provides DC path to supply while passing RF. Required for all four output pins including unused ones.",
+      "datasheet_page": 16
+    },
+    {
+      "type": "resistor",
+      "value": "50\u03a9",
+      "placement": "Each active RF output to load; each unused RF output to GND as termination",
+      "reason": "RF load/termination. Unused outputs must be terminated: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "datasheet_page": 16
+    },
+    {
+      "type": "network",
+      "value": "Loop filter: C3=820pF (at CP_OUT), R3=250\u03a9, C1=0.012\u00b5F \u2225 R2=120\u03a9, C2=0.1\u00b5F (at TUNE)",
+      "placement": "Between CP_OUT (pin 7) and TUNE (pin 20)",
+      "reason": "3rd-order passive PLL loop filter. EV kit values for 40kHz bandwidth at fPFD=25MHz, fREF=50MHz.",
+      "datasheet_page": 9
+    }
+  ],
+  "application_circuits": [
+    {
+      "name": "Typical MAX2870 PLL Frequency Synthesiser (datasheet p.23)",
+      "description": "Three separate LDOs supply VCC_RF, VCC_DIG, VCC_PLL for best performance. All six VCC_ pins decoupled with 100nF+1\u00b5F. REF_IN AC-coupled via 100nF to external reference oscillator. CP_OUT drives loop filter (C3=820pF shunt, R3=250\u03a9, C1=0.012\u00b5F\u2225R2=120\u03a9, C2=0.1\u00b5F) feeding TUNE. RFOUTA\u00b1 and RFOUTB\u00b1 biased via 27nH chokes from VCC_RF, terminated into 50\u03a9. NOISE_FILT, BIAS_FILT, REG each with 1\u00b5F to GND. RSET=5.1k\u03a9 to GND. CE and RFOUT_EN pulled high to VCC_DIG via 10k\u03a9. CLK/DATA/LE from SPI master. LD and MUX_OUT to MCU GPIOs. EP soldered to ground plane with via array.",
+      "page": 23
+    }
+  ],
+  "common_mistakes": [
+    "GND_CP (8), GND_PLL (9), GND_RF (11), GND_VCO (18), GND_TUNE (21), GND_DIG (27), GND_SD (31) must NOT route directly to the exposed pad (EP) \u2014 each must connect independently to the board ground plane",
+    "TUNE (pin 20) must NOT connect directly to CP_OUT (pin 7) \u2014 TUNE connects to the output node of the loop filter network",
+    "After every power-up or CE de-assertion, registers must be written TWICE with \u226520ms pause: first pass enables device, second pass triggers VCO autoselection",
+    "Register programming order is mandatory: 5\u21924\u21923\u21922\u21921\u21920 (both times). Out-of-order writes produce undefined behaviour",
+    "Keep RFOUT disabled during the init sequence (Reg4 bits 4 and 8=0, RFOUT_EN pin low); enable with RFA_EN/RFB_EN only after the second complete programming pass",
+    "NOISE_FILT (19), BIAS_FILT (23), and REG (24) MUST each have a 1\u00b5F cap to GND \u2014 omitting any causes VCO instability and severely degraded phase noise",
+    "RF outputs are open-collector \u2014 each requires a 27nH RF choke to VCC_RF. Never connect directly to supply or GND",
+    "Unused RF outputs must still be terminated: 27nH choke to VCC_RF + 50\u03a9 to GND. Do not leave floating",
+    "REF_IN must be AC-coupled \u2014 internal DC bias at VCC_DIG/2 is disturbed by direct DC connection",
+    "VCC_VCO (pin 17) decoupling caps must connect to the analog ground plane, not the digital ground plane",
+    "RSET (pin 22) must have a resistor (2.7k\u03a9\u201310k\u03a9) to GND \u2014 do not leave floating or tie directly to GND",
+    "Analog lock detect mode (LD=10 in Reg5) makes LD pin open-drain \u2014 a 10k\u03a9 pull-up to VCC is required; missing pull-up means LD never goes high",
+    "For fractional-N mode set CPL=01 (Reg1 bits 30:29) and CPOC=0 (Reg1 bit31); for integer-N set CPL=00 and CPOC=1. Swapping degrades phase noise",
+    "VAS auto-select is not valid during and immediately after programming \u2014 wait for TUNE voltage to settle before trusting LD output"
+  ],
+  "notes": "Reg6 (read-only): contains POR status (bit23), VTUNE ADC reading ADC[2:0] (bits 22:20), and active VCO sub-band V[5:0] (bits 8:3). Access via MUX_OUT when MUX[3:0]=1100. VCO manual selection (VAS_SHDN=1, Reg3 bit25) saves ~200\u00b5s lock time but requires a pre-built per-frequency VCO lookup table. Phase shift mode: set P=M\u00d7\u0394\u03c6/360, enable CDM=10, then reset CDM=00. Low-spur mode: SDN=10 (mode1) or SDN=11 (mode2) in Reg2 bits 30:29.",
+  "symbol_type": "ic",
+  "status": "parsed",
   "confidence": "HIGH",
   "extraction_note": null,
   "filename": "MAX2870_-_23.5MHz_to_6000MHz_Fractional_Integer-N_Synthesizer_VCO_-_MAX2870.pdf",
   "page_count": 25,
   "raw_text_length": 41120,
   "uploaded_at": "2026-03-16T09:36:40.593555+00:00",
-  "parsed_at": null,
-  "human_corrections": []
+  "parsed_at": "2026-03-16T09:45:00.000Z",
+  "builtin": false,
+  "package": "TQFN-32-EP",
+  "passives": [
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "description": "VCC_ supply decoupling \u2014 one per VCC_ pin (\u00d76)"
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F",
+      "description": "VCC_ bulk decoupling \u2014 one per VCC_ pin (\u00d76)"
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F",
+      "description": "NOISE_FILT (pin 19) to GND \u2014 mandatory"
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F",
+      "description": "BIAS_FILT (pin 23) to GND \u2014 mandatory"
+    },
+    {
+      "type": "capacitor",
+      "value": "1\u00b5F",
+      "description": "REG (pin 24) to GND \u2014 mandatory"
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "description": "REF_IN (pin 29) AC-coupling cap"
+    },
+    {
+      "type": "resistor",
+      "value": "5.1k\u03a9",
+      "description": "RSET (pin 22) to GND \u2014 sets CP current"
+    },
+    {
+      "type": "inductor",
+      "value": "27nH",
+      "description": "RF choke, VCC_RF to each RF output pin (\u00d74)"
+    },
+    {
+      "type": "resistor",
+      "value": "50\u03a9",
+      "description": "RF output load/termination (\u00d74)"
+    },
+    {
+      "type": "capacitor",
+      "value": "820pF",
+      "description": "Loop filter C3 \u2014 shunt at CP_OUT"
+    },
+    {
+      "type": "resistor",
+      "value": "250\u03a9",
+      "description": "Loop filter R3"
+    },
+    {
+      "type": "capacitor",
+      "value": "0.012\u00b5F",
+      "description": "Loop filter C1"
+    },
+    {
+      "type": "resistor",
+      "value": "120\u03a9",
+      "description": "Loop filter R2"
+    },
+    {
+      "type": "capacitor",
+      "value": "0.1\u00b5F",
+      "description": "Loop filter C2 \u2014 at TUNE"
+    }
+  ],
+  "human_corrections": [],
+  "example_circuit": null,
+  "layout_example": {
+    "board": {
+      "width": 65.0,
+      "height": 65.0,
+      "units": "mm"
+    },
+    "components": [
+      {
+        "id": "U1",
+        "ref": "U1",
+        "slug": "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870",
+        "value": "MAX2870",
+        "x": 32.0,
+        "y": 32.0,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -2.85,
+            "y": 1.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "SPI_CLK"
+          },
+          {
+            "number": "2",
+            "x": -2.85,
+            "y": 1.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "SPI_DATA"
+          },
+          {
+            "number": "3",
+            "x": -2.85,
+            "y": 0.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "SPI_LE"
+          },
+          {
+            "number": "4",
+            "x": -2.85,
+            "y": 0.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "CE_NET"
+          },
+          {
+            "number": "5",
+            "x": -2.85,
+            "y": -0.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "NC"
+          },
+          {
+            "number": "6",
+            "x": -2.85,
+            "y": -0.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "VCC_CP"
+          },
+          {
+            "number": "7",
+            "x": -2.85,
+            "y": -1.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "CP_OUT_N"
+          },
+          {
+            "number": "8",
+            "x": -2.85,
+            "y": -1.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "GND"
+          },
+          {
+            "number": "9",
+            "x": -1.75,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "GND"
+          },
+          {
+            "number": "10",
+            "x": -1.25,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "VCC_PLL"
+          },
+          {
+            "number": "11",
+            "x": -0.75,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "GND"
+          },
+          {
+            "number": "12",
+            "x": -0.25,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "RFOUTA_P"
+          },
+          {
+            "number": "13",
+            "x": 0.25,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "RFOUTA_N"
+          },
+          {
+            "number": "14",
+            "x": 0.75,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "RFOUTB_P"
+          },
+          {
+            "number": "15",
+            "x": 1.25,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "RFOUTB_N"
+          },
+          {
+            "number": "16",
+            "x": 1.75,
+            "y": -2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "VCC_RF"
+          },
+          {
+            "number": "17",
+            "x": 2.85,
+            "y": -1.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "VCC_VCO"
+          },
+          {
+            "number": "18",
+            "x": 2.85,
+            "y": -1.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "GND"
+          },
+          {
+            "number": "19",
+            "x": 2.85,
+            "y": -0.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "NFILT"
+          },
+          {
+            "number": "20",
+            "x": 2.85,
+            "y": -0.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "TUNE_N"
+          },
+          {
+            "number": "21",
+            "x": 2.85,
+            "y": 0.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "GND"
+          },
+          {
+            "number": "22",
+            "x": 2.85,
+            "y": 0.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "RSET_N"
+          },
+          {
+            "number": "23",
+            "x": 2.85,
+            "y": 1.25,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "BFILT"
+          },
+          {
+            "number": "24",
+            "x": 2.85,
+            "y": 1.75,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.9,
+            "size_y": 0.25,
+            "net": "REG_N"
+          },
+          {
+            "number": "25",
+            "x": 1.75,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "LD_N"
+          },
+          {
+            "number": "26",
+            "x": 1.25,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "RFOUT_EN_N"
+          },
+          {
+            "number": "27",
+            "x": 0.75,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "GND"
+          },
+          {
+            "number": "28",
+            "x": 0.25,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "VCC_DIG"
+          },
+          {
+            "number": "29",
+            "x": -0.25,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "REFIN_N"
+          },
+          {
+            "number": "30",
+            "x": -0.75,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "MUX_N"
+          },
+          {
+            "number": "31",
+            "x": -1.25,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "GND"
+          },
+          {
+            "number": "32",
+            "x": -1.75,
+            "y": 2.85,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.25,
+            "size_y": 0.9,
+            "net": "VCC_SD"
+          },
+          {
+            "number": "33",
+            "x": 0,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 3.3,
+            "size_y": 3.3,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_CP1",
+        "ref": "C_CP1",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 26.5,
+        "y": 31.25,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_CP"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_CP2",
+        "ref": "C_CP2",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 26.5,
+        "y": 30.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_CP"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_PL1",
+        "ref": "C_PL1",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 30.75,
+        "y": 26.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_PLL"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_PL2",
+        "ref": "C_PL2",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 30.0,
+        "y": 26.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_PLL"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_RF1",
+        "ref": "C_RF1",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 33.75,
+        "y": 26.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_RF"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_RF2",
+        "ref": "C_RF2",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 34.5,
+        "y": 26.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_RF"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_VC1",
+        "ref": "C_VC1",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 37.5,
+        "y": 30.25,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_VCO"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_VC2",
+        "ref": "C_VC2",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 37.5,
+        "y": 29.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_VCO"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_DG1",
+        "ref": "C_DG1",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 32.25,
+        "y": 37.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_DIG"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_DG2",
+        "ref": "C_DG2",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 33.0,
+        "y": 37.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_DIG"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_SD1",
+        "ref": "C_SD1",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 30.25,
+        "y": 37.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_SD"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_SD2",
+        "ref": "C_SD2",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 29.5,
+        "y": 37.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_SD"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_NF",
+        "ref": "C_NF",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 37.5,
+        "y": 31.25,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "NFILT"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_BF",
+        "ref": "C_BF",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 37.5,
+        "y": 33.25,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "BFILT"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_RG",
+        "ref": "C_RG",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 37.5,
+        "y": 33.75,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "REG_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "R_RS",
+        "ref": "R_RS",
+        "slug": "RESISTOR",
+        "value": "5.1k",
+        "x": 37.5,
+        "y": 32.75,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RSET_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "R_CE",
+        "ref": "R_CE",
+        "slug": "RESISTOR",
+        "value": "10k",
+        "x": 26.5,
+        "y": 33.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_DIG"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "CE_NET"
+          }
+        ]
+      },
+      {
+        "id": "R_RE",
+        "ref": "R_RE",
+        "slug": "RESISTOR",
+        "value": "10k",
+        "x": 35.25,
+        "y": 37.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_DIG"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUT_EN_N"
+          }
+        ]
+      },
+      {
+        "id": "C_RI",
+        "ref": "C_RI",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 31.75,
+        "y": 26.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "REFIN_SRC"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "REFIN_N"
+          }
+        ]
+      },
+      {
+        "id": "L_AP",
+        "ref": "L_AP",
+        "slug": "INDUCTOR",
+        "value": "27nH",
+        "x": 31.75,
+        "y": 24.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTA_P"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_RF"
+          }
+        ]
+      },
+      {
+        "id": "L_AN",
+        "ref": "L_AN",
+        "slug": "INDUCTOR",
+        "value": "27nH",
+        "x": 32.25,
+        "y": 24.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTA_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_RF"
+          }
+        ]
+      },
+      {
+        "id": "L_BP",
+        "ref": "L_BP",
+        "slug": "INDUCTOR",
+        "value": "27nH",
+        "x": 32.75,
+        "y": 24.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTB_P"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_RF"
+          }
+        ]
+      },
+      {
+        "id": "L_BN",
+        "ref": "L_BN",
+        "slug": "INDUCTOR",
+        "value": "27nH",
+        "x": 33.25,
+        "y": 24.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTB_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "VCC_RF"
+          }
+        ]
+      },
+      {
+        "id": "R_AP",
+        "ref": "R_AP",
+        "slug": "RESISTOR",
+        "value": "50R",
+        "x": 31.75,
+        "y": 22.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTA_P"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "R_AN",
+        "ref": "R_AN",
+        "slug": "RESISTOR",
+        "value": "50R",
+        "x": 32.25,
+        "y": 22.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTA_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "R_BP",
+        "ref": "R_BP",
+        "slug": "RESISTOR",
+        "value": "50R",
+        "x": 32.75,
+        "y": 22.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTB_P"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "R_BN",
+        "ref": "R_BN",
+        "slug": "RESISTOR",
+        "value": "50R",
+        "x": 33.25,
+        "y": 22.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "RFOUTB_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "C_LF3",
+        "ref": "C_LF3",
+        "slug": "CAPACITOR",
+        "value": "820pF",
+        "x": 25.5,
+        "y": 30.75,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "CP_OUT_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      },
+      {
+        "id": "R_LF3",
+        "ref": "R_LF3",
+        "slug": "RESISTOR",
+        "value": "250R",
+        "x": 23.0,
+        "y": 30.75,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "CP_OUT_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "TUNE_N"
+          }
+        ]
+      },
+      {
+        "id": "C_LF1",
+        "ref": "C_LF1",
+        "slug": "CAPACITOR",
+        "value": "12nF",
+        "x": 21.5,
+        "y": 29.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "TUNE_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "LF_NODE_B"
+          }
+        ]
+      },
+      {
+        "id": "R_LF2",
+        "ref": "R_LF2",
+        "slug": "RESISTOR",
+        "value": "120R",
+        "x": 23.0,
+        "y": 29.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "TUNE_N"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "LF_NODE_B"
+          }
+        ]
+      },
+      {
+        "id": "C_LF2",
+        "ref": "C_LF2",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 24.5,
+        "y": 29.5,
+        "rotation": 0,
+        "layer": "F",
+        "pads": [
+          {
+            "number": "1",
+            "x": -0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "LF_NODE_B"
+          },
+          {
+            "number": "2",
+            "x": 0.5,
+            "y": 0,
+            "type": "smd",
+            "shape": "rect",
+            "size_x": 0.6,
+            "size_y": 0.6,
+            "net": "GND"
+          }
+        ]
+      }
+    ],
+    "nets": [
+      {
+        "name": "BFILT",
+        "pads": [
+          "C_BF.1",
+          "U1.23"
+        ]
+      },
+      {
+        "name": "CE_NET",
+        "pads": [
+          "R_CE.2",
+          "U1.4"
+        ]
+      },
+      {
+        "name": "CP_OUT_N",
+        "pads": [
+          "C_LF3.1",
+          "R_LF3.1",
+          "U1.7"
+        ]
+      },
+      {
+        "name": "GND",
+        "pads": [
+          "C_BF.2",
+          "C_CP1.2",
+          "C_CP2.2",
+          "C_DG1.2",
+          "C_DG2.2",
+          "C_LF2.2",
+          "C_LF3.2",
+          "C_NF.2",
+          "C_PL1.2",
+          "C_PL2.2",
+          "C_RF1.2",
+          "C_RF2.2",
+          "C_RG.2",
+          "C_SD1.2",
+          "C_SD2.2",
+          "C_VC1.2",
+          "C_VC2.2",
+          "R_AN.2",
+          "R_AP.2",
+          "R_BN.2",
+          "R_BP.2",
+          "R_RS.2",
+          "U1.11",
+          "U1.18",
+          "U1.21",
+          "U1.27",
+          "U1.31",
+          "U1.33",
+          "U1.8",
+          "U1.9"
+        ]
+      },
+      {
+        "name": "LF_NODE_B",
+        "pads": [
+          "C_LF1.2",
+          "C_LF2.1",
+          "R_LF2.2"
+        ]
+      },
+      {
+        "name": "NFILT",
+        "pads": [
+          "C_NF.1",
+          "U1.19"
+        ]
+      },
+      {
+        "name": "REFIN_N",
+        "pads": [
+          "C_RI.2",
+          "U1.29"
+        ]
+      },
+      {
+        "name": "REG_N",
+        "pads": [
+          "C_RG.1",
+          "U1.24"
+        ]
+      },
+      {
+        "name": "RFOUTA_N",
+        "pads": [
+          "L_AN.1",
+          "R_AN.1",
+          "U1.13"
+        ]
+      },
+      {
+        "name": "RFOUTA_P",
+        "pads": [
+          "L_AP.1",
+          "R_AP.1",
+          "U1.12"
+        ]
+      },
+      {
+        "name": "RFOUTB_N",
+        "pads": [
+          "L_BN.1",
+          "R_BN.1",
+          "U1.15"
+        ]
+      },
+      {
+        "name": "RFOUTB_P",
+        "pads": [
+          "L_BP.1",
+          "R_BP.1",
+          "U1.14"
+        ]
+      },
+      {
+        "name": "RFOUT_EN_N",
+        "pads": [
+          "R_RE.2",
+          "U1.26"
+        ]
+      },
+      {
+        "name": "RSET_N",
+        "pads": [
+          "R_RS.1",
+          "U1.22"
+        ]
+      },
+      {
+        "name": "TUNE_N",
+        "pads": [
+          "C_LF1.1",
+          "R_LF2.1",
+          "R_LF3.2",
+          "U1.20"
+        ]
+      },
+      {
+        "name": "VCC_CP",
+        "pads": [
+          "C_CP1.1",
+          "C_CP2.1",
+          "U1.6"
+        ]
+      },
+      {
+        "name": "VCC_DIG",
+        "pads": [
+          "C_DG1.1",
+          "C_DG2.1",
+          "R_CE.1",
+          "R_RE.1",
+          "U1.28"
+        ]
+      },
+      {
+        "name": "VCC_PLL",
+        "pads": [
+          "C_PL1.1",
+          "C_PL2.1",
+          "U1.10"
+        ]
+      },
+      {
+        "name": "VCC_RF",
+        "pads": [
+          "C_RF1.1",
+          "C_RF2.1",
+          "L_AN.2",
+          "L_AP.2",
+          "L_BN.2",
+          "L_BP.2",
+          "U1.16"
+        ]
+      },
+      {
+        "name": "VCC_SD",
+        "pads": [
+          "C_SD1.1",
+          "C_SD2.1",
+          "U1.32"
+        ]
+      },
+      {
+        "name": "VCC_VCO",
+        "pads": [
+          "C_VC1.1",
+          "C_VC2.1",
+          "U1.17"
+        ]
+      }
+    ],
+    "traces": [
+      {
+        "net": "VCC_CP",
+        "layer": "F.Cu",
+        "width": 0.4,
+        "segments": [
+          {
+            "start": {
+              "x": 29.15,
+              "y": 31.25
+            },
+            "end": {
+              "x": 26.0,
+              "y": 31.25
+            }
+          },
+          {
+            "start": {
+              "x": 26.0,
+              "y": 31.25
+            },
+            "end": {
+              "x": 26.0,
+              "y": 30.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "VCC_DIG",
+        "layer": "F.Cu",
+        "width": 0.4,
+        "segments": [
+          {
+            "start": {
+              "x": 32.25,
+              "y": 34.85
+            },
+            "end": {
+              "x": 32.25,
+              "y": 37.4
+            }
+          },
+          {
+            "start": {
+              "x": 32.25,
+              "y": 37.4
+            },
+            "end": {
+              "x": 32.35,
+              "y": 37.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.35,
+              "y": 37.5
+            },
+            "end": {
+              "x": 32.5,
+              "y": 37.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.5,
+              "y": 37.5
+            },
+            "end": {
+              "x": 31.75,
+              "y": 37.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.5,
+              "y": 37.5
+            },
+            "end": {
+              "x": 34.75,
+              "y": 37.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.25,
+              "y": 34.85
+            },
+            "end": {
+              "x": 32.0,
+              "y": 34.75
+            }
+          },
+          {
+            "start": {
+              "x": 32.0,
+              "y": 34.75
+            },
+            "end": {
+              "x": 26.25,
+              "y": 34.75
+            }
+          },
+          {
+            "start": {
+              "x": 26.25,
+              "y": 34.75
+            },
+            "end": {
+              "x": 26.0,
+              "y": 34.5
+            }
+          },
+          {
+            "start": {
+              "x": 26.0,
+              "y": 34.5
+            },
+            "end": {
+              "x": 26.0,
+              "y": 33.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "VCC_PLL",
+        "layer": "F.Cu",
+        "width": 0.4,
+        "segments": [
+          {
+            "start": {
+              "x": 30.75,
+              "y": 29.15
+            },
+            "end": {
+              "x": 30.5,
+              "y": 29.25
+            }
+          },
+          {
+            "start": {
+              "x": 30.5,
+              "y": 29.25
+            },
+            "end": {
+              "x": 30.35,
+              "y": 29.25
+            }
+          },
+          {
+            "start": {
+              "x": 30.35,
+              "y": 29.25
+            },
+            "end": {
+              "x": 30.25,
+              "y": 29.15
+            }
+          },
+          {
+            "start": {
+              "x": 30.25,
+              "y": 29.15
+            },
+            "end": {
+              "x": 30.25,
+              "y": 26.5
+            }
+          },
+          {
+            "start": {
+              "x": 30.25,
+              "y": 26.5
+            },
+            "end": {
+              "x": 29.5,
+              "y": 26.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "VCC_RF",
+        "layer": "F.Cu",
+        "width": 0.4,
+        "segments": [
+          {
+            "start": {
+              "x": 33.75,
+              "y": 29.15
+            },
+            "end": {
+              "x": 33.75,
+              "y": 26.6
+            }
+          },
+          {
+            "start": {
+              "x": 33.75,
+              "y": 26.6
+            },
+            "end": {
+              "x": 33.85,
+              "y": 26.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.85,
+              "y": 26.5
+            },
+            "end": {
+              "x": 34.0,
+              "y": 26.5
+            }
+          },
+          {
+            "start": {
+              "x": 34.0,
+              "y": 26.5
+            },
+            "end": {
+              "x": 33.25,
+              "y": 26.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.25,
+              "y": 26.5
+            },
+            "end": {
+              "x": 33.25,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.25,
+              "y": 24.5
+            },
+            "end": {
+              "x": 32.75,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.75,
+              "y": 24.5
+            },
+            "end": {
+              "x": 32.25,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.25,
+              "y": 24.5
+            },
+            "end": {
+              "x": 33.75,
+              "y": 24.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "VCC_SD",
+        "layer": "F.Cu",
+        "width": 0.4,
+        "segments": [
+          {
+            "start": {
+              "x": 30.25,
+              "y": 34.85
+            },
+            "end": {
+              "x": 30.0,
+              "y": 34.75
+            }
+          },
+          {
+            "start": {
+              "x": 30.0,
+              "y": 34.75
+            },
+            "end": {
+              "x": 29.85,
+              "y": 34.75
+            }
+          },
+          {
+            "start": {
+              "x": 29.85,
+              "y": 34.75
+            },
+            "end": {
+              "x": 29.75,
+              "y": 34.85
+            }
+          },
+          {
+            "start": {
+              "x": 29.75,
+              "y": 34.85
+            },
+            "end": {
+              "x": 29.75,
+              "y": 37.5
+            }
+          },
+          {
+            "start": {
+              "x": 29.75,
+              "y": 37.5
+            },
+            "end": {
+              "x": 29.0,
+              "y": 37.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "VCC_VCO",
+        "layer": "F.Cu",
+        "width": 0.4,
+        "segments": [
+          {
+            "start": {
+              "x": 34.85,
+              "y": 30.25
+            },
+            "end": {
+              "x": 37.0,
+              "y": 30.25
+            }
+          },
+          {
+            "start": {
+              "x": 37.0,
+              "y": 30.25
+            },
+            "end": {
+              "x": 37.0,
+              "y": 29.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "BFILT",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 34.85,
+              "y": 33.25
+            },
+            "end": {
+              "x": 37.0,
+              "y": 33.25
+            }
+          }
+        ]
+      },
+      {
+        "net": "CE_NET",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 29.15,
+              "y": 32.25
+            },
+            "end": {
+              "x": 27.25,
+              "y": 32.25
+            }
+          },
+          {
+            "start": {
+              "x": 27.25,
+              "y": 32.25
+            },
+            "end": {
+              "x": 27.0,
+              "y": 32.5
+            }
+          },
+          {
+            "start": {
+              "x": 27.0,
+              "y": 32.5
+            },
+            "end": {
+              "x": 27.0,
+              "y": 33.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "CP_OUT_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 29.15,
+              "y": 30.75
+            },
+            "end": {
+              "x": 28.25,
+              "y": 30.75
+            }
+          },
+          {
+            "start": {
+              "x": 25.0,
+              "y": 30.75
+            },
+            "end": {
+              "x": 22.5,
+              "y": 30.75
+            }
+          }
+        ]
+      },
+      {
+        "net": "CP_OUT_N",
+        "layer": "B.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 28.25,
+              "y": 30.75
+            },
+            "end": {
+              "x": 28.1,
+              "y": 30.75
+            }
+          },
+          {
+            "start": {
+              "x": 28.1,
+              "y": 30.75
+            },
+            "end": {
+              "x": 28.0,
+              "y": 30.85
+            }
+          },
+          {
+            "start": {
+              "x": 28.0,
+              "y": 30.85
+            },
+            "end": {
+              "x": 28.0,
+              "y": 32.0
+            }
+          },
+          {
+            "start": {
+              "x": 28.0,
+              "y": 32.0
+            },
+            "end": {
+              "x": 27.75,
+              "y": 32.25
+            }
+          },
+          {
+            "start": {
+              "x": 27.75,
+              "y": 32.25
+            },
+            "end": {
+              "x": 25.25,
+              "y": 32.25
+            }
+          },
+          {
+            "start": {
+              "x": 25.25,
+              "y": 32.25
+            },
+            "end": {
+              "x": 25.0,
+              "y": 32.0
+            }
+          },
+          {
+            "start": {
+              "x": 25.0,
+              "y": 32.0
+            },
+            "end": {
+              "x": 25.0,
+              "y": 30.75
+            }
+          }
+        ]
+      },
+      {
+        "net": "LF_NODE_B",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 22.0,
+              "y": 29.5
+            },
+            "end": {
+              "x": 23.5,
+              "y": 29.5
+            }
+          },
+          {
+            "start": {
+              "x": 23.5,
+              "y": 29.5
+            },
+            "end": {
+              "x": 24.0,
+              "y": 29.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "NFILT",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 34.85,
+              "y": 31.25
+            },
+            "end": {
+              "x": 37.0,
+              "y": 31.25
+            }
+          }
+        ]
+      },
+      {
+        "net": "REFIN_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 31.75,
+              "y": 34.85
+            },
+            "end": {
+              "x": 31.75,
+              "y": 26.7
+            }
+          },
+          {
+            "start": {
+              "x": 31.75,
+              "y": 26.7
+            },
+            "end": {
+              "x": 31.95,
+              "y": 26.5
+            }
+          },
+          {
+            "start": {
+              "x": 31.95,
+              "y": 26.5
+            },
+            "end": {
+              "x": 32.25,
+              "y": 26.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "REG_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 34.85,
+              "y": 33.75
+            },
+            "end": {
+              "x": 35.65,
+              "y": 33.75
+            }
+          },
+          {
+            "start": {
+              "x": 35.65,
+              "y": 33.75
+            },
+            "end": {
+              "x": 35.75,
+              "y": 33.85
+            }
+          },
+          {
+            "start": {
+              "x": 35.75,
+              "y": 33.85
+            },
+            "end": {
+              "x": 35.75,
+              "y": 33.94
+            }
+          },
+          {
+            "start": {
+              "x": 35.75,
+              "y": 33.94
+            },
+            "end": {
+              "x": 35.81,
+              "y": 34.0
+            }
+          },
+          {
+            "start": {
+              "x": 35.81,
+              "y": 34.0
+            },
+            "end": {
+              "x": 36.15,
+              "y": 34.0
+            }
+          },
+          {
+            "start": {
+              "x": 36.15,
+              "y": 34.0
+            },
+            "end": {
+              "x": 36.25,
+              "y": 33.9
+            }
+          },
+          {
+            "start": {
+              "x": 36.25,
+              "y": 33.9
+            },
+            "end": {
+              "x": 36.25,
+              "y": 33.81
+            }
+          },
+          {
+            "start": {
+              "x": 36.25,
+              "y": 33.81
+            },
+            "end": {
+              "x": 36.31,
+              "y": 33.75
+            }
+          },
+          {
+            "start": {
+              "x": 36.31,
+              "y": 33.75
+            },
+            "end": {
+              "x": 37.0,
+              "y": 33.75
+            }
+          }
+        ]
+      },
+      {
+        "net": "RFOUTA_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 32.25,
+              "y": 29.15
+            },
+            "end": {
+              "x": 32.0,
+              "y": 29.25
+            }
+          },
+          {
+            "start": {
+              "x": 32.0,
+              "y": 29.25
+            },
+            "end": {
+              "x": 31.85,
+              "y": 29.25
+            }
+          },
+          {
+            "start": {
+              "x": 31.85,
+              "y": 29.25
+            },
+            "end": {
+              "x": 31.75,
+              "y": 29.15
+            }
+          },
+          {
+            "start": {
+              "x": 31.75,
+              "y": 29.15
+            },
+            "end": {
+              "x": 31.75,
+              "y": 28.5
+            }
+          },
+          {
+            "start": {
+              "x": 31.75,
+              "y": 28.5
+            },
+            "end": {
+              "x": 31.5,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 31.5,
+              "y": 28.25
+            },
+            "end": {
+              "x": 29.75,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 29.75,
+              "y": 28.25
+            },
+            "end": {
+              "x": 29.5,
+              "y": 28.0
+            }
+          },
+          {
+            "start": {
+              "x": 29.5,
+              "y": 28.0
+            },
+            "end": {
+              "x": 29.5,
+              "y": 27.7
+            }
+          },
+          {
+            "start": {
+              "x": 29.5,
+              "y": 27.7
+            },
+            "end": {
+              "x": 29.3,
+              "y": 27.5
+            }
+          },
+          {
+            "start": {
+              "x": 29.3,
+              "y": 27.5
+            },
+            "end": {
+              "x": 28.75,
+              "y": 27.5
+            }
+          },
+          {
+            "start": {
+              "x": 28.75,
+              "y": 27.5
+            },
+            "end": {
+              "x": 28.5,
+              "y": 27.25
+            }
+          },
+          {
+            "start": {
+              "x": 28.5,
+              "y": 27.25
+            },
+            "end": {
+              "x": 28.5,
+              "y": 25.75
+            }
+          },
+          {
+            "start": {
+              "x": 28.5,
+              "y": 25.75
+            },
+            "end": {
+              "x": 28.75,
+              "y": 25.5
+            }
+          },
+          {
+            "start": {
+              "x": 28.75,
+              "y": 25.5
+            },
+            "end": {
+              "x": 30.75,
+              "y": 25.5
+            }
+          },
+          {
+            "start": {
+              "x": 30.75,
+              "y": 25.5
+            },
+            "end": {
+              "x": 31.0,
+              "y": 25.25
+            }
+          },
+          {
+            "start": {
+              "x": 31.0,
+              "y": 25.25
+            },
+            "end": {
+              "x": 31.0,
+              "y": 24.75
+            }
+          },
+          {
+            "start": {
+              "x": 31.0,
+              "y": 24.75
+            },
+            "end": {
+              "x": 31.25,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 31.25,
+              "y": 24.5
+            },
+            "end": {
+              "x": 31.75,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 31.75,
+              "y": 24.5
+            },
+            "end": {
+              "x": 31.75,
+              "y": 22.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "RFOUTA_P",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 31.75,
+              "y": 29.15
+            },
+            "end": {
+              "x": 31.5,
+              "y": 29.25
+            }
+          },
+          {
+            "start": {
+              "x": 31.5,
+              "y": 29.25
+            },
+            "end": {
+              "x": 31.35,
+              "y": 29.25
+            }
+          },
+          {
+            "start": {
+              "x": 31.35,
+              "y": 29.25
+            },
+            "end": {
+              "x": 31.25,
+              "y": 29.15
+            }
+          },
+          {
+            "start": {
+              "x": 31.25,
+              "y": 29.15
+            },
+            "end": {
+              "x": 31.25,
+              "y": 28.5
+            }
+          },
+          {
+            "start": {
+              "x": 31.25,
+              "y": 28.5
+            },
+            "end": {
+              "x": 31.0,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 31.0,
+              "y": 28.25
+            },
+            "end": {
+              "x": 28.0,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 28.0,
+              "y": 28.25
+            },
+            "end": {
+              "x": 27.75,
+              "y": 28.0
+            }
+          },
+          {
+            "start": {
+              "x": 27.75,
+              "y": 28.0
+            },
+            "end": {
+              "x": 27.75,
+              "y": 24.75
+            }
+          },
+          {
+            "start": {
+              "x": 27.75,
+              "y": 24.75
+            },
+            "end": {
+              "x": 28.0,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 28.0,
+              "y": 24.5
+            },
+            "end": {
+              "x": 31.25,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 31.25,
+              "y": 24.5
+            },
+            "end": {
+              "x": 31.25,
+              "y": 23.85
+            }
+          },
+          {
+            "start": {
+              "x": 31.25,
+              "y": 23.85
+            },
+            "end": {
+              "x": 31.15,
+              "y": 23.75
+            }
+          },
+          {
+            "start": {
+              "x": 31.15,
+              "y": 23.75
+            },
+            "end": {
+              "x": 31.06,
+              "y": 23.75
+            }
+          },
+          {
+            "start": {
+              "x": 31.06,
+              "y": 23.75
+            },
+            "end": {
+              "x": 31.0,
+              "y": 23.69
+            }
+          },
+          {
+            "start": {
+              "x": 31.0,
+              "y": 23.69
+            },
+            "end": {
+              "x": 31.0,
+              "y": 22.6
+            }
+          },
+          {
+            "start": {
+              "x": 31.0,
+              "y": 22.6
+            },
+            "end": {
+              "x": 31.1,
+              "y": 22.5
+            }
+          },
+          {
+            "start": {
+              "x": 31.1,
+              "y": 22.5
+            },
+            "end": {
+              "x": 31.25,
+              "y": 22.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "RFOUTB_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 33.25,
+              "y": 29.15
+            },
+            "end": {
+              "x": 33.25,
+              "y": 28.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.25,
+              "y": 28.5
+            },
+            "end": {
+              "x": 33.5,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 33.5,
+              "y": 28.25
+            },
+            "end": {
+              "x": 34.25,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 34.25,
+              "y": 28.25
+            },
+            "end": {
+              "x": 34.5,
+              "y": 28.0
+            }
+          },
+          {
+            "start": {
+              "x": 34.5,
+              "y": 28.0
+            },
+            "end": {
+              "x": 34.5,
+              "y": 27.7
+            }
+          },
+          {
+            "start": {
+              "x": 34.5,
+              "y": 27.7
+            },
+            "end": {
+              "x": 34.7,
+              "y": 27.5
+            }
+          },
+          {
+            "start": {
+              "x": 34.7,
+              "y": 27.5
+            },
+            "end": {
+              "x": 35.75,
+              "y": 27.5
+            }
+          },
+          {
+            "start": {
+              "x": 35.75,
+              "y": 27.5
+            },
+            "end": {
+              "x": 36.0,
+              "y": 27.25
+            }
+          },
+          {
+            "start": {
+              "x": 36.0,
+              "y": 27.25
+            },
+            "end": {
+              "x": 36.0,
+              "y": 25.75
+            }
+          },
+          {
+            "start": {
+              "x": 36.0,
+              "y": 25.75
+            },
+            "end": {
+              "x": 35.75,
+              "y": 25.5
+            }
+          },
+          {
+            "start": {
+              "x": 35.75,
+              "y": 25.5
+            },
+            "end": {
+              "x": 34.1,
+              "y": 25.5
+            }
+          },
+          {
+            "start": {
+              "x": 34.1,
+              "y": 25.5
+            },
+            "end": {
+              "x": 34.0,
+              "y": 25.4
+            }
+          },
+          {
+            "start": {
+              "x": 34.0,
+              "y": 25.4
+            },
+            "end": {
+              "x": 34.0,
+              "y": 25.31
+            }
+          },
+          {
+            "start": {
+              "x": 34.0,
+              "y": 25.31
+            },
+            "end": {
+              "x": 33.94,
+              "y": 25.25
+            }
+          },
+          {
+            "start": {
+              "x": 33.94,
+              "y": 25.25
+            },
+            "end": {
+              "x": 33.0,
+              "y": 25.25
+            }
+          },
+          {
+            "start": {
+              "x": 33.0,
+              "y": 25.25
+            },
+            "end": {
+              "x": 32.75,
+              "y": 25.0
+            }
+          },
+          {
+            "start": {
+              "x": 32.75,
+              "y": 25.0
+            },
+            "end": {
+              "x": 32.75,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.75,
+              "y": 24.5
+            },
+            "end": {
+              "x": 32.75,
+              "y": 22.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "RFOUTB_P",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 32.75,
+              "y": 29.15
+            },
+            "end": {
+              "x": 32.75,
+              "y": 28.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.75,
+              "y": 28.5
+            },
+            "end": {
+              "x": 33.0,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 33.0,
+              "y": 28.25
+            },
+            "end": {
+              "x": 36.5,
+              "y": 28.25
+            }
+          },
+          {
+            "start": {
+              "x": 36.5,
+              "y": 28.25
+            },
+            "end": {
+              "x": 36.75,
+              "y": 28.0
+            }
+          },
+          {
+            "start": {
+              "x": 36.75,
+              "y": 28.0
+            },
+            "end": {
+              "x": 36.75,
+              "y": 25.0
+            }
+          },
+          {
+            "start": {
+              "x": 36.75,
+              "y": 25.0
+            },
+            "end": {
+              "x": 36.5,
+              "y": 24.75
+            }
+          },
+          {
+            "start": {
+              "x": 36.5,
+              "y": 24.75
+            },
+            "end": {
+              "x": 35.0,
+              "y": 24.75
+            }
+          },
+          {
+            "start": {
+              "x": 35.0,
+              "y": 24.75
+            },
+            "end": {
+              "x": 34.75,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 34.75,
+              "y": 24.5
+            },
+            "end": {
+              "x": 34.75,
+              "y": 23.75
+            }
+          },
+          {
+            "start": {
+              "x": 34.75,
+              "y": 23.75
+            },
+            "end": {
+              "x": 34.5,
+              "y": 23.5
+            }
+          },
+          {
+            "start": {
+              "x": 34.5,
+              "y": 23.5
+            },
+            "end": {
+              "x": 33.6,
+              "y": 23.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.6,
+              "y": 23.5
+            },
+            "end": {
+              "x": 33.5,
+              "y": 23.6
+            }
+          },
+          {
+            "start": {
+              "x": 33.5,
+              "y": 23.6
+            },
+            "end": {
+              "x": 33.5,
+              "y": 23.69
+            }
+          },
+          {
+            "start": {
+              "x": 33.5,
+              "y": 23.69
+            },
+            "end": {
+              "x": 33.44,
+              "y": 23.75
+            }
+          },
+          {
+            "start": {
+              "x": 33.44,
+              "y": 23.75
+            },
+            "end": {
+              "x": 32.5,
+              "y": 23.75
+            }
+          },
+          {
+            "start": {
+              "x": 32.5,
+              "y": 23.75
+            },
+            "end": {
+              "x": 32.25,
+              "y": 24.0
+            }
+          },
+          {
+            "start": {
+              "x": 32.25,
+              "y": 24.0
+            },
+            "end": {
+              "x": 32.25,
+              "y": 24.5
+            }
+          },
+          {
+            "start": {
+              "x": 32.25,
+              "y": 24.5
+            },
+            "end": {
+              "x": 32.25,
+              "y": 22.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "RFOUT_EN_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 33.25,
+              "y": 34.85
+            },
+            "end": {
+              "x": 33.25,
+              "y": 36.25
+            }
+          },
+          {
+            "start": {
+              "x": 33.25,
+              "y": 36.25
+            },
+            "end": {
+              "x": 33.5,
+              "y": 36.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.5,
+              "y": 36.5
+            },
+            "end": {
+              "x": 33.8,
+              "y": 36.5
+            }
+          },
+          {
+            "start": {
+              "x": 33.8,
+              "y": 36.5
+            },
+            "end": {
+              "x": 34.0,
+              "y": 36.7
+            }
+          },
+          {
+            "start": {
+              "x": 34.0,
+              "y": 36.7
+            },
+            "end": {
+              "x": 34.0,
+              "y": 37.25
+            }
+          },
+          {
+            "start": {
+              "x": 34.0,
+              "y": 37.25
+            },
+            "end": {
+              "x": 34.25,
+              "y": 37.5
+            }
+          },
+          {
+            "start": {
+              "x": 34.25,
+              "y": 37.5
+            },
+            "end": {
+              "x": 35.75,
+              "y": 37.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "RSET_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 34.85,
+              "y": 32.75
+            },
+            "end": {
+              "x": 35.65,
+              "y": 32.75
+            }
+          },
+          {
+            "start": {
+              "x": 35.65,
+              "y": 32.75
+            },
+            "end": {
+              "x": 35.75,
+              "y": 32.65
+            }
+          },
+          {
+            "start": {
+              "x": 35.75,
+              "y": 32.65
+            },
+            "end": {
+              "x": 35.75,
+              "y": 32.56
+            }
+          },
+          {
+            "start": {
+              "x": 35.75,
+              "y": 32.56
+            },
+            "end": {
+              "x": 35.81,
+              "y": 32.5
+            }
+          },
+          {
+            "start": {
+              "x": 35.81,
+              "y": 32.5
+            },
+            "end": {
+              "x": 36.15,
+              "y": 32.5
+            }
+          },
+          {
+            "start": {
+              "x": 36.15,
+              "y": 32.5
+            },
+            "end": {
+              "x": 36.25,
+              "y": 32.6
+            }
+          },
+          {
+            "start": {
+              "x": 36.25,
+              "y": 32.6
+            },
+            "end": {
+              "x": 36.25,
+              "y": 32.69
+            }
+          },
+          {
+            "start": {
+              "x": 36.25,
+              "y": 32.69
+            },
+            "end": {
+              "x": 36.31,
+              "y": 32.75
+            }
+          },
+          {
+            "start": {
+              "x": 36.31,
+              "y": 32.75
+            },
+            "end": {
+              "x": 37.0,
+              "y": 32.75
+            }
+          }
+        ]
+      },
+      {
+        "net": "TUNE_N",
+        "layer": "F.Cu",
+        "width": 0.25,
+        "segments": [
+          {
+            "start": {
+              "x": 34.85,
+              "y": 31.75
+            },
+            "end": {
+              "x": 28.5,
+              "y": 31.75
+            }
+          },
+          {
+            "start": {
+              "x": 28.5,
+              "y": 31.75
+            },
+            "end": {
+              "x": 28.25,
+              "y": 31.5
+            }
+          },
+          {
+            "start": {
+              "x": 28.25,
+              "y": 31.5
+            },
+            "end": {
+              "x": 28.25,
+              "y": 29.85
+            }
+          },
+          {
+            "start": {
+              "x": 28.25,
+              "y": 29.85
+            },
+            "end": {
+              "x": 28.15,
+              "y": 29.75
+            }
+          },
+          {
+            "start": {
+              "x": 28.15,
+              "y": 29.75
+            },
+            "end": {
+              "x": 28.06,
+              "y": 29.75
+            }
+          },
+          {
+            "start": {
+              "x": 28.06,
+              "y": 29.75
+            },
+            "end": {
+              "x": 28.0,
+              "y": 29.69
+            }
+          },
+          {
+            "start": {
+              "x": 28.0,
+              "y": 29.69
+            },
+            "end": {
+              "x": 28.0,
+              "y": 29.576
+            }
+          },
+          {
+            "start": {
+              "x": 28.0,
+              "y": 29.576
+            },
+            "end": {
+              "x": 27.924,
+              "y": 29.5
+            }
+          },
+          {
+            "start": {
+              "x": 27.924,
+              "y": 29.5
+            },
+            "end": {
+              "x": 26.25,
+              "y": 29.5
+            }
+          },
+          {
+            "start": {
+              "x": 26.25,
+              "y": 29.5
+            },
+            "end": {
+              "x": 26.0,
+              "y": 29.25
+            }
+          },
+          {
+            "start": {
+              "x": 26.0,
+              "y": 29.25
+            },
+            "end": {
+              "x": 26.0,
+              "y": 28.75
+            }
+          },
+          {
+            "start": {
+              "x": 26.0,
+              "y": 28.75
+            },
+            "end": {
+              "x": 25.75,
+              "y": 28.5
+            }
+          },
+          {
+            "start": {
+              "x": 25.75,
+              "y": 28.5
+            },
+            "end": {
+              "x": 23.75,
+              "y": 28.5
+            }
+          },
+          {
+            "start": {
+              "x": 23.75,
+              "y": 28.5
+            },
+            "end": {
+              "x": 23.5,
+              "y": 28.75
+            }
+          },
+          {
+            "start": {
+              "x": 23.5,
+              "y": 28.75
+            },
+            "end": {
+              "x": 23.5,
+              "y": 30.75
+            }
+          },
+          {
+            "start": {
+              "x": 23.5,
+              "y": 30.75
+            },
+            "end": {
+              "x": 22.75,
+              "y": 30.75
+            }
+          },
+          {
+            "start": {
+              "x": 22.75,
+              "y": 30.75
+            },
+            "end": {
+              "x": 22.5,
+              "y": 30.5
+            }
+          },
+          {
+            "start": {
+              "x": 22.5,
+              "y": 30.5
+            },
+            "end": {
+              "x": 22.5,
+              "y": 29.5
+            }
+          },
+          {
+            "start": {
+              "x": 22.5,
+              "y": 29.5
+            },
+            "end": {
+              "x": 21.0,
+              "y": 29.5
+            }
+          }
+        ]
+      }
+    ],
+    "vias": [
+      {
+        "x": 28.25,
+        "y": 30.75,
+        "size": 1.0,
+        "drill": 0.6,
+        "net": "CP_OUT_N"
+      }
+    ]
+  },
+  "has_layout_example": true
 }
