@@ -295,6 +295,29 @@ async def api_library_new(request: Request):
     _update_index()
     return {"ok": True, "slug": slug}
 
+@router.post("/library/import-profile")
+async def api_library_import_profile(request: Request):
+    """Import a single profile.json file into the library."""
+    body = await request.json()
+    # Require at least part_number or slug
+    slug = body.get("slug") or (body.get("part_number") and re.sub(r"[^a-zA-Z0-9_\-]", "_", body["part_number"]).upper())
+    if not slug:
+        raise HTTPException(400, "profile must have part_number or slug field")
+    d = LIBRARY_DIR / slug
+    d.mkdir(parents=True, exist_ok=True)
+    # Preserve human_corrections if component already exists
+    pp = _profile_path(slug)
+    if pp.exists():
+        try:
+            existing = json.loads(pp.read_text("utf-8"))
+            if existing.get("human_corrections") and not body.get("human_corrections"):
+                body["human_corrections"] = existing["human_corrections"]
+        except Exception:
+            pass
+    _write_profile(slug, body)
+    _update_index()
+    return {"ok": True, "slug": slug, "updated": pp.exists()}
+
 @router.get("/library/{slug}/raw")
 def api_library_raw(slug: str):
     txt = LIBRARY_DIR / slug / "raw_text.txt"

@@ -182,6 +182,37 @@ async function importLibraryBundle(input) {
   if (d.ticketsImported) await ahLoad();
 }
 
+async function importSingleProfile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  let profile;
+  try {
+    profile = JSON.parse(await file.text());
+  } catch(e) {
+    alert('Invalid JSON: ' + e.message);
+    return;
+  }
+  if (!profile.part_number && !profile.slug) {
+    alert('Profile must have a part_number field.');
+    return;
+  }
+  try {
+    const res = await fetch('/api/library/import-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Import failed');
+    const action = data.updated ? 'Updated' : 'Imported';
+    alert(`${action}: ${data.slug}`);
+    if (typeof loadLibrary === 'function') loadLibrary();
+  } catch(e) {
+    alert('Import failed: ' + e.message);
+  }
+}
+
 // ── Design Bundle Export / Import (sharing) ───────────────────────────────────
 
 async function exportDesignBundle() {
@@ -244,9 +275,139 @@ async function importDesignBundle(input) {
 }
 
 // ── AI Circuit Generator ──────────────────────────────────────────────────────
-function openAIGenerateModal() {
+let _aiGenPollTimer = null;
+let _aiGenTicketId = null;
+let _aiGenSelectedSlugs = new Set();
+
+async function openAIGenerateModal() {
   document.getElementById('ai-gen-modal').style.display = 'flex';
   document.getElementById('ai-gen-prompt-wrap').style.display = 'none';
+  document.getElementById('ai-gen-status').style.display = 'none';
+  document.getElementById('ai-gen-submit-btn').disabled = false;
+  _aiGenSelectedSlugs = new Set();
+  // Populate component grid from library
+  const grid = document.getElementById('ai-gen-comp-grid');
+  if (grid) {
+    grid.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Loading library…</span>';
+    try {
+      const lib = await fetch('/api/library').then(r => r.json());
+      if (!lib || !lib.length) {
+        grid.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">No components in library.</span>';
+        return;
+      }
+      grid.innerHTML = lib.map(c => {
+        const label = c.part_number || c.slug;
+        const dot = c.builtin ? '#4b5563' : '#a78bfa';
+        return `<div class="ai-gen-chip" data-slug="${esc(c.slug)}"
+          onclick="aiGenToggleChip(this, '${esc(c.slug)}')"
+          title="${esc(c.description || c.slug)}"
+          style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:12px;
+                 border:1px solid var(--border);background:var(--surface);cursor:pointer;
+                 font-size:11px;color:var(--text-dim);user-select:none;transition:all 0.12s;">
+          <span style="width:7px;height:7px;border-radius:50%;background:${dot};flex-shrink:0;"></span>
+          ${esc(label)}
+        </div>`;
+      }).join('');
+    } catch(e) {
+      grid.innerHTML = '<span style="color:var(--text-muted);font-size:11px;">Could not load library.</span>';
+    }
+  }
+}
+
+function aiGenToggleChip(el, slug) {
+  if (_aiGenSelectedSlugs.has(slug)) {
+    _aiGenSelectedSlugs.delete(slug);
+    el.style.background = 'var(--surface)';
+    el.style.borderColor = 'var(--border)';
+    el.style.color = 'var(--text-dim)';
+  } else {
+    _aiGenSelectedSlugs.add(slug);
+    el.style.background = 'rgba(124,58,237,0.18)';
+    el.style.borderColor = '#7c3aed';
+    el.style.color = '#a78bfa';
+  }
+}
+
+function closeAIGenerateModal() {
+  document.getElementById('ai-gen-modal').style.display = 'none';
+  if (_aiGenPollTimer) { clearInterval(_aiGenPollTimer); _aiGenPollTimer = null; }
+}
+
+function _aiGenSetStatus(icon, msg, pct, showOpen) {
+  document.getElementById('ai-gen-status').style.display = 'block';
+  document.getElementById('ai-gen-status-icon').textContent = icon;
+  document.getElementById('ai-gen-status-msg').textContent = msg;
+  document.getElementById('ai-gen-progress-fill').style.width = pct + '%';
+  document.getElementById('ai-gen-open-wrap').style.display = showOpen ? 'block' : 'none';
+}
+
+async function submitAIGenerate() {
+  const desc = (document.getElementById('ai-gen-desc')?.value || '').trim();
+  if (!desc) { alert('Please describe the circuit you want to build.'); return; }
+
+  const btn = document.getElementById('ai-gen-submit-btn');
+  btn.disabled = true;
+  _aiGenSetStatus('\u23F3', 'Submitting to AI worker\u2026', 10, false);
+
+  try {
+    const res = await fetch('/api/generate-circuit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: desc,
+        library_slugs: Array.from(_aiGenSelectedSlugs),
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to submit');
+    }
+    const data = await res.json();
+    _aiGenTicketId = data.ticket_id;
+    _aiGenSetStatus('\u23F3', `Generating\u2026 (ticket #${_aiGenTicketId})`, 20, false);
+
+    // Start polling every 3 seconds
+    if (_aiGenPollTimer) clearInterval(_aiGenPollTimer);
+    _aiGenPollTimer = setInterval(_aiGenPoll, 3000);
+  } catch(e) {
+    _aiGenSetStatus('\u274C', `Error: ${e.message}`, 0, false);
+    btn.disabled = false;
+  }
+}
+
+async function _aiGenPoll() {
+  if (!_aiGenTicketId) return;
+  try {
+    const data = await fetch('/api/gen-tickets').then(r => r.json());
+    const ticket = (data.tickets || []).find(t => t.id === _aiGenTicketId);
+    if (!ticket) return;
+    const status = ticket.status;
+    if (status === 'running') {
+      _aiGenSetStatus('\u23F3', `AI is generating your circuit\u2026 (ticket #${_aiGenTicketId})`, 55, false);
+    } else if (status === 'done') {
+      clearInterval(_aiGenPollTimer); _aiGenPollTimer = null;
+      _aiGenSetStatus('\u2705', 'Circuit generated! Open the latest project to view it.', 100, true);
+      // Refresh projects list
+      if (typeof loadProjects === 'function') loadProjects();
+    } else if (status === 'error' || status === 'retracted') {
+      clearInterval(_aiGenPollTimer); _aiGenPollTimer = null;
+      const errMsg = ticket.error || status;
+      _aiGenSetStatus('\u274C', `Generation failed: ${errMsg}`, 0, false);
+      document.getElementById('ai-gen-submit-btn').disabled = false;
+    }
+  } catch(e) { /* network hiccup — keep polling */ }
+}
+
+async function aiGenOpenLatestProject() {
+  // Load the most recently updated project and open it
+  try {
+    const projects = await fetch('/api/projects').then(r => r.json());
+    if (!projects || !projects.length) { alert('No projects found.'); return; }
+    const latest = projects[0]; // already sorted by updated_at desc
+    if (typeof openProject === 'function') await openProject(latest.id);
+  } catch(e) {
+    alert('Could not open project: ' + e.message);
+  }
 }
 
 async function buildAIPrompt() {

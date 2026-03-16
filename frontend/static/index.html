@@ -596,6 +596,8 @@
           <button onclick="exportLibraryBundle()" title="Export all component profiles as library.json" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬇ Export</button>
           <button onclick="document.getElementById('import-lib-input').click()" title="Import a library.json" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬆ Import</button>
           <input id="import-lib-input" type="file" accept=".json" style="display:none;" onchange="importLibraryBundle(this)"/>
+          <button onclick="document.getElementById('import-profile-input').click()" title="Import a single profile.json" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">⬆ Profile</button>
+          <input id="import-profile-input" type="file" accept=".json" style="display:none;" onchange="importSingleProfile(this)"/>
         </span>
       </h2>
       <input type="text" class="library-search" id="lib-search" placeholder="Search parts..." />
@@ -970,6 +972,8 @@
       <button class="tool-btn" id="btn-group" onclick="editor.groupSelected()" title="Group — Ctrl+G">&#9681; Group</button>
       <button class="tool-btn" id="btn-ungroup" onclick="editor.ungroupSelected()" title="Ungroup — Ctrl+Shift+G">&#9682; Ungroup</button>
       <div class="toolbar-sep"></div>
+      <button class="tool-btn" onclick="openAIGenerateModal()" title="AI Circuit Generator — describe a circuit and let AI build the schematic" style="color:#a78bfa;border-color:#7c3aed;">&#10024; AI Generate</button>
+      <div class="toolbar-sep"></div>
       <button class="tool-btn" onclick="openDeleteProjectModal()" title="Delete this project" style="color:#f87171;border-color:#f87171;">&#128465; Delete</button>
     </div>
     <!-- ── Auto toolbar ── -->
@@ -1045,22 +1049,53 @@
 </div>
 
 
-<div id="ai-gen-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none';">
+<div id="ai-gen-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;" onclick="if(event.target===this)closeAIGenerateModal()">
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:700px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-      <div style="font-weight:700;font-size:14px;">✨ AI Circuit Generator</div>
-      <button onclick="document.getElementById('ai-gen-modal').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;">✕</button>
+      <div style="font-weight:700;font-size:14px;">&#10024; AI Circuit Generator</div>
+      <button onclick="closeAIGenerateModal()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;">&#10005;</button>
     </div>
     <div style="padding:14px 20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;flex:1;">
-      <div style="font-size:12px;color:var(--text-muted);">Describe the circuit you want to build. Claude Code will generate the schematic.</div>
-      <textarea id="ai-gen-desc" placeholder="e.g. ESP32 with a 10kΩ pull-up on GPIO2, connected to a 3.3V supply from AMS1117-3.3 with bypass caps. Add I2C pull-ups on SDA/SCL." style="width:100%;height:80px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:8px;resize:vertical;box-sizing:border-box;font-family:sans-serif;"></textarea>
-      <button onclick="buildAIPrompt()" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;align-self:flex-start;">&#128196; Generate Prompt for Claude Code</button>
-      <div id="ai-gen-prompt-wrap" style="display:none;flex-direction:column;gap:6px;">
-        <div style="font-size:11px;color:var(--text-muted);">Copy this prompt and paste it into Claude Code:</div>
-        <textarea id="ai-gen-prompt" readonly style="width:100%;height:220px;background:#0a0c12;border:1px solid var(--border);border-radius:6px;color:#a5b4fc;font-size:10px;padding:8px;resize:vertical;font-family:monospace;box-sizing:border-box;" onclick="this.select()"></textarea>
-        <button onclick="navigator.clipboard.writeText(document.getElementById('ai-gen-prompt').value).then(()=>this.textContent='✓ Copied!')" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 12px;font-size:11px;cursor:pointer;align-self:flex-start;">&#128203; Copy Prompt</button>
-        <div style="font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:10px;">After Claude Code creates the circuit, click <strong style="color:var(--accent);">Load Last Project</strong> in the Projects panel, or use the Projects list to open it.</div>
+      <div style="font-size:12px;color:var(--text-muted);">Describe the circuit you want to build. The AI will generate the schematic automatically via a background ticket.</div>
+      <div>
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);display:block;margin-bottom:4px;">Circuit Description *</label>
+        <textarea id="ai-gen-desc" placeholder="e.g. ESP32 with a 10k pull-up on GPIO2, connected to 3.3V supply from AMS1117-3.3 with bypass caps. Add I2C pull-ups on SDA/SCL." style="width:100%;height:90px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;padding:8px;resize:vertical;box-sizing:border-box;font-family:sans-serif;"></textarea>
       </div>
+      <div>
+        <label style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);display:block;margin-bottom:4px;">Components to use <span style="font-weight:400;text-transform:none;">(optional — leave blank to use all library components)</span></label>
+        <div id="ai-gen-comp-grid" style="display:flex;flex-wrap:wrap;gap:6px;max-height:100px;overflow-y:auto;padding:6px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;min-height:36px;"></div>
+        <div style="margin-top:4px;font-size:10px;color:var(--text-muted);">Click chips to toggle selection. Highlighted = included.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        <button id="ai-gen-submit-btn" onclick="submitAIGenerate()" style="background:var(--accent);border:none;color:#fff;border-radius:6px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer;">&#10024; Generate Circuit</button>
+        <button onclick="closeAIGenerateModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px 14px;font-size:12px;cursor:pointer;">Cancel</button>
+      </div>
+      <!-- Status area -->
+      <div id="ai-gen-status" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:12px;font-size:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="ai-gen-status-icon" style="font-size:16px;">&#8987;</span>
+          <span id="ai-gen-status-msg" style="color:var(--text);flex:1;"></span>
+        </div>
+        <div id="ai-gen-progress-bar" style="margin-top:8px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+          <div id="ai-gen-progress-fill" style="height:100%;background:var(--accent);width:0%;transition:width 0.4s ease;border-radius:2px;"></div>
+        </div>
+        <div id="ai-gen-open-wrap" style="display:none;margin-top:10px;">
+          <button onclick="aiGenOpenLatestProject()" style="background:var(--accent);border:none;color:#fff;border-radius:5px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;">&#128193; Open Generated Project</button>
+        </div>
+      </div>
+      <!-- Legacy manual mode -->
+      <details style="margin-top:2px;">
+        <summary style="font-size:11px;color:var(--text-muted);cursor:pointer;">Manual mode: generate a prompt to paste into Claude Code manually</summary>
+        <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+          <button onclick="buildAIPrompt()" style="background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;align-self:flex-start;">&#128196; Generate Prompt</button>
+          <div id="ai-gen-prompt-wrap" style="display:none;flex-direction:column;gap:6px;">
+            <div style="font-size:11px;color:var(--text-muted);">Copy this prompt and paste it into Claude Code:</div>
+            <textarea id="ai-gen-prompt" readonly style="width:100%;height:180px;background:#0a0c12;border:1px solid var(--border);border-radius:6px;color:#a5b4fc;font-size:10px;padding:8px;resize:vertical;font-family:monospace;box-sizing:border-box;" onclick="this.select()"></textarea>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('ai-gen-prompt').value).then(()=>this.textContent='&#10003; Copied!')" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 12px;font-size:11px;cursor:pointer;align-self:flex-start;">&#128203; Copy Prompt</button>
+            <div style="font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:8px;">After Claude Code creates the circuit, use the Projects list to open it.</div>
+          </div>
+        </div>
+      </details>
     </div>
   </div>
 </div>
