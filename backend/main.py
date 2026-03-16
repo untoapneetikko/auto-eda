@@ -28,7 +28,7 @@ from pathlib import Path
 
 
 import redis
-from fastapi import FastAPI, HTTPException, UploadFile, Form
+from fastapi import FastAPI, HTTPException, Request, UploadFile, Form
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -82,6 +82,7 @@ except Exception as e:
 # ── Upload ────────────────────────────────────────────────────────────────────
 @app.post("/upload")
 async def upload_datasheet(
+    request: Request,
     file: UploadFile,
     brief: str = Form(default=""),
 ):
@@ -94,7 +95,11 @@ async def upload_datasheet(
     with open(dest, "wb") as fh:
         fh.write(await file.read())
 
-    payload = json.dumps({"job_id": job_id, "pdf": str(dest), "brief": brief})
+    # API key comes from the browser cookie — not stored in Redis, only in the
+    # transient queue payload consumed immediately by the worker.
+    api_key = request.cookies.get("anthropic_api_key", "")
+
+    payload = json.dumps({"job_id": job_id, "pdf": str(dest), "brief": brief, "api_key": api_key})
     _r.hset(f"job:{job_id}", mapping={
         "status": "queued",
         "pdf": str(dest),

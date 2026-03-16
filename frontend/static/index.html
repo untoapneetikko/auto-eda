@@ -760,6 +760,28 @@
       <p>AI-powered electronic design — from datasheet to routed PCB</p>
     </div>
 
+    <!-- ── API Key Config ── -->
+    <div id="apikey-bar" style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;cursor:pointer;" onclick="apikeyToggle()">
+      <span id="apikey-dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;"></span>
+      <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;">Anthropic API Key</span>
+      <span id="apikey-hint" style="font-size:11px;color:var(--text-dim);flex:1;">Not set — required for AI pipeline</span>
+      <span id="apikey-chevron" style="font-size:10px;color:var(--text-dim);transition:transform .2s;">▼</span>
+    </div>
+    <div id="apikey-panel" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;margin-top:-8px;">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Stored in your browser only — never sent anywhere except directly to the server running this instance.</div>
+      <div style="display:flex;gap:8px;">
+        <input id="apikey-input" type="password" placeholder="sk-ant-…"
+          style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;font-family:monospace;"
+          onkeydown="if(event.key==='Enter')apikeySave()">
+        <button onclick="apikeyToggleVisibility()" title="Show/hide"
+          style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;">👁</button>
+        <button onclick="apikeysave()"
+          style="background:#6c63ff;border:none;color:#fff;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700;">Save</button>
+        <button onclick="apikeyClear()"
+          style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;">Clear</button>
+      </div>
+    </div>
+
     <!-- ── AI Builder — TOP ── -->
     <div class="build-prompt-area" style="border-radius:14px;border-color:rgba(168,85,247,0.3);background:linear-gradient(135deg,rgba(108,99,255,0.06),rgba(168,85,247,0.06));">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -1298,5 +1320,54 @@
 <script src="/static/js/index-rebuild-tickets.js"></script>
 <script src="/static/js/index-agents-drawer.js"></script>
 <script src="/static/js/index-modals.js"></script>
+<script>
+// ── API Key (cookie-backed) ───────────────────────────────────────────────────
+(function apikeyInit() {
+  const key = apikeyGet();
+  if (key) {
+    document.getElementById('apikey-dot').style.background = '#22c55e';
+    document.getElementById('apikey-hint').textContent = 'Key set — ready to run pipeline';
+    document.getElementById('apikey-input').value = key;
+  }
+})();
+
+function apikeyGet() {
+  const m = document.cookie.match(/(?:^|; )anthropic_api_key=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+
+function apikeyToggle() {
+  const panel = document.getElementById('apikey-panel');
+  const chevron = document.getElementById('apikey-chevron');
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  chevron.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+function apikeySave() {
+  const key = document.getElementById('apikey-input').value.trim();
+  if (!key) { alert('Enter an API key first.'); return; }
+  document.cookie = `anthropic_api_key=${encodeURIComponent(key)}; path=/; max-age=31536000; SameSite=Strict`;
+  document.getElementById('apikey-dot').style.background = '#22c55e';
+  document.getElementById('apikey-hint').textContent = 'Key set — ready to run pipeline';
+  document.getElementById('apikey-panel').style.display = 'none';
+  document.getElementById('apikey-chevron').style.transform = '';
+}
+
+// typo alias so the onclick="apikeysave()" works too
+function apikeysave() { apikeySave(); }
+
+function apikeyClear() {
+  document.cookie = 'anthropic_api_key=; path=/; max-age=0';
+  document.getElementById('apikey-input').value = '';
+  document.getElementById('apikey-dot').style.background = '#ef4444';
+  document.getElementById('apikey-hint').textContent = 'Not set — required for AI pipeline';
+}
+
+function apikeyToggleVisibility() {
+  const inp = document.getElementById('apikey-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+</script>
 </body>
 </html>

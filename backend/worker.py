@@ -61,12 +61,13 @@ def main() -> None:
         job_id = payload.get("job_id", "unknown")
         pdf_path = payload.get("pdf", "")
         brief = payload.get("brief", "")
+        api_key = payload.get("api_key", "")
 
-        print(f"[worker] Processing job {job_id}  pdf={pdf_path}", flush=True)
+        print(f"[worker] Processing job {job_id}  pdf={pdf_path}  api_key={'set' if api_key else 'missing'}", flush=True)
         t0 = time.time()
 
         try:
-            run_pipeline(r, job_id, pdf_path, brief)
+            run_pipeline(r, job_id, pdf_path, brief, api_key=api_key)
             elapsed = time.time() - t0
             print(f"[worker] Job {job_id} done in {elapsed:.1f}s", flush=True)
         except Exception as exc:

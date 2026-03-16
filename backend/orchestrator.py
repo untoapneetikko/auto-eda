@@ -479,8 +479,10 @@ def _step_layout(r: redis_lib.Redis, job_id: str, project_brief: str) -> None:
 
 # ── Main pipeline entry point ─────────────────────────────────────────────────
 
-def run_pipeline(r: redis_lib.Redis, job_id: str, pdf_path: str, project_brief: str = "") -> None:
+def run_pipeline(r: redis_lib.Redis, job_id: str, pdf_path: str, project_brief: str = "", api_key: str = "") -> None:
     """Run the complete 9-step EDA pipeline for a given job."""
+    if api_key:
+        os.environ["ANTHROPIC_API_KEY"] = api_key
     try:
         _update_job(r, job_id,
                     status="running",
