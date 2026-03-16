@@ -1,0 +1,827 @@
+{
+  "name": "TC358870XBG",
+  "description": "TC358870XBG HDMI-to-dual-MIPI-DSI bridge, P-VFBGA80 7.0x7.0mm 0.65mm pitch 80-ball",
+  "pin_count": 80,
+  "pitch": 0.65,
+  "pads": [
+    {
+      "number": "A1",
+      "name": "REXT",
+      "x": -2.925,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A2",
+      "name": "CEC",
+      "x": -2.275,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A3",
+      "name": "DDC_SCL",
+      "x": -1.625,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A4",
+      "name": "HPDI",
+      "x": -0.975,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A5",
+      "name": "CDSI1D3P",
+      "x": -0.325,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A6",
+      "name": "CDSI1D2P",
+      "x": 0.325,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A7",
+      "name": "CDSI1CP",
+      "x": 0.975,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A8",
+      "name": "CDSI1D1P",
+      "x": 1.625,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A9",
+      "name": "CDSI1D0P",
+      "x": 2.275,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "A10",
+      "name": "VSS",
+      "x": 2.925,
+      "y": -2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B1",
+      "name": "VDD33_HDMI",
+      "x": -2.925,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B2",
+      "name": "VDD11_HDMI",
+      "x": -2.275,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B3",
+      "name": "DDC_SDA",
+      "x": -1.625,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B4",
+      "name": "HPDO",
+      "x": -0.975,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B5",
+      "name": "CDSI1D3N",
+      "x": -0.325,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B6",
+      "name": "CDSI1D2N",
+      "x": 0.325,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B7",
+      "name": "CDSI1CN",
+      "x": 0.975,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B8",
+      "name": "CDSI1D1N",
+      "x": 1.625,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B9",
+      "name": "CDSI1D0N",
+      "x": 2.275,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "B10",
+      "name": "VDD12_MIPI1",
+      "x": 2.925,
+      "y": -2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C1",
+      "name": "HDMICP",
+      "x": -2.925,
+      "y": -1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C2",
+      "name": "HDMICN",
+      "x": -2.275,
+      "y": -1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C9",
+      "name": "VSS",
+      "x": 2.275,
+      "y": -1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "C10",
+      "name": "VDDC11",
+      "x": 2.925,
+      "y": -1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D1",
+      "name": "HDMID0P",
+      "x": -2.925,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D2",
+      "name": "HDMID0N",
+      "x": -2.275,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D4",
+      "name": "VSS",
+      "x": -0.975,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D5",
+      "name": "VSS",
+      "x": -0.325,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D6",
+      "name": "VSS",
+      "x": 0.325,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D7",
+      "name": "VSS",
+      "x": 0.975,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D9",
+      "name": "CDSI0D3N",
+      "x": 2.275,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "D10",
+      "name": "CDSI0D3P",
+      "x": 2.925,
+      "y": -0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E1",
+      "name": "HDMID1P",
+      "x": -2.925,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E2",
+      "name": "HDMID1N",
+      "x": -2.275,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E4",
+      "name": "VSS",
+      "x": -0.975,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E5",
+      "name": "VSS",
+      "x": -0.325,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E6",
+      "name": "VSS",
+      "x": 0.325,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E7",
+      "name": "VSS",
+      "x": 0.975,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E9",
+      "name": "CDSI0D2N",
+      "x": 2.275,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "E10",
+      "name": "CDSI0D2P",
+      "x": 2.925,
+      "y": -0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F1",
+      "name": "HDMID2P",
+      "x": -2.925,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F2",
+      "name": "HDMID2N",
+      "x": -2.275,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F4",
+      "name": "VSS",
+      "x": -0.975,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F5",
+      "name": "VSS",
+      "x": -0.325,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F6",
+      "name": "VSS",
+      "x": 0.325,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F7",
+      "name": "VSS",
+      "x": 0.975,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F9",
+      "name": "CDSI0CN",
+      "x": 2.275,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "F10",
+      "name": "CDSI0CP",
+      "x": 2.925,
+      "y": 0.325,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G1",
+      "name": "VDD33_HDMI",
+      "x": -2.925,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G2",
+      "name": "VDD11_HDMI",
+      "x": -2.275,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G4",
+      "name": "VSS",
+      "x": -0.975,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G5",
+      "name": "TEST",
+      "x": -0.325,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G6",
+      "name": "IR",
+      "x": 0.325,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G7",
+      "name": "VSS",
+      "x": 0.975,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G9",
+      "name": "CDSI0D1N",
+      "x": 2.275,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "G10",
+      "name": "CDSI0D1P",
+      "x": 2.925,
+      "y": 0.975,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H1",
+      "name": "VSS",
+      "x": -2.925,
+      "y": 1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H2",
+      "name": "VDDIO33",
+      "x": -2.275,
+      "y": 1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H9",
+      "name": "CDSI0D0N",
+      "x": 2.275,
+      "y": 1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "H10",
+      "name": "CDSI0D0P",
+      "x": 2.925,
+      "y": 1.625,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J1",
+      "name": "BIASDA",
+      "x": -2.925,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J2",
+      "name": "DAOUT",
+      "x": -2.275,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J3",
+      "name": "INT",
+      "x": -1.625,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J4",
+      "name": "A_OSCK",
+      "x": -0.975,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J5",
+      "name": "A_SD3",
+      "x": -0.325,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J6",
+      "name": "A_SD2",
+      "x": 0.325,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J7",
+      "name": "VDDIO18",
+      "x": 0.975,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J8",
+      "name": "A_SD1",
+      "x": 1.625,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J9",
+      "name": "A_SD0",
+      "x": 2.275,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "J10",
+      "name": "VDD12_MIPI0",
+      "x": 2.925,
+      "y": 2.275,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K1",
+      "name": "PCKIN",
+      "x": -2.925,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K2",
+      "name": "PFIL",
+      "x": -2.275,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K3",
+      "name": "I2C_SDA",
+      "x": -1.625,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K4",
+      "name": "I2C_SCL",
+      "x": -0.975,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K5",
+      "name": "A_WFS",
+      "x": -0.325,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K6",
+      "name": "VDDC11",
+      "x": 0.325,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K7",
+      "name": "A_SCK",
+      "x": 0.975,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K8",
+      "name": "RESETN",
+      "x": 1.625,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K9",
+      "name": "REFCLK",
+      "x": 2.275,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    },
+    {
+      "number": "K10",
+      "name": "VSS",
+      "x": 2.925,
+      "y": 2.925,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.4,
+      "size_y": 0.4
+    }
+  ],
+  "courtyard": {
+    "x": -3.75,
+    "y": -3.75,
+    "w": 7.5,
+    "h": 7.5
+  },
+  "fab": {
+    "x": -3.5,
+    "y": -3.5,
+    "w": 7.0,
+    "h": 7.0
+  },
+  "format": "kicad_mod",
+  "sources": {
+    "package": "P-VFBGA80-0707-0.65-001 per TC358870XBG datasheet (Toshiba)",
+    "pad_diameter": "0.40mm IPC-7351B density B for 0.65mm pitch BGA",
+    "no_ball": "C3-C8, D3, D8, E3, E8, F3, F8, G3, G8, H3-H8 (20 positions)",
+    "courtyard": "7.0mm body + 0.25mm clearance = 7.5x7.5mm"
+  }
+}
