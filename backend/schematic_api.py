@@ -243,7 +243,7 @@ async def api_upload(file: UploadFile):
         "type": "datasheet",
         "slug": slug,
         "title": f"Parse {slug}",
-        "prompt": f"Parse the datasheet for component {slug}.\nPDF file: data/uploads/{original_name}\nRaw text already extracted: frontend/static/library/{slug}/raw_text.txt\nWrite the structured profile to: frontend/static/library/{slug}/profile.json",
+        "prompt": f"Parse the datasheet for component {slug}.\nPDF file: data/uploads/{original_name}\nRaw text already extracted: frontend/static/library/{slug}/raw_text.txt\nWrite the structured profile to: frontend/static/library/{slug}/profile.json\n\nIMPORTANT: Set part_number to the SHORT part number only (e.g. 'MAX2870', 'LM358'). No descriptions, no suffixes, no series names.",
         "status": "pending",
         "created_at": datetime.now(timezone.utc).isoformat(),
     })
@@ -5636,8 +5636,10 @@ Body: the layout JSON object above.
 ## Task
 Produce a complete, accurate profile JSON. Fix any wrong or missing fields.
 Required fields:
-- `part_number`: exact part number string
-- `description`: one-line description
+- `part_number`: the SHORT part number ONLY — e.g. "MAX2870", "LM358", "STM32F103C8".
+  NO descriptions, NO series names, NO suffixes like " - 23.5MHz Synthesizer".
+  If the datasheet shows "MAX2870ETJ+" use "MAX2870". Strip everything after the base number.
+- `description`: one-line description (this is where the long text goes, NOT part_number)
 - `symbol_type`: one of ic|npn|pnp|nmos|pmos|resistor|capacitor|inductor|diode|led|opamp|amplifier
 - `package_types[]`: list of package strings (e.g. ["DIP-8", "SOIC-8"])
 - `pins[]`: every pin — `number`, `name`, `type` (input|output|power|gnd|io|passive|nc), `description`

@@ -21,6 +21,9 @@ A PDF file path from `data/uploads/`
 4. Footprint standard must use IPC naming when possible (e.g. SOT-23, SOIC-8)
 5. If a value is not found in the datasheet, use `null` — never guess
 6. example_application must come from the datasheet's application circuit, not invented
+7. `part_number` must be the SHORT part number ONLY — e.g. "MAX2870", "LM358", "ATmega328P".
+   Strip all descriptions, suffixes, and series names. "MAX2870ETJ+" → "MAX2870".
+   The `description` field is where the long text belongs, never `part_number`.
 
 ## Validation
 Run after writing output:
