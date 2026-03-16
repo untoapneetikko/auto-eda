@@ -2,7 +2,12 @@
   "part_number": "D",
   "description": "Rectifier diode — blocks reverse current, passes forward current above ~0.7V (silicon) or ~0.3V (Schottky)",
   "manufacturer": "Generic",
-  "package_types": ["DO-41", "DO-214AC (SMA)", "DO-214AB (SMC)", "SOD-123"],
+  "package_types": [
+    "DO-41",
+    "DO-214AC (SMA)",
+    "DO-214AB (SMC)",
+    "SOD-123"
+  ],
   "supply_voltage_range": "Forward voltage: 0.3V–1.2V depending on type",
   "absolute_max": {
     "reverse_voltage": "depends on part — check datasheet (common: 50V–1000V)",
@@ -61,5 +66,6 @@
   "uploaded_at": null,
   "parsed_at": "2026-03-08T00:00:00.000Z",
   "builtin": true,
-  "human_corrections": []
+  "human_corrections": [],
+  "category": "passive"
 }

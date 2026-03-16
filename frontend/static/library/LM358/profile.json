@@ -2,7 +2,11 @@
   "part_number": "LM358",
   "description": "Dual general-purpose op-amp — single or split supply, rail-to-rail input not required, low power, 1MHz GBW",
   "manufacturer": "Texas Instruments / ST / Many",
-  "package_types": ["DIP-8", "SOIC-8", "TSSOP-8"],
+  "package_types": [
+    "DIP-8",
+    "SOIC-8",
+    "TSSOP-8"
+  ],
   "supply_voltage_range": "3V to 32V single supply, or ±1.5V to ±16V dual supply",
   "absolute_max": {
     "supply_voltage": "32V (single) or ±16V (split)",
@@ -144,5 +148,6 @@
   "uploaded_at": null,
   "parsed_at": "2026-03-08T00:00:00.000Z",
   "builtin": true,
-  "human_corrections": []
+  "human_corrections": [],
+  "category": "opamp"
 }

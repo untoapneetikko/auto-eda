@@ -7,47 +7,47 @@
   "package_types": [
     "TQFN-32-EP"
   ],
-  "supply_voltage_range": "3.0\u20133.6V",
-  "frequency_range": "23.5MHz\u20136000MHz",
+  "supply_voltage_range": "3.0–3.6V",
+  "frequency_range": "23.5MHz–6000MHz",
   "designator": "U",
   "absolute_max": {
     "vdd": "3.9V (VCC_ to GND_)",
-    "all_other_pins": "VCC_ + 0.3V to GND_ \u2212 0.3V",
-    "operating_temp": "\u221240\u00b0C to +85\u00b0C",
-    "junction_temp": "+150\u00b0C",
-    "storage_temp": "\u221265\u00b0C to +150\u00b0C",
-    "lead_temp_soldering_10s": "+300\u00b0C",
-    "reflow_temp": "+260\u00b0C",
-    "thermal_resistance_ja": "29\u00b0C/W (TQFN, 4-layer board)",
-    "thermal_resistance_jc": "1.7\u00b0C/W"
+    "all_other_pins": "VCC_ + 0.3V to GND_ − 0.3V",
+    "operating_temp": "−40°C to +85°C",
+    "junction_temp": "+150°C",
+    "storage_temp": "−65°C to +150°C",
+    "lead_temp_soldering_10s": "+300°C",
+    "reflow_temp": "+260°C",
+    "thermal_resistance_ja": "29°C/W (TQFN, 4-layer board)",
+    "thermal_resistance_jc": "1.7°C/W"
   },
   "key_performance": {
     "pll_modes": "Integer-N and Fractional-N",
     "vco_range_fundamental": "3000MHz to 6000MHz (4 VCO cores, 16 sub-bands each)",
-    "output_dividers": "1/2/4/8/16/32/64/128 \u2014 extends output range down to 23.5MHz",
+    "output_dividers": "1/2/4/8/16/32/64/128 — extends output range down to 23.5MHz",
     "pfd_frequency_integer_n": "105MHz max",
     "pfd_frequency_frac_n": "50MHz max",
-    "reference_input_range": "10MHz to 200MHz (100MHz max with \u00d72 doubler enabled)",
-    "output_power_range": "\u22124dBm to +5dBm in 3dB steps, each output independently controlled",
-    "outputs": "Dual differential open-collector: RFOUTA\u00b1 and RFOUTB\u00b1. RFOUTB selectable as divided or VCO fundamental (BDIV bit)",
-    "muted_output_power": "\u221231dBm",
+    "reference_input_range": "10MHz to 200MHz (100MHz max with ×2 doubler enabled)",
+    "output_power_range": "−4dBm to +5dBm in 3dB steps, each output independently controlled",
+    "outputs": "Dual differential open-collector: RFOUTA± and RFOUTB±. RFOUTB selectable as divided or VCO fundamental (BDIV bit)",
+    "muted_output_power": "−31dBm",
     "supply": "3.0V to 3.6V",
     "logic_compatibility": "1.8V SPI (VIL<0.4V, VIH>1.5V)",
-    "supply_current_both_ch_max": "180mA (typ 144mA, both channels, max power, \u00f72)",
+    "supply_current_both_ch_max": "180mA (typ 144mA, both channels, max power, ÷2)",
     "supply_current_vco_rf_only": "95mA max (typ 75mA)",
     "supply_current_sleep": "1mA",
-    "vco_phase_noise_3ghz": "\u221283.5dBc/Hz @10kHz, \u2212111dBc/Hz @100kHz, \u2212136dBc/Hz @1MHz",
-    "vco_phase_noise_4500mhz": "\u221275dBc/Hz @10kHz, \u2212104dBc/Hz @100kHz, \u2212130dBc/Hz @1MHz",
-    "vco_phase_noise_6ghz": "\u221271.5dBc/Hz @10kHz, \u2212100.5dBc/Hz @100kHz, \u2212128dBc/Hz @1MHz",
+    "vco_phase_noise_3ghz": "−83.5dBc/Hz @10kHz, −111dBc/Hz @100kHz, −136dBc/Hz @1MHz",
+    "vco_phase_noise_4500mhz": "−75dBc/Hz @10kHz, −104dBc/Hz @100kHz, −130dBc/Hz @1MHz",
+    "vco_phase_noise_6ghz": "−71.5dBc/Hz @10kHz, −100.5dBc/Hz @100kHz, −128dBc/Hz @1MHz",
     "integrated_rms_jitter": "0.25ps",
-    "in_band_phase_noise": "\u221295dBc/Hz",
-    "pfd_spurs": "\u221287dBc",
+    "in_band_phase_noise": "−95dBc/Hz",
+    "pfd_spurs": "−87dBc",
     "vco_sensitivity": "100MHz/V",
     "tune_voltage_range": "0.5V to 2.5V",
-    "cp_current_range": "0.32mA to 5.12mA (RSET=5.1k\u03a9, CP[3:0]=0000 to 1111)",
+    "cp_current_range": "0.32mA to 5.12mA (RSET=5.1kΩ, CP[3:0]=0000 to 1111)",
     "interface": "4-wire SPI: CLK, DATA, LE (write); MUX_OUT for Reg6 readback",
-    "registers": "6 write-only (Reg0\u20135) + 1 read-only (Reg6) 32-bit registers",
-    "ordering": "MAX2870ETJ+ (TQFN-EP, \u221240\u00b0C to +85\u00b0C, RoHS)"
+    "registers": "6 write-only (Reg0–5) + 1 read-only (Reg6) 32-bit registers",
+    "ordering": "MAX2870ETJ+ (TQFN-EP, −40°C to +85°C, RoHS)"
   },
   "pins": [
     {
@@ -90,7 +90,7 @@
       "description": "Chip Enable. Logic-low powers down the device; charge pump goes high-impedance. All blocks except SPI are off in low-power mode.",
       "active": "low",
       "internal_pull": null,
-      "requirements": "Pull high for normal operation. After CE returns high, wait \u226520ms before programming registers.",
+      "requirements": "Pull high for normal operation. After CE returns high, wait ≥20ms before programming registers.",
       "ambiguous": false,
       "datasheet_page": 10
     },
@@ -101,7 +101,7 @@
       "description": "Fast-Lock Switch. Connect to loop filter mid-point (between R2A and R2B) when using fast-lock mode. No connect in normal operation.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Leave unconnected (NC) in normal mode. For fast-lock: split loop filter shunt resistor into R2A (\u00bc total) and R2B (\u00be total); connect SW to their junction. Set CDM=01 in Reg3.",
+      "requirements": "Leave unconnected (NC) in normal mode. For fast-lock: split loop filter shunt resistor into R2A (¼ total) and R2B (¾ total); connect SW to their junction. Set CDM=01 in Reg3.",
       "ambiguous": false,
       "datasheet_page": 10
     },
@@ -112,7 +112,7 @@
       "description": "Power Supply for Charge Pump.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0\u20133.6V. Place 100nF + 1\u00b5F decoupling caps as close as possible to pin. Star routing from central VCC node recommended.",
+      "requirements": "Connect to 3.0–3.6V. Place 100nF + 1µF decoupling caps as close as possible to pin. Star routing from central VCC node recommended.",
       "ambiguous": false,
       "datasheet_page": 10
     },
@@ -156,7 +156,7 @@
       "description": "Power Supply for PLL.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0\u20133.6V. Separate LDO recommended for best performance. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "requirements": "Connect to 3.0–3.6V. Separate LDO recommended for best performance. Place 100nF + 1µF decoupling caps close to pin.",
       "ambiguous": false,
       "datasheet_page": 10
     },
@@ -175,10 +175,10 @@
       "number": "12",
       "name": "RFOUTA_P",
       "type": "output",
-      "description": "Open Collector Positive RF Output A. Differential output. Output power set by APWR[1:0] in Reg4: 00=\u22124dBm, 01=\u22121dBm, 10=+2dBm, 11=+5dBm.",
+      "description": "Open Collector Positive RF Output A. Differential output. Output power set by APWR[1:0] in Reg4: 00=−4dBm, 01=−1dBm, 10=+2dBm, 11=+5dBm.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Bias via 27nH RF choke to VCC_RF. Enable with RFA_EN (Reg4 bit5)=1 and RFOUT_EN pin high. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "requirements": "Bias via 27nH RF choke to VCC_RF. Enable with RFA_EN (Reg4 bit5)=1 and RFOUT_EN pin high. If unused: 27nH choke to VCC_RF + 50Ω to GND.",
       "ambiguous": false,
       "datasheet_page": 10
     },
@@ -189,7 +189,7 @@
       "description": "Open Collector Negative RF Output A. Differential complement of RFOUTA_P.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Bias via 27nH RF choke to VCC_RF. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "requirements": "Bias via 27nH RF choke to VCC_RF. If unused: 27nH choke to VCC_RF + 50Ω to GND.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -200,7 +200,7 @@
       "description": "Open Collector Positive RF Output B. BDIV=0 (Reg4 bit9): same frequency as RFOUTA. BDIV=1: VCO fundamental frequency.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Bias via 27nH RF choke to VCC_RF. Enable with RFB_EN (Reg4 bit8)=1. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "requirements": "Bias via 27nH RF choke to VCC_RF. Enable with RFB_EN (Reg4 bit8)=1. If unused: 27nH choke to VCC_RF + 50Ω to GND.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -211,7 +211,7 @@
       "description": "Open Collector Negative RF Output B. Differential complement of RFOUTB_P.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Bias via 27nH RF choke to VCC_RF. If unused: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "requirements": "Bias via 27nH RF choke to VCC_RF. If unused: 27nH choke to VCC_RF + 50Ω to GND.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -222,7 +222,7 @@
       "description": "Power Supply for RF Output and Dividers. Also serves as DC bias supply for all four open-collector RF output pins via 27nH RF chokes.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0\u20133.6V. Separate LDO recommended. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "requirements": "Connect to 3.0–3.6V. Separate LDO recommended. Place 100nF + 1µF decoupling caps close to pin.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -233,7 +233,7 @@
       "description": "VCO Power Supply.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0\u20133.6V. Decoupling caps must connect to the analog ground plane (not digital) for best phase noise. Use 100nF + 1\u00b5F.",
+      "requirements": "Connect to 3.0–3.6V. Decoupling caps must connect to the analog ground plane (not digital) for best phase noise. Use 100nF + 1µF.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -255,7 +255,7 @@
       "description": "VCO Noise Decoupling. Internal VCO bias node requiring external decoupling.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Place 1\u00b5F capacitor to GND as close as possible to pin. Mandatory \u2014 omitting degrades VCO phase noise significantly.",
+      "requirements": "Place 1µF capacitor to GND as close as possible to pin. Mandatory — omitting degrades VCO phase noise significantly.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -263,7 +263,7 @@
       "number": "20",
       "name": "TUNE",
       "type": "input",
-      "description": "VCO Control Voltage Input. Connected to the output of the external loop filter. Compliance range 0.5V\u20132.5V. Internal 3-bit ADC monitors this voltage for VCO autoselect.",
+      "description": "VCO Control Voltage Input. Connected to the output of the external loop filter. Compliance range 0.5V–2.5V. Internal 3-bit ADC monitors this voltage for VCO autoselect.",
       "active": null,
       "internal_pull": null,
       "requirements": "Connect to loop filter output node (not directly to CP_OUT). ADC codes 000 (VTUNE<0.5V) and 111 (VTUNE>2.5V) indicate out-of-lock.",
@@ -285,10 +285,10 @@
       "number": "22",
       "name": "RSET",
       "type": "passive",
-      "description": "Charge-Pump Current Range Input. External resistor to GND sets CP current: ICP = 1.63V/RSET \u00d7 (1 + CP[3:0]).",
+      "description": "Charge-Pump Current Range Input. External resistor to GND sets CP current: ICP = 1.63V/RSET × (1 + CP[3:0]).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect resistor 2.7k\u03a9\u201310k\u03a9 to GND. Typical 5.1k\u03a9: ICP_min=0.32mA (CP=0000), ICP_max=5.12mA (CP=1111). Do not leave floating.",
+      "requirements": "Connect resistor 2.7kΩ–10kΩ to GND. Typical 5.1kΩ: ICP_min=0.32mA (CP=0000), ICP_max=5.12mA (CP=1111). Do not leave floating.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -299,7 +299,7 @@
       "description": "VCO Bias Filter. Internal VCO bias decoupling node.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Place 1\u00b5F capacitor to GND as close as possible to pin. Mandatory \u2014 omitting degrades VCO phase noise.",
+      "requirements": "Place 1µF capacitor to GND as close as possible to pin. Mandatory — omitting degrades VCO phase noise.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -310,7 +310,7 @@
       "description": "Reference Voltage Compensation. Internal bandgap reference decoupling node.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Place 1\u00b5F capacitor to GND as close as possible to pin. Mandatory.",
+      "requirements": "Place 1µF capacitor to GND as close as possible to pin. Mandatory.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -321,7 +321,7 @@
       "description": "Lock Detect Output. Behaviour set by LD[1:0] in Reg5 bits 23:22. 01=digital lock detect (push-pull), 10=analog lock detect (open-drain), 00=always low, 11=always high.",
       "active": "high",
       "internal_pull": null,
-      "requirements": "For digital LD (LD=01): connect to MCU GPIO. For analog LD (LD=10): add 10k\u03a9 pull-up to VCC \u2014 output is open-drain. VOH=VCC\u22120.4V at 0.3mA, VOL=0.4V at 0.3mA.",
+      "requirements": "For digital LD (LD=01): connect to MCU GPIO. For analog LD (LD=10): add 10kΩ pull-up to VCC — output is open-drain. VOH=VCC−0.4V at 0.3mA, VOL=0.4V at 0.3mA.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -354,7 +354,7 @@
       "description": "Power Supply for Digital Circuitry. Also sets the internal bias level VCC_DIG/2 for the REF_IN input.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0\u20133.6V. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "requirements": "Connect to 3.0–3.6V. Place 100nF + 1µF decoupling caps close to pin.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -362,10 +362,10 @@
       "number": "29",
       "name": "REF_IN",
       "type": "input",
-      "description": "Reference Frequency Input. High-impedance CMOS inverter with internal DC bias at VCC_DIG/2. Range 10\u2013200MHz (100MHz max with doubler). High-impedance in shutdown.",
+      "description": "Reference Frequency Input. High-impedance CMOS inverter with internal DC bias at VCC_DIG/2. Range 10–200MHz (100MHz max with doubler). High-impedance in shutdown.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Must be AC-coupled (internal bias at VCC_DIG/2). Min sensitivity 0.7\u00d7VCC_DIG Vpp. Input capacitance 2pF, input current \u00b160\u00b5A.",
+      "requirements": "Must be AC-coupled (internal bias at VCC_DIG/2). Min sensitivity 0.7×VCC_DIG Vpp. Input capacitance 2pF, input current ±60µA.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -376,7 +376,7 @@
       "description": "Multiplexed Output / Serial Data Out. Function set by MUX[3:0] (Reg2 bits 28:26 + Reg5 bit18 MSB). Options: tri-state, D_VDD, D_GND, R-divider, N-divider/2, analog LD, digital LD, or Reg6 readback (MUX=1100).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to MCU GPIO. For Reg6 readback: set MUX=1100, drive 32 CLK cycles with LE low then high, last 3 DATA bits = 110. VOH=VCC\u22120.4V, VOL=0.4V at 0.3mA. tMS=10ns setup, tMH=10ns hold.",
+      "requirements": "Connect to MCU GPIO. For Reg6 readback: set MUX=1100, drive 32 CLK cycles with LE low then high, last 3 DATA bits = 110. VOH=VCC−0.4V, VOL=0.4V at 0.3mA. tMS=10ns setup, tMH=10ns hold.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -398,7 +398,7 @@
       "description": "Power Supply for Sigma-Delta Modulator.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to 3.0\u20133.6V. Place 100nF + 1\u00b5F decoupling caps close to pin.",
+      "requirements": "Connect to 3.0–3.6V. Place 100nF + 1µF decoupling caps close to pin.",
       "ambiguous": false,
       "datasheet_page": 11
     },
@@ -409,7 +409,7 @@
       "description": "Exposed Pad. Thermal and electrical ground pad. Must be soldered to PCB ground plane.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Solder to PCB ground plane with via array (min 9 vias in 3\u00d73 pattern). The seven separate GND_ signal pins each connect to the ground plane independently \u2014 do NOT route any GND_ pin directly to EP; the ground plane ties them together.",
+      "requirements": "Solder to PCB ground plane with via array (min 9 vias in 3×3 pattern). The seven separate GND_ signal pins each connect to the ground plane independently — do NOT route any GND_ pin directly to EP; the ground plane ties them together.",
       "ambiguous": false,
       "datasheet_page": 11
     }
@@ -418,34 +418,34 @@
     {
       "type": "capacitor",
       "value": "100nF ceramic 0402",
-      "placement": "Each VCC_ pin (VCC_CP p6, VCC_PLL p10, VCC_RF p16, VCC_VCO p17, VCC_DIG p28, VCC_SD p32) to adjacent GND \u2014 one per pin",
+      "placement": "Each VCC_ pin (VCC_CP p6, VCC_PLL p10, VCC_RF p16, VCC_VCO p17, VCC_DIG p28, VCC_SD p32) to adjacent GND — one per pin",
       "reason": "High-frequency supply decoupling. Dedicated via per cap to ground plane. Do not share vias.",
       "datasheet_page": 10
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F ceramic",
-      "placement": "Each VCC_ pin (\u00d76) to GND \u2014 star routing from central VCC node",
+      "value": "1µF ceramic",
+      "placement": "Each VCC_ pin (×6) to GND — star routing from central VCC node",
       "reason": "Bulk supply decoupling. Star topology minimises coupling between IC sections.",
       "datasheet_page": 10
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F",
+      "value": "1µF",
       "placement": "NOISE_FILT (pin 19) to GND",
       "reason": "Mandatory VCO noise decoupling. Omitting causes severe phase noise degradation.",
       "datasheet_page": 11
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F",
+      "value": "1µF",
       "placement": "BIAS_FILT (pin 23) to GND",
       "reason": "Mandatory VCO bias filter. Omitting causes VCO instability.",
       "datasheet_page": 11
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F",
+      "value": "1µF",
       "placement": "REG (pin 24) to GND",
       "reason": "Mandatory internal reference voltage compensation.",
       "datasheet_page": 11
@@ -453,34 +453,34 @@
     {
       "type": "capacitor",
       "value": "100nF",
-      "placement": "REF_IN (pin 29) \u2014 series AC-coupling to reference oscillator",
+      "placement": "REF_IN (pin 29) — series AC-coupling to reference oscillator",
       "reason": "REF_IN has internal DC bias at VCC_DIG/2. DC coupling will disturb bias and cause malfunction.",
       "datasheet_page": 11
     },
     {
       "type": "resistor",
-      "value": "5.1k\u03a9 (range: 2.7k\u03a9\u201310k\u03a9)",
+      "value": "5.1kΩ (range: 2.7kΩ–10kΩ)",
       "placement": "RSET (pin 22) to GND",
-      "reason": "Sets CP current range. ICP=1.63V/RSET\u00d7(1+CP). 5.1k\u03a9 gives 0.32mA\u20135.12mA range.",
+      "reason": "Sets CP current range. ICP=1.63V/RSET×(1+CP). 5.1kΩ gives 0.32mA–5.12mA range.",
       "datasheet_page": 11
     },
     {
       "type": "inductor",
       "value": "27nH RF choke",
-      "placement": "VCC_RF (pin 16) to RFOUTA_P (12), RFOUTA_N (13), RFOUTB_P (14), RFOUTB_N (15) \u2014 one choke per output pin",
+      "placement": "VCC_RF (pin 16) to RFOUTA_P (12), RFOUTA_N (13), RFOUTB_P (14), RFOUTB_N (15) — one choke per output pin",
       "reason": "Open-collector RF output bias. Provides DC path to supply while passing RF. Required for all four output pins including unused ones.",
       "datasheet_page": 16
     },
     {
       "type": "resistor",
-      "value": "50\u03a9",
+      "value": "50Ω",
       "placement": "Each active RF output to load; each unused RF output to GND as termination",
-      "reason": "RF load/termination. Unused outputs must be terminated: 27nH choke to VCC_RF + 50\u03a9 to GND.",
+      "reason": "RF load/termination. Unused outputs must be terminated: 27nH choke to VCC_RF + 50Ω to GND.",
       "datasheet_page": 16
     },
     {
       "type": "network",
-      "value": "Loop filter: C3=820pF (at CP_OUT), R3=250\u03a9, C1=0.012\u00b5F \u2225 R2=120\u03a9, C2=0.1\u00b5F (at TUNE)",
+      "value": "Loop filter: C3=820pF (at CP_OUT), R3=250Ω, C1=0.012µF ∥ R2=120Ω, C2=0.1µF (at TUNE)",
       "placement": "Between CP_OUT (pin 7) and TUNE (pin 20)",
       "reason": "3rd-order passive PLL loop filter. EV kit values for 40kHz bandwidth at fPFD=25MHz, fREF=50MHz.",
       "datasheet_page": 9
@@ -489,27 +489,27 @@
   "application_circuits": [
     {
       "name": "Typical MAX2870 PLL Frequency Synthesiser (datasheet p.23)",
-      "description": "Three separate LDOs supply VCC_RF, VCC_DIG, VCC_PLL for best performance. All six VCC_ pins decoupled with 100nF+1\u00b5F. REF_IN AC-coupled via 100nF to external reference oscillator. CP_OUT drives loop filter (C3=820pF shunt, R3=250\u03a9, C1=0.012\u00b5F\u2225R2=120\u03a9, C2=0.1\u00b5F) feeding TUNE. RFOUTA\u00b1 and RFOUTB\u00b1 biased via 27nH chokes from VCC_RF, terminated into 50\u03a9. NOISE_FILT, BIAS_FILT, REG each with 1\u00b5F to GND. RSET=5.1k\u03a9 to GND. CE and RFOUT_EN pulled high to VCC_DIG via 10k\u03a9. CLK/DATA/LE from SPI master. LD and MUX_OUT to MCU GPIOs. EP soldered to ground plane with via array.",
+      "description": "Three separate LDOs supply VCC_RF, VCC_DIG, VCC_PLL for best performance. All six VCC_ pins decoupled with 100nF+1µF. REF_IN AC-coupled via 100nF to external reference oscillator. CP_OUT drives loop filter (C3=820pF shunt, R3=250Ω, C1=0.012µF∥R2=120Ω, C2=0.1µF) feeding TUNE. RFOUTA± and RFOUTB± biased via 27nH chokes from VCC_RF, terminated into 50Ω. NOISE_FILT, BIAS_FILT, REG each with 1µF to GND. RSET=5.1kΩ to GND. CE and RFOUT_EN pulled high to VCC_DIG via 10kΩ. CLK/DATA/LE from SPI master. LD and MUX_OUT to MCU GPIOs. EP soldered to ground plane with via array.",
       "page": 23
     }
   ],
   "common_mistakes": [
-    "GND_CP (8), GND_PLL (9), GND_RF (11), GND_VCO (18), GND_TUNE (21), GND_DIG (27), GND_SD (31) must NOT route directly to the exposed pad (EP) \u2014 each must connect independently to the board ground plane",
-    "TUNE (pin 20) must NOT connect directly to CP_OUT (pin 7) \u2014 TUNE connects to the output node of the loop filter network",
-    "After every power-up or CE de-assertion, registers must be written TWICE with \u226520ms pause: first pass enables device, second pass triggers VCO autoselection",
-    "Register programming order is mandatory: 5\u21924\u21923\u21922\u21921\u21920 (both times). Out-of-order writes produce undefined behaviour",
+    "GND_CP (8), GND_PLL (9), GND_RF (11), GND_VCO (18), GND_TUNE (21), GND_DIG (27), GND_SD (31) must NOT route directly to the exposed pad (EP) — each must connect independently to the board ground plane",
+    "TUNE (pin 20) must NOT connect directly to CP_OUT (pin 7) — TUNE connects to the output node of the loop filter network",
+    "After every power-up or CE de-assertion, registers must be written TWICE with ≥20ms pause: first pass enables device, second pass triggers VCO autoselection",
+    "Register programming order is mandatory: 5→4→3→2→1→0 (both times). Out-of-order writes produce undefined behaviour",
     "Keep RFOUT disabled during the init sequence (Reg4 bits 4 and 8=0, RFOUT_EN pin low); enable with RFA_EN/RFB_EN only after the second complete programming pass",
-    "NOISE_FILT (19), BIAS_FILT (23), and REG (24) MUST each have a 1\u00b5F cap to GND \u2014 omitting any causes VCO instability and severely degraded phase noise",
-    "RF outputs are open-collector \u2014 each requires a 27nH RF choke to VCC_RF. Never connect directly to supply or GND",
-    "Unused RF outputs must still be terminated: 27nH choke to VCC_RF + 50\u03a9 to GND. Do not leave floating",
-    "REF_IN must be AC-coupled \u2014 internal DC bias at VCC_DIG/2 is disturbed by direct DC connection",
+    "NOISE_FILT (19), BIAS_FILT (23), and REG (24) MUST each have a 1µF cap to GND — omitting any causes VCO instability and severely degraded phase noise",
+    "RF outputs are open-collector — each requires a 27nH RF choke to VCC_RF. Never connect directly to supply or GND",
+    "Unused RF outputs must still be terminated: 27nH choke to VCC_RF + 50Ω to GND. Do not leave floating",
+    "REF_IN must be AC-coupled — internal DC bias at VCC_DIG/2 is disturbed by direct DC connection",
     "VCC_VCO (pin 17) decoupling caps must connect to the analog ground plane, not the digital ground plane",
-    "RSET (pin 22) must have a resistor (2.7k\u03a9\u201310k\u03a9) to GND \u2014 do not leave floating or tie directly to GND",
-    "Analog lock detect mode (LD=10 in Reg5) makes LD pin open-drain \u2014 a 10k\u03a9 pull-up to VCC is required; missing pull-up means LD never goes high",
+    "RSET (pin 22) must have a resistor (2.7kΩ–10kΩ) to GND — do not leave floating or tie directly to GND",
+    "Analog lock detect mode (LD=10 in Reg5) makes LD pin open-drain — a 10kΩ pull-up to VCC is required; missing pull-up means LD never goes high",
     "For fractional-N mode set CPL=01 (Reg1 bits 30:29) and CPOC=0 (Reg1 bit31); for integer-N set CPL=00 and CPOC=1. Swapping degrades phase noise",
-    "VAS auto-select is not valid during and immediately after programming \u2014 wait for TUNE voltage to settle before trusting LD output"
+    "VAS auto-select is not valid during and immediately after programming — wait for TUNE voltage to settle before trusting LD output"
   ],
-  "notes": "Reg6 (read-only): contains POR status (bit23), VTUNE ADC reading ADC[2:0] (bits 22:20), and active VCO sub-band V[5:0] (bits 8:3). Access via MUX_OUT when MUX[3:0]=1100. VCO manual selection (VAS_SHDN=1, Reg3 bit25) saves ~200\u00b5s lock time but requires a pre-built per-frequency VCO lookup table. Phase shift mode: set P=M\u00d7\u0394\u03c6/360, enable CDM=10, then reset CDM=00. Low-spur mode: SDN=10 (mode1) or SDN=11 (mode2) in Reg2 bits 30:29.",
+  "notes": "Reg6 (read-only): contains POR status (bit23), VTUNE ADC reading ADC[2:0] (bits 22:20), and active VCO sub-band V[5:0] (bits 8:3). Access via MUX_OUT when MUX[3:0]=1100. VCO manual selection (VAS_SHDN=1, Reg3 bit25) saves ~200µs lock time but requires a pre-built per-frequency VCO lookup table. Phase shift mode: set P=M×Δφ/360, enable CDM=10, then reset CDM=00. Low-spur mode: SDN=10 (mode1) or SDN=11 (mode2) in Reg2 bits 30:29.",
   "symbol_type": "ic",
   "status": "parsed",
   "confidence": "HIGH",
@@ -525,27 +525,27 @@
     {
       "type": "capacitor",
       "value": "100nF",
-      "description": "VCC_ supply decoupling \u2014 one per VCC_ pin (\u00d76)"
+      "description": "VCC_ supply decoupling — one per VCC_ pin (×6)"
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F",
-      "description": "VCC_ bulk decoupling \u2014 one per VCC_ pin (\u00d76)"
+      "value": "1µF",
+      "description": "VCC_ bulk decoupling — one per VCC_ pin (×6)"
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F",
-      "description": "NOISE_FILT (pin 19) to GND \u2014 mandatory"
+      "value": "1µF",
+      "description": "NOISE_FILT (pin 19) to GND — mandatory"
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F",
-      "description": "BIAS_FILT (pin 23) to GND \u2014 mandatory"
+      "value": "1µF",
+      "description": "BIAS_FILT (pin 23) to GND — mandatory"
     },
     {
       "type": "capacitor",
-      "value": "1\u00b5F",
-      "description": "REG (pin 24) to GND \u2014 mandatory"
+      "value": "1µF",
+      "description": "REG (pin 24) to GND — mandatory"
     },
     {
       "type": "capacitor",
@@ -554,43 +554,43 @@
     },
     {
       "type": "resistor",
-      "value": "5.1k\u03a9",
-      "description": "RSET (pin 22) to GND \u2014 sets CP current"
+      "value": "5.1kΩ",
+      "description": "RSET (pin 22) to GND — sets CP current"
     },
     {
       "type": "inductor",
       "value": "27nH",
-      "description": "RF choke, VCC_RF to each RF output pin (\u00d74)"
+      "description": "RF choke, VCC_RF to each RF output pin (×4)"
     },
     {
       "type": "resistor",
-      "value": "50\u03a9",
-      "description": "RF output load/termination (\u00d74)"
+      "value": "50Ω",
+      "description": "RF output load/termination (×4)"
     },
     {
       "type": "capacitor",
       "value": "820pF",
-      "description": "Loop filter C3 \u2014 shunt at CP_OUT"
+      "description": "Loop filter C3 — shunt at CP_OUT"
     },
     {
       "type": "resistor",
-      "value": "250\u03a9",
+      "value": "250Ω",
       "description": "Loop filter R3"
     },
     {
       "type": "capacitor",
-      "value": "0.012\u00b5F",
+      "value": "0.012µF",
       "description": "Loop filter C1"
     },
     {
       "type": "resistor",
-      "value": "120\u03a9",
+      "value": "120Ω",
       "description": "Loop filter R2"
     },
     {
       "type": "capacitor",
-      "value": "0.1\u00b5F",
-      "description": "Loop filter C2 \u2014 at TUNE"
+      "value": "0.1µF",
+      "description": "Loop filter C2 — at TUNE"
     }
   ],
   "human_corrections": [],
@@ -981,7 +981,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R8",
-        "value": "10k\u03a9",
+        "value": "10kΩ",
         "x": 120,
         "y": 300,
         "rotation": 0
@@ -1001,7 +1001,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R9",
-        "value": "10k\u03a9",
+        "value": "10kΩ",
         "x": 220,
         "y": 300,
         "rotation": 0
@@ -1031,7 +1031,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R10",
-        "value": "10k\u03a9",
+        "value": "10kΩ",
         "x": 560,
         "y": 300,
         "rotation": 0
@@ -1101,7 +1101,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R1",
-        "value": "5.1k\u03a9",
+        "value": "5.1kΩ",
         "x": 800,
         "y": 460,
         "rotation": 0
@@ -1211,7 +1211,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R4",
-        "value": "50\u03a9",
+        "value": "50Ω",
         "x": 680,
         "y": 400,
         "rotation": 0
@@ -1231,7 +1231,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R5",
-        "value": "50\u03a9",
+        "value": "50Ω",
         "x": 760,
         "y": 400,
         "rotation": 0
@@ -1251,7 +1251,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R6",
-        "value": "50\u03a9",
+        "value": "50Ω",
         "x": 840,
         "y": 400,
         "rotation": 0
@@ -1271,7 +1271,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R7",
-        "value": "50\u03a9",
+        "value": "50Ω",
         "x": 920,
         "y": 400,
         "rotation": 0
@@ -1311,7 +1311,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R2",
-        "value": "250\u03a9",
+        "value": "250Ω",
         "x": 260,
         "y": 600,
         "rotation": 1
@@ -1341,7 +1341,7 @@
         "slug": "RESISTOR",
         "symType": "resistor",
         "designator": "R3",
-        "value": "120\u03a9",
+        "value": "120Ω",
         "x": 400,
         "y": 600,
         "rotation": 1
@@ -5266,5 +5266,6 @@
     ]
   },
   "has_layout_example": true,
-  "footprint": "MAX2870_TQFN-32-EP"
+  "footprint": "MAX2870_TQFN-32-EP",
+  "category": "rf"
 }

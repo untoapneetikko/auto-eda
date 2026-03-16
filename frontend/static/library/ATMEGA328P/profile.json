@@ -1,29 +1,29 @@
 {
   "part_number": "ATmega328P",
-  "description": "8-bit AVR microcontroller, 32KB flash, 2KB SRAM, 1KB EEPROM, 28-pin DIP/TQFP \u2014 the Arduino Uno MCU",
+  "description": "8-bit AVR microcontroller, 32KB flash, 2KB SRAM, 1KB EEPROM, 28-pin DIP/TQFP — the Arduino Uno MCU",
   "manufacturer": "Microchip (Atmel)",
   "package_types": [
     "28-pin DIP (PDIP28)",
     "32-pad TQFP (TQFP32)",
     "32-pad QFN (MLF32)"
   ],
-  "supply_voltage_range": "1.8\u20135.5V (full speed requires 2.7\u20135.5V)",
-  "frequency_range": "0\u201320 MHz at 4.5\u20135.5V; 0\u201310 MHz at 2.7\u20135.5V",
+  "supply_voltage_range": "1.8–5.5V (full speed requires 2.7–5.5V)",
+  "frequency_range": "0–20 MHz at 4.5–5.5V; 0–10 MHz at 2.7–5.5V",
   "designator": "U",
   "absolute_max": {
     "vcc": "6.0V",
     "max_pin_current": "40 mA per I/O pin",
     "total_port_current": "200 mA per VCC/GND pair",
-    "operating_temp": "-40\u00b0C to +85\u00b0C (industrial)"
+    "operating_temp": "-40°C to +85°C (industrial)"
   },
   "key_performance": {
     "flash": "32 KB (2 KB used by bootloader on Arduino)",
     "sram": "2 KB",
     "eeprom": "1 KB",
-    "timers": "2\u00d7 8-bit, 1\u00d7 16-bit",
-    "uart": "1\u00d7 USART",
-    "spi": "1\u00d7 SPI (also used for ISP programming)",
-    "i2c": "1\u00d7 TWI (I2C) on PC4/PC5",
+    "timers": "2× 8-bit, 1× 16-bit",
+    "uart": "1× USART",
+    "spi": "1× SPI (also used for ISP programming)",
+    "i2c": "1× TWI (I2C) on PC4/PC5",
     "adc": "6-channel 10-bit ADC (8-channel in TQFP)",
     "pwm": "6 PWM channels",
     "max_current_per_pin": "40 mA source/sink"
@@ -36,7 +36,7 @@
       "description": "Port C bit 6, also active-low RESET. Pull high to run; pull low to reset. In Arduino, RESET is exposed via the reset button and ICSP header.",
       "active": "low",
       "internal_pull": "weak pull-up on RESET line",
-      "requirements": "Add 10k\u03a9 pull-up to VCC. If using as I/O, disable RSTDISBL fuse (irreversible). Arduino uses a 100nF cap from RESET to DTR for auto-reset.",
+      "requirements": "Add 10kΩ pull-up to VCC. If using as I/O, disable RSTDISBL fuse (irreversible). Arduino uses a 100nF cap from RESET to DTR for auto-reset.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -47,7 +47,7 @@
       "description": "Port D bit 0, UART RX. Receives serial data. On Arduino Uno this connects via USB-Serial chip.",
       "active": null,
       "internal_pull": "configurable pull-up",
-      "requirements": "Leave unconnected or connect to UART TX source. 1k\u03a9 series resistor recommended if connecting to 5V UART from 3.3V system.",
+      "requirements": "Leave unconnected or connect to UART TX source. 1kΩ series resistor recommended if connecting to 5V UART from 3.3V system.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -102,7 +102,7 @@
       "description": "Digital supply voltage. Powers AVR core, flash, SRAM, and digital I/O.",
       "active": null,
       "internal_pull": null,
-      "requirements": "100nF ceramic decoupling cap to GND close to pin. Optional 10\u00b5F electrolytic on board supply rail. Separate from AVCC for best ADC performance.",
+      "requirements": "100nF ceramic decoupling cap to GND close to pin. Optional 10µF electrolytic on board supply rail. Separate from AVCC for best ADC performance.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -242,10 +242,10 @@
       "number": 20,
       "name": "AVCC",
       "type": "power",
-      "description": "Analog supply for ADC, Port C pins, and analog comparator. Should be same voltage as VCC (2.7\u20135.5V).",
+      "description": "Analog supply for ADC, Port C pins, and analog comparator. Should be same voltage as VCC (2.7–5.5V).",
       "active": null,
       "internal_pull": null,
-      "requirements": "MUST be connected even if ADC is unused. Connect to VCC through a 10\u03a9 resistor in series, then 100nF to GND. Optional: add LC filter (10\u00b5H + 100nF) for better ADC noise performance.",
+      "requirements": "MUST be connected even if ADC is unused. Connect to VCC through a 10Ω resistor in series, then 100nF to GND. Optional: add LC filter (10µH + 100nF) for better ADC noise performance.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -275,7 +275,7 @@
       "number": 23,
       "name": "PC0/ADC0",
       "type": "bidirectional",
-      "description": "Port C bit 0, ADC channel 0 (Arduino A0). 10-bit ADC, 0\u2013AREF range.",
+      "description": "Port C bit 0, ADC channel 0 (Arduino A0). 10-bit ADC, 0–AREF range.",
       "active": null,
       "internal_pull": "configurable pull-up",
       "requirements": "For ADC: drive with analog signal 0V to AREF. Do not enable internal pull-up when using as ADC input.",
@@ -321,8 +321,8 @@
       "type": "bidirectional",
       "description": "Port C bit 4, ADC channel 4, I2C SDA (Arduino A4). TWI/I2C data line.",
       "active": null,
-      "internal_pull": "configurable pull-up (use external 4.7k\u03a9 for I2C)",
-      "requirements": "For I2C: add 4.7k\u03a9 pull-up to VCC. Open-drain bus \u2014 pull-up required. Do not enable internal pull-up for I2C.",
+      "internal_pull": "configurable pull-up (use external 4.7kΩ for I2C)",
+      "requirements": "For I2C: add 4.7kΩ pull-up to VCC. Open-drain bus — pull-up required. Do not enable internal pull-up for I2C.",
       "ambiguous": false,
       "datasheet_page": 3
     },
@@ -332,8 +332,8 @@
       "type": "bidirectional",
       "description": "Port C bit 5, ADC channel 5, I2C SCL (Arduino A5). TWI/I2C clock line.",
       "active": null,
-      "internal_pull": "configurable pull-up (use external 4.7k\u03a9 for I2C)",
-      "requirements": "For I2C: add 4.7k\u03a9 pull-up to VCC. Open-drain bus.",
+      "internal_pull": "configurable pull-up (use external 4.7kΩ for I2C)",
+      "requirements": "For I2C: add 4.7kΩ pull-up to VCC. Open-drain bus.",
       "ambiguous": false,
       "datasheet_page": 3
     }
@@ -343,63 +343,63 @@
       "type": "capacitor",
       "value": "100nF 0402",
       "placement": "VCC (pin 7) to GND (pin 8)",
-      "reason": "Digital supply decoupling \u2014 required for stable operation",
+      "reason": "Digital supply decoupling — required for stable operation",
       "datasheet_page": 3
     },
     {
       "type": "capacitor",
       "value": "100nF 0402",
       "placement": "AVCC (pin 20) to GND (pin 22)",
-      "reason": "Analog supply decoupling \u2014 required even if ADC unused",
+      "reason": "Analog supply decoupling — required even if ADC unused",
       "datasheet_page": 3
     },
     {
       "type": "capacitor",
       "value": "100nF 0402",
       "placement": "AREF (pin 21) to GND (pin 22)",
-      "reason": "AREF noise filtering \u2014 prevents ADC oscillation",
+      "reason": "AREF noise filtering — prevents ADC oscillation",
       "datasheet_page": 3
     },
     {
       "type": "resistor",
-      "value": "10k\u03a9 0402",
+      "value": "10kΩ 0402",
       "placement": "RESET (pin 1) to VCC",
-      "reason": "RESET pull-up \u2014 holds MCU in run state. Required.",
+      "reason": "RESET pull-up — holds MCU in run state. Required.",
       "datasheet_page": 3
     },
     {
       "type": "capacitor",
       "value": "22pF 0402",
       "placement": "XTAL1 (pin 9) to GND",
-      "reason": "Crystal load capacitor \u2014 value depends on crystal spec, typically 12\u201322pF",
+      "reason": "Crystal load capacitor — value depends on crystal spec, typically 12–22pF",
       "datasheet_page": 4
     },
     {
       "type": "capacitor",
       "value": "22pF 0402",
       "placement": "XTAL2 (pin 10) to GND",
-      "reason": "Crystal load capacitor \u2014 paired with pin 9 cap",
+      "reason": "Crystal load capacitor — paired with pin 9 cap",
       "datasheet_page": 4
     }
   ],
   "application_circuits": [
     {
       "name": "Minimal Arduino-compatible circuit",
-      "description": "VCC and AVCC to 5V with 100nF decoupling. 10k\u03a9 RESET pull-up. 16 MHz crystal with 2\u00d722pF load caps on XTAL1/XTAL2. Optional 100nF on AREF. Bootloader enables serial programming via RXD/TXD.",
+      "description": "VCC and AVCC to 5V with 100nF decoupling. 10kΩ RESET pull-up. 16 MHz crystal with 2×22pF load caps on XTAL1/XTAL2. Optional 100nF on AREF. Bootloader enables serial programming via RXD/TXD.",
       "page": 3
     }
   ],
   "common_mistakes": [
-    "AVCC MUST be connected to supply \u2014 leaving it unconnected causes unpredictable behavior even if ADC is unused",
-    "RESET needs a 10k\u03a9 pull-up to VCC \u2014 floating RESET causes random resets",
-    "Crystal load capacitors must match the crystal's specified CL \u2014 wrong value causes frequency error or failure to start",
-    "Do not enable internal pull-up on ADC input pins \u2014 it affects ADC accuracy",
-    "I2C (SDA/SCL) requires external 4.7k\u03a9 pull-ups \u2014 internal pull-up is too weak for most buses",
-    "GPIO pins are 5V \u2014 direct connection to 3.3V devices (ESP32, Raspberry Pi) requires level shifting",
-    "Maximum 40mA per pin, 200mA per port, 400mA total from VCC \u2014 avoid directly driving motors",
-    "Brownout detection default varies by fuse setting \u2014 set BOD level appropriate for supply voltage",
-    "Boot fuse bits determine bootloader vs. application start \u2014 incorrect fuse programming bricks the chip",
-    "SPI (PB3/PB4/PB5) is shared with ISP programming \u2014 attached SPI devices may interfere with programming"
+    "AVCC MUST be connected to supply — leaving it unconnected causes unpredictable behavior even if ADC is unused",
+    "RESET needs a 10kΩ pull-up to VCC — floating RESET causes random resets",
+    "Crystal load capacitors must match the crystal's specified CL — wrong value causes frequency error or failure to start",
+    "Do not enable internal pull-up on ADC input pins — it affects ADC accuracy",
+    "I2C (SDA/SCL) requires external 4.7kΩ pull-ups — internal pull-up is too weak for most buses",
+    "GPIO pins are 5V — direct connection to 3.3V devices (ESP32, Raspberry Pi) requires level shifting",
+    "Maximum 40mA per pin, 200mA per port, 400mA total from VCC — avoid directly driving motors",
+    "Brownout detection default varies by fuse setting — set BOD level appropriate for supply voltage",
+    "Boot fuse bits determine bootloader vs. application start — incorrect fuse programming bricks the chip",
+    "SPI (PB3/PB4/PB5) is shared with ISP programming — attached SPI devices may interfere with programming"
   ],
   "notes": "DIP28 pinout. Arduino Uno uses ATmega328P-PU (DIP) or ATmega328P-AU (SMD TQFP). Default fuses: 16 MHz external crystal, BOD at 2.7V, bootloader enabled. ISP programming via 6-pin ICSP header (MOSI, MISO, SCK, RESET, VCC, GND). Datasheet: Microchip DS40002061A.",
   "symbol_type": "ic",
@@ -410,5 +410,7 @@
   "uploaded_at": null,
   "parsed_at": "2026-03-09T00:00:00.000Z",
   "builtin": true,
-  "human_corrections": []
+  "human_corrections": [],
+  "typical_current_ma": 15,
+  "category": "mcu"
 }

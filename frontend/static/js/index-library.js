@@ -56,15 +56,26 @@ async function copyPrompt(el) {
 }
 
 // ── Library ────────────────────────────────────────────────────────────────
+let _libActiveCat = '';
+
+function setLibCat(el, cat) {
+  _libActiveCat = cat;
+  document.querySelectorAll('.lib-cat-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderLibrary(document.getElementById('lib-search').value);
+}
+
 function renderLibrary(filter = '') {
   const list = document.getElementById('library-list');
   document.getElementById('lib-count').textContent = Object.keys(library).length;
 
-  const parts = Object.values(library).filter(p =>
-    !filter ||
-    p.part_number?.toLowerCase().includes(filter.toLowerCase()) ||
-    p.description?.toLowerCase().includes(filter.toLowerCase())
-  ).sort((a, b) => (b.parsed_at || b.uploaded_at || '').localeCompare(a.parsed_at || a.uploaded_at || ''));
+  const parts = Object.values(library).filter(p => {
+    const textMatch = !filter ||
+      p.part_number?.toLowerCase().includes(filter.toLowerCase()) ||
+      p.description?.toLowerCase().includes(filter.toLowerCase());
+    const catMatch = !_libActiveCat || p.category === _libActiveCat;
+    return textMatch && catMatch;
+  }).sort((a, b) => (b.parsed_at || b.uploaded_at || '').localeCompare(a.parsed_at || a.uploaded_at || ''));
 
   if (parts.length === 0) {
     list.innerHTML = `<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">No components yet.<br>Upload a datasheet PDF to start.</div>`;

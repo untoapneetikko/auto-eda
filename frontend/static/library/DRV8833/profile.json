@@ -14,22 +14,182 @@
     "operating_temp": "-40°C to +85°C ambient"
   },
   "pins": [
-    { "number": 1,  "name": "AOUT2",  "type": "output",  "description": "H-bridge A output 2. Connect to motor A terminal.", "active": null, "internal_pull": null, "requirements": "No external flyback diodes needed — internal diodes included", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 2,  "name": "VCP",    "type": "power",   "description": "Charge pump capacitor pin. Connect 100nF cap from VCP to VM.", "active": null, "internal_pull": null, "requirements": "100nF cap from VCP to VM required for internal charge pump operation", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 3,  "name": "VM",     "type": "power",   "description": "Motor supply voltage. 2.7V to 10.8V.", "active": null, "internal_pull": null, "requirements": "100nF ceramic cap to GND close to pin.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 4,  "name": "AOUT1",  "type": "output",  "description": "H-bridge A output 1. Connect to other motor A terminal.", "active": null, "internal_pull": null, "requirements": "No external flyback diodes needed.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 5,  "name": "GND",    "type": "gnd",     "description": "Ground. Connect to circuit GND.", "active": null, "internal_pull": null, "requirements": "Exposed pad on WSON must also be connected to GND.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 6,  "name": "BOUT1",  "type": "output",  "description": "H-bridge B output 1.", "active": null, "internal_pull": null, "requirements": "No external flyback diodes needed.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 7,  "name": "BOUT2",  "type": "output",  "description": "H-bridge B output 2.", "active": null, "internal_pull": null, "requirements": "No external flyback diodes needed.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 8,  "name": "GND",    "type": "gnd",     "description": "Ground (second GND pin).", "active": null, "internal_pull": null, "requirements": "Connect to common GND.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 9,  "name": "BIN2",   "type": "input",   "description": "Logic input for H-bridge B, input 2.", "active": null, "internal_pull": null, "requirements": "3.3V and 5V logic compatible. Do not leave floating.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 10, "name": "BIN1",   "type": "input",   "description": "Logic input for H-bridge B, input 1.", "active": null, "internal_pull": null, "requirements": "Do not leave floating.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 11, "name": "nFAULT", "type": "output",  "description": "Fault indicator. Active LOW open-drain output.", "active": "low", "internal_pull": null, "requirements": "Pull-up resistor (10kΩ) to logic supply required.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 12, "name": "nSLEEP", "type": "input",   "description": "Sleep mode. Active LOW. Pull HIGH to enable device.", "active": "low", "internal_pull": null, "requirements": "Pull HIGH to Vcc for normal operation. Floating = device sleeps.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 13, "name": "AIN1",   "type": "input",   "description": "Logic input for H-bridge A, input 1.", "active": null, "internal_pull": null, "requirements": "Do not leave floating.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 14, "name": "AIN2",   "type": "input",   "description": "Logic input for H-bridge A, input 2.", "active": null, "internal_pull": null, "requirements": "Do not leave floating.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 15, "name": "VCC",    "type": "power",   "description": "Logic supply voltage. 3.3V or 5V. Powers input logic.", "active": null, "internal_pull": null, "requirements": "100nF bypass cap to GND.", "ambiguous": false, "datasheet_page": 4 },
-    { "number": 16, "name": "AISEN",  "type": "passive", "description": "Current sense for H-bridge A. Short to GND if not used.", "active": null, "internal_pull": null, "requirements": "Must not be left floating.", "ambiguous": false, "datasheet_page": 4 }
+    {
+      "number": 1,
+      "name": "AOUT2",
+      "type": "output",
+      "description": "H-bridge A output 2. Connect to motor A terminal.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "No external flyback diodes needed — internal diodes included",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 2,
+      "name": "VCP",
+      "type": "power",
+      "description": "Charge pump capacitor pin. Connect 100nF cap from VCP to VM.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF cap from VCP to VM required for internal charge pump operation",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 3,
+      "name": "VM",
+      "type": "power",
+      "description": "Motor supply voltage. 2.7V to 10.8V.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF ceramic cap to GND close to pin.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 4,
+      "name": "AOUT1",
+      "type": "output",
+      "description": "H-bridge A output 1. Connect to other motor A terminal.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "No external flyback diodes needed.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 5,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground. Connect to circuit GND.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Exposed pad on WSON must also be connected to GND.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 6,
+      "name": "BOUT1",
+      "type": "output",
+      "description": "H-bridge B output 1.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "No external flyback diodes needed.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 7,
+      "name": "BOUT2",
+      "type": "output",
+      "description": "H-bridge B output 2.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "No external flyback diodes needed.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 8,
+      "name": "GND",
+      "type": "gnd",
+      "description": "Ground (second GND pin).",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to common GND.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 9,
+      "name": "BIN2",
+      "type": "input",
+      "description": "Logic input for H-bridge B, input 2.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "3.3V and 5V logic compatible. Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 10,
+      "name": "BIN1",
+      "type": "input",
+      "description": "Logic input for H-bridge B, input 1.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 11,
+      "name": "nFAULT",
+      "type": "output",
+      "description": "Fault indicator. Active LOW open-drain output.",
+      "active": "low",
+      "internal_pull": null,
+      "requirements": "Pull-up resistor (10kΩ) to logic supply required.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 12,
+      "name": "nSLEEP",
+      "type": "input",
+      "description": "Sleep mode. Active LOW. Pull HIGH to enable device.",
+      "active": "low",
+      "internal_pull": null,
+      "requirements": "Pull HIGH to Vcc for normal operation. Floating = device sleeps.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 13,
+      "name": "AIN1",
+      "type": "input",
+      "description": "Logic input for H-bridge A, input 1.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 14,
+      "name": "AIN2",
+      "type": "input",
+      "description": "Logic input for H-bridge A, input 2.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Do not leave floating.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 15,
+      "name": "VCC",
+      "type": "power",
+      "description": "Logic supply voltage. 3.3V or 5V. Powers input logic.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "100nF bypass cap to GND.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    },
+    {
+      "number": 16,
+      "name": "AISEN",
+      "type": "passive",
+      "description": "Current sense for H-bridge A. Short to GND if not used.",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Must not be left floating.",
+      "ambiguous": false,
+      "datasheet_page": 4
+    }
   ],
   "required_passives": [
     {
@@ -79,5 +239,7 @@
   "uploaded_at": null,
   "parsed_at": "2026-03-08T00:00:00.000Z",
   "builtin": true,
-  "human_corrections": []
+  "human_corrections": [],
+  "typical_current_ma": 1,
+  "category": "driver"
 }

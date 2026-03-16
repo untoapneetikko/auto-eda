@@ -2,7 +2,12 @@
   "part_number": "LM7805",
   "description": "5V 1A positive linear voltage regulator — fixed output, requires input ≥7V",
   "manufacturer": "Texas Instruments / ST / On Semi",
-  "package_types": ["TO-220", "TO-92", "D2PAK", "SOT-223"],
+  "package_types": [
+    "TO-220",
+    "TO-92",
+    "D2PAK",
+    "SOT-223"
+  ],
   "supply_voltage_range": "7V to 35V input for 5V output",
   "absolute_max": {
     "input_voltage": "35V",
@@ -85,5 +90,7 @@
   "uploaded_at": null,
   "parsed_at": "2026-03-08T00:00:00.000Z",
   "builtin": true,
-  "human_corrections": []
+  "human_corrections": [],
+  "typical_current_ma": 5,
+  "category": "power"
 }

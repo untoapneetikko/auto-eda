@@ -643,13 +643,39 @@
   "builtin": true,
   "package": "LQFP-48",
   "passives": [
-    { "type": "capacitor", "value": "100nF", "description": "VDD decoupling, place near each VDD pin" },
-    { "type": "capacitor", "value": "4.7µF", "description": "Bulk VDD decoupling" },
-    { "type": "capacitor", "value": "100nF", "description": "VDDA analog supply decoupling" },
-    { "type": "capacitor", "value": "1µF", "description": "VBAT decoupling" },
-    { "type": "resistor", "value": "10k", "description": "NRST pull-up to VDD" },
-    { "type": "capacitor", "value": "100nF", "description": "NRST RC filter cap to GND" }
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "description": "VDD decoupling, place near each VDD pin"
+    },
+    {
+      "type": "capacitor",
+      "value": "4.7µF",
+      "description": "Bulk VDD decoupling"
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "description": "VDDA analog supply decoupling"
+    },
+    {
+      "type": "capacitor",
+      "value": "1µF",
+      "description": "VBAT decoupling"
+    },
+    {
+      "type": "resistor",
+      "value": "10k",
+      "description": "NRST pull-up to VDD"
+    },
+    {
+      "type": "capacitor",
+      "value": "100nF",
+      "description": "NRST RC filter cap to GND"
+    }
   ],
   "human_corrections": [],
-  "example_circuit": null
+  "example_circuit": null,
+  "typical_current_ma": 36,
+  "category": "mcu"
 }

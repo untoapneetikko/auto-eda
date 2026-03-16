@@ -2,7 +2,10 @@
   "part_number": "L298N",
   "description": "Dual full H-bridge motor driver — 46V, 2A per channel, logic-level inputs, enable pins, current sensing",
   "manufacturer": "STMicroelectronics",
-  "package_types": ["Multiwatt15", "PowerSO20"],
+  "package_types": [
+    "Multiwatt15",
+    "PowerSO20"
+  ],
   "supply_voltage_range": "Logic (Vss): 4.5V–7V; Motor (Vs): 4.5V–46V",
   "absolute_max": {
     "motor_supply_vs": "50V",
@@ -226,5 +229,7 @@
   "uploaded_at": null,
   "parsed_at": "2026-03-08T00:00:00.000Z",
   "builtin": true,
-  "human_corrections": []
+  "human_corrections": [],
+  "typical_current_ma": 36,
+  "category": "driver"
 }

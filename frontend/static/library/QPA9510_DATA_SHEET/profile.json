@@ -892,5 +892,6 @@
       }
     ]
   },
-  "footprint": "QFN-16-3x3"
+  "footprint": "QFN-16-3x3",
+  "category": "rf"
 }

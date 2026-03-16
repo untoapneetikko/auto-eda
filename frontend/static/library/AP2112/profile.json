@@ -139,6 +139,7 @@
   "parsed_at": "2026-03-11T10:00:00.000Z",
   "builtin": false,
   "human_corrections": [],
+  "typical_current_ma": 0.055,
   "example_circuit": {
     "components": [
       {
@@ -683,5 +684,6 @@
     "vias": [],
     "thermal_notes": "?JA = 184�C/W (SOT25). At 600mA output with 1.7V dropout: Pdiss = 1.02W ? ?Tja = 188�C. To stay below 85�C junction at 25�C ambient, limit power dissipation to ~0.33W (e.g. 100mA at 3.3V from 5V). Use copper pours on GND net under and around IC for spreading.",
     "areas": []
-  }
+  },
+  "category": "power"
 }

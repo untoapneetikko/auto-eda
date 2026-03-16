@@ -4,15 +4,36 @@
   "status": "parsed",
   "slug": "AMS1117-3.3",
   "symbol_type": "ic",
-  "package_types": ["SOT-223", "TO-252", "TO-220"],
+  "package_types": [
+    "SOT-223",
+    "TO-252",
+    "TO-220"
+  ],
   "footprint": "SOT-223",
   "pins": [
-    {"number": "1", "name": "GND",    "type": "passive"},
-    {"number": "2", "name": "OUTPUT", "type": "output"},
-    {"number": "3", "name": "INPUT",  "type": "input"},
-    {"number": "4", "name": "OUTPUT", "type": "output"}
+    {
+      "number": "1",
+      "name": "GND",
+      "type": "passive"
+    },
+    {
+      "number": "2",
+      "name": "OUTPUT",
+      "type": "output"
+    },
+    {
+      "number": "3",
+      "name": "INPUT",
+      "type": "input"
+    },
+    {
+      "number": "4",
+      "name": "OUTPUT",
+      "type": "output"
+    }
   ],
   "human_corrections": [],
+  "typical_current_ma": 5,
   "layout_example": {
     "components": [],
     "traces": [],
@@ -22,5 +43,6 @@
     "components": [],
     "wires": [],
     "labels": []
-  }
+  },
+  "category": "power"
 }

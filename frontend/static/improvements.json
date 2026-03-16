@@ -5,37 +5,53 @@
       "id": 1,
       "title": "Add ATmega328P seed component",
       "description": "Full 28-pin profile for the Arduino MCU.",
-      "status": "backlog",
+      "status": "done",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:33.892046+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null,
+      "observations": "Profile exists at library/ATMEGA328P/profile.json with 28 pins, fully parsed."
     },
     {
       "id": 2,
       "title": "Add ESP32 seed component",
       "description": "Generic ESP32 module profile.",
-      "status": "backlog",
+      "status": "done",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:34.389689+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null,
+      "observations": "Profile exists at library/ESP32_WROOM_32/profile.json with 38 pins, fully parsed."
     },
     {
       "id": 3,
       "title": "Add STM32F103C8T6 seed component",
       "description": "Blue Pill MCU, 48 pins.",
-      "status": "backlog",
+      "status": "done",
       "priority": "medium",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:34.874906+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null,
+      "observations": "Profile exists at library/STM32F103C8/profile.json with 48 pins, fully parsed."
     },
     {
       "id": 4,
       "title": "Net labels on schematic",
       "description": "Same-name net labels = same electrical net.",
-      "status": "backlog",
+      "status": "done",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:35.392180+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null,
+      "observations": "Net labels fully implemented in index-schematic-editor.js: _placeLabel(), label tool, same-name labels ? same net via netlist API."
     },
     {
       "id": 5,
@@ -44,7 +60,10 @@
       "status": "backlog",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:35.872043+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null
     },
     {
       "id": 6,
@@ -53,16 +72,22 @@
       "status": "backlog",
       "priority": "medium",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:36.360929+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null
     },
     {
       "id": 7,
       "title": "Tag / category filtering in library",
       "description": "Add category tags and filter chips.",
-      "status": "backlog",
+      "status": "inprogress",
       "priority": "medium",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:21:12.731599+00:00",
+      "locked": true,
+      "locked_by": "Claude Code",
+      "locked_at": "2026-03-16T11:21:07.699053+00:00"
     },
     {
       "id": 8,
@@ -71,34 +96,46 @@
       "status": "backlog",
       "priority": "low",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:36.861914+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null
     },
     {
       "id": 9,
       "title": "AI circuit generator (Phase 4)",
       "description": "Describe a circuit \u2192 AI generates full schematic.",
-      "status": "backlog",
+      "status": "inprogress",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:22:22.913624+00:00",
+      "locked": true,
+      "locked_by": "Claude Code",
+      "locked_at": "2026-03-16T11:22:22.655398+00:00"
     },
     {
       "id": 10,
       "title": "Cross-component compatibility checks",
       "description": "Voltage, current, logic level checks.",
-      "status": "backlog",
+      "status": "inprogress",
       "priority": "high",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:21:42.660714+00:00",
+      "locked": true,
+      "locked_by": "Claude Code",
+      "locked_at": "2026-03-16T11:21:42.400287+00:00"
     },
     {
       "id": 11,
       "title": "Power budget calculator",
       "description": "Sum current draw from all placed components.",
-      "status": "backlog",
+      "status": "inprogress",
       "priority": "medium",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:21:25.336360+00:00",
+      "locked": true,
+      "locked_by": "Claude Code",
+      "locked_at": "2026-03-16T11:21:25.097684+00:00"
     },
     {
       "id": 12,
@@ -107,7 +144,10 @@
       "status": "backlog",
       "priority": "medium",
       "created_at": "2026-03-09T00:00:00Z",
-      "updated_at": "2026-03-09T00:00:00Z"
+      "updated_at": "2026-03-16T11:20:37.349356+00:00",
+      "locked": false,
+      "locked_by": null,
+      "locked_at": null
     },
     {
       "id": 13,
