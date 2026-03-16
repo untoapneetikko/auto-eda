@@ -271,6 +271,7 @@ def compute_placement(
     board_height_mm: float = BOARD_HEIGHT_MM,
     min_clearance_mm: float = 1.0,
     iterations: int = 250,
+    snap_mm: float = 0.1,
 ) -> dict[str, Any]:
     """
     One-shot tool: read schematic (+ optional connectivity), compute net-proximity
@@ -293,6 +294,11 @@ def compute_placement(
         Minimum silkscreen-to-silkscreen gap.  Default 1.0 mm.
     iterations:
         Force-directed optimisation iterations.  More = tighter packing.
+    snap_mm:
+        Grid snap applied to final (x, y) outputs in mm.
+        Default 0.1 mm = KiCad fine grid — pads land on-grid so routing
+        connections snap cleanly without manual nudging.
+        Pass 0.0 to disable (raw floating-point positions).
 
     Returns
     -------
@@ -346,6 +352,7 @@ def compute_placement(
         board_height_mm=board_height_mm,
         min_clearance_mm=min_clearance_mm,
         iterations=iterations,
+        snap_mm=snap_mm,
     )
 
     placement_dict: dict[str, Any] = {

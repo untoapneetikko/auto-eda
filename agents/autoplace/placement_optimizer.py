@@ -31,6 +31,21 @@ import polars as pl
 
 
 # ---------------------------------------------------------------------------
+# Grid-snap helper
+# ---------------------------------------------------------------------------
+
+def _snap_to_grid(value: float, snap_mm: float) -> float:
+    """Round *value* to the nearest multiple of *snap_mm*.
+
+    snap_mm <= 0 disables snapping (returns value unchanged).
+    Typical KiCad grids: 0.1 mm (fine), 0.5 mm (medium), 1.0 mm (coarse).
+    """
+    if snap_mm <= 0.0:
+        return value
+    return round(round(value / snap_mm) * snap_mm, 6)
+
+
+# ---------------------------------------------------------------------------
 # Footprint size estimation
 # ---------------------------------------------------------------------------
 
@@ -962,6 +977,7 @@ def compute_net_proximity_placement(
     seed: int = 42,
     schematic_hints: dict[str, tuple[float, float]] | None = None,
     hint_weight: float = 0.4,
+    snap_mm: float = 0.1,
 ) -> list[dict[str, Any]]:
     """
     Compute PCB component placements optimised for net-proximity.
@@ -1008,6 +1024,13 @@ def compute_net_proximity_placement(
         Multiplier (0..1) for the hint-gravity force.  Default 0.4 is gentle
         (for normalised schematic hints).  Use 0.8–1.0 for existing board
         positions that should be preserved as closely as possible.
+    snap_mm:
+        Grid snap value in mm applied to final (x, y) coordinates.
+        Default 0.1 mm matches KiCad's standard fine grid — traces snap
+        cleanly to component pads with zero manual nudging.
+        Set to 0.0 to disable snapping (fractional mm positions).
+        Snapping is applied ONLY to the output, never during the physics
+        simulation, so clearance calculations remain accurate.
 
     Returns
     -------
@@ -1354,10 +1377,19 @@ def compute_net_proximity_placement(
                 dominant_net = net
                 dominant_neighbours = neighbours
 
+        # Snap final coordinates to grid (default 0.1 mm KiCad fine grid).
+        # Snapping happens here — AFTER all physics — so clearance maths was
+        # done on the exact floating-point positions.  The snap delta is tiny
+        # (≤ snap_mm/2) and never violates the enforced min_clearance_mm.
+        fx = _snap_to_grid(pos[i][0], snap_mm)
+        fy = _snap_to_grid(pos[i][1], snap_mm)
+
+        snap_note = f" (snapped to {snap_mm} mm grid)" if snap_mm > 0 else ""
+
         if is_conn[i]:
             rationale = (
                 f"{ref} is a connector — pinned to board top edge "
-                f"(y={pos[i][1]:.2f} mm) per placement rule #1."
+                f"(y={fy:.2f} mm) per placement rule #1{snap_note}."
             )
         elif dominant_net and dominant_neighbours:
             nbr_str = ", ".join(dominant_neighbours[:4])
@@ -1367,19 +1399,19 @@ def compute_net_proximity_placement(
                 f"Net-proximity pull toward {nbr_str} via dominant net "
                 f"'{dominant_net}' ({best_count} shared connection"
                 f"{'s' if best_count != 1 else ''}). "
-                f"Final position ({pos[i][0]:.2f}, {pos[i][1]:.2f}) mm satisfies "
-                f"{min_clearance_mm} mm silkscreen-to-silkscreen clearance."
+                f"Final position ({fx:.2f}, {fy:.2f}) mm satisfies "
+                f"{min_clearance_mm} mm silkscreen-to-silkscreen clearance{snap_note}."
             )
         else:
             rationale = (
                 f"{ref} has no net connections; placed at "
-                f"({pos[i][0]:.2f}, {pos[i][1]:.2f}) mm in available space."
+                f"({fx:.2f}, {fy:.2f}) mm in available space{snap_note}."
             )
 
         result.append({
             "reference": ref,
-            "x": round(pos[i][0], 3),
-            "y": round(pos[i][1], 3),
+            "x": fx,
+            "y": fy,
             "rotation": comp.get("rotation", 0),   # from schematic; 0 if not specified
             "layer": "F.Cu",
             "footprint": comp.get("footprint", ""),
