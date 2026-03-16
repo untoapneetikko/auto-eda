@@ -243,7 +243,7 @@ async def api_upload(file: UploadFile):
         "type": "datasheet",
         "slug": slug,
         "title": f"Parse {slug}",
-        "prompt": f"parse datasheet {slug}",
+        "prompt": f"Parse the datasheet for component {slug}.\nPDF file: data/uploads/{original_name}\nRaw text already extracted: frontend/static/library/{slug}/raw_text.txt\nWrite the structured profile to: frontend/static/library/{slug}/profile.json",
         "status": "pending",
         "created_at": datetime.now(timezone.utc).isoformat(),
     })

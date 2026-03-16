@@ -696,6 +696,12 @@ function _handlePipelineSSE(evt, data) {
       .catch(() => {});
   }
 
+  // Auto-open drawer and switch to the running agent so user can see it working
+  if (evt === 'pipeline_agent_started') {
+    toggleAgentsDrawer(true);
+    if (name !== _activePaAgent) paOpenChat(name);
+  }
+
   // Route live updates to pane only if this agent is open
   if (name !== _activePaAgent) return;
 
