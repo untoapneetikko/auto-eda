@@ -51,39 +51,48 @@ function renderSchNets(editorRef, listId, countId) {
   }
   const hn = editorRef._highlightedNet;
 
-  const _isPower = name => /^(GND|AGND|DGND|PGND|VCC|VDD|VSS|VEE|VBUS|VREF|VBAT|V\d|3\.?3V?|5V|1\.?8V?|1\.?2V?|2\.?5V?|3V3|5V0|PWR|POWER|AVCC|AVDD|DVCC|DVDD)$/i.test(name.trim());
+  // Broad power net detection — matches GND, VCC, VDD, +3.3V, 3V3, 5V, VBUS, etc.
+  const _isPower = name => /gnd|vcc|vdd|vss|vee|vbus|vref|vbat|pwr|power|avcc|avdd|dvcc|dvdd|\bv\d|\d+v\d*|3v3|5v0|\+[\d.]+v/i.test(name.trim());
 
-  const power = nets.filter(n => _isPower(n.name));
+  const power  = nets.filter(n =>  _isPower(n.name));
   const signal = nets.filter(n => !_isPower(n.name));
 
+  const _header = label => `<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;padding:5px 8px 2px;">${label}</div>`;
+
+  // Power nets → compact chips that wrap (stacked tightly)
+  const _chip = n => {
+    const col = editorRef._labelColor(n.name);
+    const active = hn === n.name;
+    const outline = active ? `outline:2px solid #facc15;` : '';
+    return `<div title="${esc(n.name)} (${n.ports.length} pins)" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.05);border:1px solid ${col}33;${outline}max-width:100%;overflow:hidden;"
+      data-net="${esc(n.name)}" data-list="${esc(listId)}" data-count="${esc(countId)}"
+      onclick="_schNetClick(this.dataset.list,this.dataset.count,this.dataset.net)">
+      <div style="width:6px;height:6px;border-radius:50%;background:${col};flex-shrink:0;"></div>
+      <span style="color:${col};font-size:9px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(n.name)}</span>
+    </div>`;
+  };
+
+  // Signal nets → slim rows
   const _row = n => {
     const col = editorRef._labelColor(n.name);
     const active = hn === n.name;
     const bg = active ? 'background:rgba(250,204,21,0.13);' : '';
     const border = active ? 'border-left:3px solid #facc15;padding-left:5px;' : 'border-left:3px solid transparent;padding-left:5px;';
-    return `<div class="sch-net-row" style="cursor:pointer;${bg}${border}transition:background 0.12s,transform 0.08s,opacity 0.08s;"
-      data-net="${esc(n.name)}" data-list="${esc(listId)}" data-count="${esc(countId)}"
-      onclick="_schNetClick(this.dataset.list,this.dataset.count,this.dataset.net)"
-      onmousedown="this.style.transform='scale(0.96)';this.style.opacity='0.65';"
-      onmouseup="this.style.transform='';this.style.opacity='';"
-      onmouseleave="this.style.transform='';this.style.opacity='';"
-      title="Click to highlight net on schematic">
+    return `<div class="sch-net-row" style="cursor:pointer;${bg}${border}" data-net="${esc(n.name)}" data-list="${esc(listId)}" data-count="${esc(countId)}" onclick="_schNetClick(this.dataset.list,this.dataset.count,this.dataset.net)" title="${esc(n.name)}">
       <div class="sch-net-dot" style="background:${col};flex-shrink:0;"></div>
       <span class="sch-net-name" style="color:${col};" title="${esc(n.name)}">${esc(n.name)}</span>
       <span class="sch-net-pins">${n.ports.length}</span>
     </div>`;
   };
 
-  const _groupHeader = label => `<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;padding:5px 8px 2px;opacity:0.6;">${label}</div>`;
-
   let html = '';
   if (power.length) {
-    html += _groupHeader('Power');
-    html += `<div style="display:flex;flex-direction:column;gap:1px;margin-bottom:3px;">` + power.map(_row).join('') + `</div>`;
+    html += _header('Power');
+    html += `<div style="display:flex;flex-wrap:wrap;gap:3px;padding:2px 6px 6px;">` + power.map(_chip).join('') + `</div>`;
   }
   if (signal.length) {
     if (power.length) html += `<div style="height:1px;background:var(--border);margin:2px 0;opacity:0.4;"></div>`;
-    html += _groupHeader('Signals');
+    html += _header('Signals');
     html += signal.map(_row).join('');
   }
   el.innerHTML = html;
