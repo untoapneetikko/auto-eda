@@ -13,7 +13,7 @@ services:
       # Mount live .git so agents can commit/push from inside the container
       - ./.git:/app/.git
       # Mount Claude Code config (writable so agents can save session history)
-      - /root/.claude:/root/.claude
+      - ${CLAUDE_CONFIG_DIR:-${HOME}/.claude}:/root/.claude
       # Mount Docker socket so agents can rebuild/restart containers
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -42,7 +42,7 @@ services:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
       - ./.git:/app/.git
-      - /root/.claude:/root/.claude
+      - ${CLAUDE_CONFIG_DIR:-${HOME}/.claude}:/root/.claude
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - REDIS_URL=redis://autoeda-redis:6379
