@@ -5558,6 +5558,19 @@ Body: {{components, wires, labels}}
 """
 
     elif ticket_type == "layout":
+        # Build library summary — slug → footprint + package info
+        lib_summary_lines = []
+        try:
+            idx = _read_index()
+            for s, meta in idx.items():
+                fp = meta.get("footprint") or {}
+                pkg = (meta.get("package_types") or ["?"])[0]
+                pads_count = len(fp.get("pads", [])) if isinstance(fp, dict) else "?"
+                lib_summary_lines.append(f"  {s:<40} pkg={pkg}  pads={pads_count}")
+        except Exception:
+            lib_summary_lines = ["  (could not read library index)"]
+        lib_summary = "\n".join(lib_summary_lines)
+
         prompt = f"""Build a PCB layout example for **{part}**.
 
 ## Component profile
@@ -5567,22 +5580,39 @@ Body: {{components, wires, labels}}
   NUM   NAME                 TYPE         DESCRIPTION
 {pin_table}
 
-## Existing footprint
+## Existing footprint for this component
 {existing_footprint}
 
-## Existing example circuit
+## Existing example circuit (schematic — use these components)
 {existing_example}
 
 ## Existing layout example (for reference / improvement)
 {existing_layout}
 
+## Available library components (ONLY use slugs from this list)
+{lib_summary}
+
 ## Task
 Produce a compact, routable PCB layout that matches the example circuit above.
-Place components sensibly (decoupling caps close to power pins, etc.) and
-pre-route as many traces as possible.
+
+**CRITICAL RULES:**
+1. Every component slug used MUST exist in the library list above — never invent slugs.
+2. For each component, read its footprint from `GET /api/library/<slug>` — use the
+   actual pad positions, sizes, and drill values from the stored footprint. Do NOT
+   make up pad data.
+3. Place components sensibly (decoupling caps close to power pins, etc.)
+4. Pre-route as many traces as possible.
+
+## Workflow
+1. Read `GET /api/library/{slug}` to get the main component footprint.
+2. For each passive/support component in the example circuit, read `GET /api/library/<slug>`
+   to get its footprint too.
+3. Assemble the layout JSON using real footprint data from step 1–2.
+4. PUT to the output endpoint.
 
 The layout JSON must include:
-- `components[]`: each with `id`, `ref`, `x`, `y`, `rotation`, `layer` (F|B), `pads[]`
+- `components[]`: each with `id`, `ref`, `slug`, `x`, `y`, `rotation`, `layer` (F|B), `pads[]`
+  — pads come from the library footprint, NOT invented
 - `traces[]`: each with `net`, `layer` (F.Cu|B.Cu), `width`, `segments[]`
   where each segment has `start{{x,y}}`, `end{{x,y}}`
 - `nets[]`: each with `name`, `pads[]` (list of "REF.padnum" strings)
