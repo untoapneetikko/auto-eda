@@ -418,6 +418,20 @@
     "uploaded_at": null,
     "parsed_at": "2026-03-10T00:00:00.000Z"
   },
+  "STM32F103CB": {
+    "slug": "STM32F103CB",
+    "part_number": "STM32F103CB",
+    "description": "",
+    "manufacturer": "",
+    "status": "pending_parse",
+    "confidence": "HIGH",
+    "symbol_type": "ic",
+    "package_types": [],
+    "builtin": false,
+    "filename": "stm32f103cb.pdf",
+    "uploaded_at": "2026-03-16T10:08:17.875555+00:00",
+    "parsed_at": null
+  },
   "STM32F103CBT6": {
     "slug": "STM32F103CBT6",
     "part_number": "STM32F103CBT6",

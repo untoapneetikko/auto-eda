@@ -1,11 +1,13 @@
 {
   "part_number": "TC358870XBG",
   "slug": "TC358870XBG",
-  "description": "HDMI 1.4b to MIPI DSI dual-link bridge IC; converts up to 4K×2K/30fps HDMI stream (max 297 MHz, 7.2 Gbps) to dual-link MIPI DSI Tx at 1 Gbps/lane per lane, 80-pin VFBGA.",
+  "description": "HDMI 1.4b to MIPI DSI dual-link bridge IC; converts up to 4K\u00d72K/30fps HDMI stream (max 297 MHz, 7.2 Gbps) to dual-link MIPI DSI Tx at 1 Gbps/lane per lane, 80-pin VFBGA.",
   "manufacturer": "Toshiba Electronic Devices & Storage Corporation",
-  "package_types": ["P-VFBGA80-0707-0.65-001 (80-ball BGA, 7.0×7.0mm, 0.65mm pitch, 1.0mm height)"],
+  "package_types": [
+    "P-VFBGA80-0707-0.65-001 (80-ball BGA, 7.0\u00d77.0mm, 0.65mm pitch, 1.0mm height)"
+  ],
   "footprint": "VFBGA-80",
-  "supply_voltage_range": "VDDC11: 1.1–1.2V; VDDIO18: 1.65–1.95V (or 3.3V range); VDDIO33: 3.0–3.6V; VDD33_HDMI: 3.135–3.465V; VDD11_HDMI: 1.1–1.2V; VDD12_MIPI: 1.1–1.3V",
+  "supply_voltage_range": "VDDC11: 1.1\u20131.2V; VDDIO18: 1.65\u20131.95V (or 3.3V range); VDDIO33: 3.0\u20133.6V; VDD33_HDMI: 3.135\u20133.465V; VDD11_HDMI: 1.1\u20131.2V; VDD12_MIPI: 1.1\u20131.3V",
   "frequency_range": null,
   "impedance": null,
   "designator": "U",
@@ -13,22 +15,22 @@
     "supply_voltage": "VDDIO18/VDDIO33/VDD33_HDMI: -0.3 to +3.9V; VDDC11/VDD12_MIPI/VDD11_HDMI: -0.3 to +1.8V",
     "input_voltage": "DSI IO: -0.3 to VDD12_MIPI+0.3V; Digital IO: -0.3 to VDDIO18+0.3V or VDDIO33+0.3V",
     "output_current": null,
-    "operating_temp": "-30 to +70°C (ambient)",
-    "storage_temp": "-40 to +125°C",
-    "junction_temperature": "125°C",
+    "operating_temp": "-30 to +70\u00b0C (ambient)",
+    "storage_temp": "-40 to +125\u00b0C",
+    "junction_temperature": "125\u00b0C",
     "esd_hbm": null
   },
   "key_performance": {
     "hdmi_input": "HDMI 1.4b (up to 297 MHz TMDS clock, 7.2 Gbps stream)",
     "mipi_output": "MIPI DSI Tx (dual-link DSI0 + DSI1), each 4 data lanes at 1 Gbps/lane",
     "single_link_max": "2558 pixels wide @ 24bpp; 3411 pixels @ 16bpp",
-    "dual_link_max": "4K×2K @ 30fps; max Hsync skew between DSI0 and DSI1 < 10 ByteClk",
+    "dual_link_max": "4K\u00d72K @ 30fps; max Hsync skew between DSI0 and DSI1 < 10 ByteClk",
     "color_formats": "RGB888, RGB666, YCbCr444, YCbCr422 (16/24bpp); color conversion supported",
     "hdcp": "HDCP 1.4 (optional)",
-    "audio": "Up to 4×I2S data lines (5.1/7.1), max 192 kHz @8CH; I2S and TDM pins multiplexed",
+    "audio": "Up to 4\u00d7I2S data lines (5.1/7.1), max 192 kHz @8CH; I2S and TDM pins multiplexed",
     "i2c_addresses": "0x0F (INT pulled low at RESETN) or 0x1F (INT pulled high at RESETN)",
     "i2c_modes": "100 kHz / 400 kHz / 2 MHz slave mode",
-    "power_typical": "1920×1080@60fps: 420mW; 2560×1600@60fps: 504mW; 3840×2160@30fps: 520mW (dual D-PHY)"
+    "power_typical": "1920\u00d71080@60fps: 420mW; 2560\u00d71600@60fps: 504mW; 3840\u00d72160@30fps: 520mW (dual D-PHY)"
   },
   "pins": [
     {
@@ -38,7 +40,7 @@
       "description": "System reset input, active low. Schmitt trigger. Powered by VDDIO18.",
       "active": "low",
       "internal_pull": null,
-      "requirements": "Drive low ≥100µs to reset. Pull high for normal operation.",
+      "requirements": "Drive low \u2265100\u00b5s to reset. Pull high for normal operation.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -46,10 +48,10 @@
       "number": "K9",
       "name": "REFCLK",
       "type": "input",
-      "description": "Reference clock input, 40–50 MHz. Schmitt trigger. Powered by VDDIO18.",
+      "description": "Reference clock input, 40\u201350 MHz. Schmitt trigger. Powered by VDDIO18.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Must supply 40–50 MHz reference clock.",
+      "requirements": "Must supply 40\u201350 MHz reference clock.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -60,7 +62,7 @@
       "description": "Internal test terminal. Normal digital I/O. Powered by VDDIO18.",
       "active": null,
       "internal_pull": null,
-      "requirements": "MANDATORY: Always must be fixed low externally — never leave floating.",
+      "requirements": "MANDATORY: Always must be fixed low externally \u2014 never leave floating.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -68,10 +70,10 @@
       "number": "J3",
       "name": "INT",
       "type": "bidirectional",
-      "description": "Dual-function: during RESETN asserted, input — detects pull polarity to select I2C slave address (pull-up → 0x1F, pull-down → 0x0F). After RESETN deasserted, becomes interrupt output (active high). Normal digital. Powered by VDDIO18.",
+      "description": "Dual-function: during RESETN asserted, input \u2014 detects pull polarity to select I2C slave address (pull-up \u2192 0x1F, pull-down \u2192 0x0F). After RESETN deasserted, becomes interrupt output (active high). Normal digital. Powered by VDDIO18.",
       "active": "high",
       "internal_pull": null,
-      "requirements": "Pull up or pull down with 10kΩ external resistor. Consult Toshiba representative before board design to determine direction.",
+      "requirements": "Pull up or pull down with 10k\u03a9 external resistor. Consult Toshiba representative before board design to determine direction.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -82,7 +84,7 @@
       "description": "MIPI-DSI0 clock lane positive. MIPI-PHY output. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair to DSI panel.",
+      "requirements": "Route as 100\u03a9 differential pair to DSI panel.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -93,7 +95,7 @@
       "description": "MIPI-DSI0 clock lane negative. MIPI-PHY output. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI0CP.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI0CP.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -104,7 +106,7 @@
       "description": "MIPI-DSI0 data lane 0 positive. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -115,7 +117,7 @@
       "description": "MIPI-DSI0 data lane 0 negative. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI0D0P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI0D0P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -126,7 +128,7 @@
       "description": "MIPI-DSI0 data lane 1 positive. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -137,7 +139,7 @@
       "description": "MIPI-DSI0 data lane 1 negative. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI0D1P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI0D1P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -148,7 +150,7 @@
       "description": "MIPI-DSI0 data lane 2 positive. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -159,7 +161,7 @@
       "description": "MIPI-DSI0 data lane 2 negative. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI0D2P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI0D2P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -170,7 +172,7 @@
       "description": "MIPI-DSI0 data lane 3 positive. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -181,7 +183,7 @@
       "description": "MIPI-DSI0 data lane 3 negative. MIPI-PHY. Powered by VDD12_MIPI0.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI0D3P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI0D3P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -192,7 +194,7 @@
       "description": "MIPI-DSI1 clock lane positive. MIPI-PHY. Powered by VDD12_MIPI0. DSI1 carries right half of HDMI video.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -203,7 +205,7 @@
       "description": "MIPI-DSI1 clock lane negative. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI1CP.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI1CP.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -214,7 +216,7 @@
       "description": "MIPI-DSI1 data lane 0 positive. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -225,7 +227,7 @@
       "description": "MIPI-DSI1 data lane 0 negative. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI1D0P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI1D0P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -236,7 +238,7 @@
       "description": "MIPI-DSI1 data lane 1 positive. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -247,7 +249,7 @@
       "description": "MIPI-DSI1 data lane 1 negative. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI1D1P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI1D1P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -258,7 +260,7 @@
       "description": "MIPI-DSI1 data lane 2 positive. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -269,7 +271,7 @@
       "description": "MIPI-DSI1 data lane 2 negative. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI1D2P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI1D2P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -280,7 +282,7 @@
       "description": "MIPI-DSI1 data lane 3 positive. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair.",
+      "requirements": "Route as 100\u03a9 differential pair.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -291,7 +293,7 @@
       "description": "MIPI-DSI1 data lane 3 negative. MIPI-PHY. Powered by VDD12_MIPI1.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω differential pair with CDSI1D3P.",
+      "requirements": "Route as 100\u03a9 differential pair with CDSI1D3P.",
       "ambiguous": false,
       "datasheet_page": 8
     },
@@ -302,7 +304,7 @@
       "description": "HDMI clock channel positive. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair from HDMI connector.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair from HDMI connector.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -313,7 +315,7 @@
       "description": "HDMI clock channel negative. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair with HDMICP.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair with HDMICP.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -324,7 +326,7 @@
       "description": "HDMI data channel 0 positive. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -335,7 +337,7 @@
       "description": "HDMI data channel 0 negative. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair with HDMID0P.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair with HDMID0P.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -346,7 +348,7 @@
       "description": "HDMI data channel 1 positive. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -357,7 +359,7 @@
       "description": "HDMI data channel 1 negative. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair with HDMID1P.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair with HDMID1P.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -368,7 +370,7 @@
       "description": "HDMI data channel 2 positive. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -379,7 +381,7 @@
       "description": "HDMI data channel 2 negative. HDMI-PHY. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Route as 100Ω TMDS differential pair with HDMID2P.",
+      "requirements": "Route as 100\u03a9 TMDS differential pair with HDMID2P.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -390,7 +392,7 @@
       "description": "External reference resistor terminal for HDMI-RX automatic termination resistance adjustment. Powered by VDD33_HDMI.",
       "active": null,
       "internal_pull": null,
-      "requirements": "MANDATORY: Connect 2kΩ±1% between VDD33_HDMI and this pin. Required per Fig 5.2 p.16.",
+      "requirements": "MANDATORY: Connect 2k\u03a9\u00b11% between VDD33_HDMI and this pin. Required per Fig 5.2 p.16.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -401,7 +403,7 @@
       "description": "DDC I2C slave clock. Schmitt trigger, 5V tolerant, open drain. Powered by VDDIO33.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Pull up to +5V via 1kΩ±5%. Add 100kΩ pull-down to GND to hold low when 5V is off. See Fig 5.1 p.15.",
+      "requirements": "Pull up to +5V via 1k\u03a9\u00b15%. Add 100k\u03a9 pull-down to GND to hold low when 5V is off. See Fig 5.1 p.15.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -412,7 +414,7 @@
       "description": "DDC I2C slave data. Schmitt trigger, 5V tolerant, open drain. Powered by VDDIO33.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Pull up to +5V via 4.7kΩ±5%. Add 100kΩ pull-down to GND to hold low when 5V is off. See Fig 5.1 p.15.",
+      "requirements": "Pull up to +5V via 4.7k\u03a9\u00b15%. Add 100k\u03a9 pull-down to GND to hold low when 5V is off. See Fig 5.1 p.15.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -434,7 +436,7 @@
       "description": "Hot Plug Detect input, 5V tolerant. Connected to HDMI pin 18 (+5V). Powered by VDDIO33.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Pull up to +5V via 100kΩ±5% per Fig 5.1 p.15.",
+      "requirements": "Pull up to +5V via 100k\u03a9\u00b15% per Fig 5.1 p.15.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -566,7 +568,7 @@
       "description": "Audio PLL BIAS signal output. Powered by VDDIO33.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to AVSS through 0.1μF when Audio PLL not used. See Fig 5.3 p.16.",
+      "requirements": "Connect to AVSS through 0.1\u03bcF when Audio PLL not used. See Fig 5.3 p.16.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -574,10 +576,10 @@
       "number": "J2",
       "name": "DAOUT",
       "type": "output",
-      "description": "Audio PLL Clock Reference output. PLL clock — external LPF required. Powered by VDDIO33.",
+      "description": "Audio PLL Clock Reference output. PLL clock \u2014 external LPF required. Powered by VDDIO33.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect LPF per Fig 5.3 p.16: 5pF to GND, 1.0kΩ, 2SC2712Y transistor, 1000pF to GND. Leave open if not used.",
+      "requirements": "Connect LPF per Fig 5.3 p.16: 5pF to GND, 1.0k\u03a9, 2SC2712Y transistor, 1000pF to GND. Leave open if not used.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -588,7 +590,7 @@
       "description": "Audio PLL Reference Input clock. PLL input. Powered by VDDIO33.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect to AVSS through 0.1μF when Audio PLL not used. See Fig 5.3 p.16.",
+      "requirements": "Connect to AVSS through 0.1\u03bcF when Audio PLL not used. See Fig 5.3 p.16.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -599,7 +601,7 @@
       "description": "Audio PLL Low Pass Filter signal for phase comparator. Powered by VDDIO33.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Connect 0.1μF and 1000pF to AVSS per Fig 5.3 p.16 when not used.",
+      "requirements": "Connect 0.1\u03bcF and 1000pF to AVSS per Fig 5.3 p.16 when not used.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -610,7 +612,7 @@
       "description": "1.1V internal core power supply (ball C10).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >1μF and >0.1μF to VSS. Separate from regulator VSS via ferrite bead.",
+      "requirements": "Decouple with >1\u03bcF and >0.1\u03bcF to VSS. Separate from regulator VSS via ferrite bead.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -621,7 +623,7 @@
       "description": "1.1V internal core power supply (ball K6).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >1μF and >0.1μF to VSS. Separate from regulator VSS via ferrite bead.",
+      "requirements": "Decouple with >1\u03bcF and >0.1\u03bcF to VSS. Separate from regulator VSS via ferrite bead.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -632,7 +634,7 @@
       "description": "1.8V IO supply for system, audio, IR, I2C interfaces. Can also operate at 3.3V.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >10μF, >1μF, >0.1μF to VSS. Separate via ferrite bead.",
+      "requirements": "Decouple with >10\u03bcF, >1\u03bcF, >0.1\u03bcF to VSS. Separate via ferrite bead.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -643,7 +645,7 @@
       "description": "3.3V IO supply for DDC, CEC, HPD, Audio PLL interfaces.",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >1μF and >0.1μF to VSS. MUST be isolated from VDD33_HDMI — ESD diode reverse current at power-off damages VDDIO33.",
+      "requirements": "Decouple with >1\u03bcF and >0.1\u03bcF to VSS. MUST be isolated from VDD33_HDMI \u2014 ESD diode reverse current at power-off damages VDDIO33.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -654,7 +656,7 @@
       "description": "HDMI PHY 3.3V power supply (ball B1).",
       "active": null,
       "internal_pull": null,
-      "requirements": "MANDATORY: Isolate from VDDIO33 and all other 3.3V supplies — ESD diode reverse current at power-off will damage other supplies. Decouple with >10μF×3, >1μF, >0.1μF. See Fig 5.4 p.17.",
+      "requirements": "MANDATORY: Isolate from VDDIO33 and all other 3.3V supplies \u2014 ESD diode reverse current at power-off will damage other supplies. Decouple with >10\u03bcF\u00d73, >1\u03bcF, >0.1\u03bcF. See Fig 5.4 p.17.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -676,7 +678,7 @@
       "description": "HDMI PHY 1.1V power supply (ball B2).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >10μF×2, >1μF, >0.1μF. Separate via ferrite bead.",
+      "requirements": "Decouple with >10\u03bcF\u00d72, >1\u03bcF, >0.1\u03bcF. Separate via ferrite bead.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -687,7 +689,7 @@
       "description": "HDMI PHY 1.1V power supply (ball G2).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >10μF×2, >1μF, >0.1μF. Separate via ferrite bead.",
+      "requirements": "Decouple with >10\u03bcF\u00d72, >1\u03bcF, >0.1\u03bcF. Separate via ferrite bead.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -698,7 +700,7 @@
       "description": "MIPI DSI 1.2V supply for link 0 (DSI0 / CDSI TX0).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >10μF×2, >1μF, >0.1μF. Separate via ferrite bead.",
+      "requirements": "Decouple with >10\u03bcF\u00d72, >1\u03bcF, >0.1\u03bcF. Separate via ferrite bead.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -709,7 +711,7 @@
       "description": "MIPI DSI 1.2V supply for link 1 (DSI1 / CDSI TX1).",
       "active": null,
       "internal_pull": null,
-      "requirements": "Decouple with >10μF×2, >1μF, >0.1μF. Separate via ferrite bead.",
+      "requirements": "Decouple with >10\u03bcF\u00d72, >1\u03bcF, >0.1\u03bcF. Separate via ferrite bead.",
       "ambiguous": false,
       "datasheet_page": 9
     },
@@ -915,7 +917,7 @@
   "required_passives": [
     {
       "type": "resistor",
-      "value": "2kΩ ±1%",
+      "value": "2k\u03a9 \u00b11%",
       "part_number": "",
       "placement": "Between VDD33_HDMI and REXT pin (A1)",
       "reason": "MANDATORY: Required for HDMI-RX automatic termination resistance adjustment. See Fig 5.2 p.16.",
@@ -923,7 +925,7 @@
     },
     {
       "type": "resistor",
-      "value": "10kΩ",
+      "value": "10k\u03a9",
       "part_number": "",
       "placement": "INT pin (J3) to VDDIO18 (pull-up for 0x1F) or to GND (pull-down for 0x0F)",
       "reason": "Selects I2C slave address during RESETN assertion. Consult Toshiba before board design.",
@@ -931,7 +933,7 @@
     },
     {
       "type": "resistor",
-      "value": "1kΩ ±5%",
+      "value": "1k\u03a9 \u00b15%",
       "part_number": "",
       "placement": "DDC_SCL (A3) to +5V",
       "reason": "DDC I2C pull-up to 5V. Required per Fig 5.1 p.15.",
@@ -939,7 +941,7 @@
     },
     {
       "type": "resistor",
-      "value": "4.7kΩ ±5%",
+      "value": "4.7k\u03a9 \u00b15%",
       "part_number": "",
       "placement": "DDC_SDA (B3) to +5V",
       "reason": "DDC I2C pull-up to 5V. Required per Fig 5.1 p.15.",
@@ -947,7 +949,7 @@
     },
     {
       "type": "resistor",
-      "value": "100kΩ ±5%",
+      "value": "100k\u03a9 \u00b15%",
       "part_number": "",
       "placement": "DDC_SCL (A3) to GND",
       "reason": "Pull-down to hold DDC_SCL low when 5V supply is off. Required per Fig 5.1 p.15.",
@@ -955,7 +957,7 @@
     },
     {
       "type": "resistor",
-      "value": "100kΩ ±5%",
+      "value": "100k\u03a9 \u00b15%",
       "part_number": "",
       "placement": "DDC_SDA (B3) to GND",
       "reason": "Pull-down to hold DDC_SDA low when 5V supply is off. Required per Fig 5.1 p.15.",
@@ -963,7 +965,7 @@
     },
     {
       "type": "resistor",
-      "value": "100kΩ ±5%",
+      "value": "100k\u03a9 \u00b15%",
       "part_number": "",
       "placement": "HPDI (A4) to +5V",
       "reason": "Hot plug detect input pull-up. Required per Fig 5.1 p.15.",
@@ -971,7 +973,7 @@
     },
     {
       "type": "capacitor",
-      "value": "0.1μF ±10%",
+      "value": "0.1\u03bcF \u00b110%",
       "part_number": "",
       "placement": "BIASDA (J1) to AVSS/GND",
       "reason": "Required when Audio PLL not used. See Fig 5.3 p.16.",
@@ -979,7 +981,7 @@
     },
     {
       "type": "capacitor",
-      "value": "0.1μF ±10%",
+      "value": "0.1\u03bcF \u00b110%",
       "part_number": "",
       "placement": "PCKIN (K1) to AVSS/GND",
       "reason": "Required when Audio PLL not used. See Fig 5.3 p.16.",
@@ -987,7 +989,7 @@
     },
     {
       "type": "capacitor",
-      "value": "0.1μF ±10% + 1000pF ±10%",
+      "value": "0.1\u03bcF \u00b110% + 1000pF \u00b110%",
       "part_number": "",
       "placement": "PFIL (K2) to AVSS/GND",
       "reason": "Audio PLL low pass filter. Required when Audio PLL not used. See Fig 5.3 p.16.",
@@ -995,15 +997,15 @@
     },
     {
       "type": "capacitor",
-      "value": "5pF ±5%",
+      "value": "5pF \u00b15%",
       "part_number": "",
       "placement": "DAOUT (J2) LPF first cap to GND",
-      "reason": "Audio PLL external LPF — required when Audio PLL is used. See Fig 5.3 p.16.",
+      "reason": "Audio PLL external LPF \u2014 required when Audio PLL is used. See Fig 5.3 p.16.",
       "datasheet_page": 16
     },
     {
       "type": "capacitor",
-      "value": "1000pF ±10%",
+      "value": "1000pF \u00b110%",
       "part_number": "",
       "placement": "Audio PLL LPF output cap to GND",
       "reason": "Audio PLL external LPF. See Fig 5.3 p.16.",
@@ -1011,7 +1013,7 @@
     },
     {
       "type": "resistor",
-      "value": "1.5kΩ ±5%",
+      "value": "1.5k\u03a9 \u00b15%",
       "part_number": "",
       "placement": "VDD33_HDMI bias to Audio PLL LPF",
       "reason": "Audio PLL external LPF bias resistor. See Fig 5.3 p.16.",
@@ -1019,7 +1021,7 @@
     },
     {
       "type": "resistor",
-      "value": "1.0kΩ ±5% (×2)",
+      "value": "1.0k\u03a9 \u00b15% (\u00d72)",
       "part_number": "",
       "placement": "Audio PLL external LPF resistors (DAOUT path and PCKIN path)",
       "reason": "Audio PLL external LPF. See Fig 5.3 p.16.",
@@ -1027,7 +1029,7 @@
     },
     {
       "type": "capacitor",
-      "value": ">10μF×3, >1μF, >0.1μF",
+      "value": ">10\u03bcF\u00d73, >1\u03bcF, >0.1\u03bcF",
       "part_number": "",
       "placement": "VDD33_HDMI (B1, G1) to VSS",
       "reason": "Power supply decoupling. Multiple values required per Fig 5.4 p.17.",
@@ -1035,7 +1037,7 @@
     },
     {
       "type": "capacitor",
-      "value": ">10μF×2, >1μF, >0.1μF",
+      "value": ">10\u03bcF\u00d72, >1\u03bcF, >0.1\u03bcF",
       "part_number": "",
       "placement": "VDD11_HDMI (B2, G2) to VSS",
       "reason": "Power supply decoupling per Fig 5.4 p.17.",
@@ -1043,7 +1045,7 @@
     },
     {
       "type": "capacitor",
-      "value": ">1μF, >0.1μF",
+      "value": ">1\u03bcF, >0.1\u03bcF",
       "part_number": "",
       "placement": "VDDC11 (C10, K6) to VSS",
       "reason": "Core power decoupling per Fig 5.4 p.17.",
@@ -1051,7 +1053,7 @@
     },
     {
       "type": "capacitor",
-      "value": ">1μF, >0.1μF",
+      "value": ">1\u03bcF, >0.1\u03bcF",
       "part_number": "",
       "placement": "VDDIO33 (H2) to VSS",
       "reason": "IO power decoupling per Fig 5.4 p.17.",
@@ -1059,7 +1061,7 @@
     },
     {
       "type": "capacitor",
-      "value": ">10μF×2, >1μF, >0.1μF",
+      "value": ">10\u03bcF\u00d72, >1\u03bcF, >0.1\u03bcF",
       "part_number": "",
       "placement": "VDDIO18 (J7) to VSS",
       "reason": "IO power decoupling per Fig 5.4 p.17.",
@@ -1067,7 +1069,7 @@
     },
     {
       "type": "capacitor",
-      "value": ">10μF×2, >1μF, >0.1μF",
+      "value": ">10\u03bcF\u00d72, >1\u03bcF, >0.1\u03bcF",
       "part_number": "",
       "placement": "VDD12_MIPI0 (J10) and VDD12_MIPI1 (B10) to VSS",
       "reason": "MIPI PHY power decoupling per Fig 5.4 p.17.",
@@ -1085,38 +1087,38 @@
   "application_circuits": [
     {
       "name": "Typical HDMI to Dual DSI system (Fig 1.1, p.7)",
-      "description": "HDMI source → HDMICP/N + HDMID0-2P/N (TMDS differential) → internal TMDS Rx PHY → YUV/RGB FiFo → dual-link DSI Tx. DSI0 path: DSITX0 engine → CDSI0CP/N (clock) + CDSI0D0-3P/N (4 data lanes) → DSI panel left half. DSI1 path: DSITX1 engine → CDSI1CP/N (clock) + CDSI1D0-3P/N (4 data lanes) → DSI panel right half. DDC: HDMI connector → DDC_SDA/SCL with 5V pull-ups and GND pull-downs (Fig 5.1) for EDID access. HPD: HPDI from HDMI +5V pin, HPDO outputs hot plug detect. Host → I2C_SCL/SDA to configure all registers. INT output to host for interrupt signalling.",
+      "description": "HDMI source \u2192 HDMICP/N + HDMID0-2P/N (TMDS differential) \u2192 internal TMDS Rx PHY \u2192 YUV/RGB FiFo \u2192 dual-link DSI Tx. DSI0 path: DSITX0 engine \u2192 CDSI0CP/N (clock) + CDSI0D0-3P/N (4 data lanes) \u2192 DSI panel left half. DSI1 path: DSITX1 engine \u2192 CDSI1CP/N (clock) + CDSI1D0-3P/N (4 data lanes) \u2192 DSI panel right half. DDC: HDMI connector \u2192 DDC_SDA/SCL with 5V pull-ups and GND pull-downs (Fig 5.1) for EDID access. HPD: HPDI from HDMI +5V pin, HPDO outputs hot plug detect. Host \u2192 I2C_SCL/SDA to configure all registers. INT output to host for interrupt signalling.",
       "page": 7
     },
     {
       "name": "DDC Interface Connection (Fig 5.1, p.15)",
-      "description": "HDMI connector DDC_SCL → 1kΩ pull-up to +5V and 100kΩ pull-down to GND → DDC_SCL (A3). DDC_SDA → 4.7kΩ pull-up to +5V and 100kΩ pull-down to GND → DDC_SDA (B3). HPDI (A4) → 100kΩ to +5V. HPDO (B4) drives hot plug detect back to HDMI connector.",
+      "description": "HDMI connector DDC_SCL \u2192 1k\u03a9 pull-up to +5V and 100k\u03a9 pull-down to GND \u2192 DDC_SCL (A3). DDC_SDA \u2192 4.7k\u03a9 pull-up to +5V and 100k\u03a9 pull-down to GND \u2192 DDC_SDA (B3). HPDI (A4) \u2192 100k\u03a9 to +5V. HPDO (B4) drives hot plug detect back to HDMI connector.",
       "page": 15
     },
     {
       "name": "Audio Clock External LPF (Fig 5.3, p.16)",
-      "description": "VDD33_HDMI → 1.5kΩ bias → BIASDA (J1) [0.1μF to GND]. DAOUT (J2) → 5pF to GND → 2SC2712Y NPN transistor base → collector via 1.0kΩ → PCKIN (K1) [0.1μF to GND]; transistor emitter via 1.0kΩ to GND. PFIL (K2) → 0.1μF + 1000pF to GND.",
+      "description": "VDD33_HDMI \u2192 1.5k\u03a9 bias \u2192 BIASDA (J1) [0.1\u03bcF to GND]. DAOUT (J2) \u2192 5pF to GND \u2192 2SC2712Y NPN transistor base \u2192 collector via 1.0k\u03a9 \u2192 PCKIN (K1) [0.1\u03bcF to GND]; transistor emitter via 1.0k\u03a9 to GND. PFIL (K2) \u2192 0.1\u03bcF + 1000pF to GND.",
       "page": 16
     },
     {
       "name": "Power supply with VDD33_HDMI isolation (Fig 5.4, p.17)",
-      "description": "5V → 3.3V reg → external switch on TMDS signal lines → VDD33_HDMI (>10μF×3 + >1μF + >0.1μF to VSS). Separate: 1.15V reg → FB → VDD11_HDMI; 1.15V reg → FB → VDDC11; 3.3V reg → FB → VDDIO33; 1.8V reg → FB → VDDIO18; 1.2V reg → FB → VDD12_MIPI0/VDD12_MIPI1. All VSS pins separated from regulator GND via ferrite bead.",
+      "description": "5V \u2192 3.3V reg \u2192 external switch on TMDS signal lines \u2192 VDD33_HDMI (>10\u03bcF\u00d73 + >1\u03bcF + >0.1\u03bcF to VSS). Separate: 1.15V reg \u2192 FB \u2192 VDD11_HDMI; 1.15V reg \u2192 FB \u2192 VDDC11; 3.3V reg \u2192 FB \u2192 VDDIO33; 1.8V reg \u2192 FB \u2192 VDDIO18; 1.2V reg \u2192 FB \u2192 VDD12_MIPI0/VDD12_MIPI1. All VSS pins separated from regulator GND via ferrite bead.",
       "page": 17
     }
   ],
   "common_mistakes": [
-    "TEST pin (G5) ALWAYS must be fixed low externally — never leave floating or pull high",
-    "IR pin (G6): Fix low externally if not used — do not leave floating",
-    "INT pin (J3) is dual-function: during RESETN it is a bootstrap INPUT for I2C address; after RESETN it automatically becomes the INT OUTPUT. The 10kΩ pull resistor serves both functions.",
+    "TEST pin (G5) ALWAYS must be fixed low externally \u2014 never leave floating or pull high",
+    "IR pin (G6): Fix low externally if not used \u2014 do not leave floating",
+    "INT pin (J3) is dual-function: during RESETN it is a bootstrap INPUT for I2C address; after RESETN it automatically becomes the INT OUTPUT. The 10k\u03a9 pull resistor serves both functions.",
     "VDD33_HDMI MUST be isolated from VDDIO33 and all other 3.3V supplies. ESD diode on TMDS inputs causes reverse current into VDD33_HDMI at power-off which also damages VDDIO33. Use external switch (Fig 5.4) or reverse-current-protection regulator (Fig 5.5).",
-    "BIASDA, PCKIN, PFIL MUST be connected to AVSS through 0.1μF when Audio PLL is not used",
-    "REXT (A1) MUST have 2kΩ±1% to VDD33_HDMI — mandatory for HDMI-RX termination calibration",
+    "BIASDA, PCKIN, PFIL MUST be connected to AVSS through 0.1\u03bcF when Audio PLL is not used",
+    "REXT (A1) MUST have 2k\u03a9\u00b11% to VDD33_HDMI \u2014 mandatory for HDMI-RX termination calibration",
     "DDC_SDA and DDC_SCL must have pull-down resistors to hold lines low when +5V power to HDMI connector is absent",
     "All TC358870 VSS balls MUST be separated at AC level from regulator VSS using ferrite beads to attenuate EMI",
     "Max Hsync skew between DSI0 and DSI1 must be less than 10 ByteClk cycles in dual-link mode",
-    "No-ball positions (C3–C8, D3, D8, E3, E8, F3, F8, G3, G8, H3–H8) are physically absent — do not attempt connections at these grid positions"
+    "No-ball positions (C3\u2013C8, D3, D8, E3, E8, F3, F8, G3, G8, H3\u2013H8) are physically absent \u2014 do not attempt connections at these grid positions"
   ],
-  "notes": "80-ball P-VFBGA80 BGA, 7×7mm, 0.65mm pitch, 1.0mm height. Requires multi-layer PCB with BGA via fanout. I2C slave addresses: 0x0F (INT pulled down at RESETN) or 0x1F (INT pulled up at RESETN). HDCP 1.4 decryption supported (optional). EDID: embedded 1K-byte SRAM (CEA-861-D). DSI0 carries left half of HDMI video, DSI1 carries right half — both clocks and data widths can differ. REFCLK must be 40–50 MHz. Reverse current protection on VDD33_HDMI is the most critical board-level concern.",
+  "notes": "80-ball P-VFBGA80 BGA, 7\u00d77mm, 0.65mm pitch, 1.0mm height. Requires multi-layer PCB with BGA via fanout. I2C slave addresses: 0x0F (INT pulled down at RESETN) or 0x1F (INT pulled up at RESETN). HDCP 1.4 decryption supported (optional). EDID: embedded 1K-byte SRAM (CEA-861-D). DSI0 carries left half of HDMI video, DSI1 carries right half \u2014 both clocks and data widths can differ. REFCLK must be 40\u201350 MHz. Reverse current protection on VDD33_HDMI is the most critical board-level concern.",
   "symbol_type": "ic",
   "status": "parsed",
   "confidence": "HIGH",
@@ -1129,8 +1131,641 @@
   "builtin": false,
   "human_corrections": [],
   "example_circuit": {
-    "components": [],
-    "wires": [],
-    "labels": []
+    "components": [
+      {
+        "id": "u1",
+        "ref": "U1",
+        "slug": "TC358870XBG",
+        "value": "TC358870XBG",
+        "x": 500,
+        "y": 400,
+        "rotation": 0
+      },
+      {
+        "id": "r_rext",
+        "ref": "R1",
+        "slug": "RESISTOR",
+        "value": "2k 1%",
+        "x": 200,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "r_int",
+        "ref": "R2",
+        "slug": "RESISTOR",
+        "value": "10k",
+        "x": 200,
+        "y": 300,
+        "rotation": 0
+      },
+      {
+        "id": "r_test",
+        "ref": "R3",
+        "slug": "RESISTOR",
+        "value": "10k",
+        "x": 200,
+        "y": 380,
+        "rotation": 0
+      },
+      {
+        "id": "r_ddc_scl",
+        "ref": "R4",
+        "slug": "RESISTOR",
+        "value": "1k",
+        "x": 200,
+        "y": 460,
+        "rotation": 0
+      },
+      {
+        "id": "r_ddc_sda",
+        "ref": "R5",
+        "slug": "RESISTOR",
+        "value": "4.7k",
+        "x": 200,
+        "y": 540,
+        "rotation": 0
+      },
+      {
+        "id": "r_ddc_scl_pd",
+        "ref": "R6",
+        "slug": "RESISTOR",
+        "value": "100k",
+        "x": 200,
+        "y": 620,
+        "rotation": 0
+      },
+      {
+        "id": "r_ddc_sda_pd",
+        "ref": "R7",
+        "slug": "RESISTOR",
+        "value": "100k",
+        "x": 200,
+        "y": 700,
+        "rotation": 0
+      },
+      {
+        "id": "r_hpdi",
+        "ref": "R8",
+        "slug": "RESISTOR",
+        "value": "100k",
+        "x": 200,
+        "y": 780,
+        "rotation": 0
+      },
+      {
+        "id": "c_vddc",
+        "ref": "C1",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 820,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "c_vddc_bulk",
+        "ref": "C2",
+        "slug": "CAPACITOR",
+        "value": "1uF",
+        "x": 860,
+        "y": 220,
+        "rotation": 0
+      },
+      {
+        "id": "c_vddio18",
+        "ref": "C3",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 820,
+        "y": 320,
+        "rotation": 0
+      },
+      {
+        "id": "c_vddio18_bulk",
+        "ref": "C4",
+        "slug": "CAPACITOR",
+        "value": "10uF",
+        "x": 860,
+        "y": 320,
+        "rotation": 0
+      },
+      {
+        "id": "c_vddio33",
+        "ref": "C5",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 820,
+        "y": 420,
+        "rotation": 0
+      },
+      {
+        "id": "c_vdd33hdmi",
+        "ref": "C6",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 820,
+        "y": 520,
+        "rotation": 0
+      },
+      {
+        "id": "c_vdd33hdmi_bulk",
+        "ref": "C7",
+        "slug": "CAPACITOR",
+        "value": "10uF",
+        "x": 860,
+        "y": 520,
+        "rotation": 0
+      },
+      {
+        "id": "c_vdd11hdmi",
+        "ref": "C8",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 820,
+        "y": 620,
+        "rotation": 0
+      },
+      {
+        "id": "c_mipi0",
+        "ref": "C9",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 820,
+        "y": 720,
+        "rotation": 0
+      },
+      {
+        "id": "c_mipi1",
+        "ref": "C10",
+        "slug": "CAPACITOR",
+        "value": "100nF",
+        "x": 820,
+        "y": 800,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_vddc",
+        "ref": "VCC1",
+        "slug": "VCC",
+        "value": "1.15V",
+        "x": 820,
+        "y": 180,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_vddio18",
+        "ref": "VCC2",
+        "slug": "VCC",
+        "value": "1.8V",
+        "x": 820,
+        "y": 280,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_vddio33",
+        "ref": "VCC3",
+        "slug": "VCC",
+        "value": "3.3V",
+        "x": 820,
+        "y": 380,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_vdd33hdmi",
+        "ref": "VCC4",
+        "slug": "VCC",
+        "value": "3.3V_HDMI",
+        "x": 820,
+        "y": 480,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_vdd11hdmi",
+        "ref": "VCC5",
+        "slug": "VCC",
+        "value": "1.15V",
+        "x": 820,
+        "y": 580,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_mipi0",
+        "ref": "VCC6",
+        "slug": "VCC",
+        "value": "1.2V_MIPI0",
+        "x": 820,
+        "y": 680,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_mipi1",
+        "ref": "VCC7",
+        "slug": "VCC",
+        "value": "1.2V_MIPI1",
+        "x": 820,
+        "y": 760,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_rext",
+        "ref": "VCC8",
+        "slug": "VCC",
+        "value": "3.3V_HDMI",
+        "x": 200,
+        "y": 180,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_pullup",
+        "ref": "VCC9",
+        "slug": "VCC",
+        "value": "1.8V",
+        "x": 120,
+        "y": 280,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_5v_ddc",
+        "ref": "VCC10",
+        "slug": "VCC",
+        "value": "+5V",
+        "x": 120,
+        "y": 440,
+        "rotation": 0
+      },
+      {
+        "id": "vcc_5v_hpdi",
+        "ref": "VCC11",
+        "slug": "VCC",
+        "value": "+5V",
+        "x": 120,
+        "y": 760,
+        "rotation": 0
+      },
+      {
+        "id": "gnd1",
+        "ref": "GND1",
+        "slug": "GND",
+        "value": "GND",
+        "x": 820,
+        "y": 260,
+        "rotation": 0
+      },
+      {
+        "id": "gnd2",
+        "ref": "GND2",
+        "slug": "GND",
+        "value": "GND",
+        "x": 820,
+        "y": 360,
+        "rotation": 0
+      },
+      {
+        "id": "gnd3",
+        "ref": "GND3",
+        "slug": "GND",
+        "value": "GND",
+        "x": 820,
+        "y": 460,
+        "rotation": 0
+      },
+      {
+        "id": "gnd4",
+        "ref": "GND4",
+        "slug": "GND",
+        "value": "GND",
+        "x": 820,
+        "y": 560,
+        "rotation": 0
+      },
+      {
+        "id": "gnd5",
+        "ref": "GND5",
+        "slug": "GND",
+        "value": "GND",
+        "x": 820,
+        "y": 660,
+        "rotation": 0
+      },
+      {
+        "id": "gnd6",
+        "ref": "GND6",
+        "slug": "GND",
+        "value": "GND",
+        "x": 820,
+        "y": 740,
+        "rotation": 0
+      },
+      {
+        "id": "gnd7",
+        "ref": "GND7",
+        "slug": "GND",
+        "value": "GND",
+        "x": 820,
+        "y": 840,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_r2",
+        "ref": "GND8",
+        "slug": "GND",
+        "value": "GND",
+        "x": 120,
+        "y": 320,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_test",
+        "ref": "GND9",
+        "slug": "GND",
+        "value": "GND",
+        "x": 120,
+        "y": 400,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_ddc_pd",
+        "ref": "GND10",
+        "slug": "GND",
+        "value": "GND",
+        "x": 120,
+        "y": 640,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_ddc_pd2",
+        "ref": "GND11",
+        "slug": "GND",
+        "value": "GND",
+        "x": 120,
+        "y": 720,
+        "rotation": 0
+      },
+      {
+        "id": "gnd_hpdi",
+        "ref": "GND12",
+        "slug": "GND",
+        "value": "GND",
+        "x": 120,
+        "y": 800,
+        "rotation": 0
+      }
+    ],
+    "wires": [
+      {
+        "id": "w_rext_top",
+        "x1": 200,
+        "y1": 200,
+        "x2": 200,
+        "y2": 220
+      },
+      {
+        "id": "w_int_top",
+        "x1": 140,
+        "y1": 300,
+        "x2": 200,
+        "y2": 300
+      },
+      {
+        "id": "w_int_bot",
+        "x1": 200,
+        "y1": 320,
+        "x2": 120,
+        "y2": 320
+      },
+      {
+        "id": "w_test_bot",
+        "x1": 200,
+        "y1": 400,
+        "x2": 120,
+        "y2": 400
+      },
+      {
+        "id": "w_ddc_scl_top",
+        "x1": 140,
+        "y1": 460,
+        "x2": 200,
+        "y2": 460
+      },
+      {
+        "id": "w_ddc_sda_top",
+        "x1": 140,
+        "y1": 540,
+        "x2": 200,
+        "y2": 540
+      },
+      {
+        "id": "w_ddc_scl_pd_bot",
+        "x1": 200,
+        "y1": 640,
+        "x2": 120,
+        "y2": 640
+      },
+      {
+        "id": "w_ddc_sda_pd_bot",
+        "x1": 200,
+        "y1": 720,
+        "x2": 120,
+        "y2": 720
+      },
+      {
+        "id": "w_hpdi_top",
+        "x1": 140,
+        "y1": 780,
+        "x2": 200,
+        "y2": 780
+      },
+      {
+        "id": "w_hpdi_bot",
+        "x1": 200,
+        "y1": 800,
+        "x2": 120,
+        "y2": 800
+      },
+      {
+        "id": "w_c_vddc",
+        "x1": 820,
+        "y1": 200,
+        "x2": 820,
+        "y2": 220
+      },
+      {
+        "id": "w_c_vddc_bot",
+        "x1": 820,
+        "y1": 240,
+        "x2": 820,
+        "y2": 260
+      },
+      {
+        "id": "w_c_vddio18",
+        "x1": 820,
+        "y1": 300,
+        "x2": 820,
+        "y2": 320
+      },
+      {
+        "id": "w_c_vddio18_bot",
+        "x1": 820,
+        "y1": 340,
+        "x2": 820,
+        "y2": 360
+      },
+      {
+        "id": "w_c_vddio33",
+        "x1": 820,
+        "y1": 400,
+        "x2": 820,
+        "y2": 420
+      },
+      {
+        "id": "w_c_vddio33_bot",
+        "x1": 820,
+        "y1": 440,
+        "x2": 820,
+        "y2": 460
+      },
+      {
+        "id": "w_c_vdd33hdmi",
+        "x1": 820,
+        "y1": 500,
+        "x2": 820,
+        "y2": 520
+      },
+      {
+        "id": "w_c_vdd33hdmi_bot",
+        "x1": 820,
+        "y1": 540,
+        "x2": 820,
+        "y2": 560
+      },
+      {
+        "id": "w_c_vdd11hdmi",
+        "x1": 820,
+        "y1": 600,
+        "x2": 820,
+        "y2": 620
+      },
+      {
+        "id": "w_c_vdd11hdmi_bot",
+        "x1": 820,
+        "y1": 640,
+        "x2": 820,
+        "y2": 660
+      },
+      {
+        "id": "w_c_mipi0",
+        "x1": 820,
+        "y1": 700,
+        "x2": 820,
+        "y2": 720
+      },
+      {
+        "id": "w_c_mipi0_bot",
+        "x1": 820,
+        "y1": 740,
+        "x2": 820,
+        "y2": 760
+      },
+      {
+        "id": "w_c_mipi1",
+        "x1": 820,
+        "y1": 780,
+        "x2": 820,
+        "y2": 800
+      },
+      {
+        "id": "w_c_mipi1_bot",
+        "x1": 820,
+        "y1": 820,
+        "x2": 820,
+        "y2": 840
+      }
+    ],
+    "labels": [
+      {
+        "id": "l_hdmi",
+        "text": "HDMI_IN (TMDS x4 diff pairs from connector)",
+        "x": 40,
+        "y": 220
+      },
+      {
+        "id": "l_dsi0",
+        "text": "DSI0_TX (4-lane MIPI, left half video)",
+        "x": 940,
+        "y": 300
+      },
+      {
+        "id": "l_dsi1",
+        "text": "DSI1_TX (4-lane MIPI, right half video)",
+        "x": 940,
+        "y": 380
+      },
+      {
+        "id": "l_i2c",
+        "text": "I2C_HOST (SCL/SDA from application processor)",
+        "x": 40,
+        "y": 600
+      },
+      {
+        "id": "l_audio",
+        "text": "AUDIO_OUT (I2S/TDM up to 8ch 192kHz)",
+        "x": 940,
+        "y": 500
+      },
+      {
+        "id": "l_rext",
+        "text": "R1: 2k 1pct to VDD33_HDMI (MANDATORY \u2014 REXT termination)",
+        "x": 40,
+        "y": 260
+      },
+      {
+        "id": "l_int",
+        "text": "R2: INT pull-up 10k -> 0x1F I2C addr (or pull-down -> 0x0F)",
+        "x": 40,
+        "y": 300
+      },
+      {
+        "id": "l_test",
+        "text": "R3: TEST pin ALWAYS pull low (mandatory)",
+        "x": 40,
+        "y": 380
+      },
+      {
+        "id": "l_ddc_scl",
+        "text": "R4: DDC_SCL 1k to +5V | R6: 100k to GND",
+        "x": 40,
+        "y": 460
+      },
+      {
+        "id": "l_ddc_sda",
+        "text": "R5: DDC_SDA 4.7k to +5V | R7: 100k to GND",
+        "x": 40,
+        "y": 540
+      },
+      {
+        "id": "l_hpdi",
+        "text": "R8: HPDI 100k to +5V (HDMI pin 18)",
+        "x": 40,
+        "y": 780
+      },
+      {
+        "id": "l_resetn",
+        "text": "RESETN: active-low from host MCU",
+        "x": 940,
+        "y": 600
+      },
+      {
+        "id": "l_refclk",
+        "text": "REFCLK: 40-50MHz oscillator input",
+        "x": 940,
+        "y": 640
+      },
+      {
+        "id": "l_note",
+        "text": "CRITICAL: VDD33_HDMI MUST be isolated from VDDIO33 \u2014 use reverse-current protection switch or regulator",
+        "x": 40,
+        "y": 900
+      }
+    ]
   }
 }
