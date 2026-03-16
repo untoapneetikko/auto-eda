@@ -99,6 +99,13 @@ EOF
 
 Only write a summary when you actually complete work that changes something. Skip it for read-only queries or if you did nothing.
 
+## After Writing profile.json — Refresh the Library Index
+After writing `profile.json`, always delete the cached index so the UI picks up the new `part_number` immediately:
+```bash
+rm -f /app/frontend/static/library/index.json
+```
+Do this BEFORE the git commit step (and skip it for testing components per the skip-cache rule above).
+
 ## Committing and Pushing Changes
 After completing any task that modifies files, always commit and push:
 ```bash

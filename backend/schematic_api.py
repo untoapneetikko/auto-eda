@@ -221,7 +221,7 @@ async def api_upload(file: UploadFile):
     (part_dir / "raw_text.txt").write_text(raw_text, encoding="utf-8")
 
     profile = {
-        "part_number": slug,
+        "part_number": None,
         "status": "pending_parse",
         "confidence": confidence,
         "extraction_note": extraction_note or None,
