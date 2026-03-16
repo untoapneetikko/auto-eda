@@ -273,8 +273,8 @@ async function confirmRebuild() {
     // Queue one ticket per selected type
     const types = [..._genSelected];
     for (const type of types) {
-      // 'symbol' maps to 'datasheet' ticket type
-      const ticketType = type === 'symbol' ? 'datasheet' : type;
+      // map UI toggle names → backend ticket types → _TICKET_AGENT_MAP
+      const ticketType = type === 'symbol' ? 'datasheet' : type === 'schematic' ? 'example' : type;
       await gtCreateTicket(ticketType, selectedSlug, freshProfile, rawText, extraNotes);
     }
     if (btn) {
