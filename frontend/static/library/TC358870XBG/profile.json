@@ -4784,5 +4784,6 @@
         "rules": "100 Ohm differential pairs (TMDS). Single-track BGA escape then route as matched pair."
       }
     ]
-  }
+  },
+  "has_layout_example": true
 }
