@@ -27,8 +27,6 @@ services:
       - ANTHROPIC_API_KEY=${AUTOEDA_ANTHROPIC_API_KEY:-}
       # Project name for agent self-rebuild via docker compose
       - COMPOSE_PROJECT_NAME=autoeda
-    ports:
-      - "8000:8000"
     depends_on:
       - autoeda-redis
     restart: unless-stopped
