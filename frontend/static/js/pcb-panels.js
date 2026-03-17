@@ -394,8 +394,11 @@ function updateInfoPanel(){
           <option${lyr==='B.Cu'?' selected':''}>B.Cu</option>
         </select></div>
       <div class="ir"><span class="il">Width</span>
-        <input class="ii" value="${(tr.width||0.25).toFixed(3)}"
-          onchange="editor.selectedTrace.width=Math.max(0.05,parseFloat(this.value)||0.25);editor.render()"> mm</div>
+        ${tr.widths?.length?
+          `<span class="iv" style="font-size:10px;">${tr.widths[0].toFixed(3)} → ${tr.widths[tr.widths.length-1].toFixed(3)} mm (taper)</span>`:
+          `<input class="ii" value="${(tr.width||0.25).toFixed(3)}"
+            onchange="editor.selectedTrace.width=Math.max(0.05,parseFloat(this.value)||0.25);delete editor.selectedTrace.widths;editor.render()"> mm`
+        }</div>
       <div class="ir"><span class="il">Length</span><span class="iv">${segLen.toFixed(3)} mm</span></div>
       <div class="ir"><span class="il">Segs</span><span class="iv">${(tr.segments||[]).length}</span></div>
       <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;">
@@ -522,26 +525,21 @@ function fitToPad(){
     return Math.max(DR.minTraceWidth||0.15,Math.exp(Math.log(w1)+(Math.log(w2)-Math.log(w1))*f));
   }
 
-  // Resample into N equal-length segments with individual widths
+  // Resample into N equal-length segments stored on a single trace with a widths array
   const N=10;
   const pts=[];
   for(let i=0;i<=N;i++)pts.push(interpPt(i/N));
 
-  const newTraces=[];
+  const newSegs=[], newWidths=[];
   for(let i=0;i<N;i++){
-    const w=parseFloat(taperW((i+0.5)/N).toFixed(4));
-    const t={net:tr.net||'',layer:tr.layer||'F.Cu',width:w,
-              segments:[{start:{...pts[i]},end:{...pts[i+1]}}]};
-    if(tr.groupId)t.groupId=tr.groupId;
-    newTraces.push(t);
+    newSegs.push({start:{...pts[i]},end:{...pts[i+1]}});
+    newWidths.push(parseFloat(taperW((i+0.5)/N).toFixed(4)));
   }
 
   editor._snapshot();
-  const traces=editor.board.traces||(editor.board.traces=[]);
-  const idx=traces.indexOf(tr);
-  if(idx===-1)return;
-  traces.splice(idx,1,...newTraces);
-  editor.selectedTrace=null;
+  tr.segments=newSegs;
+  tr.widths=newWidths;
+  tr.width=newWidths[0]; // keep width field valid for DRC/clearance fallback
   editor.render();updateInfoPanel();
 }
 function delVia(){

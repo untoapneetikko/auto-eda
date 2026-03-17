@@ -381,6 +381,32 @@ class PCBEditor {
       const dragSegIdx=isDragging?this._dragTraceSegIdx:-1;
       const w=Math.max(1,(tr.width||tr.width_mm||0.25)*this.scale);
       const segs=tr.segments||[];
+      // Per-segment widths (taper): draw each segment individually
+      if(tr.widths&&tr.widths.length===segs.length){
+        const lc=this.layers[layer].color;
+        const bright=this._lightenColor(lc,0.35);
+        for(let si=0;si<segs.length;si++){
+          const sw=Math.max(1,tr.widths[si]*this.scale);
+          const seg=segs[si];
+          const sx=this.mmX(seg.start.x),sy=this.mmY(seg.start.y);
+          const ex=this.mmX(seg.end.x),ey=this.mmY(seg.end.y);
+          if(sel||isDragging){
+            ctx.strokeStyle=bright+'33';ctx.lineWidth=sw+10;
+            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+            ctx.strokeStyle=bright;ctx.lineWidth=sw;
+            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+          } else if(hov){
+            ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=sw+6;
+            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+            ctx.strokeStyle=lc+'cc';ctx.lineWidth=sw;
+            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+          } else {
+            ctx.strokeStyle=lc;ctx.lineWidth=sw;
+            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+          }
+        }
+        continue;
+      }
       // Draw path helper (optionally skip one segment)
       const drawPath=(skipIdx=-1)=>{
         const cAngle=DR?.cornerAngle??90;
