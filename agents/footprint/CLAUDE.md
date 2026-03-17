@@ -11,6 +11,17 @@ You are precise. Dimensions are in millimeters. Errors here cause manufacturing 
 `data/outputs/footprint.json` — matches `shared/schemas/footprint_output.json`
 `data/outputs/footprint.kicad_mod` — KiCad footprint file
 
+## Register in Component Library (REQUIRED)
+After writing `footprint.json`, you MUST register the footprint in the library so it appears in the UI dropdown:
+
+```bash
+curl -s -X PUT "http://localhost:8000/api/footprints/$(python3 -c "import json; print(json.load(open('data/outputs/footprint.json'))['name'].replace('/','_').replace(':','_').replace(' ','_'))")" \
+  -H "Content-Type: application/json" \
+  -d @data/outputs/footprint.json
+```
+
+Never skip this step — without it the footprint is invisible to the user.
+
 ## Footprint Rules
 1. Always check IPC-7351 standard for the package type in the datasheet
 2. Pad dimensions must include manufacturing tolerances (+0.1mm on land pattern)
