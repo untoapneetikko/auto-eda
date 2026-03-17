@@ -1,4 +1,5 @@
 .env
+claude.container.json
 data/uploads/*
 data/outputs/*
 data/agents/*
