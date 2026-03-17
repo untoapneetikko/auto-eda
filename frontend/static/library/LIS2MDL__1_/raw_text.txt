@@ -1,0 +1,1084 @@
+LIS2MDL
+Datasheet
+Digital output magnetic sensor:
+ultralow-power, high-performance 3-axis magnetometer
+Features
+• Three magnetic field channels
+• ±50 gauss magnetic dynamic range
+• 16-bit data output
+• SPI/I²C serial interfaces
+• Analog supply voltage 1.71 V to 3.6 V
+• Selectable power mode/resolution
+• Single measurement mode
+• Programmable interrupt generator
+• Embedded self-test
+• Embedded temperature sensor
+• ECOPACK and RoHS compliant
+Product status link Applications
+LIS2MDL
+• Tilt-compensated compasses
+Product summary • Map rotation
+• Intelligent power saving for handheld devices
+Order code LIS2MDLTR
+• Gaming and virtual reality input devices
+Temp. range [°C] -40 to +85
+Package LGA-12 Description
+Packing Tape and reel
+The LIS2MDL is an ultralow-power, high-performance 3-axis digital magnetic sensor.
+It has a magnetic field dynamic range of ±50 gauss.
+Product resources
+The LIS2MDL includes an I²C serial bus interface that supports standard, fast mode,
+AN5069 (device application note) fast mode plus, and high speed (100 kHz, 400 kHz, 1 MHz, and 3.4 MHz) and an SPI
+TN0018 (design and soldering) serial standard interface.
+The device can be configured to generate an interrupt signal for magnetic field
+detection.
+Product label
+The LIS2MDL is available in a plastic, land grid array (LGA) package and is
+guaranteed to operate over an extended temperature range from -40°C to +85°C.
+DS12144 - Rev 6 - July 2024 www.st.com
+For further information contact your local STMicroelectronics sales office.
+LIS2MDL
+Block diagram and pin description
+1 Block diagram and pin description
+1.1 Block diagram
+Figure 1. Block diagram
+X+ CS
+Y+ CHARGE I2C SCL/SPC
+Z+ AMPLIFIER SDA/SDI/SDO
+I (M) SPI
+A/D CONTRO L SDO
+MUX CONVERTER LOGIC
+Z-
+Y- INT/DRDY
+X-
+TRIMMING INTERRUPT
+TEMP. SENSOR SELF-TEST CIRCUITS CLOCK GENERATOR
+DS12144 - Rev 6 page 2/36
+1.2 Pin description
+Figure 2. Pin connections
+Z
+Vdd_IO 10 11 12 1 SCL/SPC
+Vdd NC
+GND CS
+Y
+X
+INT/DRDY/SDO 7 6 5 4 SDA/SDI/SDO
+TOP VIEW
+DIRECTION OF
+DETECTABLE
+MAGNETIC FIELDS
+(BOTTOM VIEW)
+CN
+DNG
+CN
+1C
+LIS2MDL
+Block diagram and pin description
+Table 1. Pin description
+Pin# Name Function
+SCL I²C serial clock (SCL)
+1
+SPC SPI serial port clock (SPC)
+2 NC Internally not connected. Can be tied to Vdd, Vdd_IO, or GND.
+I²C/SPI mode selection
+3 CS (1: SPI idle mode / I²C communication enabled;
+0: SPI communication mode / I²C disabled)
+SDA I²C serial data (SDA)
+4 SDI SPI serial data input (SDI)
+SDO 3-wire interface serial data output (SDO)
+5 C1 Capacitor connection (C1 = 220 nF)
+6 GND Connected to GND
+7 INT/DRDY/SDO Interrupt/data-ready signal or SDO line for 4-wire SPI connection
+8 GND 0 V
+9 Vdd Power supply
+10 Vdd_IO Power supply for I/O pins
+11 NC Internally not connected. Can be tied to Vdd, Vdd_IO, or GND.
+12 NC Internally not connected. Can be tied to Vdd, Vdd_IO, or GND.
+DS12144 - Rev 6 page 3/36
+LIS2MDL
+Module specifications
+2 Module specifications
+2.1 Sensor characteristics
+@Vdd = 2.5 V, T = 25°C unless otherwise noted. The product is factory calibrated at 2.5 V. The operational power
+supply range is from 1.71 V to 3.6 V.
+Table 2. Sensor characteristics
+Symbol Parameter Test conditions Min. Typ.(1) Max. Unit
+FS Magnetic dynamic range ±49.152 gauss
+So Sensitivity(2) -7% 1.5 +7% mgauss/LSB
+TCSo Sensitivity change vs. temperature(3) ±0.03 %/°C
+TyOff Magnetic sensor offset(4)(5) With offset cancellation -60 +60 mgauss
+TCOff Magnetic sensor offset change vs. temp.(4) With offset cancellation -0.3 +0.3 mgauss/°C
+RMS RMS noise(6) High-resolution mode 3 mgauss (RMS)
+ST Self-test(7) 15 500 mgauss
+Top Operating temperature range -40 +85 °C
+1. Typical specifications are not guaranteed.
+2. Values after factory calibration test and trimming
+3. Measurements are performed in a uniform temperature setup and they are based on characterization data in a limited
+number of samples, not measured during final test for production
+4. Based on characterization data on a limited number of samples, not measured during final test for production
+5. Excluding drift due to magnetic shock
+6. With low-pass filter or offset cancellation enabled
+7. “Self-test” is defined as: OUTPUT[gauss](Self-test enabled) - OUTPUT[gauss](Self-test disabled).
+2.2 Temperature sensor characteristics
+@Vdd = 2.5 V, T = 25°C unless otherwise noted. The product is factory calibrated at 2.5 V. The operational power
+supply range is from 1.71 V to 3.6 V.
+Table 3. Temperature sensor characteristics
+Symbol Parameter Test conditions Min. Typ.(1) Max. Unit
+TSDr Temperature sensor output change vs. temp. 8 digit/°C(2)
+TODR Temperature refresh rate ODR(3) Hz
+Top Operating temperature range -40 +85 °C
+1. Typical specifications are not guaranteed.
+2. 12-bit resolution
+3. Refer to Table 24.
+DS12144 - Rev 6 page 4/36
+LIS2MDL
+Module specifications
+2.3 Electrical characteristics
+@Vdd = 2.5 V, T = 25°C unless otherwise noted. The product is factory calibrated at 2.5 V. The operational power
+supply range is from 1.71 V to 3.6 V.
+Table 4. Electrical characteristics
+Symbol Parameter Test conditions Min. Typ.(1) Max. Unit
+Vdd Supply voltage 1.71 2.5 3.6 V
+Vdd_IO Module power supply for I/O 1.71 3.6 V
+Idd_HR Supply current in high-resolution mode ODR = 20 Hz 200 µA
+Idd_LP Supply current consumption in low-power mode ODR = 20 Hz 50 µA
+Idd_PD Supply current in power-down 1.5 µA
+VIH Digital high-level input voltage 0.7*Vdd_IO V
+VIL Digital low-level input voltage 0.3*Vdd_IO V
+VOH High-level output voltage IOH = 4 mA(2) Vdd_IO - 0.2 V
+VOL Low-level output voltage IOL = 4 mA(2) 0.2 V
+TOP Operating temperature range -40 +85 °C
+1. Typical specifications are not guaranteed.
+2. 4 mA is the maximum driving capability, that is, the maximum DC current that can be sourced/sunk by the digital pin in order
+to guarantee the correct digital output voltage levels VOH and VOL.
+DS12144 - Rev 6 page 5/36
+LIS2MDL
+Module specifications
+2.4 Communication interface characteristics
+2.4.1 SPI - serial peripheral interface
+Subject to general operating conditions for Vdd and Top.
+Table 5. SPI slave timing values
+Value(1)
+Symbol Parameter Unit
+Min Max
+tc(SPC) SPI clock cycle 100 ns
+fc(SPC) SPI clock frequency 10 MHz
+tsu(CS) CS setup time 5
+th(CS) CS hold time 20
+tsu(SI) SDI input setup time 5
+th(SI) SDI input hold time 15 ns
+tv(SO) SDO valid output time 50
+th(SO) SDO output hold time 5
+tdis(SO) SDO output disable time 50
+1. Values are evaluated at 10 MHz clock frequency for SPI with 3 wires, based on characterization results, not tested in
+production.
+Figure 3. SPI slave timing diagram
+Note: Measurement points are done at 0.3·Vdd_IO and 0.7·Vdd_IO for both input and output ports.
+DS12144 - Rev 6 page 6/36
+LIS2MDL
+Module specifications
+2.4.2 I²C - inter-IC control interface
+Subject to general operating conditions for Vdd and Top.
+Table 6. I²C slave timing values (standard and fast mode)
+I²C standard mode(1) I²C fast mode(1)
+Symbol Parameter Unit
+Min Max Min Max
+f(SCL) SCL clock frequency 0 100 0 400 kHz
+tw(SCLL) Low period of the SCL clock 4.7 1.3
+µs
+tw(SCLH) High period of the SCL clock 4.0 0.6
+tsu(SDA) Data setup time 250 100 ns
+th(SDA) Data hold time 0 3.45 0 0.9
+th(ST) START condition hold time 4 0.6
+tsu(SR) Setup time for a repeated START condition 4.7 0.6 µs
+tsu(SP) Setup time for STOP condition 4 0.6
+tw(SP:SR) Bus free time between STOP and START condition 4.7 1.3
+1. Data based on standard I²C protocol requirement, not tested in production.
+Table 7. I²C slave timing values (fast mode plus and high speed)
+I²C fast mode plus(1) I²C high speed(1)
+Symbol Parameter Unit
+Min Max Min Max
+f(SCL) SCL clock frequency 0 1 0 3.4 MHz
+tw(SCLL) Low period of the SCL clock 0.5 0.16
+µs
+tw(SCLH) High period of the SCL clock 0.26 0.06
+tsu(SDA) Data setup time 50 10 ns
+th(SDA) Data hold time 0 0 0.07
+th(ST) START condition hold time 0.26 0.16
+tsu(SR) Setup time for a repeated START condition 0.26 0.16 µs
+tsu(SP) Setup time for STOP condition 0.26 0.16
+tw(SP:SR) Bus free time between STOP and START condition 0.5
+1. Data based on standard I²C protocol requirement, not tested in production.
+DS12144 - Rev 6 page 7/36
+LIS2MDL
+Module specifications
+Figure 4. I²C slave timing diagram
+REPEATED
+START
+START
+t
+su(SR)
+t START
+SDA w(SP:SR)
+t t
+su(SDA) h(SDA)
+t STOP
+su(SP)
+SCL
+t t t
+h(ST) w(SCLL) w(SCLH)
+Note: Measurement points are done at 0.3·Vdd_IO and 0.7·Vdd_IO for both ports.
+DS12144 - Rev 6 page 8/36
+LIS2MDL
+Module specifications
+2.4.3 Absolute maximum ratings
+Stresses above those listed as “absolute maximum ratings” may cause permanent damage to the device. This is
+a stress rating only and functional operation of the device under these conditions is not implied. Exposure to
+maximum rating conditions for extended periods may affect device reliability.
+Table 8. Absolute maximum ratings
+Symbol Ratings Maximum value Unit
+Vdd Supply voltage -0.3 to +4.8 V
+Vdd_IO I/O pins supply voltage -0.3 to +4.8 V
+Input voltage on any control pin
+Vin -0.3 to Vdd_IO +0.3 V
+(CS, SCL/SPC, SDA/SDI/SDO)
+MEF Maximum exposed field 10000 gauss
+TOP Operating temperature range -40 to +85 °C
+TSTG Storage temperature range -40 to +125 °C
+ESD Electrostatic discharge protection (HBM) 2 kV
+Note: Supply voltage on any pin should never exceed 4.8 V.
+This device is sensitive to mechanical shock, improper handling can cause permanent damage to the part.
+This device is sensitive to electrostatic discharge (ESD), improper handling can cause permanent damage to the part.
+DS12144 - Rev 6 page 9/36
+LIS2MDL
+Terminology
+3 Terminology
+3.1 Sensitivity
+Sensitivity describes the ratio of the output digital data expressed in LSB units and the applied magnetic field
+expressed in mG (milligauss). It can be measured, for example, by applying a known magnetic field along one
+axis and measuring the digital output of the device.
+3.2 Zero-gauss level
+The zero-gauss level offset (TyOff) describes the deviation of an actual output signal from the ideal output if no
+magnetic field is present.
+3.3 Magnetic dynamic range
+The magnetic dynamic range is defined as the magnetic field driven along one sensitive axis, giving the maximum
+digital output value.
+DS12144 - Rev 6 page 10/36
+LIS2MDL
+Functionality
+4 Functionality
+4.1 Power modes
+The LIS2MDL provides two different power modes: high-resolution and low-power modes.
+The tables below summarize the RMS noise values and supply current in different product configurations.
+When the low-pass filter is enabled, the bandwidth is reduced while noise performance is improved without any
+increase in power consumption.
+Table 9. RMS noise of operating modes
+CFG_REG_B[LPF] (CFG_REG_A[LP = 0]) (CFG_REG_A[LP = 1])
+or high-resolution mode low-power mode
+CFG_REG_B[OFF_CANC] BW [Hz] Noise RMS [mg] BW [Hz] Noise RMS [mg]
+0 (disable) ODR/2 4.5 ODR/2 9
+1 (enable) ODR/4 3 ODR/4 6
+Table 10. Supply current of operating modes
+Supply current (µA) Supply current (µA) Supply current (µA) Supply current (µA)
+ODR (CFG_REG_A[LP] = 0) (CFG_REG_A[LP] = 1) (CFG_REG_A[LP] = 0) (CFG_REG_A[LP] = 1)
+(Hz) high-resolution low-power high-resolution low-power
+CFG_REG_B[OFF_CANC] = 0 CFG_REG_B[OFF_CANC] = 0 CFG_REG_B[OFF_CANC] = 1 CFG_REG_B[OFF_CANC] = 1
+10 100 25 120 50
+20 200 50 235 100
+50 475 125 575 235
+100 950 250 1130 460
+The following table summarizes the turn-on time of the device in the two different power modes with the offset
+cancellation function enabled or disabled (see Supply_current_in_power_down and Supply_current_10Hz can be
+found, respectively, in Table 4 and Table 10).
+Table 11. Operating mode and turn-on time
+Operating mode Turn-on time
+CFG_REG_A[LP] CFG_REG_A[OFF_CANC = 0] CFG_REG_A[OFF_CANC = 1]
+0 (high-resolution) 9.4 ms 9.4 ms + 1/ODR
+1 (low-power) 6.4 ms 6.4 ms + 1/ODR
+The LIS2MDL offers single measurement mode in both high-resolution and low-power modes.
+Single measurement mode is enabled by writing bits MD[1:0] to 01 in CFG_REG_A (60h).
+In single measurement mode, once the measurement has been performed, the DRDY pin is set to high, data is
+available in the output register and the LIS2MDL is automatically configured in idle mode by setting the MD[1] bit
+to 1.
+Single measurement is independent of the programmed ODR but depends on the frequency at which the MD[1:0]
+bits are written by the microcontroller/application processor.
+DS12144 - Rev 6 page 11/36
+LIS2MDL
+Functionality
+The maximum ODR frequency achievable in single mode measurement is given in the following table.
+Table 12. Maximum ODR in single measurement mode (HR and LP modes)
+Maximum ODR Power mode (CFG_REG_A[LP])
+100 Hz High resolution (LP = 0)
+150 Hz Low power (LP = 1)
+In single measurement mode, for ODR < 10 Hz, supply current can be calculated with the following formula:
+(Supply_current_10Hz - Supply_current_in_power_down) / (10 Hz / ODR) + Supply_current_in_power_down
+Where Supply_current_in_power_down and Supply_current_10Hz can be found, respectively, in Table 4 and
+Table 10.
+4.2 IC interface
+The complete measurement chain is composed of a low-noise capacitive amplifier that converts the capacitive
+unbalancing of the MEMS sensor into an analog voltage using an analog-to-digital converter.
+The magnetic data may be accessed through an I²C/SPI interface thus making the device particularly suitable for
+direct interfacing with a microcontroller.
+The LIS2MDL features a data-ready signal, which indicates when new sets of measured magnetic data are
+available, thus simplifying data synchronization in the digital system that uses the device.
+4.3 Factory calibration
+The IC interface is factory calibrated for sensitivity (So) and zero-gauss level (TyOff).
+The trim values are stored inside the device in nonvolatile memory. Anytime the device is turned on, the trim
+parameters are downloaded into the registers to be used during active operation. This allows using the device
+without further calibration.
+DS12144 - Rev 6 page 12/36
+5 Application hints
+Figure 5. LIS2MDL electrical connections
+Vdd_IO
+Vdd
+C =10µF
+2
+C =100nF
+3
+GND
+Digitalsignal from/to signal controller. Signallevels are defined by proper selection of Vdd_IO.
+1C
+SCL/SPC
+CS
+SDA/SDI/SDO
+DNG
+C =100nF
+4
+12 11 Vdd_IO
+1 10
+Vdd
+NC
+TOP VIEW
+GND
+INT/DRDY/SDO
+4 7
+5 6
+CC == 212000nnFF
+1 1
+CN CN
+LIS2MDL
+Application hints
+The device core is supplied through the Vdd line while the I/O pads are supplied through the Vdd_IO line. Power
+supply decoupling capacitors (100 nF ceramic, 10 µF aluminum) should be placed as near as possible to pin 9 of
+the device (common design practice).
+It is possible to remove Vdd, maintaining Vdd_IO, without blocking the communication bus, in this condition, the
+measurement chain is powered off.
+The following recommendations apply to capacitor C1:
+• It must be connected as close as possible to pins 5 and 6 since very high current pulses flow from C1 to
+pin 5 and 6. This avoids problems caused by inductive effects due to the length of the copper strips.
+• It is highly recommended to use low ESR (max 200 mOhm)
+The functionality of the device and the measured magnetic data are selectable and accessible through the I²C or
+SPI interfaces. When using the I²C, CS must be tied high (that is, connected to Vdd_IO).
+The functions, the threshold, and the timing of the interrupt pin (INT) can be completely programmed by the user
+through the I²C/SPI interface.
+DS12144 - Rev 6 page 13/36
+LIS2MDL
+Application hints
+Table 13. Internal pin status
+Pin# Name Function Pin status
+SCL I²C serial clock (SCL)
+1 Default: input without pull-up
+SPC SPI serial port clock (SPC)
+2 NC Internally not connected
+I²C/SPI mode selection
+3 CS (1: SPI idle mode / I²C communication enabled; Default: input without pull-up
+0: SPI communication mode / I²C disabled)
+SDA I²C serial data (SDA)
+4 SDI SPI serial data input (SDI) Default: (SDA) input without pull-up
+SDO 3-wire interface serial data output (SDO)
+External capacitor, voltage forced by the
+5 C1 Capacitor connection (C1 = 220 nF)
+device
+6 GND 0 V
+7 INT/DRDY/SDO Interrupt/data-ready signal or SDO for 4-wire SPI interface Default: output high impedance
+8 GND 0 V
+9 Vdd Power supply
+10 Vdd_IO Power supply for I/O pins
+11 NC Internally not connected
+12 NC Internally not connected
+Note: In order to program INT/DRDY as a push-pull output, write the INT_on_PIN bit or DRDY_on_PIN bit to 1 in
+CFG_REG_C (62h).
+Refer to AN5069 for more information (magnetometer offset cancellation, magnetometer hard-iron compensation,
+interrupt generation, self-test procedure).
+5.1 Soldering information
+The LGA package is compliant with the ECOPACK and RoHS standards.
+It is qualified for soldering heat resistance according to JEDEC J-STD-020.
+For land pattern and soldering recommendations, consult technical note TN0018 available on www.st.com.
+5.2 High-current wiring effects
+High current in wiring and printed circuit traces can be culprits in causing errors in magnetic field measurements
+for compassing.
+Conductor-generated magnetic fields add to the Earth’s magnetic field, leading to errors in compass heading
+computation.
+Keep currents higher than 10 mA a few millimeters away from the sensor IC.
+5.3 Startup sequence
+The following general-purpose sequence can be used to configure the device:
+1. Write CFG_REG_A = 80h // Enable temperature compensation
+// Mag = 10 Hz (high-resolution and continuous mode)
+2. Write CFG_REG_C = 01h // Enable mag. data-ready interrupt
+DS12144 - Rev 6 page 14/36
+LIS2MDL
+Digital interfaces
+6 Digital interfaces
+The registers embedded inside the LIS2MDL may be accessed through both the I²C and 3-wire SPI serial
+interfaces.
+The serial interfaces are mapped to the same pads. To select/exploit the I²C interface, the
+CS line must be tied high (that is, connected to Vdd_IO).
+Table 14. Serial interface pin description
+Pin name Pin description
+Enable SPI
+I²C/SPI mode selection
+CS
+(1: SPI idle mode / I²C communication enabled;
+0: SPI communication mode / I²C disabled)
+SCL I²C serial clock (SCL)
+SPC SPI serial port clock (SPC)
+SDA I²C serial data (SDA)
+SDI SPI serial data input (SDI)
+SDO 3-wire SPI interface serial data output (SDO)
+SDO 4-wire SPI interface serial data output (SDO)
+6.1 I²C serial interface
+The LIS2MDL I²C is a bus slave. The I²C is employed to write data into registers whose content can also be read
+back.
+The relevant I²C terminology is given in the table below.
+Table 15. I²C terminology
+Term Description
+Transmitter The device that sends data to the bus
+Receiver The device that receives data from the bus
+Master The device that initiates a transfer, generates clock signals. and terminates a transfer
+Slave The device addressed by the master
+There are two signals associated with the I²C bus: the serial clock line (SCL) and the serial data line (SDA). The
+latter is a bidirectional line used for sending and receiving the data to/from the interface. Both the lines must be
+connected to Vdd_IO through an external pull-up resistor. When the bus is free, both the lines are high.
+The I²C interface is compliant with standard mode (100 kHz), fast mode (400 kHz), fast mode plus (1 MHz), and
+high-speed mode (3.4 MHz).
+6.1.1 I²C operation
+The transaction on the bus is started through a start (ST) signal. A start condition is defined as a high-to-low
+transition on the data line while the SCL line is held high. After this has been transmitted by the master, the bus is
+considered busy. The next byte of data transmitted after the start condition contains the address of the slave in
+the first 7 bits and the eighth bit tells whether the master is receiving data from the slave or transmitting data to
+the slave. When an address is sent, each device in the system compares the first seven bits after a start condition
+with its address. If they match, the device considers itself addressed by the master.
+Data transfer with acknowledge is mandatory. The transmitter must release the SDA line during the acknowledge
+pulse. The receiver must then pull the data line low so that it remains stable low during the high period of the
+acknowledge clock pulse. A receiver that has been addressed is obliged to generate an acknowledge after each
+byte of data received.
+DS12144 - Rev 6 page 15/36
+LIS2MDL
+Digital interfaces
+The I²C embedded inside the LIS2MDL behaves like a slave device and the following protocol must be adhered
+to. After the start condition (ST) a slave address is sent, once a slave acknowledge (SAK) has been returned, an
+8-bit subaddress (SUB) is transmitted: the 7 LSb represent the actual register address while the MSB enables
+address auto increment. If the MSb of the SUB field is 1, the SUB (register address) is automatically increased to
+allow multiple data read/writes.
+The slave address is completed with a read/write bit. If the bit was 1 (read), a repeated start (SR) condition must
+be issued after the two sub-address bytes; if the bit is 0 (write) the master transmits to the slave with direction
+unchanged. Table 20 explains how the SAD+read/write bit pattern is composed, listing all the possible
+configurations.
+Table 16. Transfer when master is writing one byte to slave
+Master ST SAD + W SUB DATA SP
+Slave SAK SAK SAK
+Table 17. Transfer when master is writing multiple bytes to slave
+Master ST SAD + W SUB DATA DATA SP
+Slave SAK SAK SAK SAK
+Table 18. Transfer when master is receiving (reading) one byte of data from slave
+Master ST SAD + W SUB SR SAD + R NMAK SP
+Slave SAK SAK SAK DATA
+Table 19. Transfer when master is receiving (reading) multiple bytes of data from slave
+SAD+ SAD+
+Master ST SUB SR MAK MAK NMAK SP
+W R
+Slave SAK SAK SAK DATA DATA DATA
+Data are transmitted in byte format (DATA). Each data transfer contains 8 bits. The number of bytes transferred
+per transfer is unlimited. Data is transferred with the most significant bit (MSb) first. If a receiver cannot receive
+another complete byte of data until it has performed some other function, it can hold the clock line SCL low to
+force the transmitter into a wait state. Data transfer only continues when the receiver is ready for another byte and
+releases the data line. If a slave receiver doesn’t acknowledge the slave address (that is, it is not able to receive
+because it is performing some real-time function) the data line must be left high by the slave. The master can then
+abort the transfer. A low-to-high transition on the SDA line while the SCL line is high is defined as a stop
+condition. Each data transfer must be terminated by the generation of a stop (SP) condition.
+In the presented communication format MAK is master acknowledge and NMAK is no master acknowledge.
+Default address:
+The slave address is 0011110b.
+The slave address is completed with a read/write bit. If the bit is1 (read), a repeated start (SR) condition must be
+issued after the subaddress byte. If the bit is 0 (write) the master transmits to the slave with direction unchanged.
+Table 20 explains how the SAD+read/write bit patterns are composed, listing all the possible configurations.
+Table 20. SAD + read/write patterns
+Command SAD[6:0] R/W SAD + R/W
+Read 0011110 1 00111101 (3Dh)
+Write 0011110 0 00111100 (3Ch)
+DS12144 - Rev 6 page 16/36
+LIS2MDL
+Digital interfaces
+6.2 SPI bus interface
+The LIS2MDL SPI is a bus slave. The SPI allows writing and reading the registers of the device.
+The default serial interface interacts with the application using three wires: CS, SPC, SDI/O.
+The 4-wire SPI interface mode can be activated by writing bit 2 of CFG_REG_C (62h) to 1. Of course, doing this
+disables the interrupt and data-ready signaling capability of the device.
+6.2.1 SPI write
+Figure 6. SPI write protocol
+The SPI write command is performed with 16 clock pulses. The multiple byte write command is performed by
+adding blocks of 8 clock pulses to the previous one.
+bit 0: WRITE bit. The value is 0.
+bit 1-7: address AD(6:0). This is the address field of the indexed register.
+bit 8-15: data DI(7:0) (write mode). This is the data that is written inside the device (MSb first).
+bit 16-... : data DI(...-8). Further data in multiple byte writes.
+Figure 7. Multiple byte SPI write protocol (2-byte example)
+DS12144 - Rev 6 page 17/36
+LIS2MDL
+Digital interfaces
+6.2.2 SPI read
+Figure 8. SPI read protocol
+The SPI read command is performed with 16 clock pulses. A multiple read is performed by adding blocks of 8
+clock pulses to the previous one. The read address is automatically incremented.
+bit 0: READ bit. The value is 1.
+bit 1-7: address AD(6:0). This is the address field of the indexed register.
+bit 8-15: data DO(7:0) (read mode). This is the data that is read from the device (MSb first).
+bit 16-...: data DO(...-8). Further data in multiple byte reads.
+Figure 9. Multiple byte SPI read protocol (2-byte example)
+DS12144 - Rev 6 page 18/36
+LIS2MDL
+Register mapping
+7 Register mapping
+The table given below provides a list of the 8-bit registers embedded in the device and the corresponding
+addresses.
+Table 21. Register address map
+Register address
+Name Type(1) Default Comment
+Hex Binary
+Reserved 00 - 44 Reserved
+OFFSET_X_REG_L R/W 45 01000101 00000000
+OFFSET_X_REG_H R/W 46 01000110 00000000
+OFFSET_Y_REG_L R/W 47 01000111 00000000
+Hard-iron registers
+OFFSET_Y_REG_H R/W 48 01001000 00000000
+OFFSET_Z_REG_L R/W 49 01001001 00000000
+OFFSET_Z_REG_H R/W 4A 01001010 00000000
+RESERVED 4B-4C Reserved
+WHO_AM_I R 4F 01001111 01000000
+RESERVED 50-5F Reserved
+CFG_REG_A R/W 60 01100000 00000011
+CFG_REG_B R/W 61 01100001 00000000 Configuration registers
+CFG_REG_C R/W 62 01100010 00000000
+INT_CRTL_REG R/W 63 01100011 11100000
+INT_SOURCE_REG R 64 01100100
+Interrupt configuration registers
+INT_THS_L_REG R/W 65 01100101 00000000
+INT_THS_H_REG R/W 66 01100110 00000000
+STATUS_REG R 67 01100111
+OUTX_L_REG R 68 01101000 output
+OUTX_H_REG R 69 01101001 output
+OUTY_L_REG R 6A 01101010 output
+Output registers
+OUTY_H_REG R 6B 01101010 output
+OUTZ_L_REG R 6C 01101100 output
+OUTZ_H_REG R 6D 01101101 output
+TEMP_OUT_L_REG R 6E 01101110 output
+Temperature sensor registers
+TEMP_OUT_H_REG R 6F 01101111 output
+1. R = read-only register, R/W = readable/writable register
+Reserved registers must not be changed. Writing to those registers may cause permanent damage to the device.
+The content of the registers that are loaded at boot should not be changed. They contain the factory calibration
+values. Their content is automatically restored when the device is powered up.
+DS12144 - Rev 6 page 19/36
+LIS2MDL
+Register description
+8 Register description
+8.1 OFFSET_X_REG_L (45h) and OFFSET_X_REG_H (46h)
+These registers comprise a 16-bit register and represent the X hard-iron offset in order to compensate
+environmental effects (data in two’s complement). These values act on the magnetic output data value in order to
+delete the environmental offset.
+8.2 OFFSET_Y_REG_L (47h) and OFFSET_Y_REG_H (48h)
+These registers comprise a 16-bit register and represent the Y hard-iron offset in order to compensate
+environmental effects (data in two’s complement). These values act on the magnetic output data value in order to
+delete the environmental offset.
+8.3 OFFSET_Z_REG_L (49h) and OFFSET_Z_REG_H (4Ah)
+These registers comprise a 16-bit register and represent the Z hard-iron offset in order to compensate
+environmental effects (data in two’s complement). These values act on the magnetic output data value in order to
+delete the environmental offset.
+8.4 WHO_AM_I (4Fh)
+The identification register is used to identify the device.
+0 1 0 0 0 0 0 0
+DS12144 - Rev 6 page 20/36
+LIS2MDL
+Register description
+8.5 CFG_REG_A (60h)
+The configuration register is used to configure the output data rate and the measurement configuration.
+Table 22. CFG_REG_A register
+COMP_
+REBOOT SOFT_RST LP ODR1 ODR0 MD1 MD0
+TEMP_EN
+Table 23. CFG_REG_A register description
+Enables the magnetometer temperature compensation. Default value: 0
+COMP_TEMP_EN(1)
+(0: temperature compensation disabled; 1: temperature compensation enabled)
+Reboots magnetometer memory content. Default value: 0
+REBOOT
+(0: normal mode; 1: reboot memory content)
+When this bit is set, the configuration registers and user registers are reset. Flash registers keep their
+SOFT_RST
+values. Default value: 0
+Enables low-power mode. Default value: 0
+LP
+0: high-resolution mode 1: low-power mode enabled
+Output data rate configuration (see Table 24. Output data rate configuration)
+ODR[1:0]
+Default value: 00
+These bits select the mode of operation of the device (see Table 25. Mode of operation). Default value:
+MD[1:0]
+11
+1. This bit must be set to 1 for the correct operation of the device.
+Table 24. Output data rate configuration
+ODR1 ODR0 ODR (Hz)
+0 0 10 (default)
+0 1 20
+1 0 50
+1 1 100
+Table 25. Mode of operation
+MD1 MD0 Mode
+Continuous mode. In continuous mode the device continuously performs measurements and places the result in
+0 0 the data register. The data-ready signal is generated when a new data set is ready to be read. This signal can be
+available on the external pin by setting the DRDY_on_PIN bit in CFG_REG_C (62h).
+Single mode. When single mode is selected, the device performs a single measurement, sets DRDY high and
+0 1
+returns to idle mode. Mode register returns to idle mode bit values.
+1 0 Idle mode. Device is placed in idle mode. I²C and SPI active.
+1 1 Idle mode. Device is placed in idle mode. I²C and SPI active (default).
+DS12144 - Rev 6 page 21/36
+LIS2MDL
+Register description
+8.6 CFG_REG_B (61h)
+Table 26. CFG_REG_B register
+OFF_CANC_ INT_on_
+0 0 0 Set_FREQ OFF_CANC LPF
+ONE_SHOT DataOFF
+Table 27. CFG_REG_B register description
+Enables offset cancellation in single measurement mode. The OFF_CANC bit must be set to 1
+when enabling offset cancellation in single measurement mode. Default value: 0
+OFF_CANC_ONE_SHOT
+(0: offset cancellation in single measurement mode disabled;
+1: offset cancellation in single measurement mode enabled)
+If 1, the interrupt block recognition checks data after the hard-iron correction to discover the
+INT_on_DataOFF
+interrupt. Default value: 0
+Selects the frequency of the set pulse. Default value: 0
+Set_FREQ (0: set pulse is released every 64 ODR;
+1: set pulse is released only at power-on after PD condition)
+Enables offset cancellation. Default value: 0
+OFF_CANC
+(0: offset cancellation disabled; 1: offset cancellation enabled)
+Enables low-pass filter (see Table 28). Default value: 0
+LPF
+(0: digital filter disabled; 1: digital filter enabled)
+Table 28. Digital low-pass filter
+CFG_REG_B[LPF] BW [Hz]
+0 (disable) ODR/2
+1 (enable) ODR/4
+DS12144 - Rev 6 page 22/36
+LIS2MDL
+Register description
+8.7 CFG_REG_C (62h)
+Table 29. CFG_REG_C register
+0 INT_on_PIN I2C_DIS BDU BLE 4WSPI Self_test DRDY_on_PIN
+Table 30. CFG_REG_C register description
+If 1, the INTERRUPT signal (INT bit in INT_SOURCE_REG (64h)) is driven to the INT/DRDY pin. The INT/
+INT_on_PIN DRDY pin is configured in push-pull output mode.
+Default value: 0
+I2C_DIS If 1, the I²C interface is inhibited. Only the SPI interface can be used.
+If enabled, reading incorrect data is avoided when the user reads asynchronously. In fact, if the read request
+BDU arrives during an update of the output data, a latch is possible, reading incoherent high and low bytes of the
+same register. Only one byte is updated and the other one remains unchanged.
+BLE If 1, an inversion of the low and high bytes of the data occurs.
+4WSPI Set to 1 to enable SDO line on pin 7.
+Self_test If 1, the self-test is enabled.
+If 1, the data-ready signal (Zyxda bit in STATUS_REG (67h)) is driven on the INT/DRDY pin. The INT/DRDY
+DRDY_on_PIN pin is configured in push-pull output mode.
+Default value: 0
+8.8 INT_CTRL_REG (63h)
+The interrupt control register is used to enable and to configure the interrupt recognition.
+Table 31. INT_CRTL_REG register
+XIEN YIEN ZIEN 0(1) 0(1) IEA IEL IEN
+1. This bit must be set to 0 for the correct operation of the device.
+Table 32. INT_CTRL_REG register description
+Enables the interrupt detection for the X-axis. Default value: 1
+XIEN
+(1: enabled; 0: disabled)
+Enables the interrupt detection for the Y-axis. Default value: 1
+YIEN
+(1: enabled; 0: disabled)
+Enables the interrupt detection for the Z-axis. Default value: 1
+ZIEN
+(1: enabled; 0: disabled)
+Controls the polarity of the INT bit (INT_SOURCE_REG (64h)) when an interrupt occurs. Default: 0
+IEA If IEA = 0, then INT = 0 signals an interrupt
+If IEA = 1, then INT = 1 signals an interrupt
+Controls whether the INT bit (INT_SOURCE_REG (64h)) is latched or pulsed. Default: 0
+If IEL = 0, then INT is pulsed.
+IEL
+If IEL = 1, then INT is latched.
+Once latched, INT remains in the same state until INT_SOURCE_REG (64h) is read.
+Enables the interrupt. When set, enables the generation of the interrupt. The INT bit is in INT_SOURCE_REG (64h).
+IEN
+Default: 0
+DS12144 - Rev 6 page 23/36
+LIS2MDL
+Register description
+8.9 INT_SOURCE_REG (64h)
+When interrupt latched is selected, reading this register resets all the bits in this register.
+Table 33. INT_SOURCE_REG register
+P_TH_S_X P_TH_S_Y P_TH_S_Z N_TH_S_X N_TH_S_Y N_TH_S_Z MROI INT
+Table 34. INT_SOURCE_REG register description
+P_TH_S_X X-axis value exceeds the threshold positive side
+P_TH_S_Y Y-axis value exceeds the threshold positive side
+P_TH_S_Z Z-axis value exceeds the threshold positive side
+N_TH_S_X X-axis value exceeds the threshold negative side
+N_TH_S_Y Y-axis value exceeds the threshold negative side
+N_TH_S_Z Z-axis value exceeds the threshold negative side
+MROI MROI flag generation is always enabled.This flag is reset by reading INT_SOURCE_REG (64h).
+INT This bit signals when the interrupt event occurs.
+8.10 INT_THS_L_REG (65h)
+This register contains the least significant bits of the threshold value chosen for the interrupt.
+Table 35. INT_THS_L_REG register
+TH7 TH6 TH5 TH4 TH3 TH2 TH1 TH0
+Table 36. INT_THS_L_REG register description
+TH[7:0] Threshold value for the interrupt
+8.11 INT_THS_H_REG (66h)
+This register contains the most significant bits of the threshold value chosen for the interrupt.
+Table 37. INT_THS_H_REG register
+TH15 TH14 TH13 TH12 TH11 TH10 TH9 TH8
+Table 38. INT_THS_H_REG register description
+TH[15:8] Threshold value for the interrupt
+These registers set the threshold value for the output to generate the interrupt (INT bit in INT_SOURCE_REG
+(64h)).
+This threshold is common to all three (axes) output values and is unsigned unipolar. The threshold value is
+correlated to the current gain and it is unsigned because the threshold is considered as an absolute value, but
+crossing the threshold is detected for both the positive and negative sides.
+DS12144 - Rev 6 page 24/36
+LIS2MDL
+Register description
+8.12 STATUS_REG (67h)
+The status register is an 8-bit read-only register. This register is used to indicate device status.
+Table 39. STATUS_REG register
+Zyxor zor yor xor Zyxda zda yda xda
+Table 40. STATUS_REG register description
+X-, Y-, and Z-axis data overrun. Default value: 0
+Zyxor
+(0: no overrun has occurred; 1: a new set of data has overwritten the previous set)
+Z-axis data overrun. Default value: 0
+zor
+(0: no overrun has occurred; 1: new data for the Z-axis has overwritten the previous data)
+Y-axis data overrun. Default value: 0
+yor
+(0: no overrun has occurred; 1: new data for the Y-axis has overwritten the previous data)
+X-axis data overrun. Default value: 0
+xor
+(0: no overrun has occurred; 1: new data for the X-axis has overwritten the previous data)
+X-, Y-, and Z-axis new data available. Default value: 0
+Zyxda
+(0: a new set of data is not yet available; 1: a new set of data is available)
+Z-axis new data available. Default value: 0
+zda
+(0: new data for the Z-axis is not yet available; 1: new data for the Z-axis is available)
+Y-axis new data available. Default value: 0
+yda
+(0: new data for the Y-axis is not yet available; 1: new data for the Y-axis is available)
+X-axis new data available. Default value: 0
+xda
+(0: new data for the X-axis is not yet available; 1: new data for the X-axis is available)
+DS12144 - Rev 6 page 25/36
+LIS2MDL
+Register description
+8.13 OUTX_L_REG, OUTX_H_REG (68h - 69h)
+The data output X registers are two 8-bit registers, data output X MSB register (69h) and output X LSB register
+(68h).
+The output data represents the raw magnetic data only if OFFSET_X_REG is equal to zero, otherwise hard-iron
+calibration is included.
+Table 41. OUTX_L_REG register
+0 0 0 0 0 0 0 0
+Table 42. OUTX_H_REG register
+0 0 0 0 0 0 0 0
+The value of the magnetic field is expressed in two’s complement. This register contains the X component of the
+magnetic data.
+8.14 OUTY_L_REG, OUTY_H_REG (6Ah - 6Bh)
+The data output Y registers are two 8-bit registers, data output Y MSB register (6Bh) and output Y LSB register
+(6Ah).
+The output data represents the raw magnetic data only if OFFSET_Y_REG is equal to zero, otherwise hard-iron
+calibration is included.
+Table 43. OUTY_L_REG register
+0 0 0 0 0 0 0 0
+Table 44. OUTY_H_REG register
+0 0 0 0 0 0 0 0
+The value of the magnetic field is expressed in two’s complement. This register contains the Y component of the
+magnetic data.
+8.15 OUTZ_L_REG, OUTZ_H_REG (6Ch - 6Dh)
+The data output Z registers are two 8-bit registers, data output Z MSB register (6Dh) and output Z LSB register
+(6Ch).
+The output data represents the raw magnetic data only if OFFSET_Z_REG is equal to zero, otherwise hard-iron
+calibration is included.
+Table 45. OUTZ_L_REG register
+0 0 0 0 0 0 0 0
+Table 46. OUTZ_H_REG register
+0 0 0 0 0 0 0 0
+The value of the magnetic field is expressed in two’s complement. This register contains the Z component of the
+magnetic data.
+DS12144 - Rev 6 page 26/36
+LIS2MDL
+Register description
+8.16 TEMP_OUT_L_REG (6Eh), TEMP_OUT_H_REG (6Fh)
+Temperature sensor data
+These registers contain temperature values from the internal temperature sensor. The output value is expressed
+as a signed 16-bit byte in two’s complement. The four most significant bits contain a copy of the sign bit.
+The nominal sensitivity is 8 LSB/°C.
+DS12144 - Rev 6 page 27/36
+LIS2MDL
+Package information
+9 Package information
+In order to meet environmental requirements, ST offers these devices in different grades of ECOPACK packages,
+depending on their level of environmental compliance. ECOPACK specifications, grade definitions and product
+status are available at: www.st.com. ECOPACK is an ST trademark.
+9.1 LGA-12L package information
+Figure 10. LGA-12L 2.0 x 2.0 x 0.7 mm package outline and mechanical data
+Dimensions are in millimeter unless otherwise specified.
+General Tolerance is +/-0.15mm unless otherwise specified.
+OUTER DIMENSIONS
+ITEM DIMENSION [mm] TOLERANCE [mm]
+Length [L] 2 ±0.1
+Width [W] 2 ±0.1
+Height [H] 0.7 MAX /
+DM00170568_7
+Note: Package tolerances guaranteed by process
+DS12144 - Rev 6 page 28/36
+LIS2MDL
+Package information
+9.2 LGA-12L packing information
+Figure 11. Carrier tape information for LGA-12L package
+4.00 +0.1
+0.30±0.05 2.00±0.05 SEE NOTE 2 1.50 0.0 B
+1.00 MIN
+4.00 SEE NOTE 1
+1.75±0.1
+A A
+5.50±0.05
+SEE NOTE 2
+Bo +0.3
+12.00-0.1
+R0.20 MAX
+R0.25 TYP
+Ko
+B
+SECTION B-B
+Ao
+DIM ±
+Ao 2.30 0.05
+SECTION A-A
+Bo 2.30 0.05
+SCALE 1:1
+Ko 1.00 0.1
+NOTES:
+1. 10 SPROCKET HOLE PITCH CUMULATIVE TOLERANCE ±0.2
+2. POCKET POSITION RELATIVE TO SPROCKET HOLE MEASURED AS TRUE POSITION OF POCKET, NOT
+POCKET HOLE.
+3. Ao AND Bo ARE CALCULATED ON A PLANE AT A DISTANCE "R" ABOVE THE BOTTOM OF THE POCKET.
+Figure 12. LGA-12L package orientation in carrier tape
+DS12144 - Rev 6 page 29/36
+LIS2MDL
+Package information
+Figure 13. Reel information for carrier tape of LGA-12L package
+T
+40mm min.
+Access hole at
+slot location
+B
+C
+D N
+A
+G measured at hub
+Full radius
+Tape slot
+in core for
+tape start
+2.5mm min. width
+Table 47. Reel dimensions for carrier tape of LGA-12L package
+Reel dimensions (mm)
+A (max) 330
+B (min) 1.5
+C 13 ±0.25
+D (min) 20.2
+N (min) 60
+G 12.4 +2/-0
+T (max) 18.4
+DS12144 - Rev 6 page 30/36
+LIS2MDL
+Package information
+Revision history
+Table 48. Document revision history
+Date Version Changes
+11-May-2017 1 Initial release
+18-Jul-2017 2 Document status promoted to “Datasheet - production data”
+Updated Table 2: Pin description
+Updated Table 5: Electrical characteristics
+Updated Figure 3: SPI slave timing diagram
+Removed Magnetometer offset cancellation, Magnetometer interrupt,
+Magnetometer hard-iron compensation, and Self-test
+Updated Section 5: Application hints, Section 5.1: Soldering information, and
+Section 5.3: Startup sequence
+21-Sep-2017 3 Updated Section 6: Digital interfaces and Section 6.1: I²C serial interface
+Updated CFG_REG_A (60h)
+Specified default values in CFG_REG_B (61h)
+Updated CFG_REG_C (62h)
+Updated description of STATUS_REG (67h)
+Updated description of OUTX_L_REG, OUTX_H_REG (68h - 69h),
+OUTY_L_REG, OUTY_H_REG (6Ah - 6Bh) and TEMP_OUT_L_REG (6Eh),
+TEMP_OUT_H_REG (6Fh)
+Added 4-wire SPI function to pin 7 (updated Figure 1, Section 1.2: Pin
+07-Nov-2018 4 description, Section 5: Application hints, Section 6: Digital interfaces, and
+CFG_REG_C (62h))
+28-Nov-2018 5 Updated Table 5: Electrical characteristics
+Added product resources on page 1
+Added Figure 9. Multiple byte SPI read protocol (2-byte example)
+26-Jul-2024 6 Updated description of Set_FREQ bit in CFG_REG_B (61h)
+Updated Section 9.1: LGA-12L package information
+Minor textual updates
+DS12144 - Rev 6 page 31/36
+LIS2MDL
+Contents
+Contents
+1 Block diagram and pin description.................................................2
+1.1 Block diagram .................................................................2
+1.2 Pin description.................................................................3
+2 Module specifications .............................................................4
+2.1 Sensor characteristics ..........................................................4
+2.2 Temperature sensor characteristics ...............................................4
+2.3 Electrical characteristics.........................................................5
+2.4 Communication interface characteristics ...........................................6
+2.4.1 SPI - serial peripheral interface..............................................6
+2.4.2 I²C - inter-IC control interface ...............................................7
+2.4.3 Absolute maximum ratings .................................................9
+3 Terminology......................................................................10
+3.1 Sensitivity....................................................................10
+3.2 Zero-gauss level ..............................................................10
+3.3 Magnetic dynamic range .......................................................10
+4 Functionality .....................................................................11
+4.1 Power modes.................................................................11
+4.2 IC interface...................................................................12
+4.3 Factory calibration.............................................................12
+5 Application hints .................................................................13
+5.1 Soldering information ..........................................................14
+5.2 High-current wiring effects......................................................14
+5.3 Startup sequence .............................................................14
+6 Digital interfaces .................................................................15
+6.1 I²C serial interface.............................................................15
+6.1.1 I²C operation........................................................... 15
+6.2 SPI bus interface..............................................................17
+6.2.1 SPI write.............................................................. 17
+6.2.2 SPI read .............................................................. 18
+7 Register mapping.................................................................19
+8 Register description ..............................................................20
+8.1 OFFSET_X_REG_L (45h) and OFFSET_X_REG_H (46h)...........................20
+8.2 OFFSET_Y_REG_L (47h) and OFFSET_Y_REG_H (48h)...........................20
+8.3 OFFSET_Z_REG_L (49h) and OFFSET_Z_REG_H (4Ah)...........................20
+DS12144 - Rev 6 page 32/36
+LIS2MDL
+Contents
+8.4 WHO_AM_I (4Fh).............................................................20
+8.5 CFG_REG_A (60h)............................................................21
+8.6 CFG_REG_B (61h)............................................................22
+8.7 CFG_REG_C (62h)............................................................23
+8.8 INT_CTRL_REG (63h).........................................................23
+8.9 INT_SOURCE_REG (64h)......................................................24
+8.10 INT_THS_L_REG (65h)........................................................24
+8.11 INT_THS_H_REG (66h)........................................................24
+8.12 STATUS_REG (67h)...........................................................25
+8.13 OUTX_L_REG, OUTX_H_REG (68h - 69h) .......................................26
+8.14 OUTY_L_REG, OUTY_H_REG (6Ah - 6Bh).......................................26
+8.15 OUTZ_L_REG, OUTZ_H_REG (6Ch - 6Dh).......................................26
+8.16 TEMP_OUT_L_REG (6Eh), TEMP_OUT_H_REG (6Fh).............................27
+9 Package information..............................................................28
+9.1 LGA-12L package information...................................................28
+9.2 LGA-12L packing information ...................................................29
+Revision history .......................................................................31
+List of tables ..........................................................................34
+List of figures..........................................................................35
+DS12144 - Rev 6 page 33/36
+LIS2MDL
+List of tables
+List of tables
+Table 1. Pin description. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+Table 2. Sensor characteristics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+Table 3. Temperature sensor characteristics . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+Table 4. Electrical characteristics. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+Table 5. SPI slave timing values. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+Table 6. I²C slave timing values (standard and fast mode). . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+Table 7. I²C slave timing values (fast mode plus and high speed) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+Table 8. Absolute maximum ratings . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+Table 9. RMS noise of operating modes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+Table 10. Supply current of operating modes. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+Table 11. Operating mode and turn-on time. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+Table 12. Maximum ODR in single measurement mode (HR and LP modes). . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+Table 13. Internal pin status . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+Table 14. Serial interface pin description. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+Table 15. I²C terminology . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+Table 16. Transfer when master is writing one byte to slave. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+Table 17. Transfer when master is writing multiple bytes to slave. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+Table 18. Transfer when master is receiving (reading) one byte of data from slave. . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+Table 19. Transfer when master is receiving (reading) multiple bytes of data from slave . . . . . . . . . . . . . . . . . . . . . . . . . 16
+Table 20. SAD + read/write patterns. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+Table 21. Register address map . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+Table 22. CFG_REG_A register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+Table 23. CFG_REG_A register description. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+Table 24. Output data rate configuration. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+Table 25. Mode of operation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+Table 26. CFG_REG_B register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+Table 27. CFG_REG_B register description. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+Table 28. Digital low-pass filter . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 22
+Table 29. CFG_REG_C register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+Table 30. CFG_REG_C register description . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+Table 31. INT_CRTL_REG register . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+Table 32. INT_CTRL_REG register description . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+Table 33. INT_SOURCE_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+Table 34. INT_SOURCE_REG register description. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+Table 35. INT_THS_L_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+Table 36. INT_THS_L_REG register description . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+Table 37. INT_THS_H_REG register . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+Table 38. INT_THS_H_REG register description . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+Table 39. STATUS_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+Table 40. STATUS_REG register description. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+Table 41. OUTX_L_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+Table 42. OUTX_H_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+Table 43. OUTY_L_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+Table 44. OUTY_H_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+Table 45. OUTZ_L_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+Table 46. OUTZ_H_REG register. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 26
+Table 47. Reel dimensions for carrier tape of LGA-12L package . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+Table 48. Document revision history. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+DS12144 - Rev 6 page 34/36
+LIS2MDL
+List of figures
+List of figures
+Figure 1. Block diagram . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+Figure 2. Pin connections . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+Figure 3. SPI slave timing diagram. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+Figure 4. I²C slave timing diagram . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+Figure 5. LIS2MDL electrical connections . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+Figure 6. SPI write protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+Figure 7. Multiple byte SPI write protocol (2-byte example) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+Figure 8. SPI read protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+Figure 9. Multiple byte SPI read protocol (2-byte example). . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+Figure 10. LGA-12L 2.0 x 2.0 x 0.7 mm package outline and mechanical data. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+Figure 11. Carrier tape information for LGA-12L package . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+Figure 12. LGA-12L package orientation in carrier tape. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+Figure 13. Reel information for carrier tape of LGA-12L package . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 30
+DS12144 - Rev 6 page 35/36
+LIS2MDL
+IMPORTANT NOTICE – READ CAREFULLY
+STMicroelectronics NV and its subsidiaries (“ST”) reserve the right to make changes, corrections, enhancements, modifications, and improvements to ST
+products and/or to this document at any time without notice. Purchasers should obtain the latest relevant information on ST products before placing orders. ST
+products are sold pursuant to ST’s terms and conditions of sale in place at the time of order acknowledgment.
+Purchasers are solely responsible for the choice, selection, and use of ST products and ST assumes no liability for application assistance or the design of
+purchasers’ products.
+No license, express or implied, to any intellectual property right is granted by ST herein.
+Resale of ST products with provisions different from the information set forth herein shall void any warranty granted by ST for such product.
+ST and the ST logo are trademarks of ST. For additional information about ST trademarks, refer to www.st.com/trademarks. All other product or service names
+are the property of their respective owners.
+Information in this document supersedes and replaces information previously supplied in any prior versions of this document.
+© 2024 STMicroelectronics – All rights reserved
+DS12144 - Rev 6 page 36/36

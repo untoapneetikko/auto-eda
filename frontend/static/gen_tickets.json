@@ -1,5 +1,5 @@
 {
-  "nextId": 31,
+  "nextId": 33,
   "tickets": [
     {
       "id": 1,
@@ -336,6 +336,29 @@
       "started_at": "2026-03-16T13:53:35.697695+00:00",
       "agent": "datasheet-parser",
       "error": "test ticket / stale"
+    },
+    {
+      "id": 31,
+      "type": "datasheet",
+      "slug": "LIS2MDL__1_",
+      "title": "Parse LIS2MDL__1_",
+      "prompt": "Parse the datasheet for component LIS2MDL__1_.\nPDF file: data/uploads/lis2mdl__1_.pdf\nRaw text already extracted: frontend/static/library/LIS2MDL__1_/raw_text.txt\nWrite the structured profile to: frontend/static/library/LIS2MDL__1_/profile.json\n\nIMPORTANT: Set part_number to the SHORT part number only (e.g. 'MAX2870', 'LM358'). No descriptions, no suffixes, no series names.",
+      "status": "done",
+      "created_at": "2026-03-17T07:30:40.930082+00:00",
+      "started_at": "2026-03-17T07:30:40.937187+00:00",
+      "agent": "datasheet-parser",
+      "finished_at": "2026-03-17T07:30:42.336096+00:00"
+    },
+    {
+      "id": 32,
+      "type": "datasheet",
+      "slug": "HTTPS_WWW-I-PEX-COM_SITES_DEFAULT_FILES_DOWNLOADS_PDF_CATALOG_MHF_I_E",
+      "title": "Parse HTTPS_WWW-I-PEX-COM_SITES_DEFAULT_FILES_DOWNLOADS_PDF_CATALOG_MHF_I_E",
+      "prompt": "Parse the datasheet for component HTTPS_WWW-I-PEX-COM_SITES_DEFAULT_FILES_DOWNLOADS_PDF_CATALOG_MHF_I_E.\nPDF file: data/uploads/https_www.i-pex.com_sites_default_files_downloads_pdf_CATALOG_MHF_I_E.pdf\nRaw text already extracted: frontend/static/library/HTTPS_WWW-I-PEX-COM_SITES_DEFAULT_FILES_DOWNLOADS_PDF_CATALOG_MHF_I_E/raw_text.txt\nWrite the structured profile to: frontend/static/library/HTTPS_WWW-I-PEX-COM_SITES_DEFAULT_FILES_DOWNLOADS_PDF_CATALOG_MHF_I_E/profile.json\n\nIMPORTANT: Set part_number to the SHORT part number only (e.g. 'MAX2870', 'LM358'). No descriptions, no suffixes, no series names.",
+      "status": "running",
+      "created_at": "2026-03-17T10:53:58.911130+00:00",
+      "started_at": "2026-03-17T10:53:58.918521+00:00",
+      "agent": "datasheet-parser"
     }
   ]
 }

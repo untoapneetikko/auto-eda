@@ -1,0 +1,87 @@
+{
+  "part_number": "MHF-I",
+  "description": "MHF® I Micro RF Coaxial Connector (SMT receptacle) — DC to 9 GHz, 50 Ω characteristic impedance, 3.1×3.0 mm SMT footprint, mated height 2.5 mm max. Used in 5G sub-6, Wi-Fi 6E, LTE/LTE-Advanced, LPWA, Bluetooth, and GPS applications.",
+  "manufacturer": "I-PEX Inc.",
+  "package_types": [
+    "SMT Coaxial Receptacle (3-pad)",
+    "SMT Coaxial Receptacle (4-pad)"
+  ],
+  "supply_voltage_range": null,
+  "absolute_max": {
+    "frequency": "DC to 9 GHz",
+    "characteristic_impedance": "50 Ω",
+    "vswr_dc_3ghz": "1.3 max",
+    "vswr_3_6ghz": "1.5 max",
+    "vswr_6_9ghz": "1.9 max (cable OD 0.81/1.13/1.37/1.80 mm), 1.6 max (cable OD 1.32/2.0 mm)",
+    "mated_height": "2.5 mm max (standard), 3.0 mm max (2.0 mm cable OD variant), 2.9 mm max (LK locking variant)",
+    "smt_size": "3.1 × 3.0 mm"
+  },
+  "pins": [
+    {
+      "number": 1,
+      "name": "RF",
+      "type": "passive",
+      "description": "Center conductor — RF signal path",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Connect to 50 Ω controlled-impedance PCB trace. Keep trace as short as possible and avoid vias near the pad.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 2,
+      "name": "GND1",
+      "type": "passive",
+      "description": "Outer conductor ground pad 1",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Must be connected directly to continuous ground plane with multiple vias for low-inductance RF ground return.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    },
+    {
+      "number": 3,
+      "name": "GND2",
+      "type": "passive",
+      "description": "Outer conductor ground pad 2",
+      "active": null,
+      "internal_pull": null,
+      "requirements": "Must be connected directly to continuous ground plane with multiple vias for low-inductance RF ground return.",
+      "ambiguous": false,
+      "datasheet_page": 1
+    }
+  ],
+  "required_passives": [],
+  "application_circuits": [
+    {
+      "name": "Antenna connection for Wi-Fi / Bluetooth module",
+      "description": "Receptacle (20279-001E-03) soldered on PCB. Center pad (RF) connects to 50 Ω microstrip trace from the RF IC. Both outer pads (GND1, GND2) stitched to ground plane. MHF-I-to-MHF-I coaxial harness (e.g. 8-24-0114, OD=1.13 mm, L=100 mm) connects module to antenna or test port.",
+      "page": 1
+    },
+    {
+      "name": "GPS antenna feed",
+      "description": "Same receptacle footprint. 50 Ω trace from GPS receiver IC output to MHF-I center pad. Outer pads to ground. Short harness (L=50 mm) routes to external GPS patch antenna.",
+      "page": 1
+    }
+  ],
+  "common_mistakes": [
+    "Ground pads not stitched to ground plane with sufficient vias — causes high-impedance RF ground and degrades VSWR",
+    "Center pad trace not 50 Ω controlled impedance — causes reflections and insertion loss above 3 GHz",
+    "Using too long a harness — insertion loss increases with cable length; use shortest harness that fits",
+    "Confusing 3-pad (20279-001E-03) and 4-pad (20441-001E-01) receptacle footprints — they are not interchangeable",
+    "Mating the LK (locking) plug variant with a non-LK receptacle — the locking feature requires the matching receptacle"
+  ],
+  "notes": "Part 20279-001E-03 = standard SMT receptacle, 3 pads. Part 20441-001E-01 = SMT receptacle, 4 pads (black or natural housing). The MHF-I plug harness is available in cable OD 0.81/1.13/1.32/1.37/1.80/2.00 mm. i-Fit® solderless termination provides consistent RF performance. Compliant with 5G sub-6 GHz, Wi-Fi 6E (6 GHz), LTE/LTE-Advanced, LPWA, Bluetooth, and GPS frequency bands.",
+  "symbol_type": "connector",
+  "status": "parsed",
+  "confidence": "HIGH",
+  "extraction_note": "Catalog document covers full MHF® I series; profile represents the SMT receptacle (3-pad) — the PCB-mounted component. Part number set to series name MHF-I as no single overriding part number exists.",
+  "filename": "https_www.i-pex.com_sites_default_files_downloads_pdf_CATALOG_MHF_I_E.pdf",
+  "page_count": 21,
+  "raw_text_length": 8465,
+  "uploaded_at": "2026-03-17T10:53:58.897489+00:00",
+  "parsed_at": "2026-03-17T00:00:00.000Z",
+  "builtin": false,
+  "human_corrections": [],
+  "category": "connector"
+}
