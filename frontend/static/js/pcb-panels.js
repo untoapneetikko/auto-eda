@@ -518,15 +518,27 @@ function fitToPad(){
     return{...segs[segs.length-1].end};
   }
 
-  // Chebyshev taper profile: raised-cosine S-curve (equiripple-optimal)
-  function chebProfile(t){return 0.5*(1-Math.cos(Math.PI*t));}
-  function taperW(t){
-    const f=chebProfile(t);
-    return Math.max(DR.minTraceWidth||0.15,Math.exp(Math.log(w1)+(Math.log(w2)-Math.log(w1))*f));
+  // Klopfenstein taper profile (Bessel I0 integral, A=2.0)
+  // Φ(u,A) = ∫₀ᵘ I₀(A√(1−s²))ds, normalised by Φ(1,A)=sinh(A)/A
+  function _I0(x){
+    const ax=Math.abs(x);
+    if(ax<3.75){const t=x/3.75,t2=t*t;return 1+t2*(3.5156229+t2*(3.0899424+t2*(1.2067492+t2*(0.2659732+t2*(0.0360768+t2*0.0045813)))));}
+    const t=3.75/ax;return(Math.exp(ax)/Math.sqrt(ax))*(0.39894228+t*(0.01328592+t*(0.00225319+t*(-0.00157565+t*(0.00916281+t*(-0.02057706+t*(0.02635537+t*(-0.01647633+t*0.00392377))))))));
   }
+  function _klop(t,w1,w2,A){
+    const u=2*t-1,M=80,du=u/M;
+    let phi=0;
+    for(let i=0;i<=M;i++){const s=i*du;phi+=(i===0||i===M?1:i%2===0?2:4)*_I0(A*Math.sqrt(Math.max(0,1-s*s)));}
+    phi*=du/3;
+    const phi1=A>1e-6?Math.sinh(A)/A:1;
+    const pn=phi1>1e-10?phi/phi1:u;
+    return Math.exp(0.5*(Math.log(w1)+Math.log(w2))+0.5*(Math.log(w2)-Math.log(w1))*pn);
+  }
+  const A=2.0;
+  function taperW(t){return Math.max(DR.minTraceWidth||0.15,_klop(t,w1,w2,A));}
 
   // Resample into N equal-length segments stored on a single trace with a widths array
-  const N=10;
+  const N=20;
   const pts=[];
   for(let i=0;i<=N;i++)pts.push(interpPt(i/N));
 

@@ -381,29 +381,67 @@ class PCBEditor {
       const dragSegIdx=isDragging?this._dragTraceSegIdx:-1;
       const w=Math.max(1,(tr.width||tr.width_mm||0.25)*this.scale);
       const segs=tr.segments||[];
-      // Per-segment widths (taper): draw each segment individually
+      // Tapered trace (widths[] array): render as smooth filled polygon
       if(tr.widths&&tr.widths.length===segs.length){
         const lc=this.layers[layer].color;
         const bright=this._lightenColor(lc,0.35);
-        for(let si=0;si<segs.length;si++){
-          const sw=Math.max(1,tr.widths[si]*this.scale);
-          const seg=segs[si];
-          const sx=this.mmX(seg.start.x),sy=this.mmY(seg.start.y);
-          const ex=this.mmX(seg.end.x),ey=this.mmY(seg.end.y);
-          if(sel||isDragging){
-            ctx.strokeStyle=bright+'33';ctx.lineWidth=sw+10;
-            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-            ctx.strokeStyle=bright;ctx.lineWidth=sw;
-            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-          } else if(hov){
-            ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=sw+6;
-            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-            ctx.strokeStyle=lc+'cc';ctx.lineWidth=sw;
-            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-          } else {
-            ctx.strokeStyle=lc;ctx.lineWidth=sw;
-            ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-          }
+        const N=segs.length;
+        // Width at each of the N+1 polyline points
+        const pts=[segs[0].start,...segs.map(s=>s.end)];
+        const ptW=[tr.widths[0]];
+        for(let i=1;i<N;i++) ptW.push((tr.widths[i-1]+tr.widths[i])/2);
+        ptW.push(tr.widths[N-1]);
+        // Canvas-space unit tangents per segment, then averaged at junctions
+        const sTan=segs.map(s=>{
+          const dx=this.mmX(s.end.x)-this.mmX(s.start.x);
+          const dy=this.mmY(s.end.y)-this.mmY(s.start.y);
+          const l=Math.hypot(dx,dy)||1; return{x:dx/l,y:dy/l};
+        });
+        const pTan=[sTan[0]];
+        for(let i=1;i<N;i++){
+          const tx=sTan[i-1].x+sTan[i].x,ty=sTan[i-1].y+sTan[i].y;
+          const l=Math.hypot(tx,ty)||1; pTan.push({x:tx/l,y:ty/l});
+        }
+        pTan.push(sTan[N-1]);
+        // Left/right outline: left normal = CW rotation of canvas tangent = (ty, -tx)
+        const lP=[],rP=[];
+        for(let i=0;i<=N;i++){
+          const cx=this.mmX(pts[i].x),cy=this.mmY(pts[i].y);
+          const t=pTan[i],hw=ptW[i]/2*this.scale;
+          lP.push({x:cx+t.y*hw,y:cy-t.x*hw});
+          rP.push({x:cx-t.y*hw,y:cy+t.x*hw});
+        }
+        const drawTaper=()=>{
+          ctx.beginPath();
+          ctx.moveTo(lP[0].x,lP[0].y);
+          for(let i=1;i<=N;i++) ctx.lineTo(lP[i].x,lP[i].y);
+          // End cap: arc from lP[N] forward around to rP[N]
+          const ecx=this.mmX(pts[N].x),ecy=this.mmY(pts[N].y);
+          const er=Math.max(0.5,ptW[N]/2*this.scale);
+          let ea1=Math.atan2(lP[N].y-ecy,lP[N].x-ecx);
+          let ea2=Math.atan2(rP[N].y-ecy,rP[N].x-ecx);
+          if(ea2<ea1) ea2+=2*Math.PI;
+          ctx.arc(ecx,ecy,er,ea1,ea2,false);
+          // Right side backward
+          for(let i=N-1;i>=0;i--) ctx.lineTo(rP[i].x,rP[i].y);
+          // Start cap: arc from rP[0] backward around to lP[0]
+          const scx=this.mmX(pts[0].x),scy=this.mmY(pts[0].y);
+          const sr=Math.max(0.5,ptW[0]/2*this.scale);
+          let sa1=Math.atan2(rP[0].y-scy,rP[0].x-scx);
+          let sa2=Math.atan2(lP[0].y-scy,lP[0].x-scx);
+          if(sa2<sa1) sa2+=2*Math.PI;
+          ctx.arc(scx,scy,sr,sa1,sa2,false);
+          ctx.closePath();
+        };
+        if(sel||isDragging){
+          ctx.save();ctx.shadowBlur=12;ctx.shadowColor=bright;
+          ctx.fillStyle=bright;drawTaper();ctx.fill();ctx.restore();
+          ctx.fillStyle=bright+'55';drawTaper();ctx.fill();
+        } else if(hov){
+          ctx.fillStyle='rgba(255,255,255,0.12)';drawTaper();ctx.fill();
+          ctx.fillStyle=lc+'cc';drawTaper();ctx.fill();
+        } else {
+          ctx.fillStyle=lc;drawTaper();ctx.fill();
         }
         continue;
       }
@@ -596,7 +634,7 @@ class PCBEditor {
         // Skip traces on different layer
         const trIsF=(tr.layer||'F.Cu').startsWith('F');
         if(trIsF!==zoneIsF)continue;
-        const tw=(tr.width||tr.width_mm||DR.traceWidth||0.25)+cl*2;
+        const tw=Math.max(...(tr.widths&&tr.widths.length?tr.widths:[tr.width||tr.width_mm||DR.traceWidth||0.25]))+cl*2;
         oc.lineWidth=tw*this.scale;
         for(const seg of(tr.segments||[])){
           if(!seg||!seg.start||!seg.end)continue;
@@ -1192,7 +1230,7 @@ class PCBEditor {
         // Skip traces on different layer
         const trIsF=(tr.layer||'F.Cu').startsWith('F');
         if(trIsF!==areaIsF)continue;
-        const tw=(tr.width||tr.width_mm||DR.traceWidth||0.25)+cl*2;
+        const tw=Math.max(...(tr.widths&&tr.widths.length?tr.widths:[tr.width||tr.width_mm||DR.traceWidth||0.25]))+cl*2;
         oc.lineWidth=tw*this.scale;
         for(const seg of(tr.segments||[])){
           if(!seg||!seg.start||!seg.end)continue;
