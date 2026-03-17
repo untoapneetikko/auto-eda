@@ -63,11 +63,14 @@ evtSource.addEventListener('profile_updated', e => {
   if (selectedSlug === slug) {
     clearTimeout(_profileReloadTimer);
     _profileReloadTimer = setTimeout(() => {
-      // Don't blow away the layout-example iframe while the user is actively working on it.
-      // profile_updated fires after every leSaveLayout() PUT, which would destroy the iframe
-      // and leave _leLoadedSlug pointing at a blank frame — silently breaking the next save.
-      if (typeof currentProfileTab !== 'undefined' && currentProfileTab === 'layout-example' &&
-          typeof _leLoadedSlug !== 'undefined' && _leLoadedSlug === slug) return;
+      // Don't blow away editor state while the user is actively working on any tab.
+      // For layout-example: the iframe would be destroyed and _leLoadedSlug would break saves.
+      // For schematic/footprint: unsaved changes would be lost.
+      if (typeof currentProfileTab !== 'undefined') {
+        if (currentProfileTab === 'layout-example' &&
+            typeof _leLoadedSlug !== 'undefined' && _leLoadedSlug === slug) return;
+        if (currentProfileTab === 'schematic' || currentProfileTab === 'footprint') return;
+      }
       loadProfile(slug);
     }, 600);
   }

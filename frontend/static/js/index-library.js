@@ -110,6 +110,8 @@ async function selectPart(slug) {
 
 async function loadProfile(slug) {
   if (!slug || slug === 'undefined' || slug === 'null') return;
+  // New component selected — reset tab-loaded tracking so each tab re-fetches fresh data
+  if (slug !== selectedSlug || Object.keys(_tabLoadedForSlug).length === 0) _tabLoadedForSlug = {};
   // Load from the active version snapshot so the user always sees their last
   // explicitly saved state (not a potentially-drifted profile.json from Generate).
   let profile = null;
@@ -576,9 +578,15 @@ Then parse this component:
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
             <div class="section-title" style="margin-bottom:0;">🔲 Component Layout (Footprint)</div>
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-              <select id="fp-select" onchange="onFootprintSelect(this.value)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:11px;cursor:pointer;">
-                <option value="">— select footprint —</option>
-              </select>
+              <div id="fp-select-wrap" style="position:relative;display:inline-block;">
+                <input id="fp-search" type="text" placeholder="— select footprint —" autocomplete="off"
+                  style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:3px 8px;font-size:11px;width:220px;box-sizing:border-box;"
+                  oninput="fpSearchInput(this.value)"
+                  onfocus="fpSearchOpen()"
+                  onblur="setTimeout(fpSearchClose,200)"
+                />
+                <div id="fp-dropdown" style="display:none;position:absolute;top:100%;left:0;z-index:999;background:var(--surface2);border:1px solid var(--border);border-radius:4px;max-height:200px;overflow-y:auto;min-width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.4);margin-top:2px;"></div>
+              </div>
               <button onclick="fpSaveAssignment(this)" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Assign</button>
               <button onclick="fpSavePads(this)" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;">💾 Save Pads</button>
               <button onclick="fpGenerate(this)" style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:4px;color:var(--accent);padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;">⚡ Generate</button>
@@ -680,20 +688,31 @@ Then parse this component:
 
 // ── Tab switching ──────────────────────────────────────────────────────────
 let currentProfileTab = 'datasheet';
+// Track which tabs have already been loaded for the current slug so that
+// switching back to a tab doesn't wipe unsaved changes with server data.
+let _tabLoadedForSlug = {};
+
 function switchProfileTab(name, btn) {
   currentProfileTab = name;
   document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
   document.querySelectorAll('.profile-tab').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + name).style.display = 'block';
   btn.classList.add('active');
+  const firstVisit = _tabLoadedForSlug[name] !== selectedSlug;
   if (name === 'schematic') {
     renderAccPalette(document.getElementById('acc-palette-search')?.value || '');
-    requestAnimationFrame(() => {
-      fetch(`/api/library/${selectedSlug}`).then(r => r.json()).then(p => renderAppCircuitWithEditor(p));
-    });
+    if (firstVisit) {
+      _tabLoadedForSlug['schematic'] = selectedSlug;
+      requestAnimationFrame(() => {
+        fetch(`/api/library/${selectedSlug}`).then(r => r.json()).then(p => renderAppCircuitWithEditor(p));
+      });
+    }
   }
   if (name === 'footprint') {
-    requestAnimationFrame(() => initFootprintTab(selectedSlug));
+    if (firstVisit) {
+      _tabLoadedForSlug['footprint'] = selectedSlug;
+      requestAnimationFrame(() => initFootprintTab(selectedSlug));
+    }
   }
   if (name === 'layout-example') {
     requestAnimationFrame(() => renderLayoutExample(selectedSlug));
