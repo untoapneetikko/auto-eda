@@ -1,0 +1,40 @@
+{
+  "name": "MHF1",
+  "description": "MHF-I / U.FL SMD RF coaxial receptacle, 50Ω, DC-9GHz, 3-pad (I-PEX 20279-001E-03)",
+  "pin_count": 3,
+  "pads": [
+    {
+      "number": "1",
+      "x": 0,
+      "y": 0,
+      "type": "smd",
+      "shape": "circle",
+      "size_x": 0.7,
+      "size_y": 0.7
+    },
+    {
+      "number": "2",
+      "x": -1.15,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.3,
+      "size_y": 1.6
+    },
+    {
+      "number": "3",
+      "x": 1.15,
+      "y": 0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.3,
+      "size_y": 1.6
+    }
+  ],
+  "courtyard": {
+    "x": -1.8,
+    "y": -1.75,
+    "w": 3.6,
+    "h": 3.5
+  }
+}
