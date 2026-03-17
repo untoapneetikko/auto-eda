@@ -384,8 +384,8 @@
     "uploaded_at": null,
     "parsed_at": "2026-03-09T00:00:00.000Z"
   },
-  "HTTPS_WWW-I-PEX-COM_SITES_DEFAULT_FILES_DOWNLOADS_PDF_CATALOG_MHF_I_E": {
-    "slug": "HTTPS_WWW-I-PEX-COM_SITES_DEFAULT_FILES_DOWNLOADS_PDF_CATALOG_MHF_I_E",
+  "MHF1": {
+    "slug": "MHF1",
     "part_number": "MHF-I",
     "description": "MHF\u00ae I Micro RF Coaxial Connector (SMT receptacle) \u2014 DC to 9 GHz, 50 \u03a9 characteristic impedance, 3.1\u00d73.0 mm SMT footprint, mated height 2.5 mm max. Used in 5G sub-6, Wi-Fi 6E, LTE/LTE-Advanced, LPWA, Bluetooth, and GPS applications.",
     "manufacturer": "I-PEX Inc.",
