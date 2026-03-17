@@ -585,7 +585,7 @@ Then parse this component:
                   onfocus="fpSearchOpen()"
                   onblur="setTimeout(fpSearchClose,200)"
                 />
-                <div id="fp-dropdown" style="display:none;position:absolute;top:100%;left:0;z-index:999;background:var(--surface2);border:1px solid var(--border);border-radius:4px;max-height:200px;overflow-y:auto;min-width:100%;box-shadow:0 4px 12px rgba(0,0,0,0.4);margin-top:2px;"></div>
+                <div id="fp-dropdown" style="display:none;position:absolute;top:100%;left:0;z-index:999;background:var(--surface2);border:1px solid var(--border);border-radius:4px;max-height:260px;overflow-y:auto;min-width:max(100%,360px);box-shadow:0 4px 16px rgba(0,0,0,0.5);margin-top:2px;"></div>
               </div>
               <button onclick="fpSaveAssignment(this)" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">💾 Assign</button>
               <button onclick="fpSavePads(this)" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:4px;color:#22c55e;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;">💾 Save Pads</button>

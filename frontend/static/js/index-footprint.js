@@ -340,6 +340,62 @@ let _fpData = null;       // current footprint object {name,description,pads,cou
 let _fpSlug = null;       // profile slug this footprint belongs to
 let _fpSelectedPad = -1;  // index of selected pad
 let fpEditor = null;
+let _fpAllOptions = [];   // [{name, description}] full list for search
+let _fpSelectedValue = ''; // currently selected footprint name
+
+function fpSearchOpen() {
+  fpSearchFilter(document.getElementById('fp-search')?.value || '');
+  const dd = document.getElementById('fp-dropdown');
+  if (dd) dd.style.display = 'block';
+}
+function fpSearchClose() {
+  const dd = document.getElementById('fp-dropdown');
+  if (dd) dd.style.display = 'none';
+  // If input doesn't match selected value, reset it
+  const inp = document.getElementById('fp-search');
+  if (inp && inp.value !== _fpSelectedValue) inp.value = _fpSelectedValue;
+}
+function fpSearchInput(val) {
+  fpSearchFilter(val);
+  const dd = document.getElementById('fp-dropdown');
+  if (dd) dd.style.display = 'block';
+}
+function fpSearchFilter(query) {
+  const dd = document.getElementById('fp-dropdown');
+  if (!dd) return;
+  const q = query.trim().toLowerCase();
+  const items = q
+    ? _fpAllOptions.filter(f => (f.name||'').toLowerCase().includes(q) || (f.description||'').toLowerCase().includes(q))
+    : [..._fpAllOptions].sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  // Highlight matching substring
+  const hi = s => {
+    if (!q || !s) return esc(s||'');
+    const i = s.toLowerCase().indexOf(q);
+    if (i < 0) return esc(s);
+    return esc(s.slice(0,i)) + `<mark style="background:rgba(108,99,255,0.35);color:inherit;border-radius:2px;padding:0 1px;">${esc(s.slice(i,i+q.length))}</mark>` + esc(s.slice(i+q.length));
+  };
+  const header = `<div style="padding:4px 10px;font-size:10px;color:var(--text-muted);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface);">
+    <span>${items.length} footprint${items.length!==1?'s':''}</span>
+    <span style="cursor:pointer;color:var(--text-dim);" onmousedown="fpSearchSelect('')">✕ clear</span>
+  </div>`;
+  dd.innerHTML = header + items.map(f =>
+    `<div style="padding:5px 10px;font-size:11px;cursor:pointer;display:flex;align-items:baseline;gap:6px;min-width:0;"
+      onmouseover="this.style.background='var(--accent-dim,rgba(108,99,255,0.15))'" onmouseout="this.style.background=''"
+      onmousedown="fpSearchSelect(${JSON.stringify(f.name||f.file)})">
+      <span style="font-weight:600;font-family:monospace;flex-shrink:0;">${hi(f.name||f.file)}</span>
+      ${f.pin_count ? `<span style="font-size:9px;padding:1px 5px;background:rgba(108,99,255,0.2);border-radius:3px;color:#a5b4fc;flex-shrink:0;">${f.pin_count}p</span>` : ''}
+      ${f.description ? `<span style="color:var(--text-dim);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hi(f.description)}</span>` : ''}
+    </div>`
+  ).join('');
+}
+function fpSearchSelect(value) {
+  _fpSelectedValue = value;
+  const inp = document.getElementById('fp-search');
+  if (inp) inp.value = value;
+  const dd = document.getElementById('fp-dropdown');
+  if (dd) dd.style.display = 'none';
+  onFootprintSelect(value);
+}
 
 async function initFootprintTab(slug) {
   _fpSlug = slug;
@@ -357,18 +413,19 @@ async function initFootprintTab(slug) {
   const pasteInp = document.getElementById('fp-paste-gap');
   if (pasteInp && fpEditor) pasteInp.value = fpEditor.pasteGap.toFixed(2);
   buildFPLayerPanel();
-  // Load footprint list into select
-  const sel = document.getElementById('fp-select');
-  if (!sel) return;
+  // Load footprint list into searchable dropdown
   const list = await fetch('/api/footprints').then(r => r.json()).catch(() => []);
-  sel.innerHTML = '<option value="">— select footprint —</option>' +
-    list.map(f => `<option value="${esc(f.name)}">${esc(f.name)} — ${esc(f.description||'')}</option>`).join('');
+  _fpAllOptions = list;
   // Load profile to see if footprint already assigned
   const profile = await fetch(`/api/library/${slug}`).then(r => r.json()).catch(() => null);
   if (!profile) return;
-  const assigned = profile.footprint || '';
+  // profile.footprint may be a string or an object {name, ...} — normalise to string
+  const rawFp = profile.footprint || '';
+  const assigned = typeof rawFp === 'string' ? rawFp : (rawFp?.name || '');
   if (assigned) {
-    sel.value = assigned;
+    _fpSelectedValue = assigned;
+    const inp = document.getElementById('fp-search');
+    if (inp) inp.value = assigned;
     await loadFootprint(assigned);
   } else {
     _fpData = null;
@@ -394,13 +451,12 @@ async function onFootprintSelect(name) {
 }
 
 async function fpSaveAssignment(btn) {
-  const sel = document.getElementById('fp-select');
-  if (!sel || !_fpSlug) return;
+  if (!_fpSlug) return;
   const orig = btn ? btn.textContent : '';
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   await fetch(`/api/library/${_fpSlug}/footprint`, {
     method: 'PUT', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ footprint: sel.value || null })
+    body: JSON.stringify({ footprint: _fpSelectedValue || null })
   });
   if (btn) { btn.textContent = '✓ Assigned'; setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500); }
 }
@@ -670,14 +726,13 @@ async function fpGenerate(btn) {
     _fpData = footprint;
     const ni = document.getElementById('fp-name'); if (ni) ni.value = _fpData.name || '';
     const di = document.getElementById('fp-desc'); if (di) di.value = _fpData.description || '';
-    const sel = document.getElementById('fp-select');
-    if (sel) {
-      // Add to dropdown if not present
-      if (![...sel.options].some(o => o.value === _fpData.name)) {
-        const opt = document.createElement('option'); opt.value = _fpData.name; opt.textContent = _fpData.name + ' (generated)'; sel.appendChild(opt);
-      }
-      sel.value = _fpData.name;
+    // Add to options list if not present, then select it
+    if (!_fpAllOptions.some(o => o.name === _fpData.name)) {
+      _fpAllOptions.push({ name: _fpData.name, description: '(generated)' });
     }
+    _fpSelectedValue = _fpData.name;
+    const inp = document.getElementById('fp-search');
+    if (inp) inp.value = _fpData.name;
     if (fpEditor) { fpEditor.data = _fpData; fpEditor._fit(); fpEditor._render(); }
     fpRenderPadList();
     if (btn) { btn.textContent = `✓ ${method} · ${confidence}`; setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500); }
