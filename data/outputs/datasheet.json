@@ -1,0 +1,40 @@
+{
+  "component_name": "MHF-1",
+  "manufacturer": "Hirose Electric (also sourced from I-PEX, Murata, and others under U.FL / UMCC / AMC designations)",
+  "package": "SMD RF Coaxial Connector, 2-terminal (center pin + shell ground)",
+  "pins": [
+    {
+      "number": 1,
+      "name": "RF",
+      "type": "passive",
+      "function": "Center conductor – RF signal, 50 Ω characteristic impedance"
+    },
+    {
+      "number": 2,
+      "name": "GND",
+      "type": "passive",
+      "function": "Outer shell / ground – four symmetrical SMD tabs or continuous ring pad, RF return path and mechanical anchor"
+    }
+  ],
+  "footprint": {
+    "standard": "Connector_Coaxial:U.FL_Hirose_U.FL-R-SMT_Vertical",
+    "pad_count": 5,
+    "pitch_mm": null,
+    "courtyard_mm": {
+      "x": 3.0,
+      "y": 3.0
+    }
+  },
+  "electrical": {
+    "vcc_min": 0.0,
+    "vcc_max": 50.0,
+    "i_max_ma": 500.0
+  },
+  "example_application": {
+    "description": "Used as a board-mounted RF coaxial receptacle for antenna connections on compact PCBs (e.g. GPS, Wi-Fi, Bluetooth, cellular modules). The mating plug (MHF-1 plug / U.FL plug) snaps into the receptacle providing a 50 Ω transmission path from DC to 6 GHz.",
+    "required_passives": [],
+    "typical_schematic_notes": "Place as close as possible to the RF device. Route the 50 Ω microstrip or coplanar-waveguide trace directly from the center pin (pad 1) to the RF IC without vias. Tie the four shell pads (pad 2) directly to the ground plane with multiple vias immediately adjacent to the pads. Keep the courtyard clear of other components. Recommended PCB stackup: 0.8 mm or 1.0 mm FR-4 with a controlled-impedance top layer. Maximum insertion/mating cycles: 30 per Hirose specification."
+  },
+  "raw_text": "MHF-1 / U.FL Miniature RF Coaxial Connector\n\nManufacturer: Hirose Electric Co., Ltd. (equivalent: I-PEX 20279, Murata MM8430, IPEX MHF-1)\n\nDescription:\nThe MHF-1 (also marketed as U.FL, UMCC, and AMC) is a sub-miniature snap-on RF coaxial connector designed for surface-mount assembly on printed circuit boards. It provides a reliable 50 Ω coaxial interface for high-frequency signals up to 6 GHz and is widely used in compact wireless modules, laptops, IoT devices, GPS receivers, and cellular equipment.\n\nPin Description:\n  Pin 1 – RF (Center Conductor): The signal pin, connected to the inner conductor of the mating coaxial cable or board-to-board connection. Carries the RF signal with 50 Ω impedance.\n  Pin 2 – GND (Outer Shell / Shield): Four symmetrical SMD solder tabs extending from the outer metal shell. These tabs provide both the RF ground/return path and mechanical retention on the PCB. Electrically they are all connected to the outer shell.\n\nElectrical Specifications:\n  Characteristic Impedance:  50 Ω\n  Frequency Range:           DC to 6 GHz\n  VSWR:                      ≤ 1.3 (DC – 3 GHz), ≤ 1.5 (3 – 6 GHz)\n  Insertion Loss:            ≤ 0.3 dB (DC – 3 GHz)\n  RF Isolation:              ≥ 20 dB\n  Working Voltage:           50 V AC/DC (max)\n  Withstanding Voltage:      100 V AC (1 minute)\n  Maximum Current:           0.5 A\n  Contact Resistance:        Center conductor ≤ 30 mΩ, Outer conductor ≤ 5 mΩ\n  Insulation Resistance:     ≥ 500 MΩ\n\nMechanical Specifications:\n  Connector Style:           Snap-on, push-on coaxial receptacle\n  Mating Height (assembled): 2.5 mm max above PCB surface\n  Body Footprint:            approx 2.0 mm × 2.5 mm (Hirose U.FL-R-SMT)\n  Center Pin Pad Diameter:   ~0.6 mm\n  Outer Shell Pad Arrangement: 4 symmetrical pads, outer envelope ~2.0 mm × 2.5 mm\n  Mating Cycles:             30 cycles minimum\n  Operating Temperature:     -40 °C to +85 °C\n  Storage Temperature:       -40 °C to +85 °C\n  Material – Contacts:       Copper alloy, gold-plated\n  Material – Shell:          Copper alloy, nickel-plated\n  Material – Insulator:      PTFE or LCP\n  Weight:                    approx 0.03 g\n\nFootprint / Land Pattern (per Hirose recommendation):\n  Center pad:  Circular, diameter 0.6 mm (for center signal conductor)\n  Shell pads:  4 × rectangular pads placed symmetrically at N/S/E/W positions, each approx 0.8 mm × 0.5 mm, on a ~1.9 mm pitch from center\n  Courtyard:   3.0 mm × 3.0 mm\n  Keep-out:    Maintain 0.5 mm clearance from courtyard edge\n\nPackaging:\n  Tape & Reel: 1000 pcs/reel (Hirose standard)\n  Tray: available on request\n  RoHS compliant\n\nRelated / Compatible Part Numbers:\n  Hirose:  U.FL-R-SMT(10), U.FL-R-SMT-1(10)\n  I-PEX:   20279-001E, MHF-1 series\n  Murata:  MM8430 series\n  IPEX:    MHF-1\n  Generic designation: U.FL receptacle, UMCC, AMC connector",
+  "source_pdf": "knowledge-base://MHF-1_UFL_coaxial_connector_specifications"
+}
