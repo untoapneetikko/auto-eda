@@ -381,7 +381,8 @@ function fpSearchFilter(query) {
   dd.innerHTML = header + items.map(f =>
     `<div style="padding:5px 10px;font-size:11px;cursor:pointer;display:flex;align-items:baseline;gap:6px;min-width:0;"
       onmouseover="this.style.background='var(--accent-dim,rgba(108,99,255,0.15))'" onmouseout="this.style.background=''"
-      onmousedown="fpSearchSelect(${JSON.stringify(f.name||f.file)})">
+      data-fp-name="${esc(f.name||f.file)}"
+      onmousedown="fpSearchSelect(this.dataset.fpName)">
       <span style="font-weight:600;font-family:monospace;flex-shrink:0;">${hi(f.name||f.file)}</span>
       ${f.pin_count ? `<span style="font-size:9px;padding:1px 5px;background:rgba(108,99,255,0.2);border-radius:3px;color:#a5b4fc;flex-shrink:0;">${f.pin_count}p</span>` : ''}
       ${f.description ? `<span style="color:var(--text-dim);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${hi(f.description)}</span>` : ''}
