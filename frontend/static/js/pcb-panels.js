@@ -398,7 +398,8 @@ function updateInfoPanel(){
           onchange="editor.selectedTrace.width=Math.max(0.05,parseFloat(this.value)||0.25);editor.render()"> mm</div>
       <div class="ir"><span class="il">Length</span><span class="iv">${segLen.toFixed(3)} mm</span></div>
       <div class="ir"><span class="il">Segs</span><span class="iv">${(tr.segments||[]).length}</span></div>
-      <div style="margin-top:10px;display:flex;gap:5px;">
+      <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="btn" onclick="fitToPad()" title="Set trace width to match the pad it connects to">⊢ Fit to pad</button>
         <button class="btn" style="color:var(--red)" onclick="delTrace()">✕ Del</button>
       </div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:7px;line-height:1.6;">Del to delete • Esc deselect</div>`;
@@ -456,6 +457,35 @@ function delTrace(){
   const i=(editor.board.traces||[]).indexOf(editor.selectedTrace);
   if(i!==-1)editor.board.traces.splice(i,1);
   editor.selectedTrace=null;editor.render();updateInfoPanel();
+}
+function fitToPad(){
+  const tr=editor.selectedTrace;
+  if(!tr||!editor.board)return;
+  const segs=tr.segments||[];
+  if(segs.length===0)return;
+  const p0=segs[0].start, pN=segs[segs.length-1].end;
+  // Find closest pad on same net to either endpoint
+  let bestPad=null, bestDist=Infinity, bestEndpoint=null;
+  for(const comp of(editor.board.components||[])){
+    for(const pad of(comp.pads||[])){
+      if((pad.net||'')!==(tr.net||''))continue;
+      const{px,py}=editor._padWorld(comp,pad);
+      for(const ep of[p0,pN]){
+        const d=Math.hypot(px-ep.x,py-ep.y);
+        if(d<bestDist){bestDist=d;bestPad=pad;bestEndpoint=ep;}
+      }
+    }
+  }
+  if(!bestPad)return;
+  // Determine approach direction from the segment touching that endpoint
+  const approachSeg=bestEndpoint===p0?segs[0]:segs[segs.length-1];
+  const dx=Math.abs(approachSeg.end.x-approachSeg.start.x);
+  const dy=Math.abs(approachSeg.end.y-approachSeg.start.y);
+  // Use the pad dimension perpendicular to the trace direction
+  const newWidth=dx>=dy?(bestPad.size_y||bestPad.size_x||0.25):(bestPad.size_x||bestPad.size_y||0.25);
+  editor._snapshot();
+  editor.selectedTrace.width=Math.max(DR.minTraceWidth||0.15,newWidth);
+  editor.render();updateInfoPanel();
 }
 function delVia(){
   if(!editor.selectedVia||!editor.board)return;
