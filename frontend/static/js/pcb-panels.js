@@ -464,27 +464,84 @@ function fitToPad(){
   const segs=tr.segments||[];
   if(segs.length===0)return;
   const p0=segs[0].start, pN=segs[segs.length-1].end;
-  // Find closest pad on same net to either endpoint
-  let bestPad=null, bestDist=Infinity, bestEndpoint=null;
-  for(const comp of(editor.board.components||[])){
-    for(const pad of(comp.pads||[])){
-      if((pad.net||'')!==(tr.net||''))continue;
-      const{px,py}=editor._padWorld(comp,pad);
-      for(const ep of[p0,pN]){
+
+  // Find closest same-net pad to a given endpoint
+  function findPad(ep){
+    let best=null,bestD=Infinity;
+    for(const comp of(editor.board.components||[])){
+      for(const pad of(comp.pads||[])){
+        if((pad.net||'')!==(tr.net||''))continue;
+        const{px,py}=editor._padWorld(comp,pad);
         const d=Math.hypot(px-ep.x,py-ep.y);
-        if(d<bestDist){bestDist=d;bestPad=pad;bestEndpoint=ep;}
+        if(d<bestD){bestD=d;best=pad;}
       }
     }
+    return best;
   }
-  if(!bestPad)return;
-  // Determine approach direction from the segment touching that endpoint
-  const approachSeg=bestEndpoint===p0?segs[0]:segs[segs.length-1];
-  const dx=Math.abs(approachSeg.end.x-approachSeg.start.x);
-  const dy=Math.abs(approachSeg.end.y-approachSeg.start.y);
-  // Use the pad dimension perpendicular to the trace direction
-  const newWidth=dx>=dy?(bestPad.size_y||bestPad.size_x||0.25):(bestPad.size_x||bestPad.size_y||0.25);
+  // Perpendicular pad width given the approach segment direction
+  function padW(pad,seg){
+    const dx=Math.abs(seg.end.x-seg.start.x),dy=Math.abs(seg.end.y-seg.start.y);
+    return dx>=dy?(pad.size_y||pad.size_x||0.25):(pad.size_x||pad.size_y||0.25);
+  }
+
+  const padStart=findPad(p0), padEnd=findPad(pN);
+  if(!padStart&&!padEnd)return;
+  const w1=padStart?padW(padStart,segs[0]):(tr.width||0.25);
+  const w2=padEnd?padW(padEnd,segs[segs.length-1]):(tr.width||0.25);
+
+  // If widths are the same just set it directly
+  if(Math.abs(w1-w2)<0.001){
+    editor._snapshot();
+    tr.width=Math.max(DR.minTraceWidth||0.15,w1);
+    editor.render();updateInfoPanel();return;
+  }
+
+  // Build cumulative-length table along the polyline
+  const cumLen=[0];
+  for(const seg of segs)cumLen.push(cumLen[cumLen.length-1]+Math.hypot(seg.end.x-seg.start.x,seg.end.y-seg.start.y));
+  const totalLen=cumLen[cumLen.length-1];
+  if(totalLen<0.001)return;
+
+  // Interpolate a world point at normalised position t∈[0,1]
+  function interpPt(t){
+    const tgt=t*totalLen;
+    for(let i=0;i<segs.length;i++){
+      if(tgt<=cumLen[i+1]){
+        const f=(tgt-cumLen[i])/(cumLen[i+1]-cumLen[i]);
+        const s=segs[i];
+        return{x:s.start.x+f*(s.end.x-s.start.x),y:s.start.y+f*(s.end.y-s.start.y)};
+      }
+    }
+    return{...segs[segs.length-1].end};
+  }
+
+  // Chebyshev taper profile: raised-cosine S-curve (equiripple-optimal)
+  function chebProfile(t){return 0.5*(1-Math.cos(Math.PI*t));}
+  function taperW(t){
+    const f=chebProfile(t);
+    return Math.max(DR.minTraceWidth||0.15,Math.exp(Math.log(w1)+(Math.log(w2)-Math.log(w1))*f));
+  }
+
+  // Resample into N equal-length segments with individual widths
+  const N=10;
+  const pts=[];
+  for(let i=0;i<=N;i++)pts.push(interpPt(i/N));
+
+  const newTraces=[];
+  for(let i=0;i<N;i++){
+    const w=parseFloat(taperW((i+0.5)/N).toFixed(4));
+    const t={net:tr.net||'',layer:tr.layer||'F.Cu',width:w,
+              segments:[{start:{...pts[i]},end:{...pts[i+1]}}]};
+    if(tr.groupId)t.groupId=tr.groupId;
+    newTraces.push(t);
+  }
+
   editor._snapshot();
-  editor.selectedTrace.width=Math.max(DR.minTraceWidth||0.15,newWidth);
+  const traces=editor.board.traces||(editor.board.traces=[]);
+  const idx=traces.indexOf(tr);
+  if(idx===-1)return;
+  traces.splice(idx,1,...newTraces);
+  editor.selectedTrace=null;
   editor.render();updateInfoPanel();
 }
 function delVia(){
