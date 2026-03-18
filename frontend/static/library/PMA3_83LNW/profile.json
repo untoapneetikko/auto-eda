@@ -242,7 +242,7 @@
     "Thermal resistance junction-to-ground is 47\u00b0C/W \u2014 verify Tj stays below 150\u00b0C at max operating conditions."
   ],
   "notes": "RF MMIC \u2014 standard RF PCB layout rules apply: 50\u03a9 controlled impedance traces, short RF paths, ground vias adjacent to every ground connection, no sharp corners on RF traces. Use Mini-Circuits suggested PCB layout PL-628. Evaluation board TB-PMA3-83LNW+ available. BOM from p.4: L1=LQP15MN18NJ02D (18nH), L2=0402CS-39NXGLW (39nH), C1=GRM155R71E103KA01D (0.01\u00b5F), C2=GJM1555C1H100JB01D (10pF), C3=GRM1555C1H101JA01D (100pF).",
-  "symbol_type": "ic",
+  "symbol_type": "amplifier",
   "status": "parsed",
   "confidence": "HIGH",
   "extraction_note": null,
@@ -1221,33 +1221,6 @@
         ]
       },
       {
-        "net": "RF_IN",
-        "layer": "F.Cu",
-        "width": 0.25,
-        "segments": [
-          {
-            "start": {
-              "x": 5.5,
-              "y": 12.5
-            },
-            "end": {
-              "x": 5.5,
-              "y": 15
-            }
-          },
-          {
-            "start": {
-              "x": 5.5,
-              "y": 12.5
-            },
-            "end": {
-              "x": 5.5,
-              "y": 9.25
-            }
-          }
-        ]
-      },
-      {
         "net": "V+",
         "layer": "F.Cu",
         "width": 0.25,
@@ -1277,6 +1250,252 @@
             "end": {
               "x": 6.5,
               "y": -1.5
+            }
+          }
+        ]
+      },
+      {
+        "net": "RF_IN",
+        "layer": "F.Cu",
+        "width": 0.303,
+        "segments": [
+          {
+            "start": {
+              "x": 5.5,
+              "y": 9.25
+            },
+            "end": {
+              "x": 5.5,
+              "y": 9.4125
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 9.4125
+            },
+            "end": {
+              "x": 5.5,
+              "y": 9.575
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 9.575
+            },
+            "end": {
+              "x": 5.5,
+              "y": 9.7375
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 9.7375
+            },
+            "end": {
+              "x": 5.5,
+              "y": 9.9
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 9.9
+            },
+            "end": {
+              "x": 5.5,
+              "y": 10.0625
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 10.0625
+            },
+            "end": {
+              "x": 5.5,
+              "y": 10.225
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 10.225
+            },
+            "end": {
+              "x": 5.5,
+              "y": 10.3875
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 10.3875
+            },
+            "end": {
+              "x": 5.5,
+              "y": 10.55
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 10.55
+            },
+            "end": {
+              "x": 5.5,
+              "y": 10.7125
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 10.7125
+            },
+            "end": {
+              "x": 5.5,
+              "y": 10.875
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 10.875
+            },
+            "end": {
+              "x": 5.5,
+              "y": 11.0375
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 11.0375
+            },
+            "end": {
+              "x": 5.5,
+              "y": 11.2
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 11.2
+            },
+            "end": {
+              "x": 5.5,
+              "y": 11.3625
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 11.3625
+            },
+            "end": {
+              "x": 5.5,
+              "y": 11.525
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 11.525
+            },
+            "end": {
+              "x": 5.5,
+              "y": 11.6875
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 11.6875
+            },
+            "end": {
+              "x": 5.5,
+              "y": 11.85
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 11.85
+            },
+            "end": {
+              "x": 5.5,
+              "y": 12.0125
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 12.0125
+            },
+            "end": {
+              "x": 5.5,
+              "y": 12.175
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 12.175
+            },
+            "end": {
+              "x": 5.5,
+              "y": 12.3375
+            }
+          },
+          {
+            "start": {
+              "x": 5.5,
+              "y": 12.3375
+            },
+            "end": {
+              "x": 5.5,
+              "y": 12.5
+            }
+          }
+        ],
+        "widths": [
+          0.303,
+          0.31,
+          0.3184,
+          0.3282,
+          0.3393,
+          0.3519,
+          0.3658,
+          0.3811,
+          0.3976,
+          0.4151,
+          0.4336,
+          0.4528,
+          0.4723,
+          0.492,
+          0.5115,
+          0.5305,
+          0.5485,
+          0.5653,
+          0.5806,
+          0.594
+        ]
+      },
+      {
+        "net": "RF_IN",
+        "layer": "F.Cu",
+        "width": 0.6,
+        "segments": [
+          {
+            "start": {
+              "x": 5.5,
+              "y": 12.5
+            },
+            "end": {
+              "x": 5.5,
+              "y": 15
             }
           }
         ]
@@ -1363,7 +1582,17 @@
         "x1": 12.5,
         "y1": 17,
         "x2": -5.5,
-        "y2": -4.5
+        "y2": -4.5,
+        "clearance": 0.4
+      },
+      {
+        "id": "area_mmwms88h",
+        "net": "GND",
+        "layer": "In1.Cu",
+        "x1": 8.5,
+        "y1": 16.5,
+        "x2": 3,
+        "y2": 8.5
       }
     ],
     "zones": [],

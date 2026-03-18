@@ -4,7 +4,7 @@
   "manufacturer": "",
   "status": "parsed",
   "confidence": "MEDIUM",
-  "symbol_type": "ic",
+  "symbol_type": "connector",
   "package_types": [
     "UFLRSMT140"
   ],

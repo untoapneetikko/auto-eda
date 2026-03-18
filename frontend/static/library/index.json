@@ -346,23 +346,6 @@
     "uploaded_at": "2026-03-16T09:36:40.593555+00:00",
     "parsed_at": "2026-03-16T09:45:00.000Z"
   },
-  "MHF1": {
-    "slug": "MHF1",
-    "part_number": "MHF-I",
-    "description": "MHF\u00ae I Micro RF Coaxial Connector (SMT receptacle) \u2014 DC to 9 GHz, 50 \u03a9 characteristic impedance, 3.1\u00d73.0 mm SMT footprint, mated height 2.5 mm max. Used in 5G sub-6, Wi-Fi 6E, LTE/LTE-Advanced, LPWA, Bluetooth, and GPS applications.",
-    "manufacturer": "I-PEX Inc.",
-    "status": "parsed",
-    "confidence": "HIGH",
-    "symbol_type": "connector",
-    "package_types": [
-      "SMT Coaxial Receptacle (3-pad)",
-      "SMT Coaxial Receptacle (4-pad)"
-    ],
-    "builtin": false,
-    "filename": "https_www.i-pex.com_sites_default_files_downloads_pdf_CATALOG_MHF_I_E.pdf",
-    "uploaded_at": "2026-03-17T10:53:58.897489+00:00",
-    "parsed_at": "2026-03-17T00:00:00.000Z"
-  },
   "NE555": {
     "slug": "NE555",
     "part_number": "NE555",
@@ -380,6 +363,22 @@
     "filename": "builtin",
     "uploaded_at": null,
     "parsed_at": "2026-03-08T00:00:00.000Z"
+  },
+  "PMA3-83LNW_": {
+    "slug": "PMA3-83LNW_",
+    "part_number": "PMA3-83LNW+ EAGLE",
+    "description": "RF Amplifier MMIC AMPLIFIER RoHSSource:  Datasheet",
+    "manufacturer": "",
+    "status": "parsed",
+    "confidence": "MEDIUM",
+    "symbol_type": "ic",
+    "package_types": [
+      "QFN51P300X300X89-13N"
+    ],
+    "builtin": false,
+    "filename": "",
+    "uploaded_at": null,
+    "parsed_at": null
   },
   "PMA3_83LNW": {
     "slug": "PMA3_83LNW",
@@ -514,6 +513,22 @@
     "symbol_type": "connector",
     "package_types": [
       "16-pin SMD + 4 shield tabs (8.94\u00d73.4mm)"
+    ],
+    "builtin": false,
+    "filename": "",
+    "uploaded_at": null,
+    "parsed_at": null
+  },
+  "U_FL-R-SMT-1_40_": {
+    "slug": "U_FL-R-SMT-1_40_",
+    "part_number": "U.FL-R-SMT-1_40_",
+    "description": "RF Connectors / Coaxial Connectors SMT MALE RECEPT AU 50 OHM\nSource:  Datasheet",
+    "manufacturer": "",
+    "status": "parsed",
+    "confidence": "MEDIUM",
+    "symbol_type": "connector",
+    "package_types": [
+      "UFLRSMT140"
     ],
     "builtin": false,
     "filename": "",

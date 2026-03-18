@@ -1,97 +1,307 @@
 {
-  "project_name": "PMA3-83LNW+ Example Application Circuit",
+  "project_name": "MAX2870 23.5MHz–6GHz Fractional/Integer-N Synthesiser Example Application",
   "format": "kicad_sch",
-  "power_symbols": ["VDD", "GND"],
+  "power_symbols": ["VCC", "GND"],
   "nets": [
-    { "name": "RF_IN",      "label": "RF_IN",       "type": "signal" },
-    { "name": "RF_INT",     "label": "RF_INT",       "type": "signal" },
-    { "name": "RF_OUT_INT", "label": "RF_OUT_INT",   "type": "signal" },
-    { "name": "RF_OUT",     "label": "RF_OUT",       "type": "signal" },
-    { "name": "VDD",        "label": "VDD (5V/6V)",  "type": "power"  },
-    { "name": "GND",        "label": "GND",          "type": "gnd"    },
-    { "name": "NC",         "label": "NC",           "type": "signal" }
+    {"name": "VCC",            "label": "VCC (3.3V)",   "type": "power"},
+    {"name": "GND",            "label": "GND",           "type": "gnd"},
+    {"name": "SPI_CLK",        "label": "SPI_CLK",       "type": "signal"},
+    {"name": "SPI_DATA",       "label": "SPI_DATA",      "type": "signal"},
+    {"name": "SPI_LE",         "label": "SPI_LE",        "type": "signal"},
+    {"name": "CE_N",           "label": "CE_N",          "type": "signal"},
+    {"name": "NC",             "label": "NC",            "type": "signal"},
+    {"name": "CP_OUT",         "label": "CP_OUT",        "type": "signal"},
+    {"name": "VTUNE",          "label": "VTUNE",         "type": "signal"},
+    {"name": "RFOUTA_P_NET",   "label": "RFOUTA_P",      "type": "signal"},
+    {"name": "RFOUTA_N_NET",   "label": "RFOUTA_N",      "type": "signal"},
+    {"name": "RFOUTB_P_NET",   "label": "RFOUTB_P",      "type": "signal"},
+    {"name": "RFOUTB_N_NET",   "label": "RFOUTB_N",      "type": "signal"},
+    {"name": "RF_OUT_A_P",     "label": "RF_OUT_A_P",    "type": "signal"},
+    {"name": "RF_OUT_A_N",     "label": "RF_OUT_A_N",    "type": "signal"},
+    {"name": "RF_OUT_B_P",     "label": "RF_OUT_B_P",    "type": "signal"},
+    {"name": "RF_OUT_B_N",     "label": "RF_OUT_B_N",    "type": "signal"},
+    {"name": "NOISE_FILT_NET", "label": "NOISE_FILT",    "type": "signal"},
+    {"name": "RSET_NET",       "label": "RSET",          "type": "signal"},
+    {"name": "BIAS_FILT_NET",  "label": "BIAS_FILT",     "type": "signal"},
+    {"name": "REG_NET",        "label": "REG",           "type": "signal"},
+    {"name": "LD_NET",         "label": "LD",            "type": "signal"},
+    {"name": "RFOUT_EN_NET",   "label": "RFOUT_EN",      "type": "signal"},
+    {"name": "REF_OSC",        "label": "REF_OSC",       "type": "signal"},
+    {"name": "REF_IN_NET",     "label": "REF_IN",        "type": "signal"},
+    {"name": "MUX_OUT_NET",    "label": "MUX_OUT",       "type": "signal"}
   ],
   "components": [
     {
       "reference": "U1",
-      "value": "PMA3-83LNW+",
-      "footprint": "MiniCircuits:MCLP_3x3mm_DQ1225",
-      "position": { "x": 380, "y": 280 },
+      "value": "MAX2870",
+      "footprint": "Package_DFN_QFN:TQFN-32-1EP_5x5mm_P0.5mm_EP3.5x3.5mm",
+      "position": {"x": 400, "y": 300},
       "connections": [
-        { "pin": 2,  "net": "RF_INT"     },
-        { "pin": 8,  "net": "RF_OUT_INT" },
-        { "pin": 13, "net": "GND"        },
-        { "pin": 1,  "net": "GND"        },
-        { "pin": 3,  "net": "GND"        },
-        { "pin": 4,  "net": "GND"        },
-        { "pin": 5,  "net": "GND"        },
-        { "pin": 6,  "net": "GND"        },
-        { "pin": 7,  "net": "GND"        },
-        { "pin": 9,  "net": "GND"        },
-        { "pin": 10, "net": "GND"        },
-        { "pin": 11, "net": "NC"         },
-        { "pin": 12, "net": "NC"         }
-      ]
-    },
-    {
-      "reference": "C2",
-      "value": "10pF",
-      "footprint": "Capacitor_SMD:C_0402_1005Metric",
-      "position": { "x": 160, "y": 280 },
-      "connections": [
-        { "pin": 1, "net": "RF_IN"  },
-        { "pin": 2, "net": "RF_INT" }
-      ]
-    },
-    {
-      "reference": "L1",
-      "value": "18nH",
-      "footprint": "Inductor_SMD:L_0402_1005Metric",
-      "position": { "x": 280, "y": 360 },
-      "connections": [
-        { "pin": 1, "net": "RF_INT" },
-        { "pin": 2, "net": "GND"   }
-      ]
-    },
-    {
-      "reference": "C3",
-      "value": "100pF",
-      "footprint": "Capacitor_SMD:C_0402_1005Metric",
-      "position": { "x": 540, "y": 280 },
-      "connections": [
-        { "pin": 1, "net": "RF_OUT_INT" },
-        { "pin": 2, "net": "RF_OUT"     }
-      ]
-    },
-    {
-      "reference": "L2",
-      "value": "39nH",
-      "footprint": "Inductor_SMD:L_0402_1005Metric",
-      "position": { "x": 480, "y": 200 },
-      "connections": [
-        { "pin": 1, "net": "VDD"        },
-        { "pin": 2, "net": "RF_OUT_INT" }
+        {"pin": 1,  "net": "SPI_CLK"},
+        {"pin": 2,  "net": "SPI_DATA"},
+        {"pin": 3,  "net": "SPI_LE"},
+        {"pin": 4,  "net": "CE_N"},
+        {"pin": 5,  "net": "NC"},
+        {"pin": 6,  "net": "VCC"},
+        {"pin": 7,  "net": "CP_OUT"},
+        {"pin": 8,  "net": "GND"},
+        {"pin": 9,  "net": "GND"},
+        {"pin": 10, "net": "VCC"},
+        {"pin": 11, "net": "GND"},
+        {"pin": 12, "net": "RFOUTA_P_NET"},
+        {"pin": 13, "net": "RFOUTA_N_NET"},
+        {"pin": 14, "net": "RFOUTB_P_NET"},
+        {"pin": 15, "net": "RFOUTB_N_NET"},
+        {"pin": 16, "net": "VCC"},
+        {"pin": 17, "net": "VCC"},
+        {"pin": 18, "net": "GND"},
+        {"pin": 19, "net": "NOISE_FILT_NET"},
+        {"pin": 20, "net": "VTUNE"},
+        {"pin": 21, "net": "GND"},
+        {"pin": 22, "net": "RSET_NET"},
+        {"pin": 23, "net": "BIAS_FILT_NET"},
+        {"pin": 24, "net": "REG_NET"},
+        {"pin": 25, "net": "LD_NET"},
+        {"pin": 26, "net": "RFOUT_EN_NET"},
+        {"pin": 27, "net": "GND"},
+        {"pin": 28, "net": "VCC"},
+        {"pin": 29, "net": "REF_IN_NET"},
+        {"pin": 30, "net": "MUX_OUT_NET"},
+        {"pin": 31, "net": "GND"},
+        {"pin": 32, "net": "VCC"},
+        {"pin": 33, "net": "GND"}
       ]
     },
     {
       "reference": "C1",
-      "value": "1µF",
+      "value": "100nF ceramic 0402",
       "footprint": "Capacitor_SMD:C_0402_1005Metric",
-      "position": { "x": 580, "y": 160 },
-      "connections": [
-        { "pin": 1, "net": "VDD" },
-        { "pin": 2, "net": "GND" }
-      ]
+      "position": {"x": 550, "y": 100},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C2",
+      "value": "1µF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 600, "y": 100},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C3",
+      "value": "100nF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 550, "y": 150},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
     },
     {
       "reference": "C4",
-      "value": "100µF",
-      "footprint": "Capacitor_SMD:C_0805_2012Metric",
-      "position": { "x": 660, "y": 160 },
-      "connections": [
-        { "pin": 1, "net": "VDD" },
-        { "pin": 2, "net": "GND" }
-      ]
+      "value": "1µF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 600, "y": 150},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C5",
+      "value": "100nF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 550, "y": 200},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C6",
+      "value": "1µF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 600, "y": 200},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C7",
+      "value": "100nF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 550, "y": 250},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C8",
+      "value": "1µF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 600, "y": 250},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C9",
+      "value": "100nF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 550, "y": 430},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C10",
+      "value": "1µF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 600, "y": 430},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C11",
+      "value": "100nF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 550, "y": 480},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C12",
+      "value": "1µF ceramic 0402",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 600, "y": 480},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C13",
+      "value": "1µF",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 200, "y": 300},
+      "connections": [{"pin": 1, "net": "NOISE_FILT_NET"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C14",
+      "value": "1µF",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 200, "y": 370},
+      "connections": [{"pin": 1, "net": "BIAS_FILT_NET"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C15",
+      "value": "1µF",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 200, "y": 440},
+      "connections": [{"pin": 1, "net": "REG_NET"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C16",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 200, "y": 540},
+      "connections": [{"pin": 1, "net": "REF_OSC"}, {"pin": 2, "net": "REF_IN_NET"}]
+    },
+    {
+      "reference": "C17",
+      "value": "820pF",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 310, "y": 550},
+      "connections": [{"pin": 1, "net": "CP_OUT"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C18",
+      "value": "12nF",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 450, "y": 550},
+      "connections": [{"pin": 1, "net": "VTUNE"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "C19",
+      "value": "100nF",
+      "footprint": "Capacitor_SMD:C_0402_1005Metric",
+      "position": {"x": 570, "y": 550},
+      "connections": [{"pin": 1, "net": "VTUNE"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "R1",
+      "value": "5.1kΩ",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 200, "y": 480},
+      "connections": [{"pin": 1, "net": "RSET_NET"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "R2",
+      "value": "10kΩ",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 150, "y": 150},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "CE_N"}]
+    },
+    {
+      "reference": "R3",
+      "value": "10kΩ",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 150, "y": 220},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "RFOUT_EN_NET"}]
+    },
+    {
+      "reference": "R4",
+      "value": "10kΩ",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 150, "y": 290},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "LD_NET"}]
+    },
+    {
+      "reference": "R5",
+      "value": "250Ω",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 380, "y": 550},
+      "connections": [{"pin": 1, "net": "CP_OUT"}, {"pin": 2, "net": "VTUNE"}]
+    },
+    {
+      "reference": "R6",
+      "value": "120Ω",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 510, "y": 550},
+      "connections": [{"pin": 1, "net": "VTUNE"}, {"pin": 2, "net": "GND"}]
+    },
+    {
+      "reference": "R7",
+      "value": "50Ω",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 820, "y": 200},
+      "connections": [{"pin": 1, "net": "RFOUTA_P_NET"}, {"pin": 2, "net": "RF_OUT_A_P"}]
+    },
+    {
+      "reference": "R8",
+      "value": "50Ω",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 820, "y": 250},
+      "connections": [{"pin": 1, "net": "RFOUTA_N_NET"}, {"pin": 2, "net": "RF_OUT_A_N"}]
+    },
+    {
+      "reference": "R9",
+      "value": "50Ω",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 820, "y": 300},
+      "connections": [{"pin": 1, "net": "RFOUTB_P_NET"}, {"pin": 2, "net": "RF_OUT_B_P"}]
+    },
+    {
+      "reference": "R10",
+      "value": "50Ω",
+      "footprint": "Resistor_SMD:R_0402_1005Metric",
+      "position": {"x": 820, "y": 350},
+      "connections": [{"pin": 1, "net": "RFOUTB_N_NET"}, {"pin": 2, "net": "RF_OUT_B_N"}]
+    },
+    {
+      "reference": "L1",
+      "value": "27nH",
+      "footprint": "Inductor_SMD:L_0402_1005Metric",
+      "position": {"x": 700, "y": 200},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "RFOUTA_P_NET"}]
+    },
+    {
+      "reference": "L2",
+      "value": "27nH",
+      "footprint": "Inductor_SMD:L_0402_1005Metric",
+      "position": {"x": 700, "y": 250},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "RFOUTA_N_NET"}]
+    },
+    {
+      "reference": "L3",
+      "value": "27nH",
+      "footprint": "Inductor_SMD:L_0402_1005Metric",
+      "position": {"x": 700, "y": 300},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "RFOUTB_P_NET"}]
+    },
+    {
+      "reference": "L4",
+      "value": "27nH",
+      "footprint": "Inductor_SMD:L_0402_1005Metric",
+      "position": {"x": 700, "y": 350},
+      "connections": [{"pin": 1, "net": "VCC"}, {"pin": 2, "net": "RFOUTB_N_NET"}]
     }
   ]
 }
