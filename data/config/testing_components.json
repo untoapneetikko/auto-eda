@@ -1,6 +1,4 @@
 {
   "_comment": "Components listed here are used for testing. All agents must skip writing outputs, summaries, and cache files when processing these components.",
-  "skip_cache": [
-    "MAX2870_-_23-5MHZ_TO_6000MHZ_FRACTIONAL_INTEGER-N_SYNTHESIZER_VCO_-_MAX2870"
-  ]
+  "skip_cache": []
 }
