@@ -116,7 +116,7 @@ function renderLibrary(filter = '') {
         ${items.map(p => {
           const name = p.part_number || p.slug;
           const active = selectedSlug === p.slug;
-          return `<div class="lib-tree-item ${active ? 'active' : ''}" onclick="selectPart('${p.slug}')" title="${p.description || ''}">
+          return `<div class="lib-tree-item ${active ? 'active' : ''}" onclick="selectPart('${p.slug}')" oncontextmenu="event.preventDefault();showLibContextMenu(event,'${p.slug}')" title="${p.description || ''}">
             <span class="tree-part">${name}</span>
           </div>`;
         }).join('')}
@@ -131,6 +131,66 @@ function toggleLibGroup(type) {
   renderLibrary(document.getElementById('lib-search').value);
 }
 
+// ── Right-click context menu ─────────────────────────────────────────────
+function showLibContextMenu(e, slug) {
+  // Remove any existing menu
+  const old = document.getElementById('lib-ctx-menu');
+  if (old) old.remove();
+
+  const allTypes = [..._libTypeOrder];
+  // Add any extra types from current library
+  Object.values(library).forEach(p => {
+    const t = p.symbol_type || 'ic';
+    if (!allTypes.includes(t)) allTypes.push(t);
+  });
+
+  const menu = document.createElement('div');
+  menu.id = 'lib-ctx-menu';
+  menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;background:var(--surface,#1a1d27);border:1px solid var(--border,#2e3250);border-radius:6px;min-width:160px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.5);padding:4px 0;`;
+
+  // Header
+  menu.innerHTML = `<div style="padding:5px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted,#64748b);border-bottom:1px solid var(--border,#2e3250);margin-bottom:2px;">Move to</div>`;
+
+  for (const type of allTypes) {
+    const label = _libTypeLabels[type] || type.charAt(0).toUpperCase() + type.slice(1);
+    const current = library[slug]?.symbol_type || 'ic';
+    const isCurrent = type === current;
+    const row = document.createElement('div');
+    row.style.cssText = `padding:5px 12px;font-size:12px;cursor:${isCurrent ? 'default' : 'pointer'};color:${isCurrent ? 'var(--accent,#6c63ff)' : 'var(--text,#e2e8f0)'};font-weight:${isCurrent ? '700' : '400'};display:flex;align-items:center;gap:6px;transition:background 0.1s;`;
+    row.innerHTML = `${isCurrent ? '● ' : ''}${label}`;
+    if (!isCurrent) {
+      row.onmouseover = () => row.style.background = 'var(--surface2,#22263a)';
+      row.onmouseout = () => row.style.background = '';
+      row.onclick = () => { menu.remove(); movePartToCategory(slug, type); };
+    }
+    menu.appendChild(row);
+  }
+
+  document.body.appendChild(menu);
+
+  // Dismiss on click outside
+  const dismiss = (ev) => {
+    if (!menu.contains(ev.target)) { menu.remove(); document.removeEventListener('mousedown', dismiss, true); }
+  };
+  setTimeout(() => document.addEventListener('mousedown', dismiss, true), 0);
+}
+
+async function movePartToCategory(slug, newType) {
+  try {
+    const res = await fetch(`/api/library/${encodeURIComponent(slug)}/symbol_type`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol_type: newType })
+    });
+    if (!res.ok) throw new Error('Failed to update');
+    // Update local cache and re-render
+    if (library[slug]) library[slug].symbol_type = newType;
+    renderLibrary(document.getElementById('lib-search')?.value || '');
+  } catch (e) {
+    alert('Move failed: ' + e.message);
+  }
+}
+
 // ── Import Sources menu ──────────────────────────────────────────────────
 function toggleImportMenu() {
   const m = document.getElementById('import-sources-menu');
@@ -138,8 +198,8 @@ function toggleImportMenu() {
 }
 document.addEventListener('click', e => {
   const menu = document.getElementById('import-sources-menu');
-  const btn = document.getElementById('import-sources-btn');
-  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+  const zone = document.getElementById('import-drop-zone');
+  if (menu && zone && !menu.contains(e.target) && !zone.contains(e.target)) {
     menu.style.display = 'none';
   }
 });

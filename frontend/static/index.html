@@ -591,30 +591,32 @@
 <div id="section-library" class="app-section hidden">
 <div class="layout">
   <div class="sidebar">
-    <div class="sidebar-section">
-      <h2>Upload Datasheet</h2>
-      <div class="drop-zone" id="drop-zone">
-        <div class="icon">📄</div>
-        <p><strong>Drop a PDF here</strong></p>
-        <p>or click to browse</p>
+    <div class="sidebar-section" style="padding-bottom:8px;">
+      <h2>Upload</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="drop-zone" id="drop-zone" style="padding:14px 10px;">
+          <div class="icon" style="font-size:20px;margin-bottom:4px;">📄</div>
+          <p style="font-size:11px;"><strong>Datasheet PDF</strong></p>
+          <p style="font-size:10px;">Drop or click</p>
+        </div>
+        <div class="drop-zone" id="import-drop-zone" onclick="toggleImportMenu()" style="padding:14px 10px;position:relative;">
+          <div class="icon" style="font-size:20px;margin-bottom:4px;">📥</div>
+          <p style="font-size:11px;"><strong>Import Sources</strong></p>
+          <p style="font-size:10px;">Eagle .lbr, etc.</p>
+          <div id="import-sources-menu" style="display:none;position:absolute;left:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;min-width:180px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.4);padding:4px 0;">
+            <div onclick="event.stopPropagation();document.getElementById('import-eagle-input').click();toggleImportMenu();" style="padding:7px 12px;font-size:11px;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:6px;transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+              <span style="font-size:13px;">🦅</span> Eagle .lbr
+            </div>
+          </div>
+        </div>
       </div>
       <input type="file" id="file-input" accept=".pdf" />
+      <input id="import-eagle-input" type="file" accept=".lbr" style="display:none;" onchange="importEagleLbr(this)"/>
       <div class="upload-status" id="upload-status"></div>
       <div class="parse-instructions" id="parse-instructions"></div>
     </div>
     <div class="sidebar-section" style="flex:1;overflow:hidden;display:flex;flex-direction:column;border-bottom:none;padding-bottom:0;min-height:0;">
-      <h2 style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-        <span>Library (<span id="lib-count">0</span> parts)</span>
-        <span style="position:relative;display:inline-block;">
-          <button id="import-sources-btn" onclick="toggleImportMenu()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;">Import Sources ▾</button>
-          <div id="import-sources-menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;min-width:180px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,0.4);padding:4px 0;">
-            <div onclick="document.getElementById('import-eagle-input').click();toggleImportMenu();" style="padding:7px 12px;font-size:11px;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:6px;transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-              <span style="font-size:13px;">🦅</span> Eagle .lbr
-            </div>
-          </div>
-          <input id="import-eagle-input" type="file" accept=".lbr" style="display:none;" onchange="importEagleLbr(this)"/>
-        </span>
-      </h2>
+      <h2>Library (<span id="lib-count">0</span> parts)</h2>
       <input type="text" class="library-search" id="lib-search" placeholder="Search parts..." />
       <div class="library" id="library-list" style="padding:4px 0;"></div>
     </div>
