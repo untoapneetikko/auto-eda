@@ -210,7 +210,7 @@ Then parse this component:
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;">
               <button class="gen-toggle" id="gen-t-symbol"    onclick="genToggle('symbol')">🔷 Symbol</button>
               <button class="gen-toggle" id="gen-t-schematic" onclick="genToggle('schematic')">📐 Schematic Example</button>
-              <button class="gen-toggle" id="gen-t-footprint" onclick="genToggle('footprint')">📦 Component Layout</button>
+              <button class="gen-toggle" id="gen-t-footprint" onclick="genToggle('footprint')">📦 Footprint</button>
               <button class="gen-toggle" id="gen-t-layout"    onclick="genToggle('layout')">🗺 Layout Example</button>
             </div>
             <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:5px;letter-spacing:.06em;text-transform:uppercase;">Optional instructions</div>
@@ -247,7 +247,7 @@ Then parse this component:
       <div class="profile-tabs">
         <button class="profile-tab active" id="tab-btn-datasheet" onclick="switchProfileTab('datasheet', this)">Symbol</button>
         <button class="profile-tab" id="tab-btn-schematic" onclick="switchProfileTab('schematic', this)">Schematic Example</button>
-        <button class="profile-tab" id="tab-btn-footprint" onclick="switchProfileTab('footprint', this)">Component Layout</button>
+        <button class="profile-tab" id="tab-btn-footprint" onclick="switchProfileTab('footprint', this)">Footprint</button>
         <button class="profile-tab" id="tab-btn-layout-example" onclick="switchProfileTab('layout-example', this)">Layout Example</button>
       </div>
 
@@ -576,7 +576,7 @@ Then parse this component:
       <div id="tab-footprint" class="tab-panel" style="display:none;">
         <div class="profile-body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-            <div class="section-title" style="margin-bottom:0;">🔲 Component Layout (Footprint)</div>
+            <div class="section-title" style="margin-bottom:0;">🔲 Footprint</div>
             <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
               <div id="fp-select-wrap" style="position:relative;display:inline-block;">
                 <input id="fp-search" type="text" placeholder="— select footprint —" autocomplete="off"

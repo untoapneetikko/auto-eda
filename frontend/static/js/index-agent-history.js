@@ -303,7 +303,7 @@ async function historyDelete(id) {
 }
 
 const GT_TAB_LABEL = {
-  footprint: 'Component Layout',
+  footprint: 'Footprint',
   example:   'Schematic Example',
   layout:    'Layout Example',
   datasheet: 'Profile Rebuild',
