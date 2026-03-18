@@ -258,12 +258,10 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   }
 </script>
 
-<div class="pcb-sections">
+<!-- 3-column persistent layout: left | center (header + switchable content) | right -->
+<div style="display:flex;flex:1;overflow:hidden;">
 
-<!-- ══ LAYOUT SECTION ══ -->
-<div id="pcb-section-layout" class="pcb-section" style="flex-direction:row;">
-
-<!-- Left Panel (full height from top nav to bottom) -->
+<!-- Left Panel (always visible) -->
 <div class="lpanel">
   <div class="ps" style="flex-shrink:0;">
     <h3>Components <span id="comp-count" style="color:var(--text-muted);font-weight:400;"></span></h3>
@@ -279,16 +277,15 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   </div>
 </div>
 
-<!-- Center column (header + toolbars + canvas) -->
+<!-- Center column (header always visible + switchable sections below) -->
 <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
 
-<!-- Top Navigation (inside center column so side panels extend to top) -->
+<!-- Top Navigation (always visible) -->
 <header>
   <a class="hbtn" href="/" id="pcb-back-link" style="display:none;text-decoration:none;margin-right:6px;">←</a>
   <nav style="display:flex;gap:2px;">
     <button class="nav-tab active" id="pcb-nav-layout"  onclick="switchPcbSection('layout')">⬛ Layout</button>
     <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">🛠 Tools</button>
-    <button class="nav-tab"        id="pcb-nav-nets"    onclick="switchPcbSection('nets')">〰 Nets</button>
     <button class="nav-tab"        id="pcb-nav-drc"     onclick="switchPcbSection('drc')">📐 Rules</button>
     <button class="nav-tab"        id="pcb-nav-export"  onclick="switchPcbSection('export')">📦 Export</button>
     <button class="nav-tab"        id="pcb-nav-3d"      onclick="open3DView()">🎲 3D</button>
@@ -296,6 +293,11 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <span class="phase-badge" style="margin-left:auto;">PCB Layout</span>
   <button id="pcb-user-btn" onclick="window.top===window?doLogoutPcb():void 0" style="background:var(--surface2,#22263a);border:1px solid var(--border,#2e3250);border-radius:4px;padding:2px 8px;color:var(--text-dim,#94a3b8);font-size:10px;cursor:pointer;margin-left:6px;display:none;">👤 <span id="pcb-user-name"></span></button>
 </header>
+
+<div class="pcb-sections">
+
+<!-- ══ LAYOUT SECTION ══ -->
+<div id="pcb-section-layout" class="pcb-section">
 
 <!-- Stale banner -->
 <div id="pcb-stale-banner" style="display:none;background:rgba(245,158,11,0.12);border-bottom:1px solid rgba(245,158,11,0.35);padding:4px 10px;align-items:center;gap:8px;flex-shrink:0;">
@@ -416,46 +418,6 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
       <thead><tr><th>Type</th><th>Conflict</th><th>How to correct</th></tr></thead>
       <tbody id="ct-tbody"></tbody>
     </table>
-  </div>
-</div>
-</div><!-- center column -->
-
-<!-- Right Panel (full height from top nav to bottom) -->
-<div class="rpanel">
-  <!-- Layers window -->
-  <div class="layers-panel">
-    <div class="layers-panel-header">
-      <h3>Layers <span id="layer-count-badge" style="font-size:10px;font-weight:600;color:var(--text-muted);opacity:0.7;"></span></h3>
-      <span id="active-layer-badge" class="active-badge" title="Active work layer"></span>
-      <button class="lp-btn" onclick="openLayerManager()" title="Layer manager & design rules">⚙</button>
-    </div>
-    <div class="layer-list-wrap" id="layer-list"></div>
-  </div>
-  <!-- DRC Panel -->
-  <div class="drc-side-panel" style="flex-shrink:0;border-bottom:1px solid var(--border);">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;cursor:pointer;" onclick="toggleDrcPanel()">
-      <h3 style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">DRC</h3>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span id="drc-side-badge" style="font-size:10px;color:var(--text-muted);">--</span>
-        <button class="lp-btn" onclick="event.stopPropagation();runSideDRC()" title="Run DRC">&#9654;</button>
-      </div>
-    </div>
-    <div id="drc-side-list" style="max-height:200px;overflow-y:auto;padding:0 8px 6px;display:none;">
-      <div style="font-size:10px;color:var(--text-muted);padding:4px 0;">Click Run to check</div>
-    </div>
-  </div>
-  <!-- Properties -->
-  <div class="ps" id="tool-params-section" style="flex-shrink:0;display:none;">
-    <h3 id="tool-params-title" style="margin-bottom:6px;"></h3>
-    <div id="tool-params-content" style="font-size:12px;color:var(--text-muted);"></div>
-  </div>
-  <div class="ps" style="flex-shrink:0;padding-bottom:4px;"><h3>Selection</h3></div>
-  <div class="info-panel" id="info-panel">
-    <div class="ip-empty">Click a component<br>to inspect</div>
-  </div>
-  <div class="ps" style="flex-shrink:0;">
-    <h3>Board</h3>
-    <div id="board-info" style="font-size:12px;color:var(--text-muted);line-height:1.8;">No board</div>
   </div>
 </div>
 
@@ -982,6 +944,47 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 </div>
 
 </div><!-- pcb-sections -->
+</div><!-- center column -->
+
+<!-- Right Panel (always visible) -->
+<div class="rpanel">
+  <!-- Layers window -->
+  <div class="layers-panel">
+    <div class="layers-panel-header">
+      <h3>Layers <span id="layer-count-badge" style="font-size:10px;font-weight:600;color:var(--text-muted);opacity:0.7;"></span></h3>
+      <span id="active-layer-badge" class="active-badge" title="Active work layer"></span>
+      <button class="lp-btn" onclick="openLayerManager()" title="Layer manager & design rules">⚙</button>
+    </div>
+    <div class="layer-list-wrap" id="layer-list"></div>
+  </div>
+  <!-- DRC Panel -->
+  <div class="drc-side-panel" style="flex-shrink:0;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;cursor:pointer;" onclick="toggleDrcPanel()">
+      <h3 style="margin:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">DRC</h3>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="drc-side-badge" style="font-size:10px;color:var(--text-muted);">--</span>
+        <button class="lp-btn" onclick="event.stopPropagation();runSideDRC()" title="Run DRC">&#9654;</button>
+      </div>
+    </div>
+    <div id="drc-side-list" style="max-height:200px;overflow-y:auto;padding:0 8px 6px;display:none;">
+      <div style="font-size:10px;color:var(--text-muted);padding:4px 0;">Click Run to check</div>
+    </div>
+  </div>
+  <!-- Properties -->
+  <div class="ps" id="tool-params-section" style="flex-shrink:0;display:none;">
+    <h3 id="tool-params-title" style="margin-bottom:6px;"></h3>
+    <div id="tool-params-content" style="font-size:12px;color:var(--text-muted);"></div>
+  </div>
+  <div class="ps" style="flex-shrink:0;padding-bottom:4px;"><h3>Selection</h3></div>
+  <div class="info-panel" id="info-panel">
+    <div class="ip-empty">Click a component<br>to inspect</div>
+  </div>
+  <div class="ps" style="flex-shrink:0;">
+    <h3>Board</h3>
+    <div id="board-info" style="font-size:12px;color:var(--text-muted);line-height:1.8;">No board</div>
+  </div>
+</div>
+</div><!-- 3-column wrapper -->
 
 <!-- ══ IMPORT SCHEMATIC MODAL ══ -->
 <div class="modal-bg" id="import-modal">
