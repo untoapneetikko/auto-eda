@@ -1264,6 +1264,7 @@ async def api_import_library(request: Request):
     return {"ok": True, "installed": installed, "skipped": skipped}
 
 # ── Eagle .lbr import ─────────────────────────────────────────────────────────
+import math
 import xml.etree.ElementTree as ET
 
 _EAGLE_PIN_DIRECTION_MAP = {
@@ -1282,6 +1283,18 @@ def _eagle_mm(val_str: str) -> float:
     except (ValueError, TypeError):
         return 0.0
 
+def _eagle_rot(rot_str: str | None) -> float:
+    """Parse Eagle rotation string like 'R90', 'R180', 'MR270' → degrees."""
+    if not rot_str:
+        return 0.0
+    s = rot_str.replace("M", "").replace("S", "")  # strip mirror/spin prefixes
+    if s.startswith("R"):
+        try:
+            return float(s[1:])
+        except ValueError:
+            return 0.0
+    return 0.0
+
 def _parse_eagle_lbr(xml_bytes: bytes) -> tuple[list[dict], list[dict]]:
     """Parse an Eagle .lbr file. Returns (profiles, footprints)."""
     root = ET.fromstring(xml_bytes)
@@ -1294,23 +1307,43 @@ def _parse_eagle_lbr(xml_bytes: bytes) -> tuple[list[dict], list[dict]]:
             continue
         pads = []
         for smd in pkg_el.iter("smd"):
+            sx = _eagle_mm(smd.get("x", "0"))
+            sy = _eagle_mm(smd.get("y", "0"))
+            dx = _eagle_mm(smd.get("dx", "0"))
+            dy = _eagle_mm(smd.get("dy", "0"))
+            angle = _eagle_rot(smd.get("rot"))
+            # Apply rotation to position and swap dimensions for 90/270°
+            rad = math.radians(angle)
+            cos_a, sin_a = round(math.cos(rad), 6), round(math.sin(rad), 6)
+            rx = sx * cos_a - sy * sin_a
+            ry = sx * sin_a + sy * cos_a
+            # Swap dx/dy when rotated ~90° or ~270°
+            if abs(angle % 360 - 90) < 1 or abs(angle % 360 - 270) < 1:
+                dx, dy = dy, dx
             pads.append({
                 "number": smd.get("name", ""),
-                "x": _eagle_mm(smd.get("x", "0")),
-                "y": -_eagle_mm(smd.get("y", "0")),  # flip Y
+                "x": round(rx, 4),
+                "y": -round(ry, 4),  # flip Y
                 "type": "smd",
                 "shape": "rect",
-                "size_x": _eagle_mm(smd.get("dx", "0")),
-                "size_y": _eagle_mm(smd.get("dy", "0")),
+                "size_x": dx,
+                "size_y": dy,
             })
         for pad in pkg_el.iter("pad"):
+            px = _eagle_mm(pad.get("x", "0"))
+            py = _eagle_mm(pad.get("y", "0"))
+            angle = _eagle_rot(pad.get("rot"))
+            rad = math.radians(angle)
+            cos_a, sin_a = round(math.cos(rad), 6), round(math.sin(rad), 6)
+            rpx = px * cos_a - py * sin_a
+            rpy = px * sin_a + py * cos_a
             drill = _eagle_mm(pad.get("drill", "0"))
             shape = _EAGLE_PAD_SHAPE_MAP.get(pad.get("shape", "round"), "circle")
             diameter = _eagle_mm(pad.get("diameter", "0")) or round(drill * 1.8, 4)
             pads.append({
                 "number": pad.get("name", ""),
-                "x": _eagle_mm(pad.get("x", "0")),
-                "y": -_eagle_mm(pad.get("y", "0")),
+                "x": round(rpx, 4),
+                "y": -round(rpy, 4),
                 "type": "thru_hole",
                 "shape": shape,
                 "size_x": diameter,
