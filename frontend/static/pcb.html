@@ -395,14 +395,6 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <span id="status-bar">x: 0.00  y: 0.00</span>
 </div>
 
-<!-- Board Tabs + Save -->
-<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 8px;display:flex;align-items:center;gap:4px;height:26px;flex-shrink:0;">
-  <div id="pcb-board-tabs" class="pcb-board-tabs" style="display:contents;"></div>
-  <div style="flex:1;"></div>
-  <button class="tbtn save" id="toolbar-save-btn2" onclick="saveBoard()" style="display:none;">💾 Save</button>
-  <script>if(!location.search.includes('embedded=1')){const b=document.getElementById('toolbar-save-btn2');if(b)b.style.display='';}</script>
-</div>
-
 <!-- Canvas -->
 <div class="canvas-wrap" id="canvas-wrap" style="flex:1;">
   <div class="canvas-inner" id="canvas-inner">
