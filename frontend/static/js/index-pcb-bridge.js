@@ -100,7 +100,13 @@ async function _doPCBImport(projectId, boardOpts) {
   }
   // Compute authoritative netlist from this schematic so PCB importer uses exact same names
   let netlist = null;
-  try { const r = buildNetlist(); netlist = r.namedNets; } catch(_) {}
+  try {
+    const r = await buildNetlist();
+    // Convert namedNets array [{name, pins}, ...] to dict {name: pins, ...}
+    const nn = r.namedNets || [];
+    netlist = {};
+    for (const n of nn) { if (n.name && Array.isArray(n.pins)) netlist[n.name] = n.pins; }
+  } catch(_) {}
   let done = false;
   const onDone = (ev) => {
     if (ev.data?.type === 'importProjectDone') {
