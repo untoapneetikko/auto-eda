@@ -456,7 +456,8 @@ function switchTab(tabId) {
 function closeTab(tabId) {
   const tab = openTabs.find(t => t.tabId === tabId);
   if (!tab) return;
-  if (tab.dirty && !confirm(`Close "${tab.name || 'Untitled'}" without saving?`)) return;
+  const unsaved = tab.dirty || !tab.projectId;
+  if (unsaved && !confirm(`Close "${tab.name || 'Untitled'}" without saving?`)) return;
   const closedProjectId = tab.projectId;
   const idx = openTabs.indexOf(tab);
   openTabs.splice(idx, 1);
