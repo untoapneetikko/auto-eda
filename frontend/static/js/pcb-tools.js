@@ -6,7 +6,7 @@ function setTool(t){
   editor._hoverComp=null;editor._hoverTrace=null;
   document.querySelectorAll('.tbtn[id^="tool-"]').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('tool-'+t);if(btn)btn.classList.add('active');
-  const cursors={select:'default',route:'crosshair',via:'cell',zone:'crosshair',measure:'crosshair',area:'crosshair',draw:'crosshair'};
+  const cursors={select:'default',route:'crosshair',via:'cell',zone:'crosshair',measure:'crosshair',area:'crosshair',draw:'crosshair',text:'text'};
   document.getElementById('canvas-wrap').style.cursor=cursors[t]||'default';
   const areaOpts=document.getElementById('area-tool-opts');
   if(areaOpts)areaOpts.style.display=t==='area'?'flex':'none';
@@ -20,6 +20,14 @@ function setTool(t){
         const opt=[...lyrSel.options].find(o=>o.value===editor.workLayer);
         if(opt)lyrSel.value=editor.workLayer;
       }
+    }
+  }
+  const textOpts=document.getElementById('text-tool-opts');
+  if(textOpts){
+    textOpts.style.display=t==='text'?'flex':'none';
+    if(t==='text'){
+      const inp=document.getElementById('text-content-input');
+      if(inp)setTimeout(()=>inp.focus(),50);
     }
   }
   updateToolPanel(t);

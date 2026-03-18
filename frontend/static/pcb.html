@@ -285,7 +285,22 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <button class="tbtn" id="tool-via"    onclick="setTool('via')"    title="V — Place via">⊙ Via</button>
   <button class="tbtn" id="tool-area"   onclick="setTool('area')"   title="A — Draw copper pour area (click-drag rectangle)">▦ Area</button>
   <button class="tbtn" id="tool-draw"   onclick="setTool('draw')"   title="D — Draw lines / board outline (click to add points, double-click or Enter to finish, Esc to cancel)">✏ Draw</button>
+  <button class="tbtn" id="tool-text"   onclick="setTool('text')"   title="T — Place text on silkscreen or copper">𝐓 Text</button>
   <div class="tsep"></div>
+  <div id="text-tool-opts" style="display:none;align-items:center;gap:5px;">
+    <span style="font-size:11px;color:var(--text-muted);">Layer:</span>
+    <select id="text-layer-sel" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);padding:3px 5px;font-size:11px;">
+      <option value="F.SilkS">F.SilkS (Top silk)</option>
+      <option value="B.SilkS">B.SilkS (Bottom silk)</option>
+      <option value="F.Cu">F.Cu (Top copper)</option>
+      <option value="B.Cu">B.Cu (Bottom copper)</option>
+    </select>
+    <span style="font-size:11px;color:var(--text-muted);">Size:</span>
+    <input id="text-size-input" type="number" value="1.0" step="0.1" min="0.3" max="10" style="width:50px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);padding:3px 5px;font-size:11px;" title="Text height (mm)">
+    <span style="font-size:11px;color:var(--text-muted);">Text:</span>
+    <input id="text-content-input" type="text" value="" placeholder="Type here..." style="width:120px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);padding:3px 5px;font-size:11px;font-family:monospace;">
+    <div class="tsep"></div>
+  </div>
   <div id="draw-tool-opts" style="display:none;align-items:center;gap:5px;">
     <span style="font-size:11px;color:var(--text-muted);">Layer:</span>
     <select id="draw-layer-sel" style="background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);padding:3px 5px;font-size:11px;" title="Layer for drawing">

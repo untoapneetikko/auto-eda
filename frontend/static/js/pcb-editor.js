@@ -196,6 +196,8 @@ class PCBEditor {
     this._drawDRCMarkers();
     this._drawGroups();
     this._drawDrawings();
+    this._drawTexts();
+    if(this.tool==='text') this._drawTextPreview();
     if(this.tool==='route'&&this.routePoints.length>0) this._drawActiveRoute();
     if(this.tool==='route') this._drawSnapIndicator();
     if(this.tool==='zone'&&this.zonePoints.length>0) this._drawActiveZone();
@@ -343,6 +345,44 @@ class PCBEditor {
       }
     }
     ctx.lineCap='butt'; ctx.lineJoin='miter';
+  }
+
+  _drawTexts(){
+    const ctx=this.ctx;
+    for(const t of(this.board?.texts||[])){
+      const lyr=t.layer||'F.SilkS';
+      if(!this.layers[lyr]?.visible)continue;
+      const col=this.layers[lyr]?.color||'#cccccc';
+      const sz=Math.max(1,(t.size||1)*this.scale);
+      const isSel=t===this._selectedText;
+      ctx.fillStyle=isSel?'#facc15':col;
+      ctx.font=`${isSel?'bold ':''}${sz}px monospace`;
+      ctx.textAlign='left'; ctx.textBaseline='top';
+      const px=this.mmX(t.x), py=this.mmY(t.y);
+      ctx.save();
+      ctx.translate(px,py);
+      if(t.rotation) ctx.rotate(-t.rotation*Math.PI/180);
+      ctx.fillText(t.text||'',0,0);
+      ctx.restore();
+    }
+  }
+
+  _drawTextPreview(){
+    const inp=document.getElementById('text-content-input');
+    const txt=inp?.value;
+    if(!txt)return;
+    const lyrSel=document.getElementById('text-layer-sel');
+    const lyr=lyrSel?.value||'F.SilkS';
+    const col=this.layers[lyr]?.color||'#cccccc';
+    const szMm=parseFloat(document.getElementById('text-size-input')?.value)||1.0;
+    const sz=Math.max(1,szMm*this.scale);
+    const ctx=this.ctx;
+    ctx.globalAlpha=0.5;
+    ctx.fillStyle=col;
+    ctx.font=`${sz}px monospace`;
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText(txt,this.mmX(this._mx),this.mmY(this._my));
+    ctx.globalAlpha=1.0;
   }
 
   _drawActiveDrawing(){
@@ -2590,6 +2630,22 @@ class PCBEditor {
         } else {
           this.drawPoints.push({x:xmm,y:ymm});this.render();
         }
+      } else if(this.tool==='text'){
+        if(!this.board)return;
+        const inp=document.getElementById('text-content-input');
+        const txt=(inp?.value||'').trim();
+        if(!txt){alert('Type text in the toolbar first.');return;}
+        const lyrSel=document.getElementById('text-layer-sel');
+        const szInp=document.getElementById('text-size-input');
+        const layer=lyrSel?.value||'F.SilkS';
+        const size=parseFloat(szInp?.value)||1.0;
+        if(!this.board.texts)this.board.texts=[];
+        this.board.texts.push({
+          id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+          text:txt, layer:layer, size:size,
+          x:xmm, y:ymm, rotation:0,
+        });
+        this._snapshot();this.render();
       }
     });
 
@@ -2757,7 +2813,7 @@ class PCBEditor {
         this.panX=mx-this._panS.x; this.panY=my-this._panS.y; this.render();
       } else if(this._isBoxSel&&this._boxSelStart){
         this._boxSelEnd={mx,my};this.render();
-      } else if(this.tool==='route'||this.tool==='via'||
+      } else if(this.tool==='route'||this.tool==='via'||this.tool==='text'||
                 (this.tool==='zone'&&this.zonePoints.length>0)||
                 (this.tool==='measure'&&this.measureStart)||
                 (this.tool==='area'&&this.areaStart)||
@@ -2869,6 +2925,7 @@ class PCBEditor {
       else if(k==='z'&&!e.ctrlKey&&!e.metaKey)setTool('zone');
       else if(k==='a')setTool('area');
       else if(k==='d'&&!e.ctrlKey&&!e.metaKey)setTool('draw');
+      else if(k==='t'&&!e.ctrlKey&&!e.metaKey)setTool('text');
       else if(k==='m')setTool('measure');
       else if(k==='f')editor.fitBoard();
       else if(k==='enter'&&editor.tool==='draw'&&editor.drawPoints.length>=2){
