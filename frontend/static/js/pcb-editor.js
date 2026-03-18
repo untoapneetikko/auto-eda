@@ -313,12 +313,13 @@ class PCBEditor {
 
   _drawBoard(){
     const ctx=this.ctx,b=this.board.board;
-    const x=this.mmX(0),y=this.mmY(0),w=b.width*this.scale,h=b.height*this.scale;
+    const ox=b.ox||0, oy=b.oy||0;
+    const x=this.mmX(ox),y=this.mmY(oy),w=b.width*this.scale,h=b.height*this.scale;
     ctx.fillStyle='#0d1f0d'; ctx.fillRect(x,y,w,h);
     ctx.strokeStyle=this.layers['Edge.Cuts'].color;
     ctx.lineWidth=1.5; ctx.setLineDash([]); ctx.strokeRect(x,y,w,h);
     ctx.fillStyle='rgba(255,255,0,0.4)'; ctx.font='10px monospace'; ctx.textAlign='left';
-    ctx.fillText(`${b.width}×${b.height}mm`,x+3,y+12);
+    ctx.fillText(`${b.width.toFixed(1)}×${b.height.toFixed(1)}mm`,x+3,y+12);
     // Draw drag handles when Edge.Cuts is active layer
     if(this.workLayer==='Edge.Cuts'&&this.tool==='select'){
       const hs=5; // handle size px
@@ -335,27 +336,12 @@ class PCBEditor {
     }
   }
 
-  // Shift all board contents by (dx, dy) mm — used when dragging left/top board edge
-  _shiftBoardContents(dx,dy){
-    if(!this.board)return;
-    for(const c of(this.board.components||[])){c.x=(c.x||0)+dx;c.y=(c.y||0)+dy;}
-    for(const tr of(this.board.traces||[])){
-      for(const seg of(tr.segments||[])){
-        seg.start.x+=dx;seg.start.y+=dy;seg.end.x+=dx;seg.end.y+=dy;
-      }
-    }
-    for(const v of(this.board.vias||[])){v.x=(v.x||0)+dx;v.y=(v.y||0)+dy;}
-    for(const a of(this.board.areas||[])){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;}
-    for(const z of(this.board.zones||[])){for(const p of(z.points||[])){p.x+=dx;p.y+=dy;}}
-    for(const d of(this.board.drawings||[])){for(const p of(d.points||[])){p.x+=dx;p.y+=dy;}}
-    for(const t of(this.board.texts||[])){t.x=(t.x||0)+dx;t.y=(t.y||0)+dy;}
-  }
-
   // Hit-test board outline edges/corners. Returns edge string or null.
   _hitBoardEdge(mx,my){
     if(!this.board?.board||this.workLayer!=='Edge.Cuts')return null;
     const b=this.board.board;
-    const x0=this.mmX(0),y0=this.mmY(0);
+    const ox=b.ox||0, oy=b.oy||0;
+    const x0=this.mmX(ox),y0=this.mmY(oy);
     const x1=x0+b.width*this.scale,y1=y0+b.height*this.scale;
     const T=8; // hit threshold px
     const onLeft=Math.abs(mx-x0)<T, onRight=Math.abs(mx-x1)<T;
@@ -2442,8 +2428,8 @@ class PCBEditor {
           this._isDragBoard=true;
           this._dragBoardEdge=_boardEdge;
           this._dragBoardStart={x:this.cX(mx),y:this.cY(my)};
-          this._dragBoardOrig={w:this.board.board.width,h:this.board.board.height};
-          this._dragBoardLastDx=0; this._dragBoardLastDy=0;
+          const bb=this.board.board;
+          this._dragBoardOrig={w:bb.width,h:bb.height,ox:bb.ox||0,oy:bb.oy||0};
           this.render();updateInfoPanel();return;
         }
         // Gather ALL hittable elements at this position
@@ -2838,29 +2824,21 @@ class PCBEditor {
         const dx=curX-this._dragBoardStart.x, dy=curY-this._dragBoardStart.y;
         const orig=this._dragBoardOrig;
         const edge=this._dragBoardEdge;
+        const bb=this.board.board;
         const MIN=5;
-        if(edge.includes('e')) this.board.board.width=Math.max(MIN,orig.w+dx);
-        if(edge.includes('s')) this.board.board.height=Math.max(MIN,orig.h+dy);
-        // West/North: resize AND shift all contents so the left/top edge moves
+        // East/South: move right/bottom edge (change width/height)
+        if(edge.includes('e')) bb.width=Math.max(MIN,orig.w+dx);
+        if(edge.includes('s')) bb.height=Math.max(MIN,orig.h+dy);
+        // West/North: move left/top edge (change origin + width/height)
         if(edge.includes('w')){
           const newW=Math.max(MIN,orig.w-dx);
-          const shift=orig.w-newW; // positive = board shrunk from left
-          const incShift=shift-this._dragBoardLastDx;
-          if(Math.abs(incShift)>0.001){
-            this._shiftBoardContents(-incShift,0);
-            this._dragBoardLastDx=shift;
-          }
-          this.board.board.width=newW;
+          bb.ox=orig.ox+(orig.w-newW); // origin shifts right as board shrinks from left
+          bb.width=newW;
         }
         if(edge.includes('n')){
           const newH=Math.max(MIN,orig.h-dy);
-          const shift=orig.h-newH;
-          const incShift=shift-this._dragBoardLastDy;
-          if(Math.abs(incShift)>0.001){
-            this._shiftBoardContents(0,-incShift);
-            this._dragBoardLastDy=shift;
-          }
-          this.board.board.height=newH;
+          bb.oy=orig.oy+(orig.h-newH);
+          bb.height=newH;
         }
         this.render();
       } else if(this._isDragText&&this._selectedText){
