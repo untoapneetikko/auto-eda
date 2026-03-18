@@ -110,27 +110,7 @@ function renderSchNets(editorRef, listId, countId) {
   let html = '';
   if (power.length) {
     html += _sectionHdr('Power');
-    for (const fam of families) {
-      const members = famMap[fam];
-      if (members.length === 1) {
-        // Single net — just the chip, no group header
-        html += `<div style="padding:1px 6px 2px;">${_chip(members[0])}</div>`;
-      } else {
-        // Multiple nets in family — collapsible tree node
-        const famId = `nfam_${listId}_${fam}`;
-        html += `<div style="padding:1px 4px 2px;">
-          <div onclick="const ch=document.getElementById('${famId}');const open=ch.style.display!=='none';ch.style.display=open?'none':'flex';this.querySelector('.na').textContent=open?'▶':'▼';"
-              style="cursor:pointer;display:flex;align-items:center;gap:3px;padding:1px 4px;border-radius:3px;user-select:none;">
-            <span class="na" style="font-size:8px;color:var(--text-muted);width:8px;display:inline-block;">▼</span>
-            <span style="font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;">${esc(fam)}</span>
-            <span style="font-size:9px;color:var(--text-muted);opacity:0.55;margin-left:2px;">${members.length}</span>
-          </div>
-          <div id="${famId}" style="display:flex;flex-wrap:wrap;gap:3px;padding:2px 4px 4px 14px;">
-            ${members.map(_chip).join('')}
-          </div>
-        </div>`;
-      }
-    }
+    html += power.map(_row).join('');
   }
   if (signal.length) {
     if (power.length) html += `<div style="height:1px;background:var(--border);margin:2px 0;opacity:0.4;"></div>`;
