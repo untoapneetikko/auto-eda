@@ -109,8 +109,13 @@ function renderSchNets(editorRef, listId, countId) {
 
   let html = '';
   if (power.length) {
-    html += _sectionHdr('Power');
-    html += power.map(_row).join('');
+    const pwrId = `npwr_${listId}`;
+    html += `<div onclick="const ch=document.getElementById('${pwrId}');const open=ch.style.display!=='none';ch.style.display=open?'none':'block';this.querySelector('.na').textContent=open?'▶':'▼';"
+        style="cursor:pointer;display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;padding:5px 8px 2px;user-select:none;">
+      <span class="na" style="font-size:8px;width:8px;display:inline-block;">▶</span>Power
+      <span style="opacity:0.55;margin-left:2px;">${power.length}</span>
+    </div>`;
+    html += `<div id="${pwrId}" style="display:none;">${power.map(_row).join('')}</div>`;
   }
   if (signal.length) {
     if (power.length) html += `<div style="height:1px;background:var(--border);margin:2px 0;opacity:0.4;"></div>`;
