@@ -1153,9 +1153,7 @@ function gotoDatasheet() {
   selectedSlug = _infoSlug;
   switchSection('library');
   loadProfile(_infoSlug);
-  document.querySelectorAll('.part-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.slug === _infoSlug);
-  });
+  renderLibrary(document.getElementById('lib-search')?.value || '');
 }
 
 function updateSchWireInfoPanel(wire) {
