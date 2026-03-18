@@ -380,50 +380,217 @@ function updateInfoPanel(){
   if(tr && !c){
     const lyr=tr.layer||'F.Cu';
     const segLen=(tr.segments||[]).reduce((s,seg)=>s+Math.hypot(seg.end.x-seg.start.x,seg.end.y-seg.start.y),0);
-    // ── Coplanar Waveguide impedance estimate ──
+    // ── Coplanar Waveguide impedance — real board geometry ──
     const _cpwZ0=(()=>{
-      const w=tr.widths?.length?tr.widths[0]:(tr.width||0.25); // trace width mm
-      const g=typeof DR!=='undefined'?DR.clearance:0.2;        // gap to ground mm
-      const h=typeof DR!=='undefined'?DR.boardThickness:1.6;   // substrate mm
-      const er=4.5; // FR-4 dielectric constant
-      const t=(typeof DR!=='undefined'&&DR.copperWeight||1.0)*0.035; // copper thickness mm
-      // Effective width (compensate for copper thickness)
-      const we=w+1.25*t/Math.PI*(1+Math.log(4*Math.PI*w/t));
-      // k parameter for CPW
-      const k=we/(we+2*g);
-      const kp=Math.sqrt(1-k*k);
-      // K(k)/K(k') ratio via Hilberg approximation
-      const _Kratio=k=>{
-        if(k<1e-10)return 0;
-        if(k>1-1e-10)return Infinity;
-        const kp=Math.sqrt(1-k*k);
-        if(k<=1/Math.SQRT2){
-          return Math.PI/Math.log(2*(1+Math.sqrt(kp))/(1-Math.sqrt(kp)));
-        }else{
-          return Math.log(2*(1+Math.sqrt(k))/(1-Math.sqrt(k)))/Math.PI;
-        }
+      const board=editor.board; if(!board) return null;
+      const w=tr.widths?.length?tr.widths[0]:(tr.width||0.25);
+      const tLayer=tr.layer||'F.Cu';
+
+      // ── Sample point: midpoint of trace ──
+      const segs=tr.segments||[];
+      if(!segs.length) return null;
+      const midSeg=segs[Math.floor(segs.length/2)];
+      const mx=(midSeg.start.x+midSeg.end.x)/2, my=(midSeg.start.y+midSeg.end.y)/2;
+
+      // ── Helper: min distance from point to axis-aligned rect edge ──
+      const _distToRect=(px,py,rx,ry,rw,rh)=>{
+        const cx=Math.max(rx,Math.min(rx+rw,px));
+        const cy=Math.max(ry,Math.min(ry+rh,py));
+        return Math.hypot(px-cx,py-cy);
       };
-      // Ground-backed CPW: also account for substrate height
-      const k1=Math.tanh(Math.PI*we/(4*h))/Math.tanh(Math.PI*(we+2*g)/(4*h));
-      const k1p=Math.sqrt(1-k1*k1);
-      const Kk=_Kratio(k);
-      const Kk1=_Kratio(k1);
-      // Effective dielectric
-      const q=Kk>0?(_Kratio(kp)*Kk1)/(_Kratio(k1p)*Kk):0;
-      const eeff=1+(er-1)/2*q;
-      // Z0
-      const denom=Kk+Kk1;
-      if(denom<1e-10)return null;
-      const Z0=60*Math.PI/(Math.sqrt(eeff)*denom);
-      return{Z0,eeff,w,g,h,er,t};
+      // ── Helper: min distance from point to line segment ──
+      const _distToSeg=(px,py,x1,y1,x2,y2)=>{
+        const dx=x2-x1,dy=y2-y1,len2=dx*dx+dy*dy;
+        if(len2<1e-8) return Math.hypot(px-x1,py-y1);
+        const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/len2));
+        return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));
+      };
+
+      // ── Collect GND copper edges on same layer → coplanar gap ──
+      const isGnd=net=>/^(GND|AGND|DGND|PGND|GROUND|VSS|GND\d)$/i.test((net||'').trim());
+      let gapSame=Infinity; // nearest GND copper edge on same layer
+
+      // 1) GND zones on same layer
+      for(const z of (board.zones||[])){
+        if(z.layer!==tLayer||!isGnd(z.net)) continue;
+        const pts=z.points||[];
+        for(let i=0;i<pts.length;i++){
+          const a=pts[i], b=pts[(i+1)%pts.length];
+          const d=_distToSeg(mx,my,a.x,a.y,b.x,b.y);
+          if(d<gapSame) gapSame=d;
+        }
+      }
+      // 2) GND areas (rectangles) on same layer
+      for(const a of (board.areas||[])){
+        if(a.layer!==tLayer||!isGnd(a.net)) continue;
+        const d=_distToRect(mx,my,Math.min(a.x1,a.x2),Math.min(a.y1,a.y2),
+          Math.abs(a.x2-a.x1),Math.abs(a.y2-a.y1));
+        if(d<gapSame) gapSame=d;
+      }
+      // 3) GND pads on same layer
+      for(const comp of (board.components||[])){
+        const cLayer=comp.layer==='B'?'B.Cu':'F.Cu';
+        for(const pad of (comp.pads||[])){
+          if(!isGnd(pad.net)) continue;
+          const isOnLayer=(pad.type==='thru_hole')||(cLayer===tLayer);
+          if(!isOnLayer) continue;
+          const rad=(comp.rotation||0)*Math.PI/180;
+          const cosR=Math.cos(rad),sinR=Math.sin(rad);
+          const px=pad.x*cosR-pad.y*sinR+comp.x;
+          const py=pad.x*sinR+pad.y*cosR+comp.y;
+          const halfW=(pad.size_x||0)/2, halfH=(pad.size_y||0)/2;
+          const d=_distToRect(mx,my,px-halfW,py-halfH,pad.size_x||0,pad.size_y||0);
+          if(d<gapSame) gapSame=d;
+        }
+      }
+      // 4) GND traces on same layer
+      for(const ot of (board.traces||[])){
+        if(ot===tr||ot.layer!==tLayer||!isGnd(ot.net)) continue;
+        const otw=(ot.width||0.25)/2;
+        for(const seg of (ot.segments||[])){
+          const d=_distToSeg(mx,my,seg.start.x,seg.start.y,seg.end.x,seg.end.y)-otw;
+          if(d<gapSame) gapSame=d;
+        }
+      }
+      // 5) GND vias (present on all copper layers)
+      for(const v of (board.vias||[])){
+        if(!isGnd(v.net)) continue;
+        const d=Math.hypot(mx-v.x,my-v.y)-(v.size||DR.viaSize||1.0)/2;
+        if(d<gapSame) gapSame=d;
+      }
+      // Subtract half trace width to get edge-to-edge gap
+      gapSame=Math.max(0.01, gapSame - w/2);
+
+      // ── Stackup: find dielectric height to nearest GND plane above & below ──
+      const stackup=(typeof DR!=='undefined'&&DR.stackup)||[];
+      const copperLayers=stackup.filter(l=>l.type==='copper');
+      const trIdx=stackup.findIndex(l=>l.name===tLayer);
+
+      // Walk stackup to find nearest GND plane layer above and below
+      const _findGndPlaneDistance=(startIdx,direction)=>{
+        // direction: -1 = above (toward index 0), +1 = below
+        let dist=0; let i=startIdx+direction;
+        while(i>=0 && i<stackup.length){
+          const layer=stackup[i];
+          if(layer.type==='dielectric'||layer.type==='prepreg'){
+            dist+=layer.thickness||0;
+          } else if(layer.type==='copper'){
+            // Check if this copper layer has GND copper at these coordinates
+            const cName=layer.name;
+            let hasGnd=false;
+            for(const z of (board.zones||[])){if(z.layer===cName&&isGnd(z.net)){hasGnd=true;break;}}
+            if(!hasGnd) for(const a of (board.areas||[])){if(a.layer===cName&&isGnd(a.net)){hasGnd=true;break;}}
+            if(hasGnd) return dist;
+            // Not a ground plane — keep going but add copper thickness
+            dist+=layer.thickness||0.035;
+          }
+          i+=direction;
+        }
+        return null; // no GND plane found in this direction
+      };
+
+      let hAbove=null, hBelow=null;
+      if(trIdx>=0){
+        hAbove=_findGndPlaneDistance(trIdx,-1);
+        hBelow=_findGndPlaneDistance(trIdx,+1);
+      } else {
+        // Fallback: use full board thickness
+        hBelow=(typeof DR!=='undefined'?DR.boardThickness:1.6);
+      }
+
+      // ── Determine topology ──
+      const hasCoPlanar=gapSame<50; // found coplanar ground within 50mm
+      const buried=(hAbove!==null && hBelow!==null);
+      const backed=(hAbove!==null || hBelow!==null);
+
+      // Use closest ground plane distance
+      const hMin=buried?Math.min(hAbove,hBelow)
+                :hAbove!==null?hAbove
+                :hBelow!==null?hBelow
+                :((typeof DR!=='undefined'?DR.boardThickness:1.6));
+
+      // ── Dielectric constant from stackup material ──
+      const erMap={'FR-4':4.5,'FR4':4.5,'Rogers 4003C':3.55,'Rogers 4350B':3.66,
+                   'Isola 370HR':4.04,'Megtron 6':3.71,'Polyimide':3.5};
+      let er=4.5;
+      for(const l of stackup){
+        if(l.type==='dielectric'||l.type==='prepreg'){
+          if(erMap[l.material]) {er=erMap[l.material]; break;}
+        }
+      }
+      const t=((typeof DR!=='undefined'&&DR.copperWeight)||1.0)*0.035;
+
+      // ── K(k)/K(k') ratio — Hilberg approximation ──
+      const _Kratio=k=>{
+        if(k<1e-10)return 0; if(k>1-1e-10)return Infinity;
+        const kp=Math.sqrt(1-k*k);
+        return k<=1/Math.SQRT2
+          ?Math.PI/Math.log(2*(1+Math.sqrt(kp))/(1-Math.sqrt(kp)))
+          :Math.log(2*(1+Math.sqrt(k))/(1-Math.sqrt(k)))/Math.PI;
+      };
+
+      // Effective width (copper thickness compensation)
+      const we=w+1.25*t/Math.PI*(1+Math.log(4*Math.PI*w/t));
+
+      let Z0, eeff, topology;
+      if(hasCoPlanar && backed){
+        // ── GCPW: grounded coplanar waveguide ──
+        topology=buried?'Buried GCPW':'GCPW';
+        const g=gapSame;
+        const k0=we/(we+2*g);
+        const k1=Math.tanh(Math.PI*we/(4*hMin))/Math.tanh(Math.PI*(we+2*g)/(4*hMin));
+        const Kk0=_Kratio(k0), Kk0p=_Kratio(Math.sqrt(1-k0*k0));
+        const Kk1=_Kratio(k1), Kk1p=_Kratio(Math.sqrt(1-k1*k1));
+        const q=Kk0>0?(Kk0p*Kk1)/(Kk1p*Kk0):0;
+        eeff=1+(er-1)/2*q;
+        const denom=Kk0+Kk1;
+        if(denom<1e-10) return null;
+        Z0=60*Math.PI/(Math.sqrt(eeff)*denom);
+        if(buried){
+          // Asymmetric stripline correction: use harmonic mean of h_above and h_below
+          const hOther=hAbove===hMin?hBelow:hAbove;
+          const k2=Math.tanh(Math.PI*we/(4*hOther))/Math.tanh(Math.PI*(we+2*g)/(4*hOther));
+          const Kk2=_Kratio(k2);
+          const denomB=Kk0+Kk1+Kk2;
+          if(denomB>1e-10){
+            const q2=Kk0>0?(Kk0p*Kk2)/(_Kratio(Math.sqrt(1-k2*k2))*Kk0):0;
+            const eeff2=1+(er-1)/2*(q+q2)/2;
+            Z0=60*Math.PI/(Math.sqrt(eeff2)*denomB*0.5);
+            eeff=eeff2;
+          }
+        }
+      } else if(hasCoPlanar){
+        // ── CPW: no ground plane backing ──
+        topology='CPW';
+        const g=gapSame;
+        const k0=we/(we+2*g);
+        const Kk0=_Kratio(k0);
+        if(Kk0<1e-10) return null;
+        eeff=(1+er)/2;
+        Z0=30*Math.PI/(Math.sqrt(eeff)*Kk0);
+      } else if(backed){
+        // ── Microstrip: no coplanar ground ──
+        topology=buried?'Buried Microstrip':'Microstrip';
+        eeff=(er+1)/2+(er-1)/2/Math.sqrt(1+12*hMin/we);
+        Z0=buried
+          ?(60/Math.sqrt(er))*Math.log(5.98*hMin/(0.8*we+t))
+          :(87/Math.sqrt(er+1.41))*Math.log(5.98*hMin/(0.8*we+t));
+        if(Z0<0) Z0=Math.abs(Z0);
+      } else {
+        return null; // no reference plane at all
+      }
+
+      return{Z0,eeff,w,g:hasCoPlanar?gapSame:null,hAbove,hBelow,hMin,er,t,topology,
+             gndSameLayer:gapSame<50};
     })();
     const cpwHtml=_cpwZ0?`
       <div style="margin-top:8px;padding:6px 8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:5px;">
-        <div style="font-size:9px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">CPW Impedance (est.)</div>
+        <div style="font-size:9px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">${esc(_cpwZ0.topology)}</div>
         <div class="ir"><span class="il">Z₀</span><span class="iv" style="color:#a5b4fc;font-weight:700;">${_cpwZ0.Z0.toFixed(1)} Ω</span></div>
         <div class="ir"><span class="il">εeff</span><span class="iv">${_cpwZ0.eeff.toFixed(2)}</span></div>
-        <div class="ir"><span class="il">Gap</span><span class="iv">${_cpwZ0.g.toFixed(3)} mm</span></div>
-        <div class="ir"><span class="il">h</span><span class="iv">${_cpwZ0.h.toFixed(1)} mm</span></div>
+        ${_cpwZ0.g!==null?`<div class="ir"><span class="il">Gap</span><span class="iv">${_cpwZ0.g.toFixed(3)} mm</span></div>`:''}
+        ${_cpwZ0.hAbove!==null?`<div class="ir"><span class="il">h↑</span><span class="iv">${_cpwZ0.hAbove.toFixed(3)} mm</span></div>`:''}
+        ${_cpwZ0.hBelow!==null?`<div class="ir"><span class="il">h↓</span><span class="iv">${_cpwZ0.hBelow.toFixed(3)} mm</span></div>`:''}
         <div class="ir"><span class="il">εr</span><span class="iv">${_cpwZ0.er}</span></div>
         <div class="ir"><span class="il">Cu</span><span class="iv">${(_cpwZ0.t*1000).toFixed(0)} µm</span></div>
       </div>`:'';
