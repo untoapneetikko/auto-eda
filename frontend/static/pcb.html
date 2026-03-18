@@ -776,6 +776,36 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
         <div id="drt-board-computed" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:4px;border:1px solid var(--border);"></div>
       </div>
 
+      <!-- Board Stackup -->
+      <div style="margin-bottom:18px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:700;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">Board Stackup</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <label style="font-size:12px;color:var(--text-dim);">Copper Layers</label>
+          <select id="drt-layer-count" class="dr-input" style="width:70px;" onchange="applyLayerCount(parseInt(this.value))">
+            <option value="2">2</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="8">8</option>
+          </select>
+          <label style="font-size:12px;color:var(--text-dim);margin-left:12px;">Stackup Preset</label>
+          <select id="drt-stackup-preset" class="dr-input" style="width:140px;" onchange="applyStackupPreset(this.value)">
+            <option value="">Custom</option>
+            <option value="standard-2L">Standard 2L (1.6mm)</option>
+            <option value="standard-4L">Standard 4L (1.6mm)</option>
+            <option value="standard-6L">Standard 6L (1.6mm)</option>
+            <option value="hdi-4L">HDI 4L (1.0mm)</option>
+            <option value="rf-4L">RF 4L (0.8mm)</option>
+          </select>
+        </div>
+        <div id="stackup-table-wrap" style="max-height:260px;overflow-y:auto;">
+          <table class="dr-table" style="width:100%;">
+            <thead><tr><th>Layer</th><th>Type</th><th>Thickness (mm)</th><th>Material</th></tr></thead>
+            <tbody id="stackup-table-body"></tbody>
+          </table>
+        </div>
+        <div id="stackup-total" style="font-size:11px;color:var(--text-muted);margin-top:6px;padding:6px 8px;background:var(--bg);border-radius:4px;border:1px solid var(--border);"></div>
+      </div>
+
       <!-- Quick-select presets -->
       <div style="margin-bottom:18px;">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:700;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">Quick Presets</div>

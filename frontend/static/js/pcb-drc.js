@@ -130,6 +130,12 @@ function populateDRTab(){
   m('drt-silk',DR.silkscreenWidth??0.12);
   m('drt-corner-angle',DR.cornerAngle??90);
   m('drt-snap-radius',DR.snapRadius??2.0);
+  // Stackup
+  const lcSel=document.getElementById('drt-layer-count');
+  if(lcSel)lcSel.value=DR.layerCount||2;
+  // Ensure stackup exists
+  if(!DR.stackup||!DR.stackup.length) DR.stackup=_buildDefaultStackup(DR.layerCount||2);
+  populateStackupTable();
   updateDRTComputed();
 }
 
@@ -178,7 +184,8 @@ function saveDRTab(){
   DR.viaClearance=g('drt-via-clear',0.25);
   DR.tentedVias=document.getElementById('drt-tented')?.checked??true;
   DR.viaInPad=document.getElementById('drt-via-in-pad')?.checked??false;
-  DR.boardThickness=g('drt-board-thick',1.6);
+  // boardThickness is computed from stackup if stackup exists
+  if(!DR.stackup||!DR.stackup.length) DR.boardThickness=g('drt-board-thick',1.6);
   DR.copperWeight=g('drt-copper',1.0);
   DR.silkscreenWidth=g('drt-silk',0.12);
   DR.cornerAngle=Math.min(90,Math.max(0,g('drt-corner-angle',90)));
@@ -220,6 +227,184 @@ function applyDRPreset(name){
   populateDRTab();
   _saveDRStorage();
   runDRCTab();
+}
+
+// ── Stackup ──────────────────────────────────────────────────
+const _INNER_COLORS = ['#cc33cc','#33cc99','#cc9933','#3399cc','#cc3366','#66cc33'];
+
+function _buildDefaultStackup(layerCount){
+  const stack = [];
+  const copperThick = 0.035; // 1oz
+  const totalThick = DR.boardThickness || 1.6;
+  const dielectricCount = layerCount - 1;
+  const dielectricThick = Math.max(0.1, +((totalThick - layerCount * copperThick) / dielectricCount).toFixed(3));
+
+  stack.push({ name:'F.Cu', type:'copper', thickness:copperThick, material:'Copper' });
+  for (let i = 1; i < layerCount; i++) {
+    const isCore = i % 2 === 1; // odd gaps are core, even are prepreg
+    stack.push({ name: isCore ? 'Core' : 'Prepreg', type:'dielectric', thickness:dielectricThick, material: isCore ? 'FR-4 Core' : 'FR-4 Prepreg' });
+    if (i < layerCount - 1) {
+      stack.push({ name:`In${i}.Cu`, type:'copper', thickness:copperThick, material:'Copper' });
+    } else {
+      stack.push({ name:'B.Cu', type:'copper', thickness:copperThick, material:'Copper' });
+    }
+  }
+  return stack;
+}
+
+function applyLayerCount(n) {
+  if (![2,4,6,8].includes(n)) return;
+  DR.layerCount = n;
+  DR.stackup = _buildDefaultStackup(n);
+  _rebuildEditorLayers();
+  populateStackupTable();
+  saveDRTab();
+}
+
+function _rebuildEditorLayers(){
+  if (typeof editor === 'undefined' || !editor) return;
+  const copperLayers = DR.stackup.filter(l => l.type === 'copper');
+  // Preserve existing non-copper layers
+  const keep = {};
+  for (const [k, v] of Object.entries(editor.layers)) {
+    if (!k.endsWith('.Cu') && k !== 'Vias') keep[k] = v;
+  }
+  // Remove old copper layers
+  const newLayers = {};
+  for (let i = 0; i < copperLayers.length; i++) {
+    const cl = copperLayers[i];
+    const existing = editor.layers[cl.name];
+    if (existing) {
+      newLayers[cl.name] = existing;
+    } else {
+      const colorIdx = i - 1; // skip F.Cu (idx 0) and B.Cu (last)
+      newLayers[cl.name] = {
+        color: _INNER_COLORS[colorIdx % _INNER_COLORS.length] || '#aa66dd',
+        visible: true,
+        active: false,
+        displayName: cl.name === 'F.Cu' ? 'Top Copper' : cl.name === 'B.Cu' ? 'Bottom Copper' : `Inner ${i}`,
+      };
+    }
+  }
+  // Re-add non-copper layers (masks, paste, silk, vias, edge, ratsnest)
+  const vias = editor.layers['Vias'] || { color:'#88aacc', visible:true, active:false, displayName:'Vias (Multi-layer)' };
+  newLayers['Vias'] = vias;
+  for (const [k, v] of Object.entries(keep)) {
+    if (k !== 'Vias') newLayers[k] = v;
+  }
+  editor.layers = newLayers;
+  // Ensure workLayer is still valid
+  if (!editor.layers[editor.workLayer]) {
+    editor.workLayer = 'F.Cu';
+    editor.layers['F.Cu'].active = true;
+  }
+  buildLayerPanel();
+  updateWorkLayerBadge();
+  editor.render();
+}
+
+function populateStackupTable(){
+  const tbody = document.getElementById('stackup-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const stack = DR.stackup || [];
+  for (let i = 0; i < stack.length; i++) {
+    const l = stack[i];
+    const isCu = l.type === 'copper';
+    const bgColor = isCu ? 'rgba(204,102,51,0.08)' : 'rgba(100,116,139,0.06)';
+    const nameStyle = isCu ? 'font-weight:700;color:var(--text);' : 'color:var(--text-dim);';
+    tbody.innerHTML += `<tr style="background:${bgColor};">
+      <td style="${nameStyle}font-size:11px;">${l.name}</td>
+      <td style="font-size:11px;color:var(--text-muted);">${isCu ? 'Copper' : 'Dielectric'}</td>
+      <td><input class="dr-input" type="number" step="0.01" min="0.01" max="5" value="${l.thickness}"
+        onchange="DR.stackup[${i}].thickness=parseFloat(this.value)||0.1;_updateStackupTotal();" style="width:70px;"></td>
+      <td style="font-size:11px;color:var(--text-muted);">${l.material || ''}</td>
+    </tr>`;
+  }
+  _updateStackupTotal();
+}
+
+function _updateStackupTotal(){
+  const el = document.getElementById('stackup-total');
+  if (!el) return;
+  const total = (DR.stackup || []).reduce((s, l) => s + (l.thickness || 0), 0);
+  DR.boardThickness = +total.toFixed(3);
+  const thickEl = document.getElementById('drt-board-thick');
+  if (thickEl) thickEl.value = DR.boardThickness;
+  const copperCount = (DR.stackup || []).filter(l => l.type === 'copper').length;
+  el.innerHTML = `Total: <b>${total.toFixed(3)} mm</b> &nbsp;·&nbsp; ${copperCount} copper layer${copperCount !== 1 ? 's' : ''} &nbsp;·&nbsp; ${(DR.stackup||[]).filter(l=>l.type==='dielectric').length} dielectric layer${(DR.stackup||[]).filter(l=>l.type==='dielectric').length!==1?'s':''}`;
+  updateDRTComputed();
+}
+
+const _STACKUP_PRESETS = {
+  'standard-2L': {
+    layerCount: 2, stackup: [
+      { name:'F.Cu', type:'copper', thickness:0.035, material:'Copper' },
+      { name:'Core', type:'dielectric', thickness:1.53, material:'FR-4 Core' },
+      { name:'B.Cu', type:'copper', thickness:0.035, material:'Copper' },
+    ]
+  },
+  'standard-4L': {
+    layerCount: 4, stackup: [
+      { name:'F.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.2,   material:'FR-4 Prepreg' },
+      { name:'In1.Cu', type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Core',   type:'dielectric', thickness:1.065, material:'FR-4 Core' },
+      { name:'In2.Cu', type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.2,   material:'FR-4 Prepreg' },
+      { name:'B.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+    ]
+  },
+  'standard-6L': {
+    layerCount: 6, stackup: [
+      { name:'F.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.2,   material:'FR-4 Prepreg' },
+      { name:'In1.Cu', type:'copper',     thickness:0.0175,material:'Copper' },
+      { name:'Core',   type:'dielectric', thickness:0.265, material:'FR-4 Core' },
+      { name:'In2.Cu', type:'copper',     thickness:0.0175,material:'Copper' },
+      { name:'Core',   type:'dielectric', thickness:0.53,  material:'FR-4 Core' },
+      { name:'In3.Cu', type:'copper',     thickness:0.0175,material:'Copper' },
+      { name:'Core',   type:'dielectric', thickness:0.265, material:'FR-4 Core' },
+      { name:'In4.Cu', type:'copper',     thickness:0.0175,material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.2,   material:'FR-4 Prepreg' },
+      { name:'B.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+    ]
+  },
+  'hdi-4L': {
+    layerCount: 4, stackup: [
+      { name:'F.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.1,   material:'FR-4 Prepreg' },
+      { name:'In1.Cu', type:'copper',     thickness:0.0175,material:'Copper' },
+      { name:'Core',   type:'dielectric', thickness:0.66,  material:'FR-4 Core' },
+      { name:'In2.Cu', type:'copper',     thickness:0.0175,material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.1,   material:'FR-4 Prepreg' },
+      { name:'B.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+    ]
+  },
+  'rf-4L': {
+    layerCount: 4, stackup: [
+      { name:'F.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.1,   material:'Rogers RO4350B' },
+      { name:'In1.Cu', type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Core',   type:'dielectric', thickness:0.36,  material:'FR-4 Core' },
+      { name:'In2.Cu', type:'copper',     thickness:0.035, material:'Copper' },
+      { name:'Prepreg',type:'dielectric', thickness:0.1,   material:'Rogers RO4350B' },
+      { name:'B.Cu',   type:'copper',     thickness:0.035, material:'Copper' },
+    ]
+  },
+};
+
+function applyStackupPreset(name){
+  if (!name) return;
+  const p = _STACKUP_PRESETS[name];
+  if (!p) return;
+  DR.layerCount = p.layerCount;
+  DR.stackup = JSON.parse(JSON.stringify(p.stackup));
+  const sel = document.getElementById('drt-layer-count');
+  if (sel) sel.value = p.layerCount;
+  _rebuildEditorLayers();
+  populateStackupTable();
+  _saveDRStorage();
 }
 
 // DRC results storage for filter re-render

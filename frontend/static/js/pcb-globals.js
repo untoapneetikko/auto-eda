@@ -47,6 +47,13 @@ let DR = {
   // Board
   boardThickness: 1.6,    // PCB thickness (mm) — used for drill aspect ratio
   copperWeight: 1.0,      // Copper weight oz/ft² — affects current capacity
+  // Stackup
+  layerCount: 2,          // Number of copper layers (2, 4, 6, 8)
+  stackup: [
+    { name:'F.Cu',  type:'copper',     thickness:0.035, material:'Copper' },
+    { name:'Core',  type:'dielectric', thickness:1.53,  material:'FR-4' },
+    { name:'B.Cu',  type:'copper',     thickness:0.035, material:'Copper' },
+  ],
   // Silkscreen
   silkscreenWidth: 0.12,  // Min silkscreen line width (mm)
   // Routing aesthetics

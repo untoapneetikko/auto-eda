@@ -146,40 +146,43 @@ class PCBEditor {
     this._drawGrid();
     // Work layer: active layer is rendered on top at full alpha; others dimmed
     const wl=this.workLayer||'F.Cu';
-    const wIsCu=wl==='F.Cu'||wl==='B.Cu';
+    const wIsCu=wl.endsWith('.Cu');
     const wSide=(wl==='B.Cu')?'B':'F'; // copper side for work layer (default F)
-    const otherCu=wSide==='F'?'B.Cu':'F.Cu';
-    const otherSide=wSide==='F'?'B':'F';
     const otherSilk=wSide==='F'?'B.SilkS':'F.SilkS';
     const workSilk=wSide==='F'?'F.SilkS':'B.SilkS';
     const _safe=(fn)=>{try{fn();}catch(e){console.error('[PCBEditor render]',e);}};
+    // Collect all copper layer keys
+    const allCu=Object.keys(this.layers).filter(k=>k.endsWith('.Cu'));
     if(wIsCu){
-      // Draw non-work copper + pads + silk at reduced alpha
+      // Draw non-work copper layers at reduced alpha
       this.ctx.globalAlpha=0.45;
-      _safe(()=>{if(this.layers[otherCu].visible) this._drawTraces(otherCu);});
-      _safe(()=>{if(this.layers[otherSilk].visible) this._drawSilk(otherSide);});
-      _safe(()=>this._drawPads(otherSide));
+      for(const cu of allCu){
+        if(cu===wl)continue;
+        _safe(()=>{if(this.layers[cu]?.visible) this._drawTraces(cu);});
+      }
+      _safe(()=>{if(this.layers[otherSilk]?.visible) this._drawSilk(wSide==='F'?'B':'F');});
+      _safe(()=>this._drawPads(wSide==='F'?'B':'F'));
       this.ctx.globalAlpha=1.0;
       // Zones & areas (board-wide)
       _safe(()=>this._drawZones());
       _safe(()=>this._drawAreas());
       // Work layer copper + pads + silk on top at full alpha
       this.ctx.globalAlpha=1.0;
-      _safe(()=>{if(this.layers[wl].visible) this._drawTraces(wl);});
+      _safe(()=>{if(this.layers[wl]?.visible) this._drawTraces(wl);});
       _safe(()=>this._drawPads(wSide));
-      _safe(()=>{if(this.layers[workSilk].visible) this._drawSilk(wSide);});
+      _safe(()=>{if(this.layers[workSilk]?.visible) this._drawSilk(wSide);});
       // Vias rendered last — multilayer, always on top of everything
       _safe(()=>this._drawVias());
     } else {
-      // Non-copper work layer: draw everything normally, work layer content is on top by draw order
-      _safe(()=>{if(this.layers['B.Cu'].visible) this._drawTraces('B.Cu');});
-      _safe(()=>{if(this.layers['F.Cu'].visible) this._drawTraces('F.Cu');});
+      // Non-copper work layer: draw everything normally
+      for(const cu of allCu){
+        _safe(()=>{if(this.layers[cu]?.visible) this._drawTraces(cu);});
+      }
       _safe(()=>this._drawZones()); _safe(()=>this._drawAreas());
       this.ctx.globalAlpha=1.0;
       _safe(()=>this._drawPads());
-      _safe(()=>{if(this.layers['B.SilkS'].visible) this._drawSilk('B');});
-      _safe(()=>{if(this.layers['F.SilkS'].visible) this._drawSilk('F');});
-      // Vias rendered on top of everything (multilayer — always visible)
+      _safe(()=>{if(this.layers['B.SilkS']?.visible) this._drawSilk('B');});
+      _safe(()=>{if(this.layers['F.SilkS']?.visible) this._drawSilk('F');});
       _safe(()=>this._drawVias());
     }
     if(this.layers['Ratsnest'].visible) this._drawRatsnest();
