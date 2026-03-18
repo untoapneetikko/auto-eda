@@ -27,10 +27,15 @@ import uuid
 from pathlib import Path
 
 
+import hashlib
+import hmac
+import secrets
+
 import redis
 from fastapi import FastAPI, HTTPException, Request, UploadFile, Form
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # ── Path setup so agent endpoints can import their own modules ────────────────
 _PROJECT_ROOT = Path(__file__).parent.parent
@@ -58,6 +63,137 @@ _r = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"), deco
 
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(_PROJECT_ROOT / "data" / "uploads")))
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", str(_PROJECT_ROOT / "data" / "outputs")))
+
+# ── Authentication ────────────────────────────────────────────────────────────
+# Users: username → bcrypt-style salted hash (using SHA-256 + salt for simplicity)
+_AUTH_SALT = os.getenv("AUTH_SALT", "auto-eda-v1-salt-2026")
+
+def _hash_password(password: str) -> str:
+    return hashlib.sha256((_AUTH_SALT + password).encode()).hexdigest()
+
+_USERS: dict[str, dict] = {
+    "john": {
+        "password_hash": _hash_password("boy"),
+        "display_name": "John",
+        "role": "admin",
+    },
+}
+
+_SESSION_TTL = 60 * 60 * 24 * 30  # 30 days
+
+def _create_session(username: str) -> str:
+    token = secrets.token_urlsafe(48)
+    _r.setex(f"session:{token}", _SESSION_TTL, json.dumps({
+        "username": username,
+        "display_name": _USERS[username]["display_name"],
+        "role": _USERS[username]["role"],
+    }))
+    return token
+
+def _get_session(token: str) -> dict | None:
+    if not token:
+        return None
+    data = _r.get(f"session:{token}")
+    if not data:
+        return None
+    return json.loads(data)
+
+def _destroy_session(token: str):
+    _r.delete(f"session:{token}")
+
+# Paths that don't require auth
+_PUBLIC_PATHS = {"/login", "/login.html", "/api/auth/login", "/api/auth/me"}
+_PUBLIC_PREFIXES = ("/static/",)
+
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        path = request.url.path
+        # Allow public paths
+        if path in _PUBLIC_PATHS or any(path.startswith(p) for p in _PUBLIC_PREFIXES):
+            return await call_next(request)
+        # Check session cookie
+        token = request.cookies.get("eda_session", "")
+        session = _get_session(token)
+        if not session:
+            # API requests get 401, page requests get redirected to login
+            if path.startswith("/api/"):
+                return JSONResponse({"detail": "Not authenticated"}, status_code=401)
+            return RedirectResponse("/login", status_code=302)
+        # Attach user info to request state
+        request.state.user = session
+        return await call_next(request)
+
+app.add_middleware(AuthMiddleware)
+
+# ── Auth endpoints ────────────────────────────────────────────────────────────
+@app.post("/api/auth/login")
+async def api_login(request: Request):
+    body = await request.json()
+    username = (body.get("username") or "").strip().lower()
+    password = body.get("password") or ""
+    user = _USERS.get(username)
+    if not user or not hmac.compare_digest(user["password_hash"], _hash_password(password)):
+        raise HTTPException(401, "Invalid username or password")
+    token = _create_session(username)
+    resp = JSONResponse({"ok": True, "user": {
+        "username": username,
+        "display_name": user["display_name"],
+        "role": user["role"],
+    }})
+    resp.set_cookie(
+        "eda_session", token,
+        max_age=_SESSION_TTL,
+        httponly=True,
+        samesite="strict",
+        path="/",
+    )
+    return resp
+
+@app.post("/api/auth/logout")
+async def api_logout(request: Request):
+    token = request.cookies.get("eda_session", "")
+    if token:
+        _destroy_session(token)
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie("eda_session", path="/")
+    return resp
+
+@app.get("/api/auth/me")
+async def api_me(request: Request):
+    token = request.cookies.get("eda_session", "")
+    session = _get_session(token)
+    if not session:
+        return JSONResponse({"authenticated": False}, status_code=200)
+    return {"authenticated": True, "user": session}
+
+@app.post("/api/auth/update-profile")
+async def api_update_profile(request: Request):
+    token = request.cookies.get("eda_session", "")
+    session = _get_session(token)
+    if not session:
+        raise HTTPException(401, "Not authenticated")
+    body = await request.json()
+    username = session["username"]
+    user = _USERS.get(username)
+    if not user:
+        raise HTTPException(404, "User not found")
+    # Update display name
+    if "display_name" in body:
+        new_name = body["display_name"].strip()
+        if new_name:
+            user["display_name"] = new_name
+            session["display_name"] = new_name
+            _r.setex(f"session:{token}", _SESSION_TTL, json.dumps(session))
+    # Update password
+    if "new_password" in body:
+        old_pw = body.get("current_password", "")
+        if not hmac.compare_digest(user["password_hash"], _hash_password(old_pw)):
+            raise HTTPException(400, "Current password is incorrect")
+        new_pw = body["new_password"]
+        if len(new_pw) < 2:
+            raise HTTPException(400, "Password too short")
+        user["password_hash"] = _hash_password(new_pw)
+    return {"ok": True, "user": {"username": username, "display_name": user["display_name"], "role": user["role"]}}
 
 # ── Mount agent routers ───────────────────────────────────────────────────────
 try:
@@ -272,6 +408,15 @@ class _NoCacheJS(_SF):
 app.mount("/static", _NoCacheJS(directory=str(_static_dir)), name="assets")
 
 # Serve HTML pages at their natural paths via explicit routes
+@app.get("/login", include_in_schema=False)
+@app.get("/login.html", include_in_schema=False)
+async def serve_login(request: Request):
+    # If already logged in, redirect to app
+    token = request.cookies.get("eda_session", "")
+    if _get_session(token):
+        return RedirectResponse("/", status_code=302)
+    return FileResponse(str(_static_dir / "login.html"))
+
 @app.get("/", include_in_schema=False)
 async def serve_index():
     return FileResponse(str(_static_dir / "index.html"))

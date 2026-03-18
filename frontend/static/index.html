@@ -565,6 +565,23 @@
     <button class="nav-tab" id="nav-generate" style="display:none;"></button>
     <div id="live-indicator" class="dead" title="Server connection status"><div id="live-dot"></div><span id="live-label">OFFLINE</span><span id="live-ping"></span></div>
   </nav>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding-right:16px;position:relative;">
+    <button id="user-menu-btn" onclick="toggleUserMenu()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--text-dim);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+      <span style="font-size:14px;">👤</span> <span id="user-display-name">User</span> <span style="font-size:9px;opacity:0.5;">▾</span>
+    </button>
+    <div id="user-menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;min-width:200px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.5);padding:6px 0;">
+      <div style="padding:8px 14px;border-bottom:1px solid var(--border);">
+        <div id="user-menu-name" style="font-size:13px;font-weight:700;color:var(--text);"></div>
+        <div id="user-menu-role" style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;"></div>
+      </div>
+      <div onclick="openProfileSettings();toggleUserMenu();" style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text-dim);transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+        ⚙ Profile Settings
+      </div>
+      <div onclick="doLogout()" style="padding:8px 14px;font-size:12px;cursor:pointer;color:#ef4444;transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+        ↩ Sign Out
+      </div>
+    </div>
+  </div>
 </header>
 
 <!-- ══ SECTION: DATASHEETS ════════════════════════════════════════════════ -->
@@ -1413,6 +1430,101 @@ function apikeyToggleVisibility() {
   const inp = document.getElementById('apikey-input');
   inp.type = inp.type === 'password' ? 'text' : 'password';
 }
+
+// ── User menu & auth ──────────────────────────────────────────────────────
+function toggleUserMenu() {
+  const m = document.getElementById('user-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('user-menu');
+  const btn = document.getElementById('user-menu-btn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) menu.style.display = 'none';
+});
+
+async function doLogout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
+async function loadUserInfo() {
+  try {
+    const res = await fetch('/api/auth/me');
+    const d = await res.json();
+    if (d.authenticated && d.user) {
+      document.getElementById('user-display-name').textContent = d.user.display_name;
+      document.getElementById('user-menu-name').textContent = d.user.display_name;
+      document.getElementById('user-menu-role').textContent = d.user.role;
+    }
+  } catch(_) {}
+}
+loadUserInfo();
+
+function openProfileSettings() {
+  document.getElementById('profile-modal').style.display = 'flex';
+  document.getElementById('profile-display-name').value = document.getElementById('user-display-name').textContent;
+  document.getElementById('profile-current-pw').value = '';
+  document.getElementById('profile-new-pw').value = '';
+  document.getElementById('profile-status').textContent = '';
+}
+
+async function saveProfileSettings() {
+  const btn = document.getElementById('profile-save-btn');
+  const status = document.getElementById('profile-status');
+  btn.disabled = true; status.textContent = 'Saving...'; status.style.color = 'var(--text-muted)';
+  const body = {};
+  const newName = document.getElementById('profile-display-name').value.trim();
+  if (newName) body.display_name = newName;
+  const curPw = document.getElementById('profile-current-pw').value;
+  const newPw = document.getElementById('profile-new-pw').value;
+  if (newPw) { body.current_password = curPw; body.new_password = newPw; }
+  try {
+    const res = await fetch('/api/auth/update-profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.detail || 'Update failed');
+    status.textContent = 'Saved!'; status.style.color = 'var(--green)';
+    if (d.user) {
+      document.getElementById('user-display-name').textContent = d.user.display_name;
+      document.getElementById('user-menu-name').textContent = d.user.display_name;
+    }
+    setTimeout(() => { document.getElementById('profile-modal').style.display = 'none'; }, 800);
+  } catch(e) {
+    status.textContent = e.message; status.style.color = 'var(--red)';
+  }
+  btn.disabled = false;
+}
 </script>
+
+<!-- Profile Settings Modal -->
+<div id="profile-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;display:none;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:400px;box-shadow:0 16px 48px rgba(0,0,0,0.7);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;font-weight:700;">Profile Settings</span>
+      <button onclick="document.getElementById('profile-modal').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;">&times;</button>
+    </div>
+    <div style="padding:18px;">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Display Name</label>
+        <input id="profile-display-name" type="text" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;">
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:8px;">Change Password</div>
+      <div style="margin-bottom:10px;">
+        <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:3px;">Current Password</label>
+        <input id="profile-current-pw" type="password" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:3px;">New Password</label>
+        <input id="profile-new-pw" type="password" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;">
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button id="profile-save-btn" onclick="saveProfileSettings()" style="background:var(--accent);border:none;border-radius:6px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Save</button>
+        <span id="profile-status" style="font-size:12px;"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

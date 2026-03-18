@@ -251,7 +251,24 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <button class="nav-tab"        id="pcb-nav-3d"      onclick="open3DView()">🎲 3D View</button>
   </nav>
   <span class="phase-badge" style="margin-left:auto;">PCB Layout</span>
+  <button id="pcb-user-btn" onclick="window.top===window?doLogoutPcb():void 0" style="background:var(--surface2,#22263a);border:1px solid var(--border,#2e3250);border-radius:6px;padding:4px 10px;color:var(--text-dim,#94a3b8);font-size:11px;cursor:pointer;margin-left:8px;display:none;">👤 <span id="pcb-user-name"></span></button>
 </header>
+<script>
+  // Only show user button in standalone mode (not embedded iframe)
+  if(!location.search.includes('embedded=1')){
+    const _ub=document.getElementById('pcb-user-btn');
+    if(_ub)_ub.style.display='';
+    fetch('/api/auth/me').then(r=>r.json()).then(d=>{
+      if(d.authenticated&&d.user){
+        const n=document.getElementById('pcb-user-name');
+        if(n)n.textContent=d.user.display_name;
+      }
+    }).catch(()=>{});
+  }
+  function doLogoutPcb(){
+    fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/login');
+  }
+</script>
 
 <div class="pcb-sections">
 

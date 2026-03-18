@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto-EDA — Login</title>
+<style>
+  :root { --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3250; --accent:#6c63ff; --accent-dim:rgba(108,99,255,0.15); --green:#22c55e; --red:#ef4444; --text:#e2e8f0; --text-muted:#64748b; --text-dim:#94a3b8; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .login-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:40px 36px; width:380px; box-shadow:0 16px 48px rgba(0,0,0,0.5); }
+  .login-logo { font-size:28px; font-weight:800; text-align:center; margin-bottom:6px; }
+  .login-sub { font-size:13px; color:var(--text-muted); text-align:center; margin-bottom:28px; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); margin-bottom:5px; }
+  .field input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:10px 12px; color:var(--text); font-size:14px; outline:none; transition:border-color 0.2s; }
+  .field input:focus { border-color:var(--accent); }
+  .login-btn { width:100%; background:var(--accent); border:none; border-radius:6px; padding:11px; color:#fff; font-size:14px; font-weight:700; cursor:pointer; margin-top:8px; transition:opacity 0.2s; }
+  .login-btn:hover { opacity:0.9; }
+  .login-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .login-error { color:var(--red); font-size:12px; text-align:center; margin-top:12px; min-height:18px; }
+</style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-logo">Auto-EDA</div>
+    <div class="login-sub">Sign in to continue</div>
+    <form id="login-form" onsubmit="doLogin(event)">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" autocomplete="username" autofocus required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="login-btn" type="submit" id="login-btn">Sign In</button>
+    </form>
+    <div class="login-error" id="login-error"></div>
+  </div>
+<script>
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value,
+      })
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.detail || 'Login failed');
+    }
+    window.location.href = '/';
+  } catch (e) {
+    err.textContent = e.message;
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+</script>
+</body>
+</html>
