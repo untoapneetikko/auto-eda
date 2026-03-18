@@ -1275,10 +1275,10 @@ _EAGLE_PAD_SHAPE_MAP = {
     "square": "rect", "round": "circle", "octagon": "circle", "long": "rect",
 }
 
-def _eagle_mm(mils_str: str) -> float:
-    """Convert Eagle mils string to mm."""
+def _eagle_mm(val_str: str) -> float:
+    """Parse Eagle coordinate/dimension string to mm (Eagle .lbr uses mm natively)."""
     try:
-        return round(float(mils_str) * 0.0254, 4)
+        return round(float(val_str), 4)
     except (ValueError, TypeError):
         return 0.0
 

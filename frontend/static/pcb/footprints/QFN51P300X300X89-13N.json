@@ -1,0 +1,129 @@
+{
+  "name": "QFN51P300X300X89-13N",
+  "description": "<b>DQ1225</b><br>",
+  "pads": [
+    {
+      "number": "1",
+      "x": -1.4488,
+      "y": -0.5118,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "2",
+      "x": -1.4488,
+      "y": -0.0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "3",
+      "x": -1.4488,
+      "y": 0.5118,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "4",
+      "x": -0.5118,
+      "y": 1.4488,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "5",
+      "x": 0.0,
+      "y": 1.4488,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "6",
+      "x": 0.5118,
+      "y": 1.4488,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "7",
+      "x": 1.4488,
+      "y": 0.5118,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "8",
+      "x": 1.4488,
+      "y": -0.0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "9",
+      "x": 1.4488,
+      "y": -0.5118,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "10",
+      "x": 0.5118,
+      "y": -1.4488,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "11",
+      "x": 0.0,
+      "y": -1.4488,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "12",
+      "x": -0.5118,
+      "y": -1.4488,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 0.8504,
+      "size_y": 0.2992
+    },
+    {
+      "number": "13",
+      "x": 0.0,
+      "y": -0.0,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.4488,
+      "size_y": 1.4488
+    }
+  ],
+  "courtyard": {
+    "x": -2.124,
+    "y": -1.8484,
+    "w": 4.248,
+    "h": 3.6968
+  }
+}

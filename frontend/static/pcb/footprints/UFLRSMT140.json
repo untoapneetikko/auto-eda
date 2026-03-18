@@ -1,0 +1,39 @@
+{
+  "name": "UFLRSMT140",
+  "description": "<b>U.FL-R-SMT-1(40)-1</b><br>",
+  "pads": [
+    {
+      "number": "1",
+      "x": -0.0,
+      "y": 1.4134,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 1.0512,
+      "size_y": 1.0
+    },
+    {
+      "number": "2",
+      "x": 1.4764,
+      "y": -0.1102,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 2.2008,
+      "size_y": 1.0512
+    },
+    {
+      "number": "3",
+      "x": -1.4764,
+      "y": -0.1102,
+      "type": "smd",
+      "shape": "rect",
+      "size_x": 2.2008,
+      "size_y": 1.0512
+    }
+  ],
+  "courtyard": {
+    "x": -2.8268,
+    "y": -0.8858,
+    "w": 5.6536,
+    "h": 3.0492
+  }
+}
