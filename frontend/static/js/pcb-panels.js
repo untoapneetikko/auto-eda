@@ -466,6 +466,54 @@ function updateInfoPanel(){
       const copperLayers=stackup.filter(l=>l.type==='copper');
       const trIdx=stackup.findIndex(l=>l.name===tLayer);
 
+      // ── Point-in-polygon (ray casting) ──
+      const _ptInPoly=(px,py,pts)=>{
+        let inside=false;
+        for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+          const xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y;
+          if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))
+            inside=!inside;
+        }
+        return inside;
+      };
+      // ── Point-in-rect ──
+      const _ptInRect=(px,py,x1,y1,x2,y2)=>{
+        const lx=Math.min(x1,x2),hx=Math.max(x1,x2);
+        const ly=Math.min(y1,y2),hy=Math.max(y1,y2);
+        return px>=lx&&px<=hx&&py>=ly&&py<=hy;
+      };
+
+      // Check if a copper layer has GND copper directly at trace coordinates (mx, my)
+      const _hasGndAt=(cName)=>{
+        // Check zones (polygons)
+        for(const z of (board.zones||[])){
+          if(z.layer===cName&&isGnd(z.net)&&(z.points||[]).length>=3){
+            if(_ptInPoly(mx,my,z.points)) return true;
+          }
+        }
+        // Check areas (rectangles)
+        for(const a of (board.areas||[])){
+          if(a.layer===cName&&isGnd(a.net)){
+            if(_ptInRect(mx,my,a.x1,a.y1,a.x2,a.y2)) return true;
+          }
+        }
+        // Check GND pads (thru-hole pads are on all layers)
+        for(const comp of (board.components||[])){
+          for(const pad of (comp.pads||[])){
+            if(!isGnd(pad.net)) continue;
+            const onLayer=(pad.type==='thru_hole')||(comp.layer==='B'?'B.Cu':'F.Cu')===cName;
+            if(!onLayer) continue;
+            const rad=(comp.rotation||0)*Math.PI/180;
+            const cosR=Math.cos(rad),sinR=Math.sin(rad);
+            const px=pad.x*cosR-pad.y*sinR+comp.x;
+            const py=pad.x*sinR+pad.y*cosR+comp.y;
+            if(_ptInRect(mx,my,px-(pad.size_x||0)/2,py-(pad.size_y||0)/2,
+                                px+(pad.size_x||0)/2,py+(pad.size_y||0)/2)) return true;
+          }
+        }
+        return false;
+      };
+
       // Walk stackup to find nearest GND plane layer above and below
       const _findGndPlaneDistance=(startIdx,direction)=>{
         // direction: -1 = above (toward index 0), +1 = below
@@ -475,13 +523,9 @@ function updateInfoPanel(){
           if(layer.type==='dielectric'||layer.type==='prepreg'){
             dist+=layer.thickness||0;
           } else if(layer.type==='copper'){
-            // Check if this copper layer has GND copper at these coordinates
-            const cName=layer.name;
-            let hasGnd=false;
-            for(const z of (board.zones||[])){if(z.layer===cName&&isGnd(z.net)){hasGnd=true;break;}}
-            if(!hasGnd) for(const a of (board.areas||[])){if(a.layer===cName&&isGnd(a.net)){hasGnd=true;break;}}
-            if(hasGnd) return dist;
-            // Not a ground plane — keep going but add copper thickness
+            // Check if this copper layer has GND copper AT the trace coordinates
+            if(_hasGndAt(layer.name)) return dist;
+            // Not a ground plane here — keep going but add copper thickness
             dist+=layer.thickness||0.035;
           }
           i+=direction;
