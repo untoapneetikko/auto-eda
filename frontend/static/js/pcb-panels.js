@@ -408,26 +408,45 @@ function updateInfoPanel(){
 
       // ── Collect GND copper edges on same layer → coplanar gap ──
       const isGnd=net=>/^(GND|AGND|DGND|PGND|GROUND|VSS|GND\d)$/i.test((net||'').trim());
-      let gapSame=Infinity; // nearest GND copper edge on same layer
+      // Track two kinds of gap: edge-to-edge (from zone/area clearance)
+      // and center-to-edge (from pads/traces/vias, needs w/2 subtracted)
+      let gapEdge=Infinity;   // already edge-to-edge (zone clearances)
+      let gapCenter=Infinity; // center-of-trace to GND copper edge
 
       // 1) GND zones on same layer
+      // Zone polygons define the fill boundary — copper fills inside but
+      // keeps a clearance around non-zone copper. If the trace is inside
+      // the zone, the real gap = zone clearance. If outside, distance to edge.
       for(const z of (board.zones||[])){
         if(z.layer!==tLayer||!isGnd(z.net)) continue;
         const pts=z.points||[];
-        for(let i=0;i<pts.length;i++){
-          const a=pts[i], b=pts[(i+1)%pts.length];
-          const d=_distToSeg(mx,my,a.x,a.y,b.x,b.y);
-          if(d<gapSame) gapSame=d;
+        if(pts.length<3) continue;
+        const zClr=z.clearance||(typeof DR!=='undefined'?DR.clearance:0.2);
+        if(_ptInPoly(mx,my,pts)){
+          // Trace is inside zone — pour keeps clearance from trace edge
+          if(zClr<gapEdge) gapEdge=zClr;
+        } else {
+          // Trace is outside zone boundary
+          for(let i=0;i<pts.length;i++){
+            const a=pts[i], b=pts[(i+1)%pts.length];
+            const d=_distToSeg(mx,my,a.x,a.y,b.x,b.y);
+            if(d<gapCenter) gapCenter=d;
+          }
         }
       }
-      // 2) GND areas (rectangles) on same layer
+      // 2) GND areas (rectangles) on same layer — same logic
       for(const a of (board.areas||[])){
         if(a.layer!==tLayer||!isGnd(a.net)) continue;
-        const d=_distToRect(mx,my,Math.min(a.x1,a.x2),Math.min(a.y1,a.y2),
-          Math.abs(a.x2-a.x1),Math.abs(a.y2-a.y1));
-        if(d<gapSame) gapSame=d;
+        const aClr=a.clearance||(typeof DR!=='undefined'?DR.clearance:0.2);
+        if(_ptInRect(mx,my,a.x1,a.y1,a.x2,a.y2)){
+          if(aClr<gapEdge) gapEdge=aClr;
+        } else {
+          const d=_distToRect(mx,my,Math.min(a.x1,a.x2),Math.min(a.y1,a.y2),
+            Math.abs(a.x2-a.x1),Math.abs(a.y2-a.y1));
+          if(d<gapCenter) gapCenter=d;
+        }
       }
-      // 3) GND pads on same layer
+      // 3) GND pads on same layer (center-to-edge measurement)
       for(const comp of (board.components||[])){
         const cLayer=comp.layer==='B'?'B.Cu':'F.Cu';
         for(const pad of (comp.pads||[])){
@@ -440,26 +459,28 @@ function updateInfoPanel(){
           const py=pad.x*sinR+pad.y*cosR+comp.y;
           const halfW=(pad.size_x||0)/2, halfH=(pad.size_y||0)/2;
           const d=_distToRect(mx,my,px-halfW,py-halfH,pad.size_x||0,pad.size_y||0);
-          if(d<gapSame) gapSame=d;
+          if(d<gapCenter) gapCenter=d;
         }
       }
-      // 4) GND traces on same layer
+      // 4) GND traces on same layer (already edge-to-edge: subtract other trace half-width)
       for(const ot of (board.traces||[])){
         if(ot===tr||ot.layer!==tLayer||!isGnd(ot.net)) continue;
         const otw=(ot.width||0.25)/2;
         for(const seg of (ot.segments||[])){
           const d=_distToSeg(mx,my,seg.start.x,seg.start.y,seg.end.x,seg.end.y)-otw;
-          if(d<gapSame) gapSame=d;
+          if(d<gapCenter) gapCenter=d;
         }
       }
-      // 5) GND vias (present on all copper layers)
+      // 5) GND vias (center-to-edge measurement)
       for(const v of (board.vias||[])){
         if(!isGnd(v.net)) continue;
         const d=Math.hypot(mx-v.x,my-v.y)-(v.size||DR.viaSize||1.0)/2;
-        if(d<gapSame) gapSame=d;
+        if(d<gapCenter) gapCenter=d;
       }
-      // Subtract half trace width to get edge-to-edge gap
-      gapSame=Math.max(0.01, gapSame - w/2);
+      // Combine: zone/area gaps are already edge-to-edge;
+      // pad/trace/via gaps need half trace width subtracted
+      const gapFromGeom=gapCenter-w/2;
+      const gapSame=Math.max(0.01, Math.min(gapEdge, gapFromGeom));
 
       // ── Stackup: find dielectric height to nearest GND plane above & below ──
       const stackup=(typeof DR!=='undefined'&&DR.stackup)||[];
