@@ -621,20 +621,22 @@ function updateInfoPanel(){
           :(87/Math.sqrt(er+1.41))*Math.log(5.98*hMin/(0.8*we+t));
         if(Z0<0) Z0=Math.abs(Z0);
       } else {
-        return null; // no reference plane at all
+        // No GND reference at all — impedance is effectively infinite
+        topology='Unreferenced';
+        Z0=Infinity; eeff=1.0;
       }
 
-      return{Z0,eeff,w,g:hasCoPlanar?gapSame:null,hAbove,hBelow,hMin,er,t,topology,
+      return{Z0,eeff,w,g:hasCoPlanar?gapSame:null,hAbove,hBelow,hMin:hMin||null,er,t,topology,
              gndSameLayer:gapSame<50};
     })();
     const cpwHtml=_cpwZ0?`
-      <div style="margin-top:8px;padding:6px 8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:5px;">
-        <div style="font-size:9px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">${esc(_cpwZ0.topology)}</div>
-        <div class="ir"><span class="il">Z₀</span><span class="iv" style="color:#a5b4fc;font-weight:700;">${_cpwZ0.Z0.toFixed(1)} Ω</span></div>
-        <div class="ir"><span class="il">εeff</span><span class="iv">${_cpwZ0.eeff.toFixed(2)}</span></div>
+      <div style="margin-top:8px;padding:6px 8px;background:${_cpwZ0.Z0===Infinity?'rgba(239,68,68,0.10);border:1px solid rgba(239,68,68,0.35)':'rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25)'};border-radius:5px;">
+        <div style="font-size:9px;font-weight:700;color:${_cpwZ0.Z0===Infinity?'#f87171':'#818cf8'};text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">${esc(_cpwZ0.topology)}</div>
+        <div class="ir"><span class="il">Z₀</span><span class="iv" style="color:${_cpwZ0.Z0===Infinity?'#f87171':'#a5b4fc'};font-weight:700;">${_cpwZ0.Z0===Infinity?'∞ (no GND ref)':_cpwZ0.Z0.toFixed(1)+' Ω'}</span></div>
+        ${_cpwZ0.Z0!==Infinity?`<div class="ir"><span class="il">εeff</span><span class="iv">${_cpwZ0.eeff.toFixed(2)}</span></div>`:''}
         ${_cpwZ0.g!==null?`<div class="ir"><span class="il">Gap</span><span class="iv">${_cpwZ0.g.toFixed(3)} mm</span></div>`:''}
-        ${_cpwZ0.hAbove!==null?`<div class="ir"><span class="il">h↑</span><span class="iv">${_cpwZ0.hAbove.toFixed(3)} mm</span></div>`:''}
-        ${_cpwZ0.hBelow!==null?`<div class="ir"><span class="il">h↓</span><span class="iv">${_cpwZ0.hBelow.toFixed(3)} mm</span></div>`:''}
+        <div class="ir"><span class="il">h↑</span><span class="iv">${_cpwZ0.hAbove!==null?_cpwZ0.hAbove.toFixed(3)+' mm':'<span style="color:#f87171;">no GND</span>'}</span></div>
+        <div class="ir"><span class="il">h↓</span><span class="iv">${_cpwZ0.hBelow!==null?_cpwZ0.hBelow.toFixed(3)+' mm':'<span style="color:#f87171;">no GND</span>'}</span></div>
         <div class="ir"><span class="il">εr</span><span class="iv">${_cpwZ0.er}</span></div>
         <div class="ir"><span class="il">Cu</span><span class="iv">${(_cpwZ0.t*1000).toFixed(0)} µm</span></div>
       </div>`:'';
