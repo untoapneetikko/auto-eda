@@ -381,7 +381,7 @@ function updateInfoPanel(){
     const lyr=tr.layer||'F.Cu';
     const segLen=(tr.segments||[]).reduce((s,seg)=>s+Math.hypot(seg.end.x-seg.start.x,seg.end.y-seg.start.y),0);
     // ── Coplanar Waveguide impedance — real board geometry ──
-    const _cpwZ0=(()=>{
+    const _cpwZ0=(()=>{ try{
       const board=editor.board; if(!board) return null;
       const w=tr.widths?.length?tr.widths[0]:(tr.width||0.25);
       const tLayer=tr.layer||'F.Cu';
@@ -404,6 +404,23 @@ function updateInfoPanel(){
         if(len2<1e-8) return Math.hypot(px-x1,py-y1);
         const t=Math.max(0,Math.min(1,((px-x1)*dx+(py-y1)*dy)/len2));
         return Math.hypot(px-(x1+t*dx),py-(y1+t*dy));
+      };
+
+      // ── Point-in-polygon (ray casting) ──
+      const _ptInPoly=(px,py,pts)=>{
+        let inside=false;
+        for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+          const xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y;
+          if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))
+            inside=!inside;
+        }
+        return inside;
+      };
+      // ── Point-in-rect ──
+      const _ptInRect=(px,py,x1,y1,x2,y2)=>{
+        const lx=Math.min(x1,x2),hx=Math.max(x1,x2);
+        const ly=Math.min(y1,y2),hy=Math.max(y1,y2);
+        return px>=lx&&px<=hx&&py>=ly&&py<=hy;
       };
 
       // ── Collect GND copper edges on same layer → coplanar gap ──
@@ -486,23 +503,6 @@ function updateInfoPanel(){
       const stackup=(typeof DR!=='undefined'&&DR.stackup)||[];
       const copperLayers=stackup.filter(l=>l.type==='copper');
       const trIdx=stackup.findIndex(l=>l.name===tLayer);
-
-      // ── Point-in-polygon (ray casting) ──
-      const _ptInPoly=(px,py,pts)=>{
-        let inside=false;
-        for(let i=0,j=pts.length-1;i<pts.length;j=i++){
-          const xi=pts[i].x,yi=pts[i].y,xj=pts[j].x,yj=pts[j].y;
-          if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))
-            inside=!inside;
-        }
-        return inside;
-      };
-      // ── Point-in-rect ──
-      const _ptInRect=(px,py,x1,y1,x2,y2)=>{
-        const lx=Math.min(x1,x2),hx=Math.max(x1,x2);
-        const ly=Math.min(y1,y2),hy=Math.max(y1,y2);
-        return px>=lx&&px<=hx&&py>=ly&&py<=hy;
-      };
 
       // Check if a copper layer has GND copper directly at trace coordinates (mx, my)
       const _hasGndAt=(cName)=>{
@@ -649,7 +649,7 @@ function updateInfoPanel(){
 
       return{Z0,eeff,w,g:hasCoPlanar?gapSame:null,hAbove,hBelow,hMin:hMin||null,er,t,topology,
              gndSameLayer:gapSame<50};
-    })();
+    }catch(e){console.warn('CPW calc error:',e);return null;}})();
     const cpwHtml=_cpwZ0?`
       <div style="margin-top:8px;padding:6px 8px;background:${_cpwZ0.Z0===Infinity?'rgba(239,68,68,0.10);border:1px solid rgba(239,68,68,0.35)':'rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25)'};border-radius:5px;">
         <div style="font-size:9px;font-weight:700;color:${_cpwZ0.Z0===Infinity?'#f87171':'#818cf8'};text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">${esc(_cpwZ0.topology)}</div>
