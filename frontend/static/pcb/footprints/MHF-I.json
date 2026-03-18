@@ -1,18 +1,8 @@
 {
   "name": "MHF-I",
-  "description": "I-PEX MHF-I SMT RF Coaxial Receptacle, 3-pad, DC–9 GHz, 50 Ω, 3.1×3.0 mm (20279-001E-03)",
-  "pin_count": 3,
+  "description": "I-PEX MHF-I SMT RF Coaxial Receptacle, 2-pad GND, DC–9 GHz, 50 Ω, 3.1×3.0 mm (20279-001E-03)",
+  "pin_count": 2,
   "pads": [
-    {
-      "number": "1",
-      "name": "RF",
-      "x": 0.0,
-      "y": 0.0,
-      "type": "smd",
-      "shape": "circle",
-      "size_x": 0.7,
-      "size_y": 0.7
-    },
     {
       "number": "2",
       "name": "GND1",
