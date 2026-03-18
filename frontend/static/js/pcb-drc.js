@@ -593,6 +593,11 @@ function saveLayerRules(){
   document.getElementById('route-width').value=DR.traceWidth;
   document.getElementById('via-size-input').value=DR.viaSize;
   document.getElementById('via-drill-input').value=DR.viaDrill;
+  // Persist everything (stackup, layer count, DR) to localStorage
+  _saveDRStorage();
+  // Sync DRC tab inputs
+  populateDRTab();
+  if(typeof editor!=='undefined'&&editor)editor.render();
   closeModal('layer-modal');
 }
 

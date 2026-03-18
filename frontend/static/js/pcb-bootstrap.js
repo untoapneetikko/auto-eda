@@ -71,6 +71,10 @@ window.addEventListener('load',()=>{
   window.addEventListener('resize',resize);
   _loadDRStorage(); // restore persisted design rules before anything renders
   editor=new PCBEditor(cv);
+  // Apply saved stackup to editor layers (constructor defaults to 2-layer)
+  if(DR.layerCount && DR.layerCount > 2 && DR.stackup && DR.stackup.length){
+    _rebuildEditorLayers();
+  }
   resize();
   // In embedded (LE) mode, notify the parent page whenever the board changes
   // (after each drag, rotation, etc.) so it can cache the live positions for saving.
