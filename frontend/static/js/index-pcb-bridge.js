@@ -130,8 +130,9 @@ async function _doPCBImport(projectId, boardOpts) {
   setTimeout(tryPost, 600);
 }
 
-// Listen for "updatePCBRequest" from PCB iframe stale banner
+// Listen for messages from PCB iframe
 window.addEventListener('message', e => {
+  if (e.data?.type === 'backToSchematic' && e.source === document.getElementById('pcb-frame')?.contentWindow) switchSection('schematic');
   if (e.data?.type === 'updatePCBRequest' && e.source === document.getElementById('pcb-frame')?.contentWindow) openPCBLayout();
   if (e.data?.type === 'boardRefsChanged' && Array.isArray(e.data.refs) && _leBomData.length) {
     const liveRefs = new Set(e.data.refs);

@@ -290,7 +290,21 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <button class="nav-tab"        id="pcb-nav-export"  onclick="switchPcbSection('export')">📦 Export</button>
     <button class="nav-tab"        id="pcb-nav-3d"      onclick="open3DView()">🎲 3D</button>
   </nav>
-  <span class="phase-badge" style="margin-left:auto;">PCB Layout</span>
+  <div style="flex:1"></div>
+  <button class="tbtn save" id="toolbar-save-btn" onclick="saveBoard()" style="display:none;font-size:11px;padding:3px 8px;">💾 Save</button>
+  <button class="tbtn delete-board" id="toolbar-delete-btn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="display:none;color:#f87171;border-color:rgba(248,113,113,0.4);font-size:11px;padding:3px 8px;">🗑 Delete</button>
+  <button class="tbtn le-save" id="toolbar-le-save-btn" onclick="window.parent.postMessage({type:'leSave'},'*')" style="display:none;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#22c55e;font-size:11px;padding:3px 8px;">💾 Save</button>
+  <button id="btn-back-schematic" onclick="window.parent.postMessage({type:'backToSchematic'},'*')" style="display:none;background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:5px;font-size:11px;padding:3px 10px;font-weight:700;cursor:pointer;">📋 Schematic</button>
+  <script>
+    if(!location.search.includes('embedded=1')){
+      document.getElementById('toolbar-save-btn').style.display='';
+      document.getElementById('toolbar-delete-btn').style.display='';
+    } else {
+      document.getElementById('toolbar-le-save-btn').style.display='';
+    }
+    // Show "Schematic" button when embedded in main app
+    if(window.parent!==window) document.getElementById('btn-back-schematic').style.display='';
+  </script>
   <button id="pcb-user-btn" onclick="window.top===window?doLogoutPcb():void 0" style="background:var(--surface2,#22263a);border:1px solid var(--border,#2e3250);border-radius:4px;padding:2px 8px;color:var(--text-dim,#94a3b8);font-size:10px;cursor:pointer;margin-left:6px;display:none;">👤 <span id="pcb-user-name"></span></button>
 </header>
 
@@ -308,19 +322,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <button onclick="document.getElementById('pcb-stale-banner').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:0 2px;" title="Dismiss">✕</button>
 </div>
 
-<div class="toolbar" style="padding:2px 6px;gap:2px;min-height:0;flex-wrap:wrap;">
-  <button class="tbtn save" id="toolbar-save-btn" onclick="saveBoard()" style="display:none;">💾 Save</button>
-  <button class="tbtn delete-board" id="toolbar-delete-btn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="display:none;color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
-  <button class="tbtn le-save" id="toolbar-le-save-btn" onclick="window.parent.postMessage({type:'leSave'},'*')" style="display:none;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#22c55e;">💾 Save</button>
-  <script>
-    if(!location.search.includes('embedded=1')){
-      document.getElementById('toolbar-save-btn').style.display='';
-      document.getElementById('toolbar-delete-btn').style.display='';
-    } else {
-      document.getElementById('toolbar-le-save-btn').style.display='';
-    }
-  </script>
-  <div class="tsep"></div>
+<div class="toolbar">
   <button class="tbtn active" id="tool-select" onclick="setTool('select')" title="S — Select · R rotate · Del delete · Esc deselect">↖ Select</button>
   <button class="tbtn" id="tool-route"  onclick="setTool('route')"  title="W — Draw trace">〰 Trace</button>
   <button class="tbtn" id="tool-via"    onclick="setTool('via')"    title="V — Place via">⊙ Via</button>
