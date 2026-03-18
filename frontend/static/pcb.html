@@ -240,21 +240,7 @@ header h1{font-size:12px;font-weight:700;white-space:nowrap;}
 </head>
 <body>
 
-<!-- ── Top Navigation (matches index.html style) ── -->
-<header>
-  <a class="hbtn" href="/" id="pcb-back-link" style="display:none;text-decoration:none;margin-right:8px;">← Back</a>
-  <h1>🔲 PCB Editor</h1>
-  <nav style="margin-left:24px;display:flex;gap:4px;">
-    <button class="nav-tab active" id="pcb-nav-layout"  onclick="switchPcbSection('layout')">⬛ Layout</button>
-    <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">🛠 Tools</button>
-    <button class="nav-tab"        id="pcb-nav-nets"    onclick="switchPcbSection('nets')">〰 Nets</button>
-    <button class="nav-tab"        id="pcb-nav-drc"     onclick="switchPcbSection('drc')">📐 Design Rules</button>
-    <button class="nav-tab"        id="pcb-nav-export"  onclick="switchPcbSection('export')">📦 Export</button>
-    <button class="nav-tab"        id="pcb-nav-3d"      onclick="open3DView()">🎲 3D View</button>
-  </nav>
-  <span class="phase-badge" style="margin-left:auto;">PCB Layout</span>
-  <button id="pcb-user-btn" onclick="window.top===window?doLogoutPcb():void 0" style="background:var(--surface2,#22263a);border:1px solid var(--border,#2e3250);border-radius:6px;padding:4px 10px;color:var(--text-dim,#94a3b8);font-size:11px;cursor:pointer;margin-left:8px;display:none;">👤 <span id="pcb-user-name"></span></button>
-</header>
+<!-- header moved into center column below -->
 <script>
   // Only show user button in standalone mode (not embedded iframe)
   if(!location.search.includes('embedded=1')){
@@ -293,8 +279,24 @@ header h1{font-size:12px;font-weight:700;white-space:nowrap;}
   </div>
 </div>
 
-<!-- Center column (toolbars + canvas) -->
+<!-- Center column (header + toolbars + canvas) -->
 <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+
+<!-- Top Navigation (inside center column so side panels extend to top) -->
+<header>
+  <a class="hbtn" href="/" id="pcb-back-link" style="display:none;text-decoration:none;margin-right:6px;">←</a>
+  <h1>🔲 PCB</h1>
+  <nav style="margin-left:12px;display:flex;gap:2px;">
+    <button class="nav-tab active" id="pcb-nav-layout"  onclick="switchPcbSection('layout')">⬛ Layout</button>
+    <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">🛠 Tools</button>
+    <button class="nav-tab"        id="pcb-nav-nets"    onclick="switchPcbSection('nets')">〰 Nets</button>
+    <button class="nav-tab"        id="pcb-nav-drc"     onclick="switchPcbSection('drc')">📐 Rules</button>
+    <button class="nav-tab"        id="pcb-nav-export"  onclick="switchPcbSection('export')">📦 Export</button>
+    <button class="nav-tab"        id="pcb-nav-3d"      onclick="open3DView()">🎲 3D</button>
+  </nav>
+  <span class="phase-badge" style="margin-left:auto;">PCB Layout</span>
+  <button id="pcb-user-btn" onclick="window.top===window?doLogoutPcb():void 0" style="background:var(--surface2,#22263a);border:1px solid var(--border,#2e3250);border-radius:4px;padding:2px 8px;color:var(--text-dim,#94a3b8);font-size:10px;cursor:pointer;margin-left:6px;display:none;">👤 <span id="pcb-user-name"></span></button>
+</header>
 
 <!-- Stale banner -->
 <div id="pcb-stale-banner" style="display:none;background:rgba(245,158,11,0.12);border-bottom:1px solid rgba(245,158,11,0.35);padding:4px 10px;align-items:center;gap:8px;flex-shrink:0;">
