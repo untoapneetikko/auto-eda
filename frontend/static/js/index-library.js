@@ -55,48 +55,111 @@ async function copyPrompt(el) {
   setTimeout(() => el.style.borderColor = orig, 1000);
 }
 
-// ── Library ────────────────────────────────────────────────────────────────
-let _libActiveCat = '';
-
-function setLibCat(el, cat) {
-  _libActiveCat = cat;
-  document.querySelectorAll('.lib-cat-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderLibrary(document.getElementById('lib-search').value);
-}
+// ── Library (tree view) ───────────────────────────────────────────────────
+const _libTypeLabels = {
+  ic:'ICs', amplifier:'Amplifiers', resistor:'Resistors', capacitor:'Capacitors',
+  capacitor_pol:'Polar Capacitors', inductor:'Inductors', led:'LEDs', diode:'Diodes',
+  npn:'NPN Transistors', pnp:'PNP Transistors', nmos:'N-FETs', pmos:'P-FETs',
+  vcc:'Power Symbols', gnd:'Ground Symbols', opamp:'Op-Amps', connector:'Connectors',
+};
+const _libTypeOrder = ['ic','amplifier','opamp','resistor','capacitor','capacitor_pol','inductor','diode','led','npn','pnp','nmos','pmos','connector','vcc','gnd'];
+let _libTreeOpen = {};   // persisted open/closed state per group
 
 function renderLibrary(filter = '') {
   const list = document.getElementById('library-list');
   document.getElementById('lib-count').textContent = Object.keys(library).length;
 
   const parts = Object.values(library).filter(p => {
-    const textMatch = !filter ||
-      p.part_number?.toLowerCase().includes(filter.toLowerCase()) ||
-      p.description?.toLowerCase().includes(filter.toLowerCase());
-    const catMatch = !_libActiveCat || p.category === _libActiveCat;
-    return textMatch && catMatch;
-  }).sort((a, b) => (b.parsed_at || b.uploaded_at || '').localeCompare(a.parsed_at || a.uploaded_at || ''));
+    if (!filter) return true;
+    const q = filter.toLowerCase();
+    return p.part_number?.toLowerCase().includes(q) ||
+           p.description?.toLowerCase().includes(q) ||
+           p.slug?.toLowerCase().includes(q);
+  });
 
   if (parts.length === 0) {
     list.innerHTML = `<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:20px;">No components yet.<br>Upload a datasheet PDF to start.</div>`;
     return;
   }
 
-  list.innerHTML = parts.map(p => {
-    const conf = p.status === 'pending_parse' ? 'pending_parse' : (p.confidence || 'HIGH');
-    const label = p.status === 'pending_parse' ? 'PENDING' : conf;
-    const isBuiltin = p.builtin;
-    return `<div class="part-item ${selectedSlug === p.slug ? 'active' : ''}" data-slug="${p.slug}" onclick="selectPart('${p.slug}')">
-      <div class="part-item-header">
-        <span class="part-name">${p.part_number || p.slug}</span>
-        <div style="display:flex;gap:4px;align-items:center;">
-          ${isBuiltin ? `<span style="font-size:9px;background:rgba(100,116,139,0.2);color:var(--text-muted);border-radius:3px;padding:1px 5px;">BUILT-IN</span>` : ''}
-          <span class="confidence-badge conf-${conf.toLowerCase()}">${label}</span>
-        </div>
+  // Group by symbol_type
+  const groups = {};
+  for (const p of parts) {
+    const t = p.symbol_type || 'ic';
+    (groups[t] = groups[t] || []).push(p);
+  }
+  // Sort each group alphabetically
+  for (const k of Object.keys(groups)) {
+    groups[k].sort((a, b) => (a.part_number || a.slug).localeCompare(b.part_number || b.slug));
+  }
+
+  // If searching, auto-open all groups
+  if (filter) Object.keys(groups).forEach(k => { _libTreeOpen[k] = true; });
+
+  // Render tree
+  const orderedKeys = _libTypeOrder.filter(k => groups[k]);
+  const extraKeys = Object.keys(groups).filter(k => !_libTypeOrder.includes(k)).sort();
+  const allKeys = [...orderedKeys, ...extraKeys];
+
+  let html = '';
+  for (const type of allKeys) {
+    const items = groups[type];
+    const label = _libTypeLabels[type] || type.charAt(0).toUpperCase() + type.slice(1);
+    const isOpen = _libTreeOpen[type] !== false; // default open
+    html += `<div class="lib-tree-group">
+      <div class="lib-tree-header ${isOpen ? 'open' : ''}" onclick="toggleLibGroup('${type}')">
+        <span class="lib-tree-arrow">▶</span>
+        <span>${label}</span>
+        <span class="lib-tree-badge">${items.length}</span>
       </div>
-      <div class="part-desc">${p.description || (p.status === 'pending_parse' ? 'Awaiting parse by Claude Code' : 'No description')}</div>
+      <div class="lib-tree-children" style="${isOpen ? '' : 'display:none;'}">
+        ${items.map(p => {
+          const name = p.part_number || p.slug;
+          const active = selectedSlug === p.slug;
+          return `<div class="lib-tree-item ${active ? 'active' : ''}" onclick="selectPart('${p.slug}')" title="${p.description || ''}">
+            <span class="tree-part">${name}</span>
+          </div>`;
+        }).join('')}
+      </div>
     </div>`;
-  }).join('');
+  }
+  list.innerHTML = html;
+}
+
+function toggleLibGroup(type) {
+  _libTreeOpen[type] = _libTreeOpen[type] === false ? true : false;
+  renderLibrary(document.getElementById('lib-search').value);
+}
+
+// ── Import Sources menu ──────────────────────────────────────────────────
+function toggleImportMenu() {
+  const m = document.getElementById('import-sources-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('import-sources-menu');
+  const btn = document.getElementById('import-sources-btn');
+  if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+async function importEagleLbr(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await fetch('/api/import-eagle', { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Import failed');
+    await loadLibrary();
+    alert(`Eagle import done: ${data.installed.length} component(s) imported, ${data.skipped.length} skipped (already exist).`);
+    if (data.installed.length) selectPart(data.installed[0]);
+  } catch (err) {
+    alert('Eagle import error: ' + err.message);
+  }
 }
 
 document.getElementById('lib-search').addEventListener('input', e => renderLibrary(e.target.value));

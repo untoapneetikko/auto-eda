@@ -1263,6 +1263,214 @@ async def api_import_library(request: Request):
         _update_index()
     return {"ok": True, "installed": installed, "skipped": skipped}
 
+# ── Eagle .lbr import ─────────────────────────────────────────────────────────
+import xml.etree.ElementTree as ET
+
+_EAGLE_PIN_DIRECTION_MAP = {
+    "pas": "passive", "pwr": "power", "in": "input", "out": "output",
+    "io": "bidirectional", "oc": "output", "hiz": "output", "sup": "power",
+    "nc": "nc",
+}
+_EAGLE_PAD_SHAPE_MAP = {
+    "square": "rect", "round": "circle", "octagon": "circle", "long": "rect",
+}
+
+def _eagle_mm(mils_str: str) -> float:
+    """Convert Eagle mils string to mm."""
+    try:
+        return round(float(mils_str) * 0.0254, 4)
+    except (ValueError, TypeError):
+        return 0.0
+
+def _parse_eagle_lbr(xml_bytes: bytes) -> tuple[list[dict], list[dict]]:
+    """Parse an Eagle .lbr file. Returns (profiles, footprints)."""
+    root = ET.fromstring(xml_bytes)
+
+    # ── Collect packages (footprints) ──
+    packages: dict[str, dict] = {}
+    for pkg_el in root.iter("package"):
+        name = pkg_el.get("name", "")
+        if not name:
+            continue
+        pads = []
+        for smd in pkg_el.iter("smd"):
+            pads.append({
+                "number": smd.get("name", ""),
+                "x": _eagle_mm(smd.get("x", "0")),
+                "y": -_eagle_mm(smd.get("y", "0")),  # flip Y
+                "type": "smd",
+                "shape": "rect",
+                "size_x": _eagle_mm(smd.get("dx", "0")),
+                "size_y": _eagle_mm(smd.get("dy", "0")),
+            })
+        for pad in pkg_el.iter("pad"):
+            drill = _eagle_mm(pad.get("drill", "0"))
+            shape = _EAGLE_PAD_SHAPE_MAP.get(pad.get("shape", "round"), "circle")
+            diameter = _eagle_mm(pad.get("diameter", "0")) or round(drill * 1.8, 4)
+            pads.append({
+                "number": pad.get("name", ""),
+                "x": _eagle_mm(pad.get("x", "0")),
+                "y": -_eagle_mm(pad.get("y", "0")),
+                "type": "thru_hole",
+                "shape": shape,
+                "size_x": diameter,
+                "size_y": diameter,
+                "drill": drill,
+            })
+        # Compute courtyard from pad extents
+        if pads:
+            min_x = min(p["x"] - p.get("size_x", 0)/2 for p in pads)
+            max_x = max(p["x"] + p.get("size_x", 0)/2 for p in pads)
+            min_y = min(p["y"] - p.get("size_y", 0)/2 for p in pads)
+            max_y = max(p["y"] + p.get("size_y", 0)/2 for p in pads)
+            margin = 0.25
+            courtyard = {
+                "x": round(min_x - margin, 4),
+                "y": round(min_y - margin, 4),
+                "w": round(max_x - min_x + 2 * margin, 4),
+                "h": round(max_y - min_y + 2 * margin, 4),
+            }
+        else:
+            courtyard = {"x": 0, "y": 0, "w": 1, "h": 1}
+        desc_el = pkg_el.find("description")
+        packages[name] = {
+            "name": name,
+            "description": (desc_el.text or "").strip() if desc_el is not None else "",
+            "pads": pads,
+            "courtyard": courtyard,
+        }
+
+    # ── Collect symbols ──
+    symbols: dict[str, list[dict]] = {}
+    for sym_el in root.iter("symbol"):
+        name = sym_el.get("name", "")
+        if not name:
+            continue
+        pins = []
+        for pin in sym_el.iter("pin"):
+            direction = pin.get("direction", "io")
+            pins.append({
+                "name": pin.get("name", ""),
+                "type": _EAGLE_PIN_DIRECTION_MAP.get(direction, "passive"),
+            })
+        symbols[name] = pins
+
+    # ── Collect devicesets → create profiles ──
+    profiles = []
+    footprints_out = []
+    for ds in root.iter("deviceset"):
+        ds_name = ds.get("name", "")
+        if not ds_name:
+            continue
+        desc_el = ds.find("description")
+        description = (desc_el.text or "").strip() if desc_el is not None else ""
+        # Remove HTML tags from description
+        description = re.sub(r"<[^>]+>", "", description).strip()
+
+        # Collect pins from gates → symbols
+        all_pins = []
+        pin_number = 1
+        for gate in ds.iter("gate"):
+            sym_name = gate.get("symbol", "")
+            for p in symbols.get(sym_name, []):
+                all_pins.append({
+                    "number": pin_number,
+                    "name": p["name"],
+                    "type": p["type"],
+                })
+                pin_number += 1
+
+        # Collect package variants
+        package_names = []
+        pin_maps: dict[str, dict[str, str]] = {}  # package_name → {gate_pin_name: pad_number}
+        for dev in ds.iter("device"):
+            pkg_name = dev.get("package", "")
+            if pkg_name:
+                package_names.append(pkg_name)
+                # Parse connect elements for pin↔pad mapping
+                pm = {}
+                for conn in dev.iter("connect"):
+                    pm[conn.get("pin", "")] = conn.get("pad", "")
+                pin_maps[pkg_name] = pm
+
+        # Apply pin numbers from first package mapping
+        if package_names and pin_maps.get(package_names[0]):
+            pm = pin_maps[package_names[0]]
+            for pin in all_pins:
+                pad = pm.get(pin["name"], "")
+                if pad:
+                    try:
+                        pin["number"] = int(pad)
+                    except ValueError:
+                        pass  # keep sequential number
+
+        # Determine symbol_type from pin types
+        pin_types = {p["type"] for p in all_pins}
+        if len(all_pins) <= 2 and "passive" in pin_types:
+            sym_type = "resistor" if len(all_pins) == 2 else "passive"
+        elif "nc" == pin_types or len(all_pins) == 0:
+            sym_type = "ic"
+        else:
+            sym_type = "ic"
+
+        profile = {
+            "part_number": ds_name,
+            "description": description,
+            "manufacturer": "",
+            "status": "parsed",
+            "confidence": "MEDIUM",
+            "symbol_type": sym_type,
+            "package_types": package_names,
+            "pins": all_pins,
+            "source": "eagle_lbr",
+        }
+        profiles.append(profile)
+
+        # Save footprints for each package
+        for pkg_name in package_names:
+            if pkg_name in packages:
+                footprints_out.append(packages[pkg_name])
+
+    return profiles, footprints_out
+
+
+@router.post("/import-eagle")
+async def api_import_eagle(file: UploadFile):
+    if not file.filename or not file.filename.lower().endswith(".lbr"):
+        raise HTTPException(400, "Eagle .lbr file required")
+
+    xml_bytes = await file.read()
+    try:
+        profiles, footprints = _parse_eagle_lbr(xml_bytes)
+    except ET.ParseError as e:
+        raise HTTPException(400, f"Invalid XML in .lbr file: {e}")
+
+    installed, skipped = [], []
+
+    # Save footprints
+    for fp in footprints:
+        fp_path = FOOTPRINTS_DIR / f"{fp['name']}.json"
+        if not fp_path.exists():
+            fp_path.write_text(json.dumps(fp, indent=2), encoding="utf-8")
+
+    # Save component profiles
+    for profile in profiles:
+        slug = re.sub(r"[^a-zA-Z0-9\-_]", "_", profile["part_number"]).upper()
+        pp = _profile_path(slug)
+        if pp.exists():
+            skipped.append(slug)
+            continue
+        (LIBRARY_DIR / slug).mkdir(parents=True, exist_ok=True)
+        profile["slug"] = slug
+        pp.write_text(json.dumps(profile, indent=2), encoding="utf-8")
+        installed.append(slug)
+
+    if installed:
+        _update_index()
+
+    return {"ok": True, "installed": installed, "skipped": skipped,
+            "footprints_added": len(footprints)}
+
 # ── Agents ────────────────────────────────────────────────────────────────────
 @router.get("/agents")
 def api_agents_list():
