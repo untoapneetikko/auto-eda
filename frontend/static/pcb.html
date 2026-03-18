@@ -19,8 +19,8 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .hbtn:hover{border-color:var(--accent);color:var(--accent);}
 .phase-badge{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700;margin-left:auto;}
 
-.toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:5px 12px;display:flex;align-items:center;gap:5px;flex-shrink:0;flex-wrap:wrap;}
-.tbtn{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:4px 10px;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:2px 6px;display:flex;align-items:center;gap:3px;flex-shrink:0;flex-wrap:wrap;}
+.tbtn{background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text-dim);padding:2px 6px;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s;}
 .tbtn:hover{border-color:var(--accent);color:var(--text);}
 .tbtn.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
 .tbtn.danger:hover{border-color:var(--red);color:var(--red);}
@@ -28,7 +28,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 .tbtn.save:hover{background:rgba(34,197,94,0.28);border-color:#22c55e;color:#22c55e;}
 .btn.save{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#22c55e;}
 .btn.save:hover{background:#22c55e;color:#fff;}
-.tsep{width:1px;height:20px;background:var(--border);margin:0 3px;flex-shrink:0;}
+.tsep{width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0;}
 #status-bar{margin-left:auto;font-size:11px;color:var(--text-muted);font-family:monospace;white-space:nowrap;}
 
 .app-body{display:flex;flex:1;overflow:hidden;}
@@ -184,9 +184,9 @@ input[type=color]{width:28px;height:22px;border:1px solid var(--border);border-r
 pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:10px;line-height:1.5;overflow-x:auto;color:var(--text-dim);max-height:250px;overflow-y:auto;}
 
 /* ── Top nav (matches index.html) ── */
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;display:flex;align-items:center;gap:0;height:42px;flex-shrink:0;}
-header h1{font-size:14px;font-weight:700;white-space:nowrap;}
-.nav-tab{background:transparent;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;transition:all .15s;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 10px;display:flex;align-items:center;gap:0;height:34px;flex-shrink:0;}
+header h1{font-size:12px;font-weight:700;white-space:nowrap;}
+.nav-tab{background:transparent;border:none;color:var(--text-muted);font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;cursor:pointer;transition:all .15s;}
 .nav-tab:hover{background:rgba(255,255,255,0.05);color:var(--text);}
 .nav-tab.active{background:var(--accent-dim);color:var(--accent);}
 
@@ -275,18 +275,37 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 <div class="pcb-sections">
 
 <!-- ══ LAYOUT SECTION ══ -->
-<div id="pcb-section-layout" class="pcb-section">
+<div id="pcb-section-layout" class="pcb-section" style="flex-direction:row;">
 
-<!-- Stale banner — shown when schematic has unsaved changes ahead of this board -->
-<div id="pcb-stale-banner" style="display:none;background:rgba(245,158,11,0.12);border-bottom:1px solid rgba(245,158,11,0.35);padding:5px 14px;align-items:center;gap:10px;flex-shrink:0;">
-  <span style="font-size:13px;">⚠</span>
-  <span style="font-size:12px;font-weight:600;color:#f59e0b;">PCB IS NOT UP TO DATE</span>
-  <span style="font-size:11px;color:var(--text-muted);flex:1;">The schematic has unsaved changes. Update the PCB to reflect them.</span>
-  <button class="tbtn" onclick="_pcbRequestUpdate()" style="background:rgba(245,158,11,0.2);border-color:rgba(245,158,11,0.5);color:#f59e0b;font-weight:700;">⟳ Update PCB</button>
-  <button onclick="document.getElementById('pcb-stale-banner').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:0 4px;" title="Dismiss">✕</button>
+<!-- Left Panel (full height from top nav to bottom) -->
+<div class="lpanel">
+  <div class="ps" style="flex-shrink:0;">
+    <h3>Components <span id="comp-count" style="color:var(--text-muted);font-weight:400;"></span></h3>
+  </div>
+  <div class="comp-list" id="comp-list">
+    <div style="padding:8px;color:var(--text-muted);font-size:11px;">No board loaded</div>
+  </div>
+  <div class="ps" style="flex-shrink:0;border-top:1px solid var(--border);">
+    <h3>Copper Areas</h3>
+  </div>
+  <div id="areas-panel" style="overflow-y:auto;flex:1;min-height:0;padding:6px 8px;">
+    <div style="color:var(--text-muted);font-size:11px;">No areas</div>
+  </div>
 </div>
 
-<div class="toolbar">
+<!-- Center column (toolbars + canvas) -->
+<div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+
+<!-- Stale banner -->
+<div id="pcb-stale-banner" style="display:none;background:rgba(245,158,11,0.12);border-bottom:1px solid rgba(245,158,11,0.35);padding:4px 10px;align-items:center;gap:8px;flex-shrink:0;">
+  <span style="font-size:11px;">⚠</span>
+  <span style="font-size:11px;font-weight:600;color:#f59e0b;">NOT UP TO DATE</span>
+  <span style="font-size:10px;color:var(--text-muted);flex:1;">Schematic changed.</span>
+  <button class="tbtn" onclick="_pcbRequestUpdate()" style="font-size:10px;padding:2px 6px;background:rgba(245,158,11,0.2);border-color:rgba(245,158,11,0.5);color:#f59e0b;font-weight:700;">⟳ Update</button>
+  <button onclick="document.getElementById('pcb-stale-banner').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;padding:0 2px;" title="Dismiss">✕</button>
+</div>
+
+<div class="toolbar" style="padding:2px 6px;gap:2px;min-height:0;flex-wrap:wrap;">
   <button class="tbtn save" id="toolbar-save-btn" onclick="saveBoard()" style="display:none;">💾 Save</button>
   <button class="tbtn delete-board" id="toolbar-delete-btn" onclick="deleteCurrentBoard()" title="Delete this board permanently" style="display:none;color:#f87171;border-color:rgba(248,113,113,0.4);">🗑 Delete</button>
   <button class="tbtn le-save" id="toolbar-le-save-btn" onclick="window.parent.postMessage({type:'leSave'},'*')" style="display:none;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#22c55e;">💾 Save</button>
@@ -373,38 +392,16 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <span id="status-bar">x: 0.00  y: 0.00</span>
 </div>
 
-<!-- Outer wrapper: left+center column | right panel (full height from tabs to bottom) -->
-<div style="display:flex;flex:1;overflow:hidden;">
-<!-- Left + Center column (tabs, canvas, left sidebar) -->
-<div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-
-<!-- Board Tabs + Save (mirrors schematic sub-nav position) -->
-<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:4px;height:30px;flex-shrink:0;">
+<!-- Board Tabs + Save -->
+<div style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 8px;display:flex;align-items:center;gap:4px;height:26px;flex-shrink:0;">
   <div id="pcb-board-tabs" class="pcb-board-tabs" style="display:contents;"></div>
   <div style="flex:1;"></div>
-  <button class="tbtn save" id="toolbar-save-btn2" onclick="saveBoard()" style="font-size:11px;padding:3px 8px;display:none;">💾 Save</button>
+  <button class="tbtn save" id="toolbar-save-btn2" onclick="saveBoard()" style="font-size:10px;padding:2px 6px;display:none;">💾 Save</button>
   <script>if(!location.search.includes('embedded=1')){const b=document.getElementById('toolbar-save-btn2');if(b)b.style.display='';}</script>
 </div>
 
-<div class="app-body">
-<!-- Left Panel -->
-<div class="lpanel">
-  <div class="ps" style="flex-shrink:0;">
-    <h3>Components <span id="comp-count" style="color:var(--text-muted);font-weight:400;"></span></h3>
-  </div>
-  <div class="comp-list" id="comp-list">
-    <div style="padding:8px;color:var(--text-muted);font-size:11px;">No board loaded</div>
-  </div>
-  <div class="ps" style="flex-shrink:0;border-top:1px solid var(--border);">
-    <h3>Copper Areas</h3>
-  </div>
-  <div id="areas-panel" style="overflow-y:auto;flex:1;min-height:0;padding:6px 8px;">
-    <div style="color:var(--text-muted);font-size:11px;">No areas</div>
-  </div>
-</div>
-
 <!-- Canvas -->
-<div class="canvas-wrap" id="canvas-wrap">
+<div class="canvas-wrap" id="canvas-wrap" style="flex:1;">
   <div class="canvas-inner" id="canvas-inner">
     <canvas id="pcb-canvas"></canvas>
   </div>
@@ -420,10 +417,9 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     </table>
   </div>
 </div>
-</div><!-- app-body -->
-</div><!-- left+center column -->
+</div><!-- center column -->
 
-<!-- Right Panel (extends full height from tabs bar to bottom, like schematic) -->
+<!-- Right Panel (full height from top nav to bottom) -->
 <div class="rpanel">
   <!-- Layers window -->
   <div class="layers-panel">
@@ -461,7 +457,6 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
     <div id="board-info" style="font-size:11px;color:var(--text-muted);line-height:1.8;">No board</div>
   </div>
 </div>
-</div><!-- outer wrapper -->
 
 </div><!-- pcb-section-layout -->
 
