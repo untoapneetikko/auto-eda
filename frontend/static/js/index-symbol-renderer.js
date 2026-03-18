@@ -616,11 +616,6 @@ function leAddComponent(bomIdx) {
 
 function leSetLayerCount(n) {
   if (_leBoard) _leBoard.layerCount = n;
-  // Re-render to check compatibility
-  if (selectedSlug) {
-    _leLoadedSlug = null; // force re-check
-    renderLayoutExample(selectedSlug);
-  }
 }
 
 async function leSaveLayout() {
@@ -790,35 +785,10 @@ async function renderLayoutExample(slug) {
     };
   }
 
-  // Check layer count compatibility with the current project
+  // Populate the LE layer count selector (layout example decides its own layers independently)
   const _leBoardLayers = board.layerCount || 2;
-  const _projLayers = (typeof editor !== 'undefined' && editor?.project?.layerCount) ? editor.project.layerCount : null;
-
-  // Populate the LE layer count selector
   const leLcSel = document.getElementById('le-layer-count');
   if (leLcSel) leLcSel.value = _leBoardLayers;
-
-  const mismatchEl = document.getElementById('le-layer-mismatch');
-  const blockedOverlay = document.getElementById('le-blocked-overlay');
-  const blockedMsg = document.getElementById('le-blocked-msg');
-  const leFrameWrap = document.getElementById('le-frame')?.parentElement;
-
-  if (_projLayers && _leBoardLayers !== _projLayers) {
-    // BLOCK: layer mismatch — don't load into iframe
-    if (mismatchEl) { mismatchEl.style.display = ''; mismatchEl.textContent = `⚠ Example is ${_leBoardLayers}L, project targets ${_projLayers}L`; }
-    if (blockedOverlay) { blockedOverlay.style.display = 'flex'; }
-    if (blockedMsg) blockedMsg.textContent = `This layout example requires ${_leBoardLayers} copper layers, but your project targets ${_projLayers} layers. They must match.`;
-    if (leFrameWrap) leFrameWrap.style.display = 'none';
-    leRenderBomPanel(_leBomData);
-    _leBoard = board;
-    _leLoadedSlug = slug;
-    return;
-  }
-
-  // No mismatch — clear any previous block
-  if (mismatchEl) mismatchEl.style.display = 'none';
-  if (blockedOverlay) blockedOverlay.style.display = 'none';
-  if (leFrameWrap) leFrameWrap.style.display = '';
 
   // Render BOM panel now that _leAdded flags are set
   leRenderBomPanel(_leBomData);
