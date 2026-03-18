@@ -388,8 +388,6 @@ class PCBEditor {
     for(const t of(this.board?.texts||[])){
       const lyr=t.layer||'F.SilkS';
       if(!this.layers[lyr]?.visible)continue;
-      // Only hit when the text's layer matches the work layer (silkscreen active)
-      if(this.workLayer!==lyr)continue;
       const sz=(t.size||1)*this.scale;
       const px=this.mmX(t.x),py=this.mmY(t.y);
       const tw=((t.text||'').length*sz*0.6)+4; // approx text width
@@ -2927,7 +2925,8 @@ class PCBEditor {
         const _bEdge=this._hitBoardEdge(mx,my);
         const _bCur=_bEdge==='n'||_bEdge==='s'?'ns-resize':_bEdge==='e'||_bEdge==='w'?'ew-resize':
           _bEdge==='nw'||_bEdge==='se'?'nwse-resize':_bEdge==='ne'||_bEdge==='sw'?'nesw-resize':null;
-        if(wrap) wrap.style.cursor=this._isDragBoard?'grabbing':this._isDragTrace?'grabbing':_bCur?_bCur:(newHovTr||newHovC)?'pointer':'default';
+        const newHovT=this.getTextAt(mx,my)||null;
+        if(wrap) wrap.style.cursor=this._isDragBoard?'grabbing':this._isDragTrace?'grabbing':this._isDragText?'grabbing':_bCur?_bCur:(newHovTr||newHovC||newHovT)?'pointer':'default';
       }
     });
 
