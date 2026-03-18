@@ -5697,10 +5697,27 @@ async def api_pcb_import_schematic(request: Request):
     # Start from the schematic netlist, then merge in the LE canonical nets
     # (translated to schematic refs) so pad connectivity from the layout_example
     # is reflected even for pads not covered by the schematic wire tracing.
+    # Build reverse lookup: for every ref, port_name → pad_number
+    _all_port_maps: dict[str, dict[str, str]] = {}
+    for ref, (slug, sym_type) in _refs_seen.items():
+        _all_port_maps[ref] = _build_port_to_pad(ref, slug, sym_type)
+
+    def _translate_pad_ref(pad_ref: str) -> str:
+        """Translate 'R1.P1' → 'R1.1' using the port→pad maps."""
+        dot = pad_ref.rfind(".")
+        if dot < 0:
+            return pad_ref
+        ref = pad_ref[:dot]
+        port = pad_ref[dot + 1:]
+        pm = _all_port_maps.get(ref, {})
+        pad_num = pm.get(port, port)  # fallback to port name if no mapping
+        return f"{ref}.{pad_num}"
+
     pcb_nets_by_name: dict[str, set] = {}
     for net_name, pads_list in netlist.items():
         if isinstance(pads_list, list) and pads_list:
-            pcb_nets_by_name.setdefault(net_name, set()).update(str(p) for p in pads_list)
+            translated = {_translate_pad_ref(str(p)) for p in pads_list}
+            pcb_nets_by_name.setdefault(net_name, set()).update(translated)
 
     for eg_id, eg_info in le_groups.items():
         le_ref_to_sc_ref = eg_info.get("le_ref_to_sc_ref", {})
@@ -5717,6 +5734,16 @@ async def api_pcb_import_schematic(request: Request):
                     if sc_ref:
                         pcb_nets_by_name.setdefault(sc_net_name, set()).add(
                             f"{sc_ref}.{parts[1]}")
+
+    # Also collect nets from actual pad.net assignments on placed components
+    # (catches pads assigned via pad_net that weren't in the netlist)
+    for comp in pcb_comps:
+        ref = comp.get("ref", comp.get("id", ""))
+        for pad in comp.get("pads", []):
+            net = (pad.get("net") or "").strip()
+            if net:
+                pad_ref = f"{ref}.{pad.get('number', pad.get('name', ''))}"
+                pcb_nets_by_name.setdefault(net, set()).add(pad_ref)
 
     pcb_nets: list[dict] = [
         {"name": name.upper(), "pads": sorted(pads)}
