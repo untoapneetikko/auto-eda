@@ -1,9 +1,9 @@
-services:
+version: "3.9"
 
-  autoeda-app:
+services:
+  app:
     build: .
-    container_name: autoeda-app
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/backend --reload-dir /app/agents --timeout-graceful-shutdown 1
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/backend --reload-dir /app/agents
     ports:
       - "8000:8000"
     volumes:
@@ -15,29 +15,22 @@ services:
       # Mount live .git so agents can commit/push from inside the container
       - ./.git:/app/.git
       # Mount Claude Code config (writable so agents can save session history)
-      - ${CLAUDE_CONFIG_DIR:-/Users/mbp-a/.claude}:/home/appuser/.claude
-      - ./claude.container.json:/home/appuser/.claude.json
+      - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude
       # Mount Docker socket so agents can rebuild/restart containers
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - REDIS_URL=redis://autoeda-redis:6379
+      - REDIS_URL=redis://redis:6379
       - DATA_DIR=/app/data
       - OUTPUT_DIR=/app/data/outputs
       - UPLOAD_DIR=/app/data/uploads
-      - GITHUB_TOKEN=${AUTOEDA_GITHUB_TOKEN:-}
-      - ANTHROPIC_API_KEY=${AUTOEDA_ANTHROPIC_API_KEY:-}
-      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
-      # Project name for agent self-rebuild via docker compose
-      - COMPOSE_PROJECT_NAME=autoeda
+      # GitHub token for agent git push — set in .env or shell: export GITHUB_TOKEN=ghp_...
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
-      - autoeda-redis
+      - redis
     restart: unless-stopped
-    networks:
-      - infra_net
 
-  autoeda-worker:
+  worker:
     build: .
-    container_name: autoeda-worker
     command: python backend/worker.py
     volumes:
       - ./data:/app/data
@@ -46,36 +39,35 @@ services:
       - ./backend:/app/backend
       - ./frontend:/app/frontend
       - ./.git:/app/.git
-      - ${CLAUDE_CONFIG_DIR:-/Users/mbp-a/.claude}:/home/appuser/.claude
-      - ./claude.container.json:/home/appuser/.claude.json
+      # Mount Claude Code config (writable so agents can save session history)
+      - ${CLAUDE_CONFIG_DIR:-C:/Users/akiny/.claude}:/root/.claude
+      # Mount Docker socket so agents can rebuild/restart containers
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - REDIS_URL=redis://autoeda-redis:6379
+      - REDIS_URL=redis://redis:6379
       - DATA_DIR=/app/data
       - OUTPUT_DIR=/app/data/outputs
       - UPLOAD_DIR=/app/data/uploads
-      - GITHUB_TOKEN=${AUTOEDA_GITHUB_TOKEN:-}
-      - ANTHROPIC_API_KEY=${AUTOEDA_ANTHROPIC_API_KEY:-}
-      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     depends_on:
-      - autoeda-redis
+      - redis
     restart: unless-stopped
-    networks:
-      - infra_net
 
-  autoeda-redis:
+  redis:
     image: redis:7-alpine
-    container_name: autoeda-redis
-    command: --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
     volumes:
-      - autoeda_redis_data:/data
+      - redis_data:/data
     restart: unless-stopped
-    networks:
-      - infra_net
 
-networks:
-  infra_net:
-    external: true
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    # Quick tunnel — no account needed, URL printed in logs on startup
+    command: tunnel --no-autoupdate --url http://app:8000
+    depends_on:
+      - app
+    restart: unless-stopped
 
 volumes:
-  autoeda_redis_data:
+  redis_data:

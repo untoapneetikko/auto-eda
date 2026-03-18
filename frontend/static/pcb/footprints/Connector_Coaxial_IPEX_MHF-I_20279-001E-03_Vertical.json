@@ -1,0 +1,111 @@
+{
+  "name": "Connector_Coaxial:IPEX_MHF-I_20279-001E-03_Vertical",
+  "format": "kicad_mod",
+  "pads": [
+    {
+      "number": 1,
+      "type": "smd",
+      "shape": "circle",
+      "x": 0.0,
+      "y": 0.0,
+      "width": 0.9,
+      "height": 0.9,
+      "drill": null
+    },
+    {
+      "number": 2,
+      "type": "smd",
+      "shape": "rect",
+      "x": -1.25,
+      "y": 0.0,
+      "width": 0.9,
+      "height": 0.7,
+      "drill": null
+    },
+    {
+      "number": 3,
+      "type": "smd",
+      "shape": "rect",
+      "x": 1.25,
+      "y": 0.0,
+      "width": 0.9,
+      "height": 0.7,
+      "drill": null
+    }
+  ],
+  "courtyard": {
+    "x": -1.825,
+    "y": -1.75,
+    "width": 3.65,
+    "height": 3.5
+  },
+  "silkscreen": [
+    {
+      "type": "line",
+      "data": {
+        "x1": -1.825,
+        "y1": -1.75,
+        "x2": 1.825,
+        "y2": -1.75
+      }
+    },
+    {
+      "type": "line",
+      "data": {
+        "x1": 1.825,
+        "y1": -1.75,
+        "x2": 1.825,
+        "y2": 1.75
+      }
+    },
+    {
+      "type": "line",
+      "data": {
+        "x1": 1.825,
+        "y1": 1.75,
+        "x2": -1.825,
+        "y2": 1.75
+      }
+    },
+    {
+      "type": "line",
+      "data": {
+        "x1": -1.825,
+        "y1": 1.75,
+        "x2": -1.825,
+        "y2": -1.75
+      }
+    },
+    {
+      "type": "arc",
+      "data": {
+        "cx": 0.0,
+        "cy": 0.0,
+        "radius": 1.2,
+        "start_angle": 0,
+        "end_angle": 360,
+        "layer": "F.SilkS"
+      }
+    },
+    {
+      "type": "text",
+      "data": {
+        "text": "REF**",
+        "x": 0.0,
+        "y": -2.2,
+        "size": 1.0,
+        "layer": "F.SilkS"
+      }
+    },
+    {
+      "type": "text",
+      "data": {
+        "text": "Pin1=RF",
+        "x": 0.0,
+        "y": 2.2,
+        "size": 0.6,
+        "layer": "F.SilkS"
+      }
+    }
+  ]
+}

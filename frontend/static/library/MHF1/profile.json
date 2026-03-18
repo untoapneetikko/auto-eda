@@ -85,7 +85,7 @@
   "human_corrections": [],
   "category": "connector",
   "slug": "MHF1",
-  "footprint": "MHF-I",
+  "footprint": "Connector_Coaxial:IPEX_MHF-I_20279-001E-03_Vertical",
   "value": "MHF-I",
   "designator": "J",
   "example_circuit": {

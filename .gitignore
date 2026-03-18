@@ -1,16 +1,11 @@
 .env
-claude.container.json
 data/uploads/*
 data/outputs/*
-data/agents/*
 !data/uploads/.gitkeep
 !data/outputs/.gitkeep
-data/*.log
 __pycache__/
 *.pyc
 .venv/
 *.egg-info/
 dist/
 .pytest_cache/
-# Corrupted Windows plugin symlinks accidentally materialized as dirs
-agents/*/C*/
