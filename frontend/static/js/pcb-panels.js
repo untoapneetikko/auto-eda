@@ -380,6 +380,53 @@ function updateInfoPanel(){
   if(tr && !c){
     const lyr=tr.layer||'F.Cu';
     const segLen=(tr.segments||[]).reduce((s,seg)=>s+Math.hypot(seg.end.x-seg.start.x,seg.end.y-seg.start.y),0);
+    // ── Coplanar Waveguide impedance estimate ──
+    const _cpwZ0=(()=>{
+      const w=tr.widths?.length?tr.widths[0]:(tr.width||0.25); // trace width mm
+      const g=typeof DR!=='undefined'?DR.clearance:0.2;        // gap to ground mm
+      const h=typeof DR!=='undefined'?DR.boardThickness:1.6;   // substrate mm
+      const er=4.5; // FR-4 dielectric constant
+      const t=(typeof DR!=='undefined'&&DR.copperWeight||1.0)*0.035; // copper thickness mm
+      // Effective width (compensate for copper thickness)
+      const we=w+1.25*t/Math.PI*(1+Math.log(4*Math.PI*w/t));
+      // k parameter for CPW
+      const k=we/(we+2*g);
+      const kp=Math.sqrt(1-k*k);
+      // K(k)/K(k') ratio via Hilberg approximation
+      const _Kratio=k=>{
+        if(k<1e-10)return 0;
+        if(k>1-1e-10)return Infinity;
+        const kp=Math.sqrt(1-k*k);
+        if(k<=1/Math.SQRT2){
+          return Math.PI/Math.log(2*(1+Math.sqrt(kp))/(1-Math.sqrt(kp)));
+        }else{
+          return Math.log(2*(1+Math.sqrt(k))/(1-Math.sqrt(k)))/Math.PI;
+        }
+      };
+      // Ground-backed CPW: also account for substrate height
+      const k1=Math.tanh(Math.PI*we/(4*h))/Math.tanh(Math.PI*(we+2*g)/(4*h));
+      const k1p=Math.sqrt(1-k1*k1);
+      const Kk=_Kratio(k);
+      const Kk1=_Kratio(k1);
+      // Effective dielectric
+      const q=Kk>0?(_Kratio(kp)*Kk1)/(_Kratio(k1p)*Kk):0;
+      const eeff=1+(er-1)/2*q;
+      // Z0
+      const denom=Kk+Kk1;
+      if(denom<1e-10)return null;
+      const Z0=60*Math.PI/(Math.sqrt(eeff)*denom);
+      return{Z0,eeff,w,g,h,er,t};
+    })();
+    const cpwHtml=_cpwZ0?`
+      <div style="margin-top:8px;padding:6px 8px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:5px;">
+        <div style="font-size:9px;font-weight:700;color:#818cf8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">CPW Impedance (est.)</div>
+        <div class="ir"><span class="il">Z₀</span><span class="iv" style="color:#a5b4fc;font-weight:700;">${_cpwZ0.Z0.toFixed(1)} Ω</span></div>
+        <div class="ir"><span class="il">εeff</span><span class="iv">${_cpwZ0.eeff.toFixed(2)}</span></div>
+        <div class="ir"><span class="il">Gap</span><span class="iv">${_cpwZ0.g.toFixed(3)} mm</span></div>
+        <div class="ir"><span class="il">h</span><span class="iv">${_cpwZ0.h.toFixed(1)} mm</span></div>
+        <div class="ir"><span class="il">εr</span><span class="iv">${_cpwZ0.er}</span></div>
+        <div class="ir"><span class="il">Cu</span><span class="iv">${(_cpwZ0.t*1000).toFixed(0)} µm</span></div>
+      </div>`:'';
     panel.innerHTML=`
       <div style="margin-bottom:10px;">
         <div style="font-family:monospace;font-size:14px;font-weight:700;color:var(--accent);">Trace</div>
@@ -397,10 +444,11 @@ function updateInfoPanel(){
         ${tr.widths?.length?
           `<span class="iv" style="font-size:10px;">${tr.widths[0].toFixed(3)} → ${tr.widths[tr.widths.length-1].toFixed(3)} mm (taper)</span>`:
           `<input class="ii" value="${(tr.width||0.25).toFixed(3)}"
-            onchange="editor.selectedTrace.width=Math.max(0.05,parseFloat(this.value)||0.25);delete editor.selectedTrace.widths;editor.render()"> mm`
+            onchange="editor.selectedTrace.width=Math.max(0.05,parseFloat(this.value)||0.25);delete editor.selectedTrace.widths;editor.render();updateInfoPanel()" > mm`
         }</div>
       <div class="ir"><span class="il">Length</span><span class="iv">${segLen.toFixed(3)} mm</span></div>
       <div class="ir"><span class="il">Segs</span><span class="iv">${(tr.segments||[]).length}</span></div>
+      ${cpwHtml}
       <div style="margin-top:10px;display:flex;gap:5px;flex-wrap:wrap;">
         <button class="btn" onclick="fitToPad()" title="Set trace width to match the pad it connects to">⊢ Fit to pad</button>
         <button class="btn" style="color:var(--red)" onclick="delTrace()">✕ Del</button>
