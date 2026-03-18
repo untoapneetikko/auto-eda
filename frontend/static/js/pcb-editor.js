@@ -319,6 +319,41 @@ class PCBEditor {
     ctx.lineWidth=1.5; ctx.setLineDash([]); ctx.strokeRect(x,y,w,h);
     ctx.fillStyle='rgba(255,255,0,0.4)'; ctx.font='10px monospace'; ctx.textAlign='left';
     ctx.fillText(`${b.width}×${b.height}mm`,x+3,y+12);
+    // Draw drag handles when Edge.Cuts is active layer
+    if(this.workLayer==='Edge.Cuts'&&this.tool==='select'){
+      const hs=5; // handle size px
+      ctx.fillStyle='rgba(250,204,21,0.7)';
+      // Corner handles
+      for(const[hx,hy]of[[x,y],[x+w,y],[x,y+h],[x+w,y+h]]){
+        ctx.fillRect(hx-hs,hy-hs,hs*2,hs*2);
+      }
+      // Edge midpoint handles
+      ctx.fillStyle='rgba(250,204,21,0.4)';
+      for(const[hx,hy]of[[x+w/2,y],[x+w/2,y+h],[x,y+h/2],[x+w,y+h/2]]){
+        ctx.fillRect(hx-hs/2*1.5,hy-hs/2*1.5,hs*1.5,hs*1.5);
+      }
+    }
+  }
+
+  // Hit-test board outline edges/corners. Returns edge string or null.
+  _hitBoardEdge(mx,my){
+    if(!this.board?.board||this.workLayer!=='Edge.Cuts')return null;
+    const b=this.board.board;
+    const x0=this.mmX(0),y0=this.mmY(0);
+    const x1=x0+b.width*this.scale,y1=y0+b.height*this.scale;
+    const T=8; // hit threshold px
+    const onLeft=Math.abs(mx-x0)<T, onRight=Math.abs(mx-x1)<T;
+    const onTop=Math.abs(my-y0)<T, onBot=Math.abs(my-y1)<T;
+    const inX=mx>=x0-T&&mx<=x1+T, inY=my>=y0-T&&my<=y1+T;
+    if(onLeft&&onTop) return 'nw';
+    if(onRight&&onTop) return 'ne';
+    if(onLeft&&onBot) return 'sw';
+    if(onRight&&onBot) return 'se';
+    if(onTop&&inX) return 'n';
+    if(onBot&&inX) return 's';
+    if(onLeft&&inY) return 'w';
+    if(onRight&&inY) return 'e';
+    return null;
   }
 
   _drawDrawings(){
@@ -2369,6 +2404,16 @@ class PCBEditor {
         return;
       }
       if(this.tool==='select'){
+        // Board outline drag (when Edge.Cuts is active)
+        const _boardEdge=this._hitBoardEdge(mx,my);
+        if(_boardEdge&&this.board?.board){
+          this._snapshot();
+          this._isDragBoard=true;
+          this._dragBoardEdge=_boardEdge;
+          this._dragBoardStart={x:this.cX(mx),y:this.cY(my)};
+          this._dragBoardOrig={w:this.board.board.width,h:this.board.board.height};
+          this.render();updateInfoPanel();return;
+        }
         // Gather ALL hittable elements at this position
         const hitComps=this.getCompsAt(mx,my);   // all comps, smallest first
         const hitPads=this.getPadsAt(mx,my);     // all pads, closest first
@@ -2750,6 +2795,17 @@ class PCBEditor {
         this.selectedVia.x=this.snap(this.cX(mx)-this._dragViaOff.x);
         this.selectedVia.y=this.snap(this.cY(my)-this._dragViaOff.y);
         this.render();
+      } else if(this._isDragBoard&&this.board?.board){
+        const curX=this.snap(this.cX(mx)),curY=this.snap(this.cY(my));
+        const dx=curX-this._dragBoardStart.x, dy=curY-this._dragBoardStart.y;
+        const orig=this._dragBoardOrig;
+        const edge=this._dragBoardEdge;
+        const MIN=5; // min board dimension mm
+        if(edge.includes('e')) this.board.board.width=Math.max(MIN,orig.w+dx);
+        if(edge.includes('w')) this.board.board.width=Math.max(MIN,orig.w-dx);
+        if(edge.includes('s')) this.board.board.height=Math.max(MIN,orig.h+dy);
+        if(edge.includes('n')) this.board.board.height=Math.max(MIN,orig.h-dy);
+        this.render();
       } else if(this._isDragDrawing&&this.selectedDrawing){
         const dx=this.snap(this.cX(mx))-this.snap(this._dragDrawingStart.x);
         const dy=this.snap(this.cY(my))-this.snap(this._dragDrawingStart.y);
@@ -2828,15 +2884,20 @@ class PCBEditor {
         if(newHovC!==this._hoverComp){this._hoverComp=newHovC;needRender=true;}
         if(needRender)this.render();
         const wrap=document.getElementById('canvas-wrap');
-        if(wrap) wrap.style.cursor=this._isDragTrace?'grabbing':(newHovTr||newHovC)?'pointer':'default';
+        // Board edge resize cursor
+        const _bEdge=this._hitBoardEdge(mx,my);
+        const _bCur=_bEdge==='n'||_bEdge==='s'?'ns-resize':_bEdge==='e'||_bEdge==='w'?'ew-resize':
+          _bEdge==='nw'||_bEdge==='se'?'nwse-resize':_bEdge==='ne'||_bEdge==='sw'?'nesw-resize':null;
+        if(wrap) wrap.style.cursor=this._isDragBoard?'grabbing':this._isDragTrace?'grabbing':_bCur?_bCur:(newHovTr||newHovC)?'pointer':'default';
       }
     });
 
     cv.addEventListener('mouseup',e=>{
       const wasDragVia=this._isDragVia&&this.selectedVia;
-      const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace;
+      const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace||this._isDragBoard;
       this._isDrag=false; this._dragC=null; this._isPan=false; this._isDragVia=false;
       this._isDragDrawing=false; this._dragDrawingStart=null; this._dragDrawingPts=null;
+      this._isDragBoard=false; this._dragBoardEdge=null;
       this._isDragTrace=false; this._dragTrace=null; this._traceDragViolations=[];
       this._compDragViolations=[];
       // After via drag, adopt net from trace, copper area, or zone if via has no net
