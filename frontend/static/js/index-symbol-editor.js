@@ -709,7 +709,7 @@ function _renderAccCompList() {
 function _showSchProjectPanel() {
   const proj = document.getElementById('sch-info-project');
   const content = document.getElementById('sch-info-content');
-  if (proj) { proj.style.display = 'flex'; const inp = document.getElementById('sch-proj-name'); if (inp && document.activeElement !== inp) inp.value = editor.project.name || ''; }
+  if (proj) { proj.style.display = 'flex'; const inp = document.getElementById('sch-proj-name'); if (inp && document.activeElement !== inp) inp.value = editor.project.name || ''; const lc = document.getElementById('sch-proj-layers'); if (lc) lc.value = editor.project.layerCount || 2; }
   if (content) content.style.display = 'none';
   _schInfoTitle('Project');
   _renderSchCompList();

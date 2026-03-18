@@ -78,7 +78,7 @@ class SchematicEditor {
 
   // ── Project ───────────────────────────────────────────────────────────────
   newProject(name) {
-    this.project = { id: null, name: name || 'Untitled', components: [], wires: [], labels: [], groups: [], noConnects: [] };
+    this.project = { id: null, name: name || 'Untitled', components: [], wires: [], labels: [], groups: [], noConnects: [], layerCount: 2 };
     this.dirty = false; this.selected = null;
     this._saveHist(); this._resetView(); this._render(); this._status();
   }
@@ -88,6 +88,7 @@ class SchematicEditor {
     if (!this.project.labels) this.project.labels = [];
     if (!this.project.groups) this.project.groups = [];
     if (!this.project.noConnects) this.project.noConnects = [];
+    if (!this.project.layerCount) this.project.layerCount = 2;
     this.dirty = false; this.selected = null;
     this._autoConnectAll();
     this._saveHist(); this._fit(); this._render(); this._status();

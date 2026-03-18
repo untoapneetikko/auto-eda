@@ -72,6 +72,9 @@ async function saveBoard(){
   if(!editor.board){alert('No board loaded');return;}
   const board=editor.board;
   if(!board.id)board.id=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  // Embed current stackup info so the board is self-describing
+  board.layerCount=DR.layerCount||2;
+  board.stackup=DR.stackup||null;
   // Keep _currentProjectId in sync with the board being saved
   if(board.projectId) _currentProjectId=board.projectId;
   try{

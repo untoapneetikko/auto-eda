@@ -83,6 +83,13 @@ class PCBEditor {
       }
       this.board=d; this.selectedComp=null; this.routePoints=[];
       this.zonePoints=[]; this.fitBoard();
+      // Restore stackup from board if present
+      if(d.layerCount && d.stackup && typeof DR!=='undefined'){
+        DR.layerCount=d.layerCount;
+        DR.stackup=d.stackup;
+        if(typeof _rebuildEditorLayers==='function') _rebuildEditorLayers();
+        if(typeof _saveDRStorage==='function') _saveDRStorage();
+      }
       return{ok:true};
     }catch(e){return{ok:false,error:e.message};}
   }

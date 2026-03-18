@@ -1014,6 +1014,16 @@
             oninput="editor.project.name=this.value;editor.dirty=true;const _t=openTabs.find(t=>t.tabId===activeTabId);if(_t){_t.name=this.value;_t.dirty=true;}renderTabs();"
             onblur="editor._status();" />
         </label>
+        <label style="display:flex;flex-direction:column;gap:3px;">
+          <span style="font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;">Target PCB Layers</span>
+          <select id="sch-proj-layers" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:12px;padding:5px 8px;width:100%;box-sizing:border-box;cursor:pointer;"
+            onchange="editor.project.layerCount=parseInt(this.value);editor.dirty=true;">
+            <option value="2">2 Layers (Top + Bottom)</option>
+            <option value="4">4 Layers</option>
+            <option value="6">6 Layers</option>
+            <option value="8">8 Layers</option>
+          </select>
+        </label>
       </div>
       <div style="padding:0 12px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);">Components</div>
       <div id="sch-comp-list" style="flex:1;overflow-y:auto;"></div>

@@ -653,6 +653,12 @@ async function leSaveLayout() {
 
     if (!board) throw new Error('No board data available');
 
+    // Embed stackup info so the layout example knows its layer requirements
+    if (typeof DR !== 'undefined') {
+      board.layerCount = DR.layerCount || 2;
+      board.stackup = DR.stackup || null;
+    }
+
     // ── Step 2: save to profile + snapshot + set active version ──────────────
     const res = await fetch(`/api/library/${encodeURIComponent(slug)}/layout_example`, {
       method: 'PUT',
@@ -773,6 +779,15 @@ async function renderLayoutExample(slug) {
       components: [{ id: 'U1_le', ref: 'U1', value: partNum, footprint: fpName || '?', x: 20, y: 15, rotation: 0, layer: 'F', pads }],
       nets: [], traces: [], vias: []
     };
+  }
+
+  // Check layer count compatibility with the current project
+  const _leBoardLayers = board.layerCount || 2;
+  const _projLayers = (typeof editor !== 'undefined' && editor?.project?.layerCount) ? editor.project.layerCount : null;
+  if (_projLayers && _leBoardLayers !== _projLayers) {
+    if (notesEl) notesEl.textContent += ` · ⚠ layer mismatch: example is ${_leBoardLayers}L, project targets ${_projLayers}L`;
+  } else if (board.layerCount) {
+    if (notesEl) notesEl.textContent += ` · ${_leBoardLayers}L`;
   }
 
   // Render BOM panel now that _leAdded flags are set
