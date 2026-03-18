@@ -919,14 +919,43 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 
 <!-- ══ LAYER MANAGER + DESIGN RULES ══ -->
 <div class="modal-bg" id="layer-modal">
-  <div class="modal" style="width:640px;">
+  <div class="modal" style="width:700px;max-height:90vh;display:flex;flex-direction:column;">
     <div class="mh"><h2>🔧 Layer Manager &amp; Design Rules</h2><button class="mclose" onclick="closeModal('layer-modal')">✕</button></div>
-    <div class="mb">
+    <div class="mb" style="overflow-y:auto;flex:1;">
+
+      <!-- Board Stackup -->
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px;">Board Stackup</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <label style="font-size:12px;color:var(--text-dim);">Copper Layers</label>
+        <select id="lm-layer-count" class="dr-input" style="width:60px;" onchange="applyLayerCount(parseInt(this.value))">
+          <option value="2">2</option><option value="4">4</option><option value="6">6</option><option value="8">8</option>
+        </select>
+        <label style="font-size:12px;color:var(--text-dim);margin-left:8px;">Preset</label>
+        <select id="lm-stackup-preset" class="dr-input" style="width:140px;" onchange="applyStackupPreset(this.value)">
+          <option value="">Custom</option>
+          <option value="standard-2L">Standard 2L (1.6mm)</option>
+          <option value="standard-4L">Standard 4L (1.6mm)</option>
+          <option value="standard-6L">Standard 6L (1.6mm)</option>
+          <option value="hdi-4L">HDI 4L (1.0mm)</option>
+          <option value="rf-4L">RF 4L (0.8mm)</option>
+        </select>
+      </div>
+      <div id="lm-stackup-table-wrap" style="max-height:200px;overflow-y:auto;margin-bottom:6px;">
+        <table class="dr-table" style="width:100%;">
+          <thead><tr><th>Layer</th><th>Type</th><th>Thickness (mm)</th><th>Material</th></tr></thead>
+          <tbody id="lm-stackup-body"></tbody>
+        </table>
+      </div>
+      <div id="lm-stackup-total" style="font-size:11px;color:var(--text-muted);margin-bottom:14px;padding:6px 8px;background:var(--bg);border-radius:4px;border:1px solid var(--border);"></div>
+
+      <!-- Layers -->
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px;">Layers</div>
       <table class="dr-table">
         <thead><tr><th>Name</th><th>Color</th><th>Visible</th><th>Work</th><th>Key</th></tr></thead>
         <tbody id="layer-table-body"></tbody>
       </table>
+
+      <!-- Design Rules -->
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:8px;">Design Rules</div>
       <table class="dr-table">
         <thead><tr><th>Rule</th><th>Value (mm)</th><th>Description</th></tr></thead>

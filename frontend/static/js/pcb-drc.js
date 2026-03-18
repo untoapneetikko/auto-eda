@@ -258,6 +258,10 @@ function applyLayerCount(n) {
   DR.stackup = _buildDefaultStackup(n);
   _rebuildEditorLayers();
   populateStackupTable();
+  _populateLmStackup();
+  // Sync both selectors
+  const s1=document.getElementById('drt-layer-count'); if(s1)s1.value=n;
+  const s2=document.getElementById('lm-layer-count'); if(s2)s2.value=n;
   saveDRTab();
 }
 
@@ -400,10 +404,12 @@ function applyStackupPreset(name){
   if (!p) return;
   DR.layerCount = p.layerCount;
   DR.stackup = JSON.parse(JSON.stringify(p.stackup));
-  const sel = document.getElementById('drt-layer-count');
-  if (sel) sel.value = p.layerCount;
+  // Sync both layer count selectors
+  const s1=document.getElementById('drt-layer-count'); if(s1)s1.value=p.layerCount;
+  const s2=document.getElementById('lm-layer-count'); if(s2)s2.value=p.layerCount;
   _rebuildEditorLayers();
   populateStackupTable();
+  _populateLmStackup();
   _saveDRStorage();
 }
 
@@ -528,6 +534,11 @@ function openLayerManager(){
       <td style="font-size:11px;color:var(--text-muted);font-family:monospace;">${name}</td>`;
     tbody.appendChild(tr);
   }
+  // Populate stackup in modal
+  const lcSel=document.getElementById('lm-layer-count');
+  if(lcSel)lcSel.value=DR.layerCount||2;
+  if(!DR.stackup||!DR.stackup.length) DR.stackup=_buildDefaultStackup(DR.layerCount||2);
+  _populateLmStackup();
   // Populate DR fields
   document.getElementById('dr-min-trace').value=DR.minTraceWidth;
   document.getElementById('dr-trace').value=DR.traceWidth;
@@ -537,6 +548,39 @@ function openLayerManager(){
   document.getElementById('dr-edge').value=DR.edgeClearance;
   document.getElementById('dr-copper').value=DR.copperWeight;
   openModal('layer-modal');
+}
+
+function _populateLmStackup(){
+  const tbody=document.getElementById('lm-stackup-body');
+  if(!tbody)return;
+  tbody.innerHTML='';
+  const stack=DR.stackup||[];
+  for(let i=0;i<stack.length;i++){
+    const l=stack[i];
+    const isCu=l.type==='copper';
+    const bg=isCu?'rgba(204,102,51,0.08)':'rgba(100,116,139,0.06)';
+    const ns=isCu?'font-weight:700;color:var(--text);':'color:var(--text-dim);';
+    tbody.innerHTML+=`<tr style="background:${bg};">
+      <td style="${ns}font-size:11px;">${l.name}</td>
+      <td style="font-size:11px;color:var(--text-muted);">${isCu?'Copper':'Dielectric'}</td>
+      <td><input class="dr-input" type="number" step="0.01" min="0.01" max="5" value="${l.thickness}"
+        onchange="DR.stackup[${i}].thickness=parseFloat(this.value)||0.1;_updateLmStackupTotal();" style="width:70px;"></td>
+      <td style="font-size:11px;color:var(--text-muted);">${l.material||''}</td>
+    </tr>`;
+  }
+  _updateLmStackupTotal();
+}
+
+function _updateLmStackupTotal(){
+  const el=document.getElementById('lm-stackup-total');
+  if(!el)return;
+  const total=(DR.stackup||[]).reduce((s,l)=>s+(l.thickness||0),0);
+  DR.boardThickness=+total.toFixed(3);
+  const thickEl=document.getElementById('drt-board-thick');
+  if(thickEl)thickEl.value=DR.boardThickness;
+  const cc=(DR.stackup||[]).filter(l=>l.type==='copper').length;
+  const dc=(DR.stackup||[]).filter(l=>l.type==='dielectric').length;
+  el.innerHTML=`Total: <b>${total.toFixed(3)} mm</b> &nbsp;·&nbsp; ${cc} copper layer${cc!==1?'s':''} &nbsp;·&nbsp; ${dc} dielectric layer${dc!==1?'s':''}`;
 }
 function saveLayerRules(){
   DR.minTraceWidth=parseFloat(document.getElementById('dr-min-trace').value)||0.15;
