@@ -2217,13 +2217,19 @@ class PCBEditor {
 
   /** Find nearest pad within pixelRadius, returns same shape as getPadAt or null. */
   getNearestPad(mx,my,pixelRadius){
+    const routeLayer=this.workLayer||'F.Cu';
     let best=null,bestDist=pixelRadius;
-    for(const c of(this.board?.components||[]))
+    for(const c of(this.board?.components||[])){
+      const compCuLayer=c.layer==='B'?'B.Cu':'F.Cu';
       for(const p of(c.pads||[])){
+        // Thru-hole pads exist on all copper layers; SMD pads only on their component's layer
+        const padOnLayer=(p.type==='thru_hole')||(compCuLayer===routeLayer);
+        if(!padOnLayer) continue;
         const{px,py}=this._padWorld(c,p);
         const dist=Math.hypot(mx-this.mmX(px),my-this.mmY(py));
         if(dist<bestDist){bestDist=dist;best={comp:c,pad:p,x:px,y:py,dist};}
       }
+    }
     return best;
   }
 
