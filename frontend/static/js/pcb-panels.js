@@ -596,16 +596,13 @@ function updateInfoPanel(){
           :Math.log(2*(1+Math.sqrt(k))/(1-Math.sqrt(k)))/Math.PI;
       };
 
-      // Effective width (copper thickness compensation)
-      const we=w+1.25*t/Math.PI*(1+Math.log(4*Math.PI*w/t));
-
       let Z0, eeff, topology;
       if(hasCoPlanar && backed){
         // ── GCPW: grounded coplanar waveguide ──
         topology=buried?'Buried GCPW':'GCPW';
         const g=gapSame;
-        const k0=we/(we+2*g);
-        const k1=Math.tanh(Math.PI*we/(4*hMin))/Math.tanh(Math.PI*(we+2*g)/(4*hMin));
+        const k0=w/(w+2*g);
+        const k1=Math.tanh(Math.PI*w/(4*hMin))/Math.tanh(Math.PI*(w+2*g)/(4*hMin));
         const Kk0=_Kratio(k0);
         const Kk1=_Kratio(k1);
         // q = K(k0')/K(k0) * K(k1)/K(k1') = Kk1/Kk0
@@ -617,7 +614,7 @@ function updateInfoPanel(){
         if(buried){
           // Asymmetric stripline correction
           const hOther=hAbove===hMin?hBelow:hAbove;
-          const k2=Math.tanh(Math.PI*we/(4*hOther))/Math.tanh(Math.PI*(we+2*g)/(4*hOther));
+          const k2=Math.tanh(Math.PI*w/(4*hOther))/Math.tanh(Math.PI*(w+2*g)/(4*hOther));
           const Kk2=_Kratio(k2);
           const q2=Kk0>0?Kk2/Kk0:0;
           const denomB=Kk0+Kk1+Kk2;
@@ -631,7 +628,7 @@ function updateInfoPanel(){
         // ── CPW: no ground plane backing ──
         topology='CPW';
         const g=gapSame;
-        const k0=we/(we+2*g);
+        const k0=w/(w+2*g);
         const Kk0=_Kratio(k0);
         if(Kk0<1e-10) return null;
         eeff=(1+er)/2;
@@ -639,10 +636,10 @@ function updateInfoPanel(){
       } else if(backed){
         // ── Microstrip: no coplanar ground ──
         topology=buried?'Buried Microstrip':'Microstrip';
-        eeff=(er+1)/2+(er-1)/2/Math.sqrt(1+12*hMin/we);
+        eeff=(er+1)/2+(er-1)/2/Math.sqrt(1+12*hMin/w);
         Z0=buried
-          ?(60/Math.sqrt(er))*Math.log(5.98*hMin/(0.8*we+t))
-          :(87/Math.sqrt(er+1.41))*Math.log(5.98*hMin/(0.8*we+t));
+          ?(60/Math.sqrt(er))*Math.log(5.98*hMin/(0.8*w+t))
+          :(87/Math.sqrt(er+1.41))*Math.log(5.98*hMin/(0.8*w+t));
         if(Z0<0) Z0=Math.abs(Z0);
       } else {
         // No GND reference at all — impedance is effectively infinite
