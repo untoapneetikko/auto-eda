@@ -197,6 +197,13 @@ function renderSchPalette(filter) {
 async function loadExampleFromSlug(slug) {
   const p = await fetchProfile(slug);
   profileCache[slug] = p;
+  // Check layer count compatibility: layout_example declares required layers
+  const leLayers = p.layout_example?.layerCount || 2;
+  const projLayers = editor?.project?.layerCount || 2;
+  if (leLayers !== projLayers) {
+    alert(`Cannot use this example: it requires ${leLayers} copper layers, but your project targets ${projLayers} layers.\n\nChange the project's "Target PCB Layers" or the layout example's layer count to match.`);
+    return;
+  }
   switchSection('schematic');
   requestAnimationFrame(() => editor.startPlaceGroup(p));
 }

@@ -709,8 +709,22 @@ Then parse this component:
 
       <div id="tab-layout-example" class="tab-panel" style="display:none;">
         <div style="display:flex;flex-direction:column;height:calc(100vh - 160px);min-height:400px;">
-          <div id="le-notes" style="display:none;"></div>
-          <button id="le-save-btn" onclick="leSaveLayout()" style="display:none;"></button>
+          <div style="display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;">
+            <label style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Layers</label>
+            <select id="le-layer-count" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:2px 6px;cursor:pointer;"
+              onchange="leSetLayerCount(parseInt(this.value))">
+              <option value="2">2L</option><option value="4">4L</option><option value="6">6L</option><option value="8">8L</option>
+            </select>
+            <div id="le-layer-mismatch" style="display:none;font-size:11px;color:#ef4444;font-weight:700;"></div>
+            <div id="le-notes" style="flex:1;font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+            <button id="le-save-btn" onclick="leSaveLayout()" style="display:none;"></button>
+          </div>
+          <div id="le-blocked-overlay" style="display:none;position:relative;flex:1;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:40px;text-align:center;">
+            <div style="font-size:48px;">🚫</div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);">Layer Count Mismatch</div>
+            <div id="le-blocked-msg" style="font-size:13px;color:var(--text-muted);max-width:400px;"></div>
+            <div style="font-size:12px;color:var(--text-dim);margin-top:8px;">Change the project's target layers or the layout example's layer count to match.</div>
+          </div>
           <!-- body: PCB iframe on top, BOM strip below -->
           <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
             <!-- PCB editor iframe -->
