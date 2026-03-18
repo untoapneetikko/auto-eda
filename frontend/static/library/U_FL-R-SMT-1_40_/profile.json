@@ -1,0 +1,31 @@
+{
+  "part_number": "U.FL-R-SMT-1_40_",
+  "description": "RF Connectors / Coaxial Connectors SMT MALE RECEPT AU 50 OHM\nSource:  Datasheet",
+  "manufacturer": "",
+  "status": "parsed",
+  "confidence": "MEDIUM",
+  "symbol_type": "ic",
+  "package_types": [
+    "UFLRSMT140"
+  ],
+  "pins": [
+    {
+      "number": 1,
+      "name": "SIG",
+      "type": "bidirectional"
+    },
+    {
+      "number": 2,
+      "name": "GND_1",
+      "type": "bidirectional"
+    },
+    {
+      "number": 3,
+      "name": "GND_2",
+      "type": "bidirectional"
+    }
+  ],
+  "source": "eagle_lbr",
+  "slug": "U_FL-R-SMT-1_40_",
+  "footprint": "UFLRSMT140"
+}

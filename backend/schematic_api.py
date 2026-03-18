@@ -1495,6 +1495,9 @@ async def api_import_eagle(file: UploadFile):
             continue
         (LIBRARY_DIR / slug).mkdir(parents=True, exist_ok=True)
         profile["slug"] = slug
+        # Auto-assign first package as footprint
+        if profile.get("package_types") and not profile.get("footprint"):
+            profile["footprint"] = profile["package_types"][0]
         pp.write_text(json.dumps(profile, indent=2), encoding="utf-8")
         installed.append(slug)
 
