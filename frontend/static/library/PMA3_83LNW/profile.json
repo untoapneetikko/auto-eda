@@ -764,6 +764,7 @@
   },
   "footprint": "QFN-12-3x3",
   "layout_example": {
+    "layerCount": 4,
     "version": "1.0",
     "title": "PMA3-83LNW+ Layout Example",
     "board": {
