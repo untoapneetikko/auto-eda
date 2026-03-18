@@ -54,46 +54,10 @@ function renderSchNets(editorRef, listId, countId) {
   // Broad power net detection
   const _isPower = name => /gnd|vcc|vdd|vss|vee|vbus|vref|vbat|pwr|power|avcc|avdd|dvcc|dvdd|\bv\d|\d+v\d*|3v3|5v0|\+[\d.]+v/i.test(name.trim());
 
-  // Assign a family name for grouping similar power nets together
-  const _family = name => {
-    const u = name.toUpperCase();
-    if (/GND|GROUND/.test(u)) return 'GND';
-    if (/VCC/.test(u)) return 'VCC';
-    if (/VDD/.test(u)) return 'VDD';
-    if (/VSS/.test(u)) return 'VSS';
-    if (/VEE/.test(u)) return 'VEE';
-    if (/VBUS/.test(u)) return 'VBUS';
-    if (/VREF/.test(u)) return 'VREF';
-    if (/VBAT/.test(u)) return 'VBAT';
-    if (/PWR|POWER/.test(u)) return 'PWR';
-    // fallback: strip digits/symbols to get root token
-    return u.replace(/[_+\-\d.V]/g, '') || 'OTHER';
-  };
-
   const power  = nets.filter(n =>  _isPower(n.name));
   const signal = nets.filter(n => !_isPower(n.name));
 
-  // Group power nets by family, sort families alphabetically
-  const famMap = {};
-  for (const n of power) {
-    const f = _family(n.name);
-    (famMap[f] = famMap[f] || []).push(n);
-  }
-  const families = Object.keys(famMap).sort();
-
   const _sectionHdr = label => `<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;padding:5px 8px 2px;">${label}</div>`;
-
-  const _chip = n => {
-    const col = editorRef._labelColor(n.name);
-    const active = hn === n.name;
-    const outline = active ? `outline:2px solid #facc15;` : '';
-    return `<div title="${esc(n.name)} (${n.ports.length} pins)" style="cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.05);border:1px solid ${col}44;${outline}"
-      data-net="${esc(n.name)}" data-list="${esc(listId)}" data-count="${esc(countId)}"
-      onclick="_schNetClick(this.dataset.list,this.dataset.count,this.dataset.net)">
-      <div style="width:6px;height:6px;border-radius:50%;background:${col};flex-shrink:0;"></div>
-      <span style="color:${col};font-size:9px;font-weight:600;white-space:nowrap;">${esc(n.name)}</span>
-    </div>`;
-  };
 
   const _row = n => {
     const col = editorRef._labelColor(n.name);

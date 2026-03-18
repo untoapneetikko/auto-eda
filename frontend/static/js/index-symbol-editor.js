@@ -674,7 +674,7 @@ function _accSelectComp(id) {
 function _renderSchCompList() {
   const el = document.getElementById('sch-comp-list');
   if (!el) return;
-  const comps = editor.project.components || [];
+  const comps = (editor.project.components || []).filter(c => c.symType !== 'vcc' && c.symType !== 'gnd');
   if (!comps.length) {
     el.innerHTML = '<div style="padding:8px 12px;font-size:11px;color:var(--text-muted);">No components yet.</div>';
     return;
@@ -686,7 +686,7 @@ function _renderSchCompList() {
 function _renderAccCompList() {
   const el = document.getElementById('acc-info-empty');
   if (!el || !appCircuitEditor) return;
-  const comps = appCircuitEditor.project.components || [];
+  const comps = (appCircuitEditor.project.components || []).filter(c => c.symType !== 'vcc' && c.symType !== 'gnd');
   if (!comps.length) {
     el.style.alignItems = 'center';
     el.style.justifyContent = 'center';
