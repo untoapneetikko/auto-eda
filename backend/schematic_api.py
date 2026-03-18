@@ -5226,11 +5226,70 @@ async def api_pcb_import_schematic(request: Request):
     board_cy = bh / 2.0
 
     # ── Build pad→net lookup from netlist ──────────────────────────────────
-    pad_net: dict[str, str] = {}  # "R1.1" → "GND"
+    # The netlist uses schematic port names (e.g. "R1.P1", "U1.RF-IN").
+    # The PCB uses footprint pad numbers (e.g. "R1.1", "U1.2").
+    # We store both forms so the lookup works either way.
+    pad_net: dict[str, str] = {}  # "R1.1" → "GND", "R1.P1" → "GND"
     for net_name, pads_list in netlist.items():
         if isinstance(pads_list, list):
             for p in pads_list:
-                pad_net[str(p)] = net_name.upper()  # force CAPS
+                pad_net[str(p)] = net_name.upper()  # e.g. "R1.P1" → "GND"
+
+    # Build ref → {port_name → pad_number} mapping from profiles + SYMDEFS
+    # so we can translate "R1.P1" → "R1.1", "U1.RF-IN" → "U1.2", etc.
+    _passive_port_map = {
+        "P1": "1", "P2": "2", "+": "1", "-": "2",
+        "A": "1", "K": "2", "IN": "1", "OUT": "2",
+        "B": "1", "C": "2", "E": "3",
+        "G": "1", "D": "2", "S": "3",
+    }
+
+    def _build_port_to_pad(ref: str, slug: str, sym_type: str) -> dict[str, str]:
+        """Build a map from schematic port name → footprint pad number."""
+        m: dict[str, str] = {}
+        # Try profile pins: name → number
+        profile_path = LIBRARY_DIR / slug.upper() / "profile.json"
+        if profile_path.exists():
+            try:
+                prof = json.loads(profile_path.read_text("utf-8"))
+                for pin in prof.get("pins", []):
+                    name = str(pin.get("name", ""))
+                    num = str(pin.get("number", ""))
+                    if name and num:
+                        m[name] = num
+            except Exception:
+                pass
+        # Passive / simple component fallback
+        for pname, pnum in _passive_port_map.items():
+            if pname not in m:
+                m[pname] = pnum
+        return m
+
+    # Collect all refs from netlist entries and build port→pad maps
+    _refs_seen: dict[str, tuple[str, str]] = {}  # ref → (slug, sym_type)
+    for sc in project.get("components", []):
+        ref = str(sc.get("designator", sc.get("ref", sc.get("id", ""))))
+        slug = str(sc.get("slug", sc.get("symType", "")))
+        sym_type = str(sc.get("symType", ""))
+        if ref:
+            _refs_seen[ref] = (slug, sym_type)
+
+    # Now register translated pad_net keys: "R1.P1" → "R1.1"
+    _extra: dict[str, str] = {}
+    for pad_ref, net_name in pad_net.items():
+        dot = pad_ref.rfind(".")
+        if dot < 0:
+            continue
+        ref = pad_ref[:dot]
+        port_name = pad_ref[dot + 1:]
+        if ref not in _refs_seen:
+            continue
+        slug, sym_type = _refs_seen[ref]
+        port_map = _build_port_to_pad(ref, slug, sym_type)
+        pad_num = port_map.get(port_name)
+        if pad_num and pad_num != port_name:
+            _extra[f"{ref}.{pad_num}"] = net_name
+    pad_net.update(_extra)
 
     # ── Pre-load layout_example data for example groups ────────────────────
     # When a schematic component was placed via an "example circuit" drop
