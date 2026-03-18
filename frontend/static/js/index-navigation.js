@@ -197,8 +197,9 @@ function renderSchPalette(filter) {
 async function loadExampleFromSlug(slug) {
   const p = await fetchProfile(slug);
   profileCache[slug] = p;
-  // Check layer count: layout example decides its layers, project decides its layers — they must match
-  const leLayers = p.layout_example?.layerCount || 2;
+  // Check layer count: fetch layout_example directly (profile snapshots may be stale)
+  const le = await fetch(`/api/library/${encodeURIComponent(slug)}/layout_example`).then(r=>r.ok?r.json():null).catch(()=>null);
+  const leLayers = le?.layerCount || p.layout_example?.layerCount || 2;
   const projLayers = editor?.project?.layerCount || 2;
   if (leLayers !== projLayers) {
     alert(`Not allowed — layer count mismatch.\n\nThis component's layout example uses ${leLayers} layers, but your project is set to ${projLayers} layers.\n\nPlease use the same amount of layers. You can change your project's layer count in the project panel, or change the layout example's layer count in the Layout Example tab.`);

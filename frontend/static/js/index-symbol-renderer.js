@@ -736,11 +736,13 @@ async function renderLayoutExample(slug) {
   // Reset added state
   _leBomData.forEach(c => { c._leAdded = false; });
 
-  // Decide what board to show
+  // Decide what board to show — also fetch standalone layout_example which may have fresher layerCount
+  const _leStandalone = await fetch(`/api/library/${slug}/layout_example`).then(r=>r.ok?r.json():null).catch(()=>null);
   let board;
-  if (profile.layout_example && profile.layout_example.components?.length) {
-    // Saved layout takes priority
-    board = profile.layout_example;
+  if ((profile.layout_example && profile.layout_example.components?.length) || (_leStandalone && _leStandalone.components?.length)) {
+    // Saved layout takes priority; merge layerCount from standalone if profile snapshot is stale
+    board = (profile.layout_example?.components?.length) ? profile.layout_example : _leStandalone;
+    if (_leStandalone?.layerCount && !board.layerCount) board.layerCount = _leStandalone.layerCount;
     if (notesEl) notesEl.textContent += ' · ✓ saved';
     // Mark each BOM component as added if its ref already appears in the saved layout
     const leRefs = new Set((profile.layout_example.components || []).map(c => c.ref));
