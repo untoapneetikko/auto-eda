@@ -785,22 +785,19 @@ function fitToPad(){
   if(segs.length===0)return;
   const p0=segs[0].start, pN=segs[segs.length-1].end;
 
-  // Find closest pad to an endpoint — prefer same-net, fall back to nearest by proximity
+  // Find closest pad to a trace endpoint
   function findPad(ep){
-    let bestNet=null,bestNetD=Infinity;
-    let bestAny=null,bestAnyD=Infinity;
-    const trNet=(tr.net||'').toUpperCase();
+    let best=null,bestD=Infinity;
     for(const comp of(editor.board.components||[])){
       for(const pad of(comp.pads||[])){
         const{px,py}=editor._padWorld(comp,pad);
         const d=Math.hypot(px-ep.x,py-ep.y);
-        if(d<bestAnyD){bestAnyD=d;bestAny=pad;}
-        if(trNet&&(pad.net||'').toUpperCase()===trNet&&d<bestNetD){bestNetD=d;bestNet=pad;}
+        if(d<bestD){bestD=d;best=pad;}
       }
     }
-    // Use net-matched pad if close enough; otherwise nearest pad within 2mm
-    if(bestNet&&bestNetD<5)return bestNet;
-    if(bestAny&&bestAnyD<2)return bestAny;
+    // Accept if within half a pad width or 3mm, whichever is larger
+    const padR=best?Math.max((best.size_x||0.6),(best.size_y||0.6)):0;
+    if(best&&bestD<Math.max(3,padR))return best;
     return null;
   }
   // Perpendicular pad width given the approach segment direction
