@@ -4699,6 +4699,64 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
     if not components:
         return {**board}
 
+    # ── Separate grouped components from free components ─────────────────
+    # Grouped components (with groupId) are placed as units — the optimizer
+    # only sees free (ungrouped) components.  Groups are repositioned as
+    # rigid blocks using a virtual "group anchor" entry.
+    grouped: dict[str, list[dict]] = {}   # groupId → list[comp]
+    free_components: list[dict] = []
+    for c in components:
+        gid = c.get("groupId", "")
+        if gid:
+            grouped.setdefault(gid, []).append(c)
+        else:
+            free_components.append(c)
+
+    # For each group, create a virtual anchor component (using the group's
+    # bounding-box center) so the optimizer can position the group as a unit.
+    group_anchors: dict[str, dict] = {}   # groupId → virtual comp
+    group_offsets: dict[str, list[tuple]] = {}  # groupId → [(ref, dx, dy, rot)]
+    for gid, members in grouped.items():
+        xs = [m["x"] for m in members]
+        ys = [m["y"] for m in members]
+        cx = sum(xs) / len(xs)
+        cy = sum(ys) / len(ys)
+        # Compute bounding box for a coarse footprint size hint
+        all_pads = [p for m in members for p in m.get("pads", [])]
+        # Collect all nets from group members
+        group_nets: list[str] = []
+        for m in members:
+            for p in m.get("pads", []):
+                n = (p.get("net", "") or "").upper()
+                if n and n not in group_nets:
+                    group_nets.append(n)
+        # Store offsets relative to center
+        group_offsets[gid] = [
+            (m["ref"], m["x"] - cx, m["y"] - cy, m.get("rotation", 0))
+            for m in members
+        ]
+        # Create a virtual component for the optimizer
+        half_w = max((max(xs) - min(xs)) / 2 + 2, 3)
+        half_h = max((max(ys) - min(ys)) / 2 + 2, 3)
+        virtual = {
+            "ref": f"__group_{gid}",
+            "id":  f"__group_{gid}",
+            "value": f"group:{gid}",
+            "footprint": f"GROUP_{len(members)}",
+            "x": cx, "y": cy,
+            "rotation": 0,
+            "layer": "F",
+            "pads": [
+                {"number": "1", "x": -half_w, "y": 0, "type": "smd",
+                 "shape": "rect", "size_x": half_w * 2, "size_y": half_h * 2,
+                 "net": group_nets[0] if group_nets else ""},
+            ],
+        }
+        group_anchors[gid] = virtual
+        free_components.append(virtual)
+
+    components = free_components
+
     # ── Build comp_ref → list[net_name] ─────────────────────────────────
     nets = board.get("nets", [])
     comp_nets: dict[str, list[str]] = {c["ref"]: [] for c in components}
@@ -4717,6 +4775,17 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
             net_name = (pad.get("net", "") or "").upper()
             if net_name and ref in comp_nets and net_name not in comp_nets[ref]:
                 comp_nets[ref].append(net_name)
+
+    # Populate virtual group anchors with all nets from their member components
+    for gid, members in grouped.items():
+        anchor_ref = f"__group_{gid}"
+        if anchor_ref not in comp_nets:
+            comp_nets[anchor_ref] = []
+        for m in members:
+            for p in m.get("pads", []):
+                n = (p.get("net", "") or "").upper()
+                if n and n not in comp_nets[anchor_ref]:
+                    comp_nets[anchor_ref].append(n)
 
     # ── Load schematic hints from linked project ─────────────────────────
     schematic_hints: dict[str, tuple[float, float]] = {}
@@ -4841,20 +4910,38 @@ def run_autoplace(board: dict, min_clearance_mm: float = 1.0) -> dict:
     placement_by_ref = {p["reference"]: p for p in placements}
     for comp in components:
         ref = comp.get("ref", comp.get("id", ""))
+        if ref.startswith("__group_"):
+            continue  # virtual anchors handled below
         if ref in placement_by_ref:
             comp["x"] = placement_by_ref[ref]["x"]
             comp["y"] = placement_by_ref[ref]["y"]
-            # Use PCB rotation from example_schematic if known; fall back to
-            # the optimizer result (which already carries pcb_rotations), then
-            # fall back to the board's original rotation.
             comp["rotation"] = pcb_rotations.get(
                 ref,
                 placement_by_ref[ref].get("rotation", orig_rotations.get(ref, 0))
             )
 
-    # Merge: keep all original components (including skipped power symbols),
-    # updating only the ones that were actually placed.
-    placed_map = {c["ref"]: c for c in components}
+    # ── Expand virtual group anchors back to real grouped components ──────
+    for gid, offsets in group_offsets.items():
+        anchor_ref = f"__group_{gid}"
+        if anchor_ref not in placement_by_ref:
+            continue
+        ax = placement_by_ref[anchor_ref]["x"]
+        ay = placement_by_ref[anchor_ref]["y"]
+        for member_ref, dx, dy, rot in offsets:
+            for m in grouped.get(gid, []):
+                if m["ref"] == member_ref:
+                    m["x"] = round(ax + dx, 2)
+                    m["y"] = round(ay + dy, 2)
+                    m["rotation"] = rot
+                    break
+
+    # Merge: keep all original components (including skipped power symbols
+    # and grouped components), updating only the ones that were actually placed.
+    placed_map = {c["ref"]: c for c in components if not c.get("ref", "").startswith("__group_")}
+    # Add grouped components back
+    for members in grouped.values():
+        for m in members:
+            placed_map[m["ref"]] = m
     merged = []
     for orig_comp in all_components:
         ref = orig_comp.get("ref", "")
