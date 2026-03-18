@@ -71,22 +71,38 @@ _AUTH_SALT = os.getenv("AUTH_SALT", "auto-eda-v1-salt-2026")
 def _hash_password(password: str) -> str:
     return hashlib.sha256((_AUTH_SALT + password).encode()).hexdigest()
 
-_USERS: dict[str, dict] = {
-    "john": {
-        "password_hash": _hash_password("boy"),
-        "display_name": "John",
-        "role": "admin",
-    },
-}
+_USERS_REDIS_KEY = "eda:users"
+
+def _load_users() -> dict[str, dict]:
+    raw = _r.get(_USERS_REDIS_KEY)
+    if raw:
+        return json.loads(raw)
+    return {}
+
+def _save_users(users: dict[str, dict]):
+    _r.set(_USERS_REDIS_KEY, json.dumps(users))
+
+def _get_users() -> dict[str, dict]:
+    users = _load_users()
+    # Seed default admin if no users exist
+    if not users:
+        users["john"] = {
+            "password_hash": _hash_password("boy"),
+            "display_name": "John",
+            "role": "admin",
+        }
+        _save_users(users)
+    return users
 
 _SESSION_TTL = 60 * 60 * 24 * 30  # 30 days
 
 def _create_session(username: str) -> str:
+    users = _get_users()
     token = secrets.token_urlsafe(48)
     _r.setex(f"session:{token}", _SESSION_TTL, json.dumps({
         "username": username,
-        "display_name": _USERS[username]["display_name"],
-        "role": _USERS[username]["role"],
+        "display_name": users[username]["display_name"],
+        "role": users[username]["role"],
     }))
     return token
 
@@ -131,7 +147,7 @@ async def api_login(request: Request):
     body = await request.json()
     username = (body.get("username") or "").strip().lower()
     password = body.get("password") or ""
-    user = _USERS.get(username)
+    user = _get_users().get(username)
     if not user or not hmac.compare_digest(user["password_hash"], _hash_password(password)):
         raise HTTPException(401, "Invalid username or password")
     token = _create_session(username)
@@ -174,7 +190,8 @@ async def api_update_profile(request: Request):
         raise HTTPException(401, "Not authenticated")
     body = await request.json()
     username = session["username"]
-    user = _USERS.get(username)
+    users = _get_users()
+    user = users.get(username)
     if not user:
         raise HTTPException(404, "User not found")
     # Update display name
@@ -193,7 +210,74 @@ async def api_update_profile(request: Request):
         if len(new_pw) < 2:
             raise HTTPException(400, "Password too short")
         user["password_hash"] = _hash_password(new_pw)
+    _save_users(users)
     return {"ok": True, "user": {"username": username, "display_name": user["display_name"], "role": user["role"]}}
+
+# ── Admin: User Management ────────────────────────────────────────────────────
+@app.get("/api/auth/users")
+async def api_list_users(request: Request):
+    session = _get_session(request.cookies.get("eda_session", ""))
+    if not session or session.get("role") != "admin":
+        raise HTTPException(403, "Admin access required")
+    users = _get_users()
+    return [{"username": u, "display_name": d["display_name"], "role": d["role"]} for u, d in users.items()]
+
+@app.post("/api/auth/users")
+async def api_create_user(request: Request):
+    session = _get_session(request.cookies.get("eda_session", ""))
+    if not session or session.get("role") != "admin":
+        raise HTTPException(403, "Admin access required")
+    body = await request.json()
+    username = (body.get("username") or "").strip().lower()
+    password = body.get("password") or ""
+    display_name = (body.get("display_name") or username).strip()
+    role = body.get("role", "user")
+    if not username or len(username) < 2:
+        raise HTTPException(400, "Username must be at least 2 characters")
+    if not password or len(password) < 2:
+        raise HTTPException(400, "Password must be at least 2 characters")
+    if role not in ("admin", "user"):
+        raise HTTPException(400, "Role must be 'admin' or 'user'")
+    users = _get_users()
+    if username in users:
+        raise HTTPException(409, f"User '{username}' already exists")
+    users[username] = {
+        "password_hash": _hash_password(password),
+        "display_name": display_name,
+        "role": role,
+    }
+    _save_users(users)
+    return {"ok": True, "username": username}
+
+@app.delete("/api/auth/users/{username}")
+async def api_delete_user(username: str, request: Request):
+    session = _get_session(request.cookies.get("eda_session", ""))
+    if not session or session.get("role") != "admin":
+        raise HTTPException(403, "Admin access required")
+    if username == session["username"]:
+        raise HTTPException(400, "Cannot delete yourself")
+    users = _get_users()
+    if username not in users:
+        raise HTTPException(404, "User not found")
+    del users[username]
+    _save_users(users)
+    return {"ok": True}
+
+@app.put("/api/auth/users/{username}/reset-password")
+async def api_reset_password(username: str, request: Request):
+    session = _get_session(request.cookies.get("eda_session", ""))
+    if not session or session.get("role") != "admin":
+        raise HTTPException(403, "Admin access required")
+    body = await request.json()
+    new_pw = body.get("password", "")
+    if len(new_pw) < 2:
+        raise HTTPException(400, "Password too short")
+    users = _get_users()
+    if username not in users:
+        raise HTTPException(404, "User not found")
+    users[username]["password_hash"] = _hash_password(new_pw)
+    _save_users(users)
+    return {"ok": True}
 
 # ── Mount agent routers ───────────────────────────────────────────────────────
 try:

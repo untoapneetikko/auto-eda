@@ -577,6 +577,9 @@
       <div onclick="openProfileSettings();toggleUserMenu();" style="padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text-dim);transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
         ⚙ Profile Settings
       </div>
+      <div id="admin-menu-item" onclick="openAdminPanel();toggleUserMenu();" style="display:none;padding:8px 14px;font-size:12px;cursor:pointer;color:var(--text-dim);transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+        👥 Admin — Users
+      </div>
       <div onclick="doLogout()" style="padding:8px 14px;font-size:12px;cursor:pointer;color:#ef4444;transition:background 0.1s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
         ↩ Sign Out
       </div>
@@ -1447,6 +1450,7 @@ async function doLogout() {
   window.location.href = '/login';
 }
 
+let _currentUserRole = null;
 async function loadUserInfo() {
   try {
     const res = await fetch('/api/auth/me');
@@ -1455,6 +1459,10 @@ async function loadUserInfo() {
       document.getElementById('user-display-name').textContent = d.user.display_name;
       document.getElementById('user-menu-name').textContent = d.user.display_name;
       document.getElementById('user-menu-role').textContent = d.user.role;
+      _currentUserRole = d.user.role;
+      if (d.user.role === 'admin') {
+        document.getElementById('admin-menu-item').style.display = '';
+      }
     }
   } catch(_) {}
 }
@@ -1495,6 +1503,85 @@ async function saveProfileSettings() {
   }
   btn.disabled = false;
 }
+
+// ── Admin User Management ─────────────────────────────────────────────────
+async function openAdminPanel() {
+  document.getElementById('admin-modal').style.display = 'flex';
+  await refreshAdminUserList();
+}
+
+async function refreshAdminUserList() {
+  const list = document.getElementById('admin-user-list');
+  list.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px;">Loading...</div>';
+  try {
+    const res = await fetch('/api/auth/users');
+    if (!res.ok) throw new Error('Access denied');
+    const users = await res.json();
+    list.innerHTML = users.map(u => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);">
+        <span style="font-size:14px;">${u.role==='admin'?'👑':'👤'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${esc(u.display_name)}</div>
+          <div style="font-size:11px;color:var(--text-muted);font-family:monospace;">${esc(u.username)} · ${u.role}</div>
+        </div>
+        <button onclick="adminResetPw('${esc(u.username)}')" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:10px;color:var(--text-dim);cursor:pointer;" title="Reset password">🔑</button>
+        <button onclick="adminDeleteUser('${esc(u.username)}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:4px;padding:3px 8px;font-size:10px;color:#ef4444;cursor:pointer;" title="Delete user">✕</button>
+      </div>
+    `).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:var(--red);font-size:12px;padding:8px;">'+e.message+'</div>';
+  }
+}
+
+async function adminCreateUser() {
+  const un = document.getElementById('admin-new-username').value.trim().toLowerCase();
+  const pw = document.getElementById('admin-new-password').value;
+  const dn = document.getElementById('admin-new-display').value.trim() || un;
+  const rl = document.getElementById('admin-new-role').value;
+  const st = document.getElementById('admin-create-status');
+  if (!un || !pw) { st.textContent = 'Username and password required'; st.style.color = 'var(--red)'; return; }
+  st.textContent = 'Creating...'; st.style.color = 'var(--text-muted)';
+  try {
+    const res = await fetch('/api/auth/users', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: un, password: pw, display_name: dn, role: rl })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.detail || 'Failed');
+    st.textContent = 'Created!'; st.style.color = 'var(--green)';
+    document.getElementById('admin-new-username').value = '';
+    document.getElementById('admin-new-password').value = '';
+    document.getElementById('admin-new-display').value = '';
+    await refreshAdminUserList();
+    setTimeout(() => { st.textContent = ''; }, 2000);
+  } catch(e) {
+    st.textContent = e.message; st.style.color = 'var(--red)';
+  }
+}
+
+async function adminDeleteUser(username) {
+  if (!confirm('Delete user "'+username+'"? This cannot be undone.')) return;
+  try {
+    const res = await fetch('/api/auth/users/'+encodeURIComponent(username), { method: 'DELETE' });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.detail || 'Failed');
+    await refreshAdminUserList();
+  } catch(e) { alert(e.message); }
+}
+
+async function adminResetPw(username) {
+  const pw = prompt('New password for "'+username+'":');
+  if (!pw) return;
+  try {
+    const res = await fetch('/api/auth/users/'+encodeURIComponent(username)+'/reset-password', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.detail || 'Failed');
+    alert('Password reset for '+username);
+  } catch(e) { alert(e.message); }
+}
 </script>
 
 <!-- Profile Settings Modal -->
@@ -1521,6 +1608,35 @@ async function saveProfileSettings() {
       <div style="display:flex;align-items:center;gap:12px;">
         <button id="profile-save-btn" onclick="saveProfileSettings()" style="background:var(--accent);border:none;border-radius:6px;padding:8px 20px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Save</button>
         <span id="profile-status" style="font-size:12px;"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin User Management Modal -->
+<div id="admin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:480px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 16px 48px rgba(0,0,0,0.7);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <span style="font-size:14px;font-weight:700;">👥 User Management</span>
+      <button onclick="document.getElementById('admin-modal').style.display='none'" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;">&times;</button>
+    </div>
+    <!-- User list -->
+    <div id="admin-user-list" style="flex:1;overflow-y:auto;min-height:100px;"></div>
+    <!-- Create new user -->
+    <div style="padding:14px 18px;border-top:1px solid var(--border);flex-shrink:0;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:8px;">Create New User</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <input id="admin-new-username" type="text" placeholder="Username" style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-size:12px;box-sizing:border-box;">
+        <input id="admin-new-password" type="password" placeholder="Password" style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-size:12px;box-sizing:border-box;">
+        <input id="admin-new-display" type="text" placeholder="Display Name (optional)" style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-size:12px;box-sizing:border-box;">
+        <select id="admin-new-role" style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:7px 10px;color:var(--text);font-size:12px;box-sizing:border-box;">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="adminCreateUser()" style="background:var(--accent);border:none;border-radius:5px;padding:7px 16px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Create User</button>
+        <span id="admin-create-status" style="font-size:11px;"></span>
       </div>
     </div>
   </div>
