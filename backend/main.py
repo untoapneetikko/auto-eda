@@ -63,6 +63,7 @@ _r = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"), deco
 
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(_PROJECT_ROOT / "data" / "uploads")))
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", str(_PROJECT_ROOT / "data" / "outputs")))
+USERS_FILE = _PROJECT_ROOT / "data" / "users.json"
 
 # ── Authentication ────────────────────────────────────────────────────────────
 # Users: username → bcrypt-style salted hash (using SHA-256 + salt for simplicity)
@@ -74,13 +75,28 @@ def _hash_password(password: str) -> str:
 _USERS_REDIS_KEY = "eda:users"
 
 def _load_users() -> dict[str, dict]:
+    # Try Redis first
     raw = _r.get(_USERS_REDIS_KEY)
     if raw:
         return json.loads(raw)
+    # Fallback: load from JSON file on disk
+    if USERS_FILE.exists():
+        try:
+            users = json.loads(USERS_FILE.read_text(encoding="utf-8"))
+            # Hydrate Redis from the file so subsequent reads are fast
+            _r.set(_USERS_REDIS_KEY, json.dumps(users))
+            return users
+        except (json.JSONDecodeError, OSError):
+            pass
     return {}
 
 def _save_users(users: dict[str, dict]):
     _r.set(_USERS_REDIS_KEY, json.dumps(users))
+    # Persist to JSON file (atomic write: tmp → rename)
+    USERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = USERS_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(users, indent=2), encoding="utf-8")
+    tmp.replace(USERS_FILE)
 
 def _get_users() -> dict[str, dict]:
     users = _load_users()
