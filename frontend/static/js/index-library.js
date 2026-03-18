@@ -149,7 +149,8 @@ function showLibContextMenu(e, slug) {
   menu.style.cssText = `position:fixed;left:${e.clientX}px;top:${e.clientY}px;background:var(--surface,#1a1d27);border:1px solid var(--border,#2e3250);border-radius:6px;min-width:160px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.5);padding:4px 0;`;
 
   // Header
-  menu.innerHTML = `<div style="padding:5px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted,#64748b);border-bottom:1px solid var(--border,#2e3250);margin-bottom:2px;">Move to</div>`;
+  const partName = library[slug]?.part_number || slug;
+  menu.innerHTML = `<div style="padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:.06em;color:var(--text-muted,#64748b);border-bottom:1px solid var(--border,#2e3250);margin-bottom:2px;">Move <span style="color:var(--accent,#6c63ff);font-family:monospace;">${partName}</span> to</div>`;
 
   for (const type of allTypes) {
     const label = _libTypeLabels[type] || type.charAt(0).toUpperCase() + type.slice(1);
