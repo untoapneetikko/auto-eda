@@ -634,3 +634,226 @@ async function exportKiCad() {
   URL.revokeObjectURL(url);
 }
 
+// ── Board Outline ────────────────────────────────────────────
+function setBoardSize(w, h) {
+  if (!editor?.board?.board) return;
+  if (w != null && w >= 5) editor.board.board.width = w;
+  if (h != null && h >= 5) editor.board.board.height = h;
+  editor._snapshot();
+  editor.fitBoard();
+  updateBoardInfo();
+  // Sync inputs
+  const wi = document.getElementById('board-outline-w');
+  const hi = document.getElementById('board-outline-h');
+  if (wi) wi.value = editor.board.board.width;
+  if (hi) hi.value = editor.board.board.height;
+}
+
+function boardFitToComponents() {
+  if (!editor?.board) return;
+  const comps = editor.board.components || [];
+  if (!comps.length) { alert('No components to fit.'); return; }
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const c of comps) {
+    const pads = c.pads || [];
+    for (const p of pads) {
+      const px = c.x + (p.x || 0), py = c.y + (p.y || 0);
+      const hw = (p.size_x || 1) / 2, hh = (p.size_y || 1) / 2;
+      minX = Math.min(minX, px - hw);
+      minY = Math.min(minY, py - hh);
+      maxX = Math.max(maxX, px + hw);
+      maxY = Math.max(maxY, py + hh);
+    }
+    if (!pads.length) {
+      minX = Math.min(minX, c.x - 2); minY = Math.min(minY, c.y - 2);
+      maxX = Math.max(maxX, c.x + 2); maxY = Math.max(maxY, c.y + 2);
+    }
+  }
+  const margin = DR.edgeClearance || 2;
+  const w = Math.ceil((maxX - minX + margin * 2) * 2) / 2;
+  const h = Math.ceil((maxY - minY + margin * 2) * 2) / 2;
+  // Shift components so they start at margin offset
+  const dx = margin - minX, dy = margin - minY;
+  for (const c of comps) { c.x = +(c.x + dx).toFixed(2); c.y = +(c.y + dy).toFixed(2); }
+  for (const t of editor.board.traces || [])
+    for (const s of t.segments || []) {
+      s.start.x = +(s.start.x + dx).toFixed(2); s.start.y = +(s.start.y + dy).toFixed(2);
+      s.end.x = +(s.end.x + dx).toFixed(2); s.end.y = +(s.end.y + dy).toFixed(2);
+    }
+  for (const v of editor.board.vias || []) { v.x = +(v.x + dx).toFixed(2); v.y = +(v.y + dy).toFixed(2); }
+  setBoardSize(w, h);
+}
+
+function populateBoardOutlineInputs() {
+  if (!editor?.board?.board) return;
+  const wi = document.getElementById('board-outline-w');
+  const hi = document.getElementById('board-outline-h');
+  if (wi) wi.value = editor.board.board.width;
+  if (hi) hi.value = editor.board.board.height;
+}
+
+// ── DXF Export ───────────────────────────────────────────────
+function exportDxf() {
+  if (!editor?.board) { alert('No board loaded.'); return; }
+  const layer = document.getElementById('dxf-export-layer')?.value || 'Edge.Cuts';
+  const b = editor.board.board;
+  let dxf = '0\nSECTION\n2\nENTITIES\n';
+
+  // Board outline rectangle (always on Edge.Cuts)
+  if (layer === 'Edge.Cuts') {
+    const w = b.width, h = b.height;
+    dxf += _dxfLine(0, 0, w, 0, layer);
+    dxf += _dxfLine(w, 0, w, h, layer);
+    dxf += _dxfLine(w, h, 0, h, layer);
+    dxf += _dxfLine(0, h, 0, 0, layer);
+  }
+
+  // Drawings on the selected layer
+  for (const d of (editor.board.drawings || [])) {
+    if ((d.layer || 'Edge.Cuts') !== layer) continue;
+    const pts = d.points || [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      dxf += _dxfLine(pts[i].x, pts[i].y, pts[i+1].x, pts[i+1].y, layer);
+    }
+    if (d.closed && pts.length > 2) {
+      dxf += _dxfLine(pts[pts.length-1].x, pts[pts.length-1].y, pts[0].x, pts[0].y, layer);
+    }
+  }
+
+  // Traces on the selected layer (copper layers)
+  if (layer.endsWith('.Cu')) {
+    for (const t of (editor.board.traces || [])) {
+      if ((t.layer || 'F.Cu') !== layer) continue;
+      for (const s of (t.segments || [])) {
+        dxf += _dxfLine(s.start.x, s.start.y, s.end.x, s.end.y, layer);
+      }
+    }
+  }
+
+  dxf += '0\nENDSEC\n0\nEOF\n';
+
+  const blob = new Blob([dxf], { type: 'application/dxf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (editor.board.title || 'board') + '_' + layer.replace('.', '_') + '.dxf';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function _dxfLine(x1, y1, x2, y2, layer) {
+  return `0\nLINE\n8\n${layer}\n10\n${x1}\n20\n${y1}\n30\n0\n11\n${x2}\n21\n${y2}\n31\n0\n`;
+}
+
+// ── DXF Import ───────────────────────────────────────────────
+function importDxf(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = reader.result;
+    const layer = document.getElementById('dxf-import-layer')?.value || 'Edge.Cuts';
+    const lines = _parseDxfLines(text);
+    if (!lines.length) { alert('No line entities found in DXF file.'); return; }
+
+    if (!editor?.board) { alert('Load a board first.'); return; }
+    if (!editor.board.drawings) editor.board.drawings = [];
+
+    // Convert lines into drawing polylines
+    // Try to chain connected lines into polylines
+    const chains = _chainDxfLines(lines);
+
+    for (const chain of chains) {
+      const pts = chain.map(p => ({ x: +p.x.toFixed(3), y: +p.y.toFixed(3) }));
+      // Check if closed
+      const first = pts[0], last = pts[pts.length - 1];
+      const closed = Math.abs(first.x - last.x) < 0.01 && Math.abs(first.y - last.y) < 0.01;
+      if (closed && pts.length > 2) pts.pop();
+
+      editor.board.drawings.push({
+        id: 'dxf_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+        layer: layer,
+        width: 0.1,
+        points: pts,
+        closed: closed,
+      });
+    }
+
+    // If importing board outline, also update board dimensions from bounding box
+    if (layer === 'Edge.Cuts') {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const l of lines) {
+        minX = Math.min(minX, l.x1, l.x2); minY = Math.min(minY, l.y1, l.y2);
+        maxX = Math.max(maxX, l.x1, l.x2); maxY = Math.max(maxY, l.y1, l.y2);
+      }
+      if (isFinite(minX)) {
+        setBoardSize(+(maxX - minX).toFixed(2), +(maxY - minY).toFixed(2));
+      }
+    }
+
+    editor._snapshot();
+    editor.render();
+    alert(`Imported ${lines.length} line(s) as ${chains.length} drawing(s) on ${layer}.`);
+  };
+  reader.readAsText(file);
+}
+
+function _parseDxfLines(text) {
+  const lines = text.split(/\r?\n/);
+  const result = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === 'LINE') {
+      const ent = {};
+      let j = i + 1;
+      while (j < lines.length && lines[j].trim() !== '0') {
+        const code = parseInt(lines[j].trim());
+        const val = lines[j + 1]?.trim();
+        if (code === 10) ent.x1 = parseFloat(val);
+        else if (code === 20) ent.y1 = parseFloat(val);
+        else if (code === 11) ent.x2 = parseFloat(val);
+        else if (code === 21) ent.y2 = parseFloat(val);
+        j += 2;
+      }
+      if (ent.x1 != null && ent.y1 != null && ent.x2 != null && ent.y2 != null) {
+        result.push(ent);
+      }
+    }
+  }
+  return result;
+}
+
+function _chainDxfLines(lines) {
+  // Chain connected line segments into polylines
+  const eps = 0.01;
+  const used = new Array(lines.length).fill(false);
+  const chains = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    if (used[i]) continue;
+    used[i] = true;
+    const chain = [{ x: lines[i].x1, y: lines[i].y1 }, { x: lines[i].x2, y: lines[i].y2 }];
+
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let j = 0; j < lines.length; j++) {
+        if (used[j]) continue;
+        const head = chain[0], tail = chain[chain.length - 1];
+        const l = lines[j];
+        if (Math.abs(tail.x - l.x1) < eps && Math.abs(tail.y - l.y1) < eps) {
+          chain.push({ x: l.x2, y: l.y2 }); used[j] = true; changed = true;
+        } else if (Math.abs(tail.x - l.x2) < eps && Math.abs(tail.y - l.y2) < eps) {
+          chain.push({ x: l.x1, y: l.y1 }); used[j] = true; changed = true;
+        } else if (Math.abs(head.x - l.x2) < eps && Math.abs(head.y - l.y2) < eps) {
+          chain.unshift({ x: l.x1, y: l.y1 }); used[j] = true; changed = true;
+        } else if (Math.abs(head.x - l.x1) < eps && Math.abs(head.y - l.y1) < eps) {
+          chain.unshift({ x: l.x2, y: l.y2 }); used[j] = true; changed = true;
+        }
+      }
+    }
+    chains.push(chain);
+  }
+  return chains;
+}
+

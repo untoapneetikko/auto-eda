@@ -244,7 +244,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <h1>🔲 PCB Editor</h1>
   <nav style="margin-left:24px;display:flex;gap:4px;">
     <button class="nav-tab active" id="pcb-nav-layout"  onclick="switchPcbSection('layout')">⬛ Layout</button>
-    <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">&#9881; Auto</button>
+    <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">🛠 Tools</button>
     <button class="nav-tab"        id="pcb-nav-nets"    onclick="switchPcbSection('nets')">〰 Nets</button>
     <button class="nav-tab"        id="pcb-nav-drc"     onclick="switchPcbSection('drc')">📐 Design Rules</button>
     <button class="nav-tab"        id="pcb-nav-export"  onclick="switchPcbSection('export')">📦 Export</button>
@@ -667,6 +667,60 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
       </div>
     </div>
 
+    <!-- ── Board Outline ── -->
+    <div style="flex:1;min-width:280px;">
+      <h2>Board Outline</h2>
+      <p class="sub">Set the board dimensions or import a custom outline.</p>
+      <div class="dr-group" style="display:grid;grid-template-columns:1fr 100px;gap:6px 12px;align-items:center;margin-top:12px;">
+        <label>Width (mm)</label>
+        <input type="number" step="0.5" min="5" max="500" id="board-outline-w" style="width:90px;"
+          onchange="setBoardSize(parseFloat(this.value), null)">
+        <label>Height (mm)</label>
+        <input type="number" step="0.5" min="5" max="500" id="board-outline-h" style="width:90px;"
+          onchange="setBoardSize(null, parseFloat(this.value))">
+      </div>
+      <div style="margin-top:12px;">
+        <button class="tbtn" onclick="boardFitToComponents()" title="Shrink board to fit all placed components with margin">Fit to Components</button>
+      </div>
+    </div>
+
+    <!-- ── DXF Import / Export ── -->
+    <div style="flex:1;min-width:280px;">
+      <h2>DXF Import / Export</h2>
+      <p class="sub">Import or export board outlines and drawings in DXF format.</p>
+
+      <div style="margin-top:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Import DXF</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <label style="font-size:12px;color:var(--text-dim);">Target Layer</label>
+          <select id="dxf-import-layer" style="width:120px;">
+            <option value="Edge.Cuts">Edge.Cuts (Outline)</option>
+            <option value="F.SilkS">Top Silk</option>
+            <option value="B.SilkS">Bottom Silk</option>
+            <option value="F.Cu">Top Copper</option>
+            <option value="B.Cu">Bottom Copper</option>
+          </select>
+        </div>
+        <button class="tbtn" onclick="document.getElementById('dxf-import-input').click()">Import .dxf</button>
+        <input id="dxf-import-input" type="file" accept=".dxf" style="display:none;" onchange="importDxf(this)">
+      </div>
+
+      <div style="margin-top:16px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Export DXF</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <label style="font-size:12px;color:var(--text-dim);">Source Layer</label>
+          <select id="dxf-export-layer" style="width:120px;">
+            <option value="Edge.Cuts">Edge.Cuts (Outline)</option>
+            <option value="F.SilkS">Top Silk</option>
+            <option value="B.SilkS">Bottom Silk</option>
+            <option value="F.Cu">Top Copper</option>
+            <option value="B.Cu">Bottom Copper</option>
+          </select>
+        </div>
+        <button class="tbtn" onclick="exportDxf()">Export .dxf</button>
+      </div>
+    </div>
+
     <!-- ── Status / Results ── -->
     <div style="flex-basis:100%;margin-top:8px;">
       <div id="auto-status" style="font-size:12px;color:var(--text-muted);min-height:20px;"></div>
@@ -701,6 +755,12 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
         <div class="export-card-title">KiCad PCB</div>
         <div class="export-card-desc">KiCad .kicad_pcb format (v20221018). Import into KiCad 7+ for advanced editing, 3D view, or additional DRC. Components and traces are included.</div>
         <button class="tbtn" onclick="exportKiCad()">Export .kicad_pcb</button>
+      </div>
+      <div class="export-card">
+        <div class="export-card-icon">📐</div>
+        <div class="export-card-title">DXF</div>
+        <div class="export-card-desc">DXF format for importing board outlines and drawings into mechanical CAD tools. Choose which layer to export from the Tools tab.</div>
+        <button class="tbtn" onclick="exportDxf()">Export .dxf</button>
       </div>
       <div class="export-card">
         <div class="export-card-icon">⬇</div>

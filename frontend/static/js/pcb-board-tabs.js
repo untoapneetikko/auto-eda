@@ -21,6 +21,8 @@ function switchPcbSection(name){
 // ── Populate Auto tab inputs from DR object ──
 function _populateAutoTab(){
   const s=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  // Board outline
+  if(typeof populateBoardOutlineInputs==='function') populateBoardOutlineInputs();
   // Place
   s('auto-clearance', DR.packageGap??1.0);
   s('auto-edge-clear', DR.edgeClearance??0.5);
