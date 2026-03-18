@@ -219,31 +219,58 @@ function renderAreasPanel(){
   const panel=document.getElementById('areas-panel');
   if(!panel)return;
   const areas=(editor.board?.areas||[]);
-  if(!areas.length){
+  const zones=(editor.board?.zones||[]);
+  const all=[...areas.map(a=>({type:'area',obj:a})),...zones.map(z=>({type:'zone',obj:z}))];
+  if(!all.length){
     panel.innerHTML='<div style="color:var(--text-muted);font-size:11px;padding:4px 2px;">No copper areas.<br>Use ▦ Area tool to draw.</div>';
     return;
   }
   panel.innerHTML='';
-  for(const a of areas){
-    const w=Math.abs(a.x2-a.x1).toFixed(1),h=Math.abs(a.y2-a.y1).toFixed(1);
-    const col=editor._netCol(a.net);
+  for(const {type,obj:a} of all){
+    const isArea=type==='area';
+    const net=a.net||'?';
+    const layer=a.layer||'F.Cu';
+    const col=editor._netCol(net);
     const sel=editor.selectedArea===a;
+    const hidden=a._hidden;
+    let dim='';
+    if(isArea){
+      dim=`${Math.abs(a.x2-a.x1).toFixed(1)}×${Math.abs(a.y2-a.y1).toFixed(1)}mm`;
+    } else {
+      dim=`${(a.points||[]).length}pts`;
+    }
     const d=document.createElement('div');
-    d.className='area-item'+(sel?' sel':'');
-    d.innerHTML=`<span class="area-net" style="color:${col}">${a.net||'?'}</span>`+
-      `<span class="area-dim">${w}×${h}mm</span>`+
-      `<span class="area-lyr">${a.layer||'F.Cu'}</span>`+
-      `<button class="btn" style="padding:2px 5px;font-size:10px;" title="Refresh pour">⟳</button>`+
-      `<button class="btn" style="padding:2px 5px;font-size:10px;color:var(--red);" title="Delete">✕</button>`;
-    d.onclick=()=>{editor.selectedArea=a;editor.selectedComp=null;editor.selectedTrace=null;editor.render();updateInfoPanel();renderAreasPanel();};
-    const btns=d.querySelectorAll('.btn');
-    btns[0].onclick=e=>{e.stopPropagation();editor.render();};  // refresh = re-render
-    btns[1].onclick=e=>{
-      e.stopPropagation();
-      const idx=(editor.board.areas||[]).indexOf(a);
-      if(idx!==-1)editor.board.areas.splice(idx,1);
-      if(editor.selectedArea===a)editor.selectedArea=null;
-      editor.render();renderAreasPanel();updateInfoPanel();
+    d.className='area-item'+(sel?' sel':'')+(hidden?' hidden-area':'');
+    d.innerHTML=
+      `<span class="area-btn" title="${hidden?'Show':'Hide'}" data-action="eye">${hidden?'○':'👁'}</span>`+
+      `<span class="area-net" style="color:${col}" title="${net}">${net}</span>`+
+      `<span class="area-lyr">${layer}</span>`+
+      `<span class="area-dim">${dim}</span>`+
+      `<span style="flex:1;"></span>`+
+      `<span class="area-btn" data-action="delete" title="Delete" style="color:#ef4444;">✕</span>`;
+    d.onclick=(e)=>{
+      const act=e.target.closest('[data-action]')?.dataset.action;
+      if(act==='eye'){
+        e.stopPropagation();
+        a._hidden=!a._hidden;
+        editor.render();renderAreasPanel();
+        return;
+      }
+      if(act==='delete'){
+        e.stopPropagation();
+        if(isArea){
+          const idx=(editor.board.areas||[]).indexOf(a);
+          if(idx!==-1)editor.board.areas.splice(idx,1);
+        } else {
+          const idx=(editor.board.zones||[]).indexOf(a);
+          if(idx!==-1)editor.board.zones.splice(idx,1);
+        }
+        if(editor.selectedArea===a)editor.selectedArea=null;
+        editor._snapshot();editor.render();renderAreasPanel();updateInfoPanel();
+        return;
+      }
+      editor.selectedArea=a;editor.selectedComp=null;editor.selectedTrace=null;
+      editor.render();updateInfoPanel();renderAreasPanel();
     };
     panel.appendChild(d);
   }

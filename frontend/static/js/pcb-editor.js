@@ -640,6 +640,7 @@ class PCBEditor {
   _drawZones(){
     const ctx=this.ctx;
     for(const z of(this.board.zones||[])){
+      if(z._hidden)continue;
       const cl=z.clearance!=null?z.clearance:(DR.clearance||0.2);
       if(!z.points||z.points.length<3)continue;
       const lyr=z.layer||'F.Cu';
@@ -1250,6 +1251,7 @@ class PCBEditor {
   _drawAreas(){
     const ctx=this.ctx;
     for(const a of(this.board?.areas||[])){
+      if(a._hidden)continue;
       const cl=a.clearance!=null?a.clearance:(DR.clearance||0.2);
       // Skip outline-based areas (handled by _drawZones after load normalization)
       if(a.outline||a.x1==null||a.x2==null)continue;
