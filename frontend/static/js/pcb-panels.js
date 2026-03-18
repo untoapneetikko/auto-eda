@@ -606,21 +606,22 @@ function updateInfoPanel(){
         const g=gapSame;
         const k0=we/(we+2*g);
         const k1=Math.tanh(Math.PI*we/(4*hMin))/Math.tanh(Math.PI*(we+2*g)/(4*hMin));
-        const Kk0=_Kratio(k0), Kk0p=_Kratio(Math.sqrt(1-k0*k0));
-        const Kk1=_Kratio(k1), Kk1p=_Kratio(Math.sqrt(1-k1*k1));
-        const q=Kk0>0?(Kk0p*Kk1)/(Kk1p*Kk0):0;
+        const Kk0=_Kratio(k0);
+        const Kk1=_Kratio(k1);
+        // q = K(k0')/K(k0) * K(k1)/K(k1') = Kk1/Kk0
+        const q=Kk0>0?Kk1/Kk0:0;
         eeff=1+(er-1)/2*q;
         const denom=Kk0+Kk1;
         if(denom<1e-10) return null;
         Z0=60*Math.PI/(Math.sqrt(eeff)*denom);
         if(buried){
-          // Asymmetric stripline correction: use harmonic mean of h_above and h_below
+          // Asymmetric stripline correction
           const hOther=hAbove===hMin?hBelow:hAbove;
           const k2=Math.tanh(Math.PI*we/(4*hOther))/Math.tanh(Math.PI*(we+2*g)/(4*hOther));
           const Kk2=_Kratio(k2);
+          const q2=Kk0>0?Kk2/Kk0:0;
           const denomB=Kk0+Kk1+Kk2;
           if(denomB>1e-10){
-            const q2=Kk0>0?(Kk0p*Kk2)/(_Kratio(Math.sqrt(1-k2*k2))*Kk0):0;
             const eeff2=1+(er-1)/2*(q+q2)/2;
             Z0=60*Math.PI/(Math.sqrt(eeff2)*denomB*0.5);
             eeff=eeff2;
