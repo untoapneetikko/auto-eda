@@ -2,6 +2,8 @@
 function buildLayerPanel(){
   const ul=document.getElementById('layer-list');ul.innerHTML='';
   const wl=editor.workLayer;
+  const lcb=document.getElementById('layer-count-badge');
+  if(lcb) lcb.textContent=`(${DR.layerCount||2}L)`;
   for(const[name,lyr]of Object.entries(editor.layers)){
     const isWork=name===wl;
     const d=document.createElement('div');
