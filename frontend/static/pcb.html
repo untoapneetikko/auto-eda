@@ -870,10 +870,10 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
       <div style="margin-bottom:18px;">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);font-weight:700;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border);">Quick Presets</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="tbtn" onclick="applyDRPreset('standard')" title="0.2mm trace/clear — JLCPCB Standard">Standard (0.2mm)</button>
-          <button class="tbtn" onclick="applyDRPreset('tight')" title="0.15mm trace/clear — fine-pitch ICs">Tight (0.15mm)</button>
-          <button class="tbtn" onclick="applyDRPreset('RF')" title="RF: 0.15mm trace, 0.2mm clear, 4-via thermal">RF / Microwave</button>
-          <button class="tbtn" onclick="applyDRPreset('power')" title="0.5mm traces, 0.25mm clear — power boards">Power (0.5mm)</button>
+          <button class="tbtn" data-dr-preset="standard" onclick="applyDRPreset('standard')" title="0.2mm trace/clear — JLCPCB Standard">Standard (0.2mm)</button>
+          <button class="tbtn" data-dr-preset="tight" onclick="applyDRPreset('tight')" title="0.15mm trace/clear — fine-pitch ICs">Tight (0.15mm)</button>
+          <button class="tbtn" data-dr-preset="RF" onclick="applyDRPreset('RF')" title="RF: 0.15mm trace, 0.2mm clear, 4-via thermal">RF / Microwave</button>
+          <button class="tbtn" data-dr-preset="power" onclick="applyDRPreset('power')" title="0.5mm traces, 0.25mm clear — power boards">Power (0.5mm)</button>
         </div>
       </div>
     </div>

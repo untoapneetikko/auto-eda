@@ -137,6 +137,7 @@ function populateDRTab(){
   if(!DR.stackup||!DR.stackup.length) DR.stackup=_buildDefaultStackup(DR.layerCount||2);
   populateStackupTable();
   updateDRTComputed();
+  _highlightActivePreset();
 }
 
 // Update computed/informational fields
@@ -198,6 +199,7 @@ function saveDRTab(){
   // Update route width toolbar
   const rw=document.getElementById('route-width');if(rw)rw.value=DR.traceWidth;
   updateDRTComputed();
+  _highlightActivePreset();
   _saveDRStorage();
   if(typeof editor!=='undefined'&&editor)editor.render();
   // Re-run DRC with a short debounce so rapid typing doesn't hammer it
@@ -207,24 +209,43 @@ function saveDRTab(){
 let _drDebounce;
 
 // Presets
+const _DR_PRESETS={
+  standard:{minTraceWidth:0.2,traceWidth:0.25,clearance:0.2,edgeClearance:0.5,
+    drillClearance:0.25,viaSize:1.0,viaDrill:0.6,minAnnularRing:0.2,viaClearance:0.25,tentedVias:true,viaInPad:false,
+    boardThickness:1.6,copperWeight:1,silkscreenWidth:0.12,cornerAngle:90,routeAngleStep:45,snapRadius:2.0},
+  tight:{minTraceWidth:0.15,traceWidth:0.15,clearance:0.15,edgeClearance:0.3,
+    drillClearance:0.2,viaSize:0.8,viaDrill:0.4,minAnnularRing:0.15,viaClearance:0.15,tentedVias:true,viaInPad:false,
+    boardThickness:1.6,copperWeight:1,silkscreenWidth:0.1,cornerAngle:45,routeAngleStep:45,snapRadius:1.5},
+  RF:{minTraceWidth:0.15,traceWidth:0.15,clearance:0.2,edgeClearance:0.5,
+    drillClearance:0.25,viaSize:0.8,viaDrill:0.4,minAnnularRing:0.15,viaClearance:0.2,tentedVias:true,viaInPad:false,
+    boardThickness:0.5,copperWeight:1,silkscreenWidth:0.1,cornerAngle:0,routeAngleStep:45,snapRadius:1.5},
+  power:{minTraceWidth:0.5,traceWidth:0.5,clearance:0.25,edgeClearance:1.0,
+    drillClearance:0.3,viaSize:1.2,viaDrill:0.8,minAnnularRing:0.2,viaClearance:0.3,tentedVias:false,viaInPad:true,
+    boardThickness:1.6,copperWeight:2,silkscreenWidth:0.15,cornerAngle:90,routeAngleStep:90,snapRadius:2.5},
+};
+
+function _detectActivePreset(){
+  for(const[name,p]of Object.entries(_DR_PRESETS)){
+    const match=Object.keys(p).every(k=>DR[k]===p[k]);
+    if(match)return name;
+  }
+  return null;
+}
+
+function _highlightActivePreset(){
+  const active=_detectActivePreset();
+  document.querySelectorAll('[data-dr-preset]').forEach(btn=>{
+    const isActive=btn.dataset.drPreset===active;
+    btn.style.outline=isActive?'2px solid #facc15':'';
+    btn.style.background=isActive?'rgba(250,204,21,0.12)':'';
+  });
+}
+
 function applyDRPreset(name){
-  const presets={
-    standard:{minTraceWidth:0.2,traceWidth:0.25,clearance:0.2,edgeClearance:0.5,
-      drillClearance:0.25,viaSize:1.0,viaDrill:0.6,minAnnularRing:0.2,viaClearance:0.25,tentedVias:true,viaInPad:false,
-      boardThickness:1.6,copperWeight:1,silkscreenWidth:0.12,cornerAngle:90,routeAngleStep:45,snapRadius:2.0},
-    tight:{minTraceWidth:0.15,traceWidth:0.15,clearance:0.15,edgeClearance:0.3,
-      drillClearance:0.2,viaSize:0.8,viaDrill:0.4,minAnnularRing:0.15,viaClearance:0.15,tentedVias:true,viaInPad:false,
-      boardThickness:1.6,copperWeight:1,silkscreenWidth:0.1,cornerAngle:45,routeAngleStep:45,snapRadius:1.5},
-    RF:{minTraceWidth:0.15,traceWidth:0.15,clearance:0.2,edgeClearance:0.5,
-      drillClearance:0.25,viaSize:0.8,viaDrill:0.4,minAnnularRing:0.15,viaClearance:0.2,tentedVias:true,viaInPad:false,
-      boardThickness:0.5,copperWeight:1,silkscreenWidth:0.1,cornerAngle:0,routeAngleStep:45,snapRadius:1.5},
-    power:{minTraceWidth:0.5,traceWidth:0.5,clearance:0.25,edgeClearance:1.0,
-      drillClearance:0.3,viaSize:1.2,viaDrill:0.8,minAnnularRing:0.2,viaClearance:0.3,tentedVias:false,viaInPad:true,
-      boardThickness:1.6,copperWeight:2,silkscreenWidth:0.15,cornerAngle:90,routeAngleStep:90,snapRadius:2.5},
-  };
-  const p=presets[name];if(!p)return;
+  const p=_DR_PRESETS[name];if(!p)return;
   Object.assign(DR,p);
   populateDRTab();
+  _highlightActivePreset();
   _saveDRStorage();
   runDRCTab();
 }
