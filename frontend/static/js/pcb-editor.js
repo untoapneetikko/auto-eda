@@ -382,6 +382,21 @@ class PCBEditor {
     ctx.lineCap='butt'; ctx.lineJoin='miter';
   }
 
+  getTextAt(mx,my){
+    for(const t of(this.board?.texts||[])){
+      const lyr=t.layer||'F.SilkS';
+      if(!this.layers[lyr]?.visible)continue;
+      // Only hit when the text's layer matches the work layer (silkscreen active)
+      if(this.workLayer!==lyr)continue;
+      const sz=(t.size||1)*this.scale;
+      const px=this.mmX(t.x),py=this.mmY(t.y);
+      const tw=((t.text||'').length*sz*0.6)+4; // approx text width
+      const th=sz+4;
+      if(mx>=px-4&&mx<=px+tw&&my>=py-4&&my<=py+th) return t;
+    }
+    return null;
+  }
+
   _drawTexts(){
     const ctx=this.ctx;
     for(const t of(this.board?.texts||[])){
@@ -2421,7 +2436,8 @@ class PCBEditor {
         const hitThs=this.getTracesAt(mx,my);    // all overlapping traces
         const hitA=this.getAreaAt(mx,my);
         const hitD=this.getDrawingAt(mx,my);
-        // Build cycle list: vias first (multilayer, always clickable through components), then comps, pads, traces, area, drawing
+        const hitT=this.getTextAt(mx,my);
+        // Build cycle list: vias first (multilayer, always clickable through components), then comps, pads, traces, area, drawing, text
         const candidates=[];
         if(hitV) candidates.push({type:'via',obj:hitV});
         for(const c of hitComps) candidates.push({type:'comp',obj:c});
@@ -2432,11 +2448,12 @@ class PCBEditor {
         for(const th of hitThs) candidates.push({type:'trace',obj:th.trace,segIdx:th.segIdx});
         if(hitA) candidates.push({type:'area',obj:hitA});
         if(hitD) candidates.push({type:'drawing',obj:hitD});
+        if(hitT) candidates.push({type:'text',obj:hitT});
 
         let picked=null;
         if(candidates.length===0){
           // Nothing here — start box selection
-          this.selectedComp=null;this.selectedTrace=null;this.selectedArea=null;this.selectedVia=null;this.selectedDrawing=null;this.selectedComps=[];
+          this.selectedComp=null;this.selectedTrace=null;this.selectedArea=null;this.selectedVia=null;this.selectedDrawing=null;this._selectedText=null;this.selectedComps=[];
           this._isBoxSel=true;this._boxSelStart={mx,my};this._boxSelEnd={mx,my};
           this._lastClickObj=null;
         } else {
@@ -2451,7 +2468,7 @@ class PCBEditor {
           picked=candidates[nextIdx];
           this._lastClickMx=mx;this._lastClickMy=my;this._lastClickObj=picked.obj;
 
-          this.selectedTrace=null;this.selectedArea=null;this.selectedVia=null;this.selectedPad=null;this.selectedDrawing=null;
+          this.selectedTrace=null;this.selectedArea=null;this.selectedVia=null;this.selectedPad=null;this.selectedDrawing=null;this._selectedText=null;this._isDragText=false;
 
           if(e.ctrlKey||e.metaKey){
             // Ctrl+click: toggle component in multi-select
@@ -2531,6 +2548,10 @@ class PCBEditor {
               this._isDragDrawing=true;
               this._dragDrawingStart={x:this.cX(mx),y:this.cY(my)};
               this._dragDrawingPts=picked.obj.points.map(p=>({x:p.x,y:p.y}));
+            } else if(picked.type==='text'){
+              this._selectedText=picked.obj;
+              this._isDragText=true;
+              this._dragTextOff={x:this.cX(mx)-picked.obj.x,y:this.cY(my)-picked.obj.y};
             }
             } // end else (not multi-drag)
           }
@@ -2806,6 +2827,10 @@ class PCBEditor {
         if(edge.includes('s')) this.board.board.height=Math.max(MIN,orig.h+dy);
         if(edge.includes('n')) this.board.board.height=Math.max(MIN,orig.h-dy);
         this.render();
+      } else if(this._isDragText&&this._selectedText){
+        this._selectedText.x=this.snap(this.cX(mx)-this._dragTextOff.x);
+        this._selectedText.y=this.snap(this.cY(my)-this._dragTextOff.y);
+        this.render();
       } else if(this._isDragDrawing&&this.selectedDrawing){
         const dx=this.snap(this.cX(mx))-this.snap(this._dragDrawingStart.x);
         const dy=this.snap(this.cY(my))-this.snap(this._dragDrawingStart.y);
@@ -2894,10 +2919,11 @@ class PCBEditor {
 
     cv.addEventListener('mouseup',e=>{
       const wasDragVia=this._isDragVia&&this.selectedVia;
-      const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace||this._isDragBoard;
+      const wasDragging=this._isDrag||this._isDragVia||this._isDragDrawing||this._isDragTrace||this._isDragBoard||this._isDragText;
       this._isDrag=false; this._dragC=null; this._isPan=false; this._isDragVia=false;
       this._isDragDrawing=false; this._dragDrawingStart=null; this._dragDrawingPts=null;
       this._isDragBoard=false; this._dragBoardEdge=null;
+      this._isDragText=false;
       this._isDragTrace=false; this._dragTrace=null; this._traceDragViolations=[];
       this._compDragViolations=[];
       // After via drag, adopt net from trace, copper area, or zone if via has no net
@@ -3032,7 +3058,7 @@ class PCBEditor {
       else if(k==='g'&&(editor.selectedComp||editor.selectedComps?.length)){
         editor.rotateSelGroup(90);
       }
-      else if((k==='delete'||k==='backspace')&&(editor.selectedComp||editor.selectedTrace||editor.selectedArea||editor.selectedVia||editor.selectedDrawing)){
+      else if((k==='delete'||k==='backspace')&&(editor.selectedComp||editor.selectedTrace||editor.selectedArea||editor.selectedVia||editor.selectedDrawing||editor._selectedText)){
         if(editor.selectedComp){
           const idx=editor.board.components.indexOf(editor.selectedComp);
           if(idx!==-1)editor.board.components.splice(idx,1);
@@ -3053,6 +3079,10 @@ class PCBEditor {
           const idx=(editor.board.drawings||[]).indexOf(editor.selectedDrawing);
           if(idx!==-1)editor.board.drawings.splice(idx,1);
           editor.selectedDrawing=null;
+        } else if(editor._selectedText){
+          const idx=(editor.board.texts||[]).indexOf(editor._selectedText);
+          if(idx!==-1)editor.board.texts.splice(idx,1);
+          editor._selectedText=null;
         }
         editor._snapshot(); editor.render();updateInfoPanel();
       }

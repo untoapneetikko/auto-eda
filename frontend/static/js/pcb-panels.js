@@ -378,6 +378,41 @@ function updateInfoPanel(){
       <div style="font-size:10px;color:var(--text-muted);margin-top:7px;">Drag to move • Del to delete</div>`;
     return;
   }
+  const txt=editor._selectedText;
+  if(txt && !c && !tr){
+    panel.innerHTML=`
+      <div style="margin-bottom:10px;">
+        <div style="font-family:monospace;font-size:14px;font-weight:700;color:var(--accent);">Text</div>
+      </div>
+      <div class="ir"><span class="il">Content</span>
+        <input class="ii" style="width:100px" value="${esc(txt.text||'')}"
+          onchange="editor._selectedText.text=this.value;editor.render()"></div>
+      <div class="ir"><span class="il">Layer</span>
+        <select style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:11px;padding:2px 4px;"
+          onchange="editor._selectedText.layer=this.value;editor.render()">
+          <option${(txt.layer||'F.SilkS')==='F.SilkS'?' selected':''}>F.SilkS</option>
+          <option${txt.layer==='B.SilkS'?' selected':''}>B.SilkS</option>
+          <option${txt.layer==='F.Cu'?' selected':''}>F.Cu</option>
+          <option${txt.layer==='B.Cu'?' selected':''}>B.Cu</option>
+        </select></div>
+      <div class="ir"><span class="il">Size</span>
+        <input class="ii" value="${(txt.size||1).toFixed(1)}"
+          onchange="editor._selectedText.size=Math.max(0.2,parseFloat(this.value)||1);editor.render()"> mm</div>
+      <div class="ir"><span class="il">X</span>
+        <input class="ii" value="${(txt.x||0).toFixed(2)}"
+          onchange="editor._selectedText.x=parseFloat(this.value)||0;editor.render()"> mm</div>
+      <div class="ir"><span class="il">Y</span>
+        <input class="ii" value="${(txt.y||0).toFixed(2)}"
+          onchange="editor._selectedText.y=parseFloat(this.value)||0;editor.render()"> mm</div>
+      <div class="ir"><span class="il">Rot</span>
+        <input class="ii" value="${(txt.rotation||0).toFixed(0)}"
+          onchange="editor._selectedText.rotation=parseFloat(this.value)||0;editor.render()"> °</div>
+      <div style="margin-top:10px;">
+        <button class="btn" style="color:var(--red)" onclick="const i=(editor.board.texts||[]).indexOf(editor._selectedText);if(i!==-1)editor.board.texts.splice(i,1);editor._selectedText=null;editor._snapshot();editor.render();updateInfoPanel();">✕ Delete</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:7px;">Drag to move • Del to delete</div>`;
+    return;
+  }
   if(!c && !tr){panel.innerHTML='<div class="ip-empty">Click a component<br>or trace to inspect</div>';return;}
   if(tr && !c){
     const lyr=tr.layer||'F.Cu';
