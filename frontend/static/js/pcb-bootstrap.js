@@ -152,6 +152,11 @@ window.addEventListener('load',()=>{
             const loadRes = editor.load(ebFull);
             if (loadRes.ok) {
               _activeBoardId = eb.id;
+              // Apply layer count from schematic if the saved board lacks it
+              if (!ebFull.layerCount || ebFull.layerCount < 2) {
+                const lc = e.data.layerCount || 2;
+                if (lc > 2 && typeof applyLayerCount === 'function') applyLayerCount(lc);
+              }
 
               // ── Merge new schematic components into existing board ──────────
               // Run a fresh import to get what the schematic currently contains,
@@ -230,6 +235,9 @@ window.addEventListener('load',()=>{
             pcb.schematicRefs = (pcb.components||[]).map(c=>JSON.parse(JSON.stringify(c)));
             switchPcbSection('layout');
             await animateBoardLoad(pcb);
+            // Apply layer count from schematic project (overrides PCB default of 2)
+            const lc = pcb.layerCount || e.data.layerCount || 2;
+            if (lc > 2 && typeof applyLayerCount === 'function') applyLayerCount(lc);
             // Stamp the project id so there's no cross-project contamination
             editor.board.projectId = e.data.projectId;
             const res = {ok: !!editor.board};

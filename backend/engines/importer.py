@@ -702,8 +702,11 @@ def import_schematic(
             pcb_groups_map[gid]["members"].append(comp["id"])
     pcb_groups = list(pcb_groups_map.values())
 
+    layer_count = int(project.get("layerCount") or 2)
+
     return {
         "title":      board_title,
+        "layerCount": layer_count,
         "board":      {"width": bw, "height": bh, "units": "mm"},
         "components": pcb_comps,
         "nets":       pcb_nets,

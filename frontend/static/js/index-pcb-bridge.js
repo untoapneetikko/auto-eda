@@ -120,7 +120,8 @@ async function _doPCBImport(projectId, boardOpts) {
   const tryPost = () => {
     if (done) { _pcbImporting = false; return; }
     attempts++;
-    try { frame.contentWindow?.postMessage({ type: 'importProject', projectId, boardOpts: boardOpts || null, netlist }, '*'); } catch(_) {}
+    const layerCount = editor.project?.layerCount || 2;
+    try { frame.contentWindow?.postMessage({ type: 'importProject', projectId, boardOpts: boardOpts || null, netlist, layerCount }, '*'); } catch(_) {}
     if (attempts < 20) {
       setTimeout(tryPost, 400);
     } else {
