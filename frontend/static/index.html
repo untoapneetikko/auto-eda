@@ -297,8 +297,8 @@
 
   /* ── Agents Drawer ── */
   #agents-drawer {
-    position: fixed; top: 0; right: 0; width: 33vw; min-width: 320px; max-width: 860px;
-    height: 100vh; background: #0d0f17; border-left: 1px solid var(--border);
+    position: fixed; top: 0; right: 0; bottom: 0; width: 33vw; min-width: 320px; max-width: 860px;
+    background: #0d0f17; border-left: 1px solid var(--border);
     z-index: 999; display: flex; flex-direction: column; overflow: hidden;
     transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
     box-shadow: -8px 0 40px rgba(0,0,0,0.55);
@@ -1483,24 +1483,9 @@ function openProfileSettings() {
   document.getElementById('profile-font-label').textContent = fs + '%';
 }
 // Apply saved UI scale — uses CSS transform on body to avoid viewport/fixed issues
+// UI scale: use CSS zoom on body — Chromium handles fixed elements and vh correctly
 function _applyUiScale(pct) {
-  const z = parseInt(pct) / 100;
-  if (z === 1) {
-    document.body.style.transform = '';
-    document.body.style.transformOrigin = '';
-    document.body.style.width = '';
-    document.body.style.height = '';
-    document.documentElement.style.zoom = '';
-    document.documentElement.style.overflow = '';
-    return;
-  }
-  // Use transform scale on body — works with fixed elements and vh units
-  document.documentElement.style.zoom = '';
-  document.body.style.transformOrigin = '0 0';
-  document.body.style.transform = `scale(${z})`;
-  document.body.style.width = (100 / z) + '%';
-  document.body.style.height = (100 / z) + 'vh';
-  document.documentElement.style.overflow = 'hidden';
+  document.body.style.zoom = parseInt(pct) / 100;
 }
 (function(){
   const fs = localStorage.getItem('eda_font_size');

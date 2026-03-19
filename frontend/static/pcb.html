@@ -14,7 +14,7 @@
   --text:#e2e8f0;--text-muted:#64748b;--text-dim:#94a3b8;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;position:fixed;inset:0;overflow:hidden;display:flex;flex-direction:column;}
 .hbtn{background:var(--surface2);border:1px solid var(--border);border-radius:4px;color:var(--text-dim);padding:4px 10px;font-size:12px;cursor:pointer;text-decoration:none;transition:all .15s;}
 .hbtn:hover{border-color:var(--accent);color:var(--accent);}
 .phase-badge{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700;margin-left:auto;}
@@ -256,16 +256,8 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   function doLogoutPcb(){
     fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/login');
   }
-  // Apply saved UI scale — transform scale on body
-  function _applyUiScale(pct){
-    const z=parseInt(pct)/100;
-    if(z===1){document.body.style.transform='';document.body.style.width='';document.body.style.height='';document.documentElement.style.overflow='';return;}
-    document.body.style.transformOrigin='0 0';
-    document.body.style.transform='scale('+z+')';
-    document.body.style.width=(100/z)+'%';
-    document.body.style.height=(100/z)+'vh';
-    document.documentElement.style.overflow='hidden';
-  }
+  // UI scale: CSS zoom on body
+  function _applyUiScale(pct){document.body.style.zoom=parseInt(pct)/100;}
   (function(){const fs=localStorage.getItem('eda_font_size');if(fs&&fs!=='100')_applyUiScale(fs);})();
   // Listen for scale changes from parent
   window.addEventListener('message',e=>{if(e.data?.type==='setFontSize')_applyUiScale(e.data.value);});
