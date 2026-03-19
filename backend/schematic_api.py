@@ -2966,7 +2966,7 @@ def gerber_for_board(board: dict) -> bytes:
             self._next = 10                   # D10 is first
 
         def _key(self, shape: str, w: float, h: float = 0) -> str:
-            if shape == "circle":
+            if shape in ("C", "circle"):
                 return f"C,{w:.6f}"
             return f"R,{w:.6f}X{h:.6f}"
 
