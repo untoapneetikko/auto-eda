@@ -184,7 +184,7 @@ input[type=color]{width:28px;height:22px;border:1px solid var(--border);border-r
 pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:10px;line-height:1.5;overflow-x:auto;color:var(--text-dim);max-height:250px;overflow-y:auto;}
 
 /* ── Top nav (matches index.html) ── */
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:0;height:38px;flex-shrink:0;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:6px;height:38px;flex-shrink:0;}
 header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 .nav-tab{background:transparent;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;transition:all .15s;}
 .nav-tab:hover{background:rgba(255,255,255,0.05);color:var(--text);}
@@ -287,7 +287,7 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 <!-- Top Navigation (always visible) -->
 <header>
   <a class="hbtn" href="/" id="pcb-back-link" style="display:none;text-decoration:none;margin-right:6px;">←</a>
-  <nav style="display:flex;gap:2px;">
+  <nav style="display:flex;gap:4px;">
     <button class="nav-tab active" id="pcb-nav-layout"  onclick="switchPcbSection('layout')">⬛ Layout</button>
     <button class="nav-tab"        id="pcb-nav-auto"    onclick="switchPcbSection('auto')">🛠 Tools</button>
     <button class="nav-tab"        id="pcb-nav-drc"     onclick="switchPcbSection('drc')">📐 Rules</button>
