@@ -1482,9 +1482,15 @@ function openProfileSettings() {
   document.getElementById('profile-font-label').textContent = fs + '%';
 }
 // Apply saved UI scale on page load
+function _applyUiScale(pct) {
+  const z = parseInt(pct) / 100;
+  document.body.style.zoom = z;
+  // Compensate body height so 100vh content fits within the zoomed viewport
+  document.body.style.height = (100 / z) + 'vh';
+}
 (function(){
   const fs = localStorage.getItem('eda_font_size');
-  if (fs && fs !== '100') document.body.style.zoom = (parseInt(fs)/100);
+  if (fs && fs !== '100') _applyUiScale(fs);
 })();
 
 async function saveProfileSettings() {
@@ -1494,7 +1500,7 @@ async function saveProfileSettings() {
   // Save UI scale to localStorage
   const fontSize = document.getElementById('profile-font-size').value;
   localStorage.setItem('eda_font_size', fontSize);
-  document.body.style.zoom = parseInt(fontSize) / 100;
+  _applyUiScale(fontSize);
   // Also notify PCB iframe
   try { document.getElementById('pcb-frame')?.contentWindow?.postMessage({type:'setFontSize',value:fontSize},'*'); } catch(_){}
   const body = {};
@@ -1618,7 +1624,7 @@ async function adminResetPw(username) {
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:10px;color:var(--text-muted);">A</span>
           <input id="profile-font-size" type="range" min="75" max="125" step="5" value="100" style="flex:1;accent-color:var(--accent);"
-            oninput="document.getElementById('profile-font-label').textContent=this.value+'%'; document.body.style.zoom=parseInt(this.value)/100;">
+            oninput="document.getElementById('profile-font-label').textContent=this.value+'%'; _applyUiScale(this.value);">
           <span style="font-size:16px;color:var(--text-muted);">A</span>
           <span id="profile-font-label" style="font-size:12px;color:var(--text-dim);min-width:36px;text-align:right;">100%</span>
         </div>

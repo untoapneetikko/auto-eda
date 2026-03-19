@@ -256,10 +256,11 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   function doLogoutPcb(){
     fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/login');
   }
-  // Apply saved UI scale
-  (function(){const fs=localStorage.getItem('eda_font_size');if(fs&&fs!=='100')document.body.style.zoom=parseInt(fs)/100;})();
+  // Apply saved UI scale (zoom + height compensation)
+  function _applyUiScale(pct){const z=parseInt(pct)/100;document.body.style.zoom=z;document.body.style.height=(100/z)+'vh';}
+  (function(){const fs=localStorage.getItem('eda_font_size');if(fs&&fs!=='100')_applyUiScale(fs);})();
   // Listen for scale changes from parent
-  window.addEventListener('message',e=>{if(e.data?.type==='setFontSize')document.body.style.zoom=parseInt(e.data.value)/100;});
+  window.addEventListener('message',e=>{if(e.data?.type==='setFontSize')_applyUiScale(e.data.value);});
 </script>
 
 <!-- 3-column persistent layout: left | center (header + switchable content) | right -->
