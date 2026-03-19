@@ -256,8 +256,16 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   function doLogoutPcb(){
     fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/login');
   }
-  // Apply saved UI scale on html element — browser adjusts viewport automatically
-  function _applyUiScale(pct){document.documentElement.style.zoom=parseInt(pct)/100;}
+  // Apply saved UI scale — transform scale on body
+  function _applyUiScale(pct){
+    const z=parseInt(pct)/100;
+    if(z===1){document.body.style.transform='';document.body.style.width='';document.body.style.height='';document.documentElement.style.overflow='';return;}
+    document.body.style.transformOrigin='0 0';
+    document.body.style.transform='scale('+z+')';
+    document.body.style.width=(100/z)+'%';
+    document.body.style.height=(100/z)+'vh';
+    document.documentElement.style.overflow='hidden';
+  }
   (function(){const fs=localStorage.getItem('eda_font_size');if(fs&&fs!=='100')_applyUiScale(fs);})();
   // Listen for scale changes from parent
   window.addEventListener('message',e=>{if(e.data?.type==='setFontSize')_applyUiScale(e.data.value);});
