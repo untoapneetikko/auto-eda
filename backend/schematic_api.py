@@ -2899,47 +2899,322 @@ async def api_pcb_import_schematic(request: Request):
 # ── Gerber export helper ───────────────────────────────────────────────────────
 
 def gerber_for_board(board: dict) -> bytes:
-    """Generate a ZIP of Gerber files for the board."""
+    """Generate a ZIP of Gerber files for the board.
+
+    Generates all standard fabrication layers:
+      F_Cu.gtl / B_Cu.gbl  — copper (traces + pads + vias + zones/areas)
+      F_Mask.gts / B_Mask.gbs — solder mask (inverted: openings over pads)
+      F_SilkS.gto / B_SilkS.gbo — silkscreen (reference designators)
+      F_Paste.gtp / B_Paste.gbp — solder paste (SMD pad openings)
+      Edge_Cuts.gml — board outline
+      drill.drl — Excellon drill file (TH pads + vias)
+    """
     bw = float(board.get("board", {}).get("width",  board.get("width",  200)))
     bh = float(board.get("board", {}).get("height", board.get("height", 200)))
 
     def _mm(v: float) -> str:
+        """Convert mm to Gerber coordinate (6.6 format = nanometres)."""
         return str(int(round(v * 1_000_000))).zfill(7)
 
-    # F_Cu.gtl  — copper traces
-    def _f_cu() -> str:
-        lines = [
-            "%FSLAX66Y66*%",
-            "%MOMM*%",
-            "%LPD*%",
-            "%ADD10C,0.25*%",  # default aperture
-            "D10*",
-        ]
+    # ── Collect pad world positions ──────────────────────────────────────────
+    _all_pads: list[dict] = []  # [{x, y, sx, sy, shape, type, net, layer, ref, num}]
+    for comp in board.get("components", []):
+        cx  = float(comp.get("x", 0))
+        cy  = float(comp.get("y", 0))
+        rot = float(comp.get("rotation", 0))
+        rad = math.radians(rot)
+        cos_r, sin_r = math.cos(rad), math.sin(rad)
+        comp_layer = comp.get("layer", "F")  # "F" or "B"
+        ref = comp.get("ref", comp.get("id", ""))
+        for pad in comp.get("pads", []):
+            lx = float(pad.get("x", 0))
+            ly = float(pad.get("y", 0))
+            wx = cx + lx * cos_r - ly * sin_r
+            wy = cy + lx * sin_r + ly * cos_r
+            sx = float(pad.get("size_x", pad.get("width", 0.6)))
+            sy = float(pad.get("size_y", pad.get("height", 0.6)))
+            _all_pads.append({
+                "x": wx, "y": wy,
+                "sx": sx, "sy": sy,
+                "shape": pad.get("shape", "rect"),
+                "type": pad.get("type", "smd"),
+                "net": (pad.get("net", "") or ""),
+                "layer": comp_layer,
+                "ref": ref,
+                "num": str(pad.get("number", "")),
+                "drill": float(pad.get("drill", 0)) if pad.get("drill") else 0,
+            })
+
+    # ── Aperture manager — assigns unique D-codes per shape/size ─────────────
+    class _ApertureMgr:
+        def __init__(self):
+            self._map: dict[str, int] = {}  # key → D-code
+            self._defs: list[str] = []       # aperture definition lines
+            self._next = 10                   # D10 is first
+
+        def _key(self, shape: str, w: float, h: float = 0) -> str:
+            if shape == "circle":
+                return f"C,{w:.6f}"
+            return f"R,{w:.6f}X{h:.6f}"
+
+        def get(self, shape: str, w: float, h: float = 0) -> int:
+            """Return D-code, creating aperture definition if new."""
+            k = self._key(shape, w, h)
+            if k in self._map:
+                return self._map[k]
+            d = self._next
+            self._next += 1
+            self._map[k] = d
+            self._defs.append(f"%ADD{d}{k}*%")
+            return d
+
+        @property
+        def definitions(self) -> list[str]:
+            return list(self._defs)
+
+    # ── Copper layer generator ───────────────────────────────────────────────
+    def _copper_layer(layer_name: str, pad_side: str) -> str:
+        """Generate Gerber for one copper layer (traces + pads + vias + zones).
+
+        layer_name: "F.Cu" or "B.Cu"
+        pad_side:   "F" or "B" (component side filter for SMD pads)
+        """
+        ap = _ApertureMgr()
+        draw_cmds: list[str] = []
+
+        # 1. Traces on this layer
         for trace in board.get("traces", []):
-            layer = trace.get("layer", "F.Cu")
-            if layer not in ("F.Cu", ""):
+            tl = trace.get("layer", "F.Cu")
+            if tl != layer_name:
                 continue
             w = float(trace.get("width", 0.25))
-            w_um = int(round(w * 1_000_000))
-            lines.append(f"%ADD11C,{w / 1:.6f}*%")
-            lines.append("D11*")
+            d = ap.get("C", w)
+            draw_cmds.append(f"D{d}*")
             for seg in trace.get("segments", []):
                 x0 = float(seg.get("start", {}).get("x", 0))
                 y0 = float(seg.get("start", {}).get("y", 0))
                 x1 = float(seg.get("end",   {}).get("x", 0))
                 y1 = float(seg.get("end",   {}).get("y", 0))
-                lines.append(f"X{_mm(x0)}Y{_mm(y0)}D02*")
-                lines.append(f"X{_mm(x1)}Y{_mm(y1)}D01*")
-        lines.append("M02*")
+                draw_cmds.append(f"X{_mm(x0)}Y{_mm(y0)}D02*")
+                draw_cmds.append(f"X{_mm(x1)}Y{_mm(y1)}D01*")
+
+        # 2. Pads — flash apertures at pad world positions
+        for p in _all_pads:
+            # Through-hole pads appear on both layers; SMD only on their side
+            if p["type"] != "thru_hole" and p["layer"] != pad_side:
+                continue
+            if p["shape"] == "circle":
+                d = ap.get("C", p["sx"])
+            else:
+                d = ap.get("R", p["sx"], p["sy"])
+            draw_cmds.append(f"D{d}*")
+            draw_cmds.append(f"X{_mm(p['x'])}Y{_mm(p['y'])}D03*")
+
+        # 3. Vias — circular flash on both layers
+        for via in board.get("vias", []):
+            vx = float(via.get("x", 0))
+            vy = float(via.get("y", 0))
+            vs = float(via.get("size", 0.8))
+            d = ap.get("C", vs)
+            draw_cmds.append(f"D{d}*")
+            draw_cmds.append(f"X{_mm(vx)}Y{_mm(vy)}D03*")
+
+        # 4. Copper zones / areas — filled rectangles or polygons
+        #    Areas: rectangle defined by x1,y1,x2,y2 or outline polygon
+        for area in board.get("areas", []):
+            al = area.get("layer", "F.Cu")
+            if al != layer_name:
+                continue
+            outline = area.get("outline")
+            if outline and len(outline) >= 3:
+                # Polygon fill: use region fill (G36/G37)
+                d = ap.get("C", 0.01)  # thin aperture for outline
+                draw_cmds.append(f"D{d}*")
+                draw_cmds.append("G36*")
+                pts = outline
+                draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D02*")
+                for pt in pts[1:]:
+                    draw_cmds.append(f"X{_mm(float(pt.get('x', 0)))}Y{_mm(float(pt.get('y', 0)))}D01*")
+                draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D01*")
+                draw_cmds.append("G37*")
+            else:
+                # Rectangle area
+                ax1 = float(area.get("x1", 0))
+                ay1 = float(area.get("y1", 0))
+                ax2 = float(area.get("x2", bw))
+                ay2 = float(area.get("y2", bh))
+                rx1, rx2 = min(ax1, ax2), max(ax1, ax2)
+                ry1, ry2 = min(ay1, ay2), max(ay1, ay2)
+                d = ap.get("C", 0.01)
+                draw_cmds.append(f"D{d}*")
+                draw_cmds.append("G36*")
+                draw_cmds.append(f"X{_mm(rx1)}Y{_mm(ry1)}D02*")
+                draw_cmds.append(f"X{_mm(rx2)}Y{_mm(ry1)}D01*")
+                draw_cmds.append(f"X{_mm(rx2)}Y{_mm(ry2)}D01*")
+                draw_cmds.append(f"X{_mm(rx1)}Y{_mm(ry2)}D01*")
+                draw_cmds.append(f"X{_mm(rx1)}Y{_mm(ry1)}D01*")
+                draw_cmds.append("G37*")
+
+        # Zones (polygon-based copper pours)
+        for zone in board.get("zones", []):
+            zl = zone.get("layer", "F.Cu")
+            if zl != layer_name:
+                continue
+            pts = zone.get("points", [])
+            if len(pts) < 3:
+                continue
+            d = ap.get("C", 0.01)
+            draw_cmds.append(f"D{d}*")
+            draw_cmds.append("G36*")
+            draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D02*")
+            for pt in pts[1:]:
+                draw_cmds.append(f"X{_mm(float(pt.get('x', 0)))}Y{_mm(float(pt.get('y', 0)))}D01*")
+            draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D01*")
+            draw_cmds.append("G37*")
+
+        # Assemble
+        lines = [
+            "%FSLAX66Y66*%",
+            "%MOMM*%",
+            "%LPD*%",
+        ] + ap.definitions + draw_cmds + ["M02*"]
         return "\n".join(lines)
 
-    # Edge_Cuts.gml — board outline
+    # ── Solder mask layer (openings over pads) ───────────────────────────────
+    def _mask_layer(pad_side: str) -> str:
+        """Solder mask: dark field with clear (LPC) openings over pads.
+
+        pad_side: "F" or "B"
+        """
+        MASK_EXPAND = 0.05  # mm expansion around pads
+        ap = _ApertureMgr()
+        draw_cmds: list[str] = []
+
+        for p in _all_pads:
+            if p["type"] != "thru_hole" and p["layer"] != pad_side:
+                continue
+            sx = p["sx"] + MASK_EXPAND * 2
+            sy = p["sy"] + MASK_EXPAND * 2
+            if p["shape"] == "circle":
+                d = ap.get("C", sx)
+            else:
+                d = ap.get("R", sx, sy)
+            draw_cmds.append(f"D{d}*")
+            draw_cmds.append(f"X{_mm(p['x'])}Y{_mm(p['y'])}D03*")
+
+        # Via openings (unless tented)
+        for via in board.get("vias", []):
+            vx = float(via.get("x", 0))
+            vy = float(via.get("y", 0))
+            vs = float(via.get("size", 0.8)) + MASK_EXPAND * 2
+            d = ap.get("C", vs)
+            draw_cmds.append(f"D{d}*")
+            draw_cmds.append(f"X{_mm(vx)}Y{_mm(vy)}D03*")
+
+        lines = [
+            "%FSLAX66Y66*%",
+            "%MOMM*%",
+            "%LPC*%",  # clear polarity — openings
+        ] + ap.definitions + draw_cmds + ["M02*"]
+        return "\n".join(lines)
+
+    # ── Solder paste (SMD pads only) ─────────────────────────────────────────
+    def _paste_layer(pad_side: str) -> str:
+        PASTE_SHRINK = 0.03  # mm shrink from pad size
+        ap = _ApertureMgr()
+        draw_cmds: list[str] = []
+
+        for p in _all_pads:
+            if p["type"] == "thru_hole":
+                continue  # no paste on TH pads
+            if p["layer"] != pad_side:
+                continue
+            sx = max(0.1, p["sx"] - PASTE_SHRINK * 2)
+            sy = max(0.1, p["sy"] - PASTE_SHRINK * 2)
+            if p["shape"] == "circle":
+                d = ap.get("C", sx)
+            else:
+                d = ap.get("R", sx, sy)
+            draw_cmds.append(f"D{d}*")
+            draw_cmds.append(f"X{_mm(p['x'])}Y{_mm(p['y'])}D03*")
+
+        lines = [
+            "%FSLAX66Y66*%",
+            "%MOMM*%",
+            "%LPD*%",
+        ] + ap.definitions + draw_cmds + ["M02*"]
+        return "\n".join(lines)
+
+    # ── Silkscreen ───────────────────────────────────────────────────────────
+    def _silk_layer(pad_side: str) -> str:
+        """Silkscreen: component reference designators + outlines."""
+        ap = _ApertureMgr()
+        draw_cmds: list[str] = []
+        line_d = ap.get("C", 0.15)  # 0.15mm silk line
+
+        for comp in board.get("components", []):
+            cl = comp.get("layer", "F")
+            if cl != pad_side:
+                continue
+            ref = comp.get("ref", comp.get("id", ""))
+            cx = float(comp.get("x", 0))
+            cy = float(comp.get("y", 0))
+            # Draw component body outline as a small rectangle
+            pads = comp.get("pads", [])
+            if pads:
+                xs = [float(p.get("x", 0)) for p in pads]
+                ys = [float(p.get("y", 0)) for p in pads]
+                pad_min_x = min(xs) - 0.5
+                pad_max_x = max(xs) + 0.5
+                pad_min_y = min(ys) - 0.5
+                pad_max_y = max(ys) + 0.5
+                rot = float(comp.get("rotation", 0))
+                rad = math.radians(rot)
+                cos_r, sin_r = math.cos(rad), math.sin(rad)
+                corners = [
+                    (pad_min_x, pad_min_y), (pad_max_x, pad_min_y),
+                    (pad_max_x, pad_max_y), (pad_min_x, pad_max_y),
+                ]
+                world_corners = [
+                    (cx + lx * cos_r - ly * sin_r, cy + lx * sin_r + ly * cos_r)
+                    for lx, ly in corners
+                ]
+                draw_cmds.append(f"D{line_d}*")
+                wx0, wy0 = world_corners[0]
+                draw_cmds.append(f"X{_mm(wx0)}Y{_mm(wy0)}D02*")
+                for wx, wy in world_corners[1:]:
+                    draw_cmds.append(f"X{_mm(wx)}Y{_mm(wy)}D01*")
+                draw_cmds.append(f"X{_mm(wx0)}Y{_mm(wy0)}D01*")
+
+        # Board texts
+        for txt in board.get("texts", []):
+            tl = txt.get("layer", "F.SilkS")
+            expected = "F.SilkS" if pad_side == "F" else "B.SilkS"
+            if tl != expected:
+                continue
+            tx = float(txt.get("x", 0))
+            ty = float(txt.get("y", 0))
+            # Approximate text as a small horizontal line
+            text_str = txt.get("text", "")
+            text_w = len(text_str) * 0.8  # rough width estimate
+            draw_cmds.append(f"D{line_d}*")
+            draw_cmds.append(f"X{_mm(tx)}Y{_mm(ty)}D02*")
+            draw_cmds.append(f"X{_mm(tx + text_w)}Y{_mm(ty)}D01*")
+
+        lines = [
+            "%FSLAX66Y66*%",
+            "%MOMM*%",
+            "%LPD*%",
+        ] + ap.definitions + draw_cmds + ["M02*"]
+        return "\n".join(lines)
+
+    # ── Edge cuts (board outline) ────────────────────────────────────────────
     def _edge_cuts() -> str:
         lines = [
             "%FSLAX66Y66*%",
             "%MOMM*%",
             "%LPD*%",
-            "%ADD10C,0.05*%",
+            "%ADD10C,0.050000*%",
             "D10*",
             f"X{_mm(0)}Y{_mm(0)}D02*",
             f"X{_mm(bw)}Y{_mm(0)}D01*",
@@ -2950,34 +3225,62 @@ def gerber_for_board(board: dict) -> bytes:
         ]
         return "\n".join(lines)
 
-    # Excellon drill file
+    # ── Excellon drill file ──────────────────────────────────────────────────
     def _drill() -> str:
-        lines = [
-            "M48",
-            "METRIC,TZ",
-            "T1C0.800",
-            "%",
-            "G90",
-            "G05",
-            "T1",
-        ]
+        # Collect all drill hits grouped by diameter
+        drills: dict[float, list[tuple[float, float]]] = {}  # diameter → [(x,y)]
+
         for comp in board.get("components", []):
             cx = float(comp.get("x", 0))
             cy = float(comp.get("y", 0))
+            rot = float(comp.get("rotation", 0))
+            rad = math.radians(rot)
+            cos_r, sin_r = math.cos(rad), math.sin(rad)
             for pad in comp.get("pads", []):
                 if pad.get("type") == "thru_hole" and pad.get("drill"):
-                    px = cx + float(pad.get("x", 0))
-                    py = cy + float(pad.get("y", 0))
-                    lines.append(f"X{px * 1000:.0f}Y{py * 1000:.0f}")
+                    lx = float(pad.get("x", 0))
+                    ly = float(pad.get("y", 0))
+                    px = cx + lx * cos_r - ly * sin_r
+                    py = cy + lx * sin_r + ly * cos_r
+                    d = float(pad["drill"])
+                    drills.setdefault(d, []).append((px, py))
+
+        for via in board.get("vias", []):
+            vx = float(via.get("x", 0))
+            vy = float(via.get("y", 0))
+            d = float(via.get("drill", 0.4))
+            drills.setdefault(d, []).append((vx, vy))
+
+        # Build Excellon
+        lines = ["M48", "METRIC,TZ"]
+        tools: list[float] = sorted(drills.keys())
+        for ti, diameter in enumerate(tools, 1):
+            lines.append(f"T{ti}C{diameter:.3f}")
+        lines.append("%")
+        lines.append("G90")
+        lines.append("G05")
+
+        for ti, diameter in enumerate(tools, 1):
+            lines.append(f"T{ti}")
+            for px, py in drills[diameter]:
+                lines.append(f"X{px * 1000:.0f}Y{py * 1000:.0f}")
+
         lines.append("T0")
         lines.append("M30")
         return "\n".join(lines)
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("F_Cu.gtl",        _f_cu())
+        zf.writestr("F_Cu.gtl",        _copper_layer("F.Cu", "F"))
+        zf.writestr("B_Cu.gbl",        _copper_layer("B.Cu", "B"))
+        zf.writestr("F_Mask.gts",      _mask_layer("F"))
+        zf.writestr("B_Mask.gbs",      _mask_layer("B"))
+        zf.writestr("F_SilkS.gto",     _silk_layer("F"))
+        zf.writestr("B_SilkS.gbo",     _silk_layer("B"))
+        zf.writestr("F_Paste.gtp",     _paste_layer("F"))
+        zf.writestr("B_Paste.gbp",     _paste_layer("B"))
         zf.writestr("Edge_Cuts.gml",   _edge_cuts())
-        zf.writestr("drill.drl",        _drill())
+        zf.writestr("drill.drl",       _drill())
     return buf.getvalue()
 
 
