@@ -315,9 +315,6 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
 
 <div class="pcb-sections">
 
-<!-- Board tabs (one per saved PCB board) -->
-<div id="pcb-board-tabs" class="pcb-board-tabs"></div>
-
 <!-- ══ LAYOUT SECTION ══ -->
 <div id="pcb-section-layout" class="pcb-section">
 
@@ -404,6 +401,9 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   <span id="work-layer-badge" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;border:1px solid;cursor:pointer;" title="Click to switch work layer" onclick="openLayerPickerDropdown()">Top Copper</span>
   <span id="status-bar">x: 0.00  y: 0.00</span>
 </div>
+
+<!-- Board tabs (lowest bar, one per saved PCB board) -->
+<div id="pcb-board-tabs" class="pcb-board-tabs"></div>
 
 <!-- Canvas -->
 <div class="canvas-wrap" id="canvas-wrap" style="flex:1;">
