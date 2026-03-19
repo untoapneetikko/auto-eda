@@ -1938,16 +1938,6 @@
       "material": "Copper"
     }
   ],
-  "updated_at": "2026-03-19T00:07:40.152302+00:00",
-  "texts": [
-    {
-      "id": "tmmwpo4vz2ld",
-      "text": "SENSOFUSION",
-      "layer": "F.SilkS",
-      "size": 1,
-      "x": 4,
-      "y": 13,
-      "rotation": 0
-    }
-  ]
+  "updated_at": "2026-03-19T00:17:05.169099+00:00",
+  "texts": []
 }

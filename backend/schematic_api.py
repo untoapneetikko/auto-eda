@@ -2909,12 +2909,25 @@ def gerber_for_board(board: dict) -> bytes:
       Edge_Cuts.gml — board outline
       drill.drl — Excellon drill file (TH pads + vias)
     """
-    bw = float(board.get("board", {}).get("width",  board.get("width",  200)))
-    bh = float(board.get("board", {}).get("height", board.get("height", 200)))
+    _bd = board.get("board", {})
+    bw = float(_bd.get("width",  board.get("width",  200)))
+    bh = float(_bd.get("height", board.get("height", 200)))
+    # Board origin offset — world coordinates are relative to (ox, oy),
+    # but Gerber output must be normalised to (0, 0) origin.
+    _ox = float(_bd.get("ox", 0))
+    _oy = float(_bd.get("oy", 0))
 
     def _mm(v: float) -> str:
         """Convert mm to Gerber coordinate (6.6 format = nanometres)."""
         return str(int(round(v * 1_000_000))).zfill(7)
+
+    def _gx(world_x: float) -> str:
+        """World X → Gerber X (shifted by board origin)."""
+        return _mm(world_x - _ox)
+
+    def _gy(world_y: float) -> str:
+        """World Y → Gerber Y (shifted by board origin)."""
+        return _mm(world_y - _oy)
 
     # ── Collect pad world positions ──────────────────────────────────────────
     _all_pads: list[dict] = []  # [{x, y, sx, sy, shape, type, net, layer, ref, num}]
@@ -2995,8 +3008,8 @@ def gerber_for_board(board: dict) -> bytes:
                 y0 = float(seg.get("start", {}).get("y", 0))
                 x1 = float(seg.get("end",   {}).get("x", 0))
                 y1 = float(seg.get("end",   {}).get("y", 0))
-                draw_cmds.append(f"X{_mm(x0)}Y{_mm(y0)}D02*")
-                draw_cmds.append(f"X{_mm(x1)}Y{_mm(y1)}D01*")
+                draw_cmds.append(f"X{_gx(x0)}Y{_gy(y0)}D02*")
+                draw_cmds.append(f"X{_gx(x1)}Y{_gy(y1)}D01*")
 
         # 2. Pads — flash apertures at pad world positions
         for p in _all_pads:
@@ -3008,7 +3021,7 @@ def gerber_for_board(board: dict) -> bytes:
             else:
                 d = ap.get("R", p["sx"], p["sy"])
             draw_cmds.append(f"D{d}*")
-            draw_cmds.append(f"X{_mm(p['x'])}Y{_mm(p['y'])}D03*")
+            draw_cmds.append(f"X{_gx(p['x'])}Y{_gy(p['y'])}D03*")
 
         # 3. Vias — circular flash on both layers
         for via in board.get("vias", []):
@@ -3017,7 +3030,7 @@ def gerber_for_board(board: dict) -> bytes:
             vs = float(via.get("size", 0.8))
             d = ap.get("C", vs)
             draw_cmds.append(f"D{d}*")
-            draw_cmds.append(f"X{_mm(vx)}Y{_mm(vy)}D03*")
+            draw_cmds.append(f"X{_gx(vx)}Y{_gy(vy)}D03*")
 
         # 4. Copper zones / areas — filled rectangles or polygons
         #    Areas: rectangle defined by x1,y1,x2,y2 or outline polygon
@@ -3032,10 +3045,10 @@ def gerber_for_board(board: dict) -> bytes:
                 draw_cmds.append(f"D{d}*")
                 draw_cmds.append("G36*")
                 pts = outline
-                draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D02*")
+                draw_cmds.append(f"X{_gx(float(pts[0].get('x', 0)))}Y{_gy(float(pts[0].get('y', 0)))}D02*")
                 for pt in pts[1:]:
-                    draw_cmds.append(f"X{_mm(float(pt.get('x', 0)))}Y{_mm(float(pt.get('y', 0)))}D01*")
-                draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D01*")
+                    draw_cmds.append(f"X{_gx(float(pt.get('x', 0)))}Y{_gy(float(pt.get('y', 0)))}D01*")
+                draw_cmds.append(f"X{_gx(float(pts[0].get('x', 0)))}Y{_gy(float(pts[0].get('y', 0)))}D01*")
                 draw_cmds.append("G37*")
             else:
                 # Rectangle area
@@ -3048,11 +3061,11 @@ def gerber_for_board(board: dict) -> bytes:
                 d = ap.get("C", 0.01)
                 draw_cmds.append(f"D{d}*")
                 draw_cmds.append("G36*")
-                draw_cmds.append(f"X{_mm(rx1)}Y{_mm(ry1)}D02*")
-                draw_cmds.append(f"X{_mm(rx2)}Y{_mm(ry1)}D01*")
-                draw_cmds.append(f"X{_mm(rx2)}Y{_mm(ry2)}D01*")
-                draw_cmds.append(f"X{_mm(rx1)}Y{_mm(ry2)}D01*")
-                draw_cmds.append(f"X{_mm(rx1)}Y{_mm(ry1)}D01*")
+                draw_cmds.append(f"X{_gx(rx1)}Y{_gy(ry1)}D02*")
+                draw_cmds.append(f"X{_gx(rx2)}Y{_gy(ry1)}D01*")
+                draw_cmds.append(f"X{_gx(rx2)}Y{_gy(ry2)}D01*")
+                draw_cmds.append(f"X{_gx(rx1)}Y{_gy(ry2)}D01*")
+                draw_cmds.append(f"X{_gx(rx1)}Y{_gy(ry1)}D01*")
                 draw_cmds.append("G37*")
 
         # Zones (polygon-based copper pours)
@@ -3066,10 +3079,10 @@ def gerber_for_board(board: dict) -> bytes:
             d = ap.get("C", 0.01)
             draw_cmds.append(f"D{d}*")
             draw_cmds.append("G36*")
-            draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D02*")
+            draw_cmds.append(f"X{_gx(float(pts[0].get('x', 0)))}Y{_gy(float(pts[0].get('y', 0)))}D02*")
             for pt in pts[1:]:
-                draw_cmds.append(f"X{_mm(float(pt.get('x', 0)))}Y{_mm(float(pt.get('y', 0)))}D01*")
-            draw_cmds.append(f"X{_mm(float(pts[0].get('x', 0)))}Y{_mm(float(pts[0].get('y', 0)))}D01*")
+                draw_cmds.append(f"X{_gx(float(pt.get('x', 0)))}Y{_gy(float(pt.get('y', 0)))}D01*")
+            draw_cmds.append(f"X{_gx(float(pts[0].get('x', 0)))}Y{_gy(float(pts[0].get('y', 0)))}D01*")
             draw_cmds.append("G37*")
 
         # Assemble
@@ -3100,7 +3113,7 @@ def gerber_for_board(board: dict) -> bytes:
             else:
                 d = ap.get("R", sx, sy)
             draw_cmds.append(f"D{d}*")
-            draw_cmds.append(f"X{_mm(p['x'])}Y{_mm(p['y'])}D03*")
+            draw_cmds.append(f"X{_gx(p['x'])}Y{_gy(p['y'])}D03*")
 
         # Via openings (unless tented)
         for via in board.get("vias", []):
@@ -3109,7 +3122,7 @@ def gerber_for_board(board: dict) -> bytes:
             vs = float(via.get("size", 0.8)) + MASK_EXPAND * 2
             d = ap.get("C", vs)
             draw_cmds.append(f"D{d}*")
-            draw_cmds.append(f"X{_mm(vx)}Y{_mm(vy)}D03*")
+            draw_cmds.append(f"X{_gx(vx)}Y{_gy(vy)}D03*")
 
         lines = [
             "%FSLAX66Y66*%",
@@ -3136,7 +3149,7 @@ def gerber_for_board(board: dict) -> bytes:
             else:
                 d = ap.get("R", sx, sy)
             draw_cmds.append(f"D{d}*")
-            draw_cmds.append(f"X{_mm(p['x'])}Y{_mm(p['y'])}D03*")
+            draw_cmds.append(f"X{_gx(p['x'])}Y{_gy(p['y'])}D03*")
 
         lines = [
             "%FSLAX66Y66*%",
@@ -3181,10 +3194,10 @@ def gerber_for_board(board: dict) -> bytes:
                 ]
                 draw_cmds.append(f"D{line_d}*")
                 wx0, wy0 = world_corners[0]
-                draw_cmds.append(f"X{_mm(wx0)}Y{_mm(wy0)}D02*")
+                draw_cmds.append(f"X{_gx(wx0)}Y{_gy(wy0)}D02*")
                 for wx, wy in world_corners[1:]:
-                    draw_cmds.append(f"X{_mm(wx)}Y{_mm(wy)}D01*")
-                draw_cmds.append(f"X{_mm(wx0)}Y{_mm(wy0)}D01*")
+                    draw_cmds.append(f"X{_gx(wx)}Y{_gy(wy)}D01*")
+                draw_cmds.append(f"X{_gx(wx0)}Y{_gy(wy0)}D01*")
 
         # Board texts
         for txt in board.get("texts", []):
@@ -3198,8 +3211,8 @@ def gerber_for_board(board: dict) -> bytes:
             text_str = txt.get("text", "")
             text_w = len(text_str) * 0.8  # rough width estimate
             draw_cmds.append(f"D{line_d}*")
-            draw_cmds.append(f"X{_mm(tx)}Y{_mm(ty)}D02*")
-            draw_cmds.append(f"X{_mm(tx + text_w)}Y{_mm(ty)}D01*")
+            draw_cmds.append(f"X{_gx(tx)}Y{_gy(ty)}D02*")
+            draw_cmds.append(f"X{_gx(tx + text_w)}Y{_gy(ty)}D01*")
 
         lines = [
             "%FSLAX66Y66*%",
@@ -3216,11 +3229,11 @@ def gerber_for_board(board: dict) -> bytes:
             "%LPD*%",
             "%ADD10C,0.050000*%",
             "D10*",
-            f"X{_mm(0)}Y{_mm(0)}D02*",
-            f"X{_mm(bw)}Y{_mm(0)}D01*",
-            f"X{_mm(bw)}Y{_mm(bh)}D01*",
-            f"X{_mm(0)}Y{_mm(bh)}D01*",
-            f"X{_mm(0)}Y{_mm(0)}D01*",
+            f"X{_gx(0)}Y{_gy(0)}D02*",
+            f"X{_gx(bw)}Y{_gy(0)}D01*",
+            f"X{_gx(bw)}Y{_gy(bh)}D01*",
+            f"X{_gx(0)}Y{_gy(bh)}D01*",
+            f"X{_gx(0)}Y{_gy(0)}D01*",
             "M02*",
         ]
         return "\n".join(lines)
@@ -3263,7 +3276,7 @@ def gerber_for_board(board: dict) -> bytes:
         for ti, diameter in enumerate(tools, 1):
             lines.append(f"T{ti}")
             for px, py in drills[diameter]:
-                lines.append(f"X{px * 1000:.0f}Y{py * 1000:.0f}")
+                lines.append(f"X{(px - _ox) * 1000:.0f}Y{(py - _oy) * 1000:.0f}")
 
         lines.append("T0")
         lines.append("M30")

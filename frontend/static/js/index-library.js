@@ -835,7 +835,7 @@ function switchProfileTab(name, btn) {
     if (firstVisit) {
       _tabLoadedForSlug['schematic'] = selectedSlug;
       requestAnimationFrame(() => {
-        fetch(`/api/library/${selectedSlug}`).then(r => r.json()).then(p => renderAppCircuitWithEditor(p));
+        fetch(`/api/library/${selectedSlug}`, { cache: 'no-store' }).then(r => r.json()).then(p => renderAppCircuitWithEditor(p));
       });
     }
   }

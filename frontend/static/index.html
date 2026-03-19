@@ -1482,18 +1482,26 @@ function openProfileSettings() {
   document.getElementById('profile-font-size').value = fs;
   document.getElementById('profile-font-label').textContent = fs + '%';
 }
-// Apply saved UI scale on page load
+// Apply saved UI scale — uses CSS transform on body to avoid viewport/fixed issues
 function _applyUiScale(pct) {
   const z = parseInt(pct) / 100;
-  document.documentElement.style.zoom = z;
-  // Fixed-position elements ignore zoom — resize them manually
-  _fixDrawerHeight();
+  if (z === 1) {
+    document.body.style.transform = '';
+    document.body.style.transformOrigin = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    document.documentElement.style.zoom = '';
+    document.documentElement.style.overflow = '';
+    return;
+  }
+  // Use transform scale on body — works with fixed elements and vh units
+  document.documentElement.style.zoom = '';
+  document.body.style.transformOrigin = '0 0';
+  document.body.style.transform = `scale(${z})`;
+  document.body.style.width = (100 / z) + '%';
+  document.body.style.height = (100 / z) + 'vh';
+  document.documentElement.style.overflow = 'hidden';
 }
-function _fixDrawerHeight() {
-  const d = document.getElementById('agents-drawer');
-  if (d) d.style.height = window.innerHeight + 'px';
-}
-window.addEventListener('resize', _fixDrawerHeight);
 (function(){
   const fs = localStorage.getItem('eda_font_size');
   if (fs && fs !== '100') _applyUiScale(fs);
