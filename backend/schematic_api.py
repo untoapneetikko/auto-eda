@@ -3229,11 +3229,11 @@ def gerber_for_board(board: dict) -> bytes:
             "%LPD*%",
             "%ADD10C,0.050000*%",
             "D10*",
-            f"X{_gx(0)}Y{_gy(0)}D02*",
-            f"X{_gx(bw)}Y{_gy(0)}D01*",
-            f"X{_gx(bw)}Y{_gy(bh)}D01*",
-            f"X{_gx(0)}Y{_gy(bh)}D01*",
-            f"X{_gx(0)}Y{_gy(0)}D01*",
+            f"X{_mm(0)}Y{_mm(0)}D02*",
+            f"X{_mm(bw)}Y{_mm(0)}D01*",
+            f"X{_mm(bw)}Y{_mm(bh)}D01*",
+            f"X{_mm(0)}Y{_mm(bh)}D01*",
+            f"X{_mm(0)}Y{_mm(0)}D01*",
             "M02*",
         ]
         return "\n".join(lines)
