@@ -1483,10 +1483,7 @@ function openProfileSettings() {
 }
 // Apply saved UI scale on page load
 function _applyUiScale(pct) {
-  const z = parseInt(pct) / 100;
-  document.body.style.zoom = z;
-  // Compensate body height so 100vh content fits within the zoomed viewport
-  document.body.style.height = (100 / z) + 'vh';
+  document.documentElement.style.zoom = parseInt(pct) / 100;
 }
 (function(){
   const fs = localStorage.getItem('eda_font_size');
