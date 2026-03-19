@@ -1477,12 +1477,26 @@ function openProfileSettings() {
   document.getElementById('profile-current-pw').value = '';
   document.getElementById('profile-new-pw').value = '';
   document.getElementById('profile-status').textContent = '';
+  const fs = localStorage.getItem('eda_font_size') || '100';
+  document.getElementById('profile-font-size').value = fs;
+  document.getElementById('profile-font-label').textContent = fs + '%';
 }
+// Apply saved font size on page load
+(function(){
+  const fs = localStorage.getItem('eda_font_size');
+  if (fs && fs !== '100') document.documentElement.style.fontSize = fs + '%';
+})();
 
 async function saveProfileSettings() {
   const btn = document.getElementById('profile-save-btn');
   const status = document.getElementById('profile-status');
   btn.disabled = true; status.textContent = 'Saving...'; status.style.color = 'var(--text-muted)';
+  // Save font size to localStorage
+  const fontSize = document.getElementById('profile-font-size').value;
+  localStorage.setItem('eda_font_size', fontSize);
+  document.documentElement.style.fontSize = fontSize + '%';
+  // Also notify PCB iframe
+  try { document.getElementById('pcb-frame')?.contentWindow?.postMessage({type:'setFontSize',value:fontSize},'*'); } catch(_){}
   const body = {};
   const newName = document.getElementById('profile-display-name').value.trim();
   if (newName) body.display_name = newName;
@@ -1598,6 +1612,16 @@ async function adminResetPw(username) {
       <div style="margin-bottom:14px;">
         <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">Display Name</label>
         <input id="profile-display-name" type="text" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:4px;">UI Font Size</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:10px;color:var(--text-muted);">A</span>
+          <input id="profile-font-size" type="range" min="75" max="125" step="5" value="100" style="flex:1;accent-color:var(--accent);"
+            oninput="document.getElementById('profile-font-label').textContent=this.value+'%'; document.documentElement.style.fontSize=this.value+'%';">
+          <span style="font-size:16px;color:var(--text-muted);">A</span>
+          <span id="profile-font-label" style="font-size:12px;color:var(--text-dim);min-width:36px;text-align:right;">100%</span>
+        </div>
       </div>
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:8px;">Change Password</div>
       <div style="margin-bottom:10px;">

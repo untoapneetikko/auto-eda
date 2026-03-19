@@ -256,6 +256,10 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   function doLogoutPcb(){
     fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/login');
   }
+  // Apply saved font size
+  (function(){const fs=localStorage.getItem('eda_font_size');if(fs&&fs!=='100')document.documentElement.style.fontSize=fs+'%';})();
+  // Listen for font size changes from parent
+  window.addEventListener('message',e=>{if(e.data?.type==='setFontSize')document.documentElement.style.fontSize=e.data.value+'%';});
 </script>
 
 <!-- 3-column persistent layout: left | center (header + switchable content) | right -->
