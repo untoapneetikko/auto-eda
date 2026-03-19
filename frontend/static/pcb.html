@@ -186,7 +186,7 @@ pre.code-block{background:var(--bg);border:1px solid var(--border);border-radius
 /* ── Top nav (matches index.html) ── */
 header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:6px;height:38px;flex-shrink:0;}
 header h1{font-size:14px;font-weight:700;white-space:nowrap;}
-.nav-tab{background:transparent;border:none;color:var(--text-muted);font-size:13px;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.nav-tab{background:transparent;border:none;color:var(--text-muted);font-size:12px;font-weight:600;padding:4px 12px;border-radius:6px;cursor:pointer;transition:all .15s;}
 .nav-tab:hover{background:rgba(255,255,255,0.05);color:var(--text);}
 .nav-tab.active{background:var(--accent-dim);color:var(--accent);}
 
@@ -256,10 +256,10 @@ header h1{font-size:14px;font-weight:700;white-space:nowrap;}
   function doLogoutPcb(){
     fetch('/api/auth/logout',{method:'POST'}).then(()=>window.location.href='/login');
   }
-  // Apply saved font size
-  (function(){const fs=localStorage.getItem('eda_font_size');if(fs&&fs!=='100')document.documentElement.style.fontSize=fs+'%';})();
-  // Listen for font size changes from parent
-  window.addEventListener('message',e=>{if(e.data?.type==='setFontSize')document.documentElement.style.fontSize=e.data.value+'%';});
+  // Apply saved UI scale
+  (function(){const fs=localStorage.getItem('eda_font_size');if(fs&&fs!=='100')document.body.style.zoom=parseInt(fs)/100;})();
+  // Listen for scale changes from parent
+  window.addEventListener('message',e=>{if(e.data?.type==='setFontSize')document.body.style.zoom=parseInt(e.data.value)/100;});
 </script>
 
 <!-- 3-column persistent layout: left | center (header + switchable content) | right -->

@@ -949,7 +949,7 @@
   <div style="flex:1;display:flex;flex-direction:row;min-width:0;">
   <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
     <!-- ── Schematic sub-nav tabs ── -->
-    <nav class="sch-subnav" style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:4px;height:34px;flex-shrink:0;">
+    <nav class="sch-subnav" style="background:var(--surface);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:6px;height:34px;flex-shrink:0;">
       <button class="nav-tab active" id="sch-sub-schematic" onclick="switchSchSection('schematic')" style="font-size:12px;padding:4px 12px;">📋 Schematic</button>
       <button class="nav-tab" id="sch-sub-auto" onclick="switchSchSection('auto')" style="font-size:12px;padding:4px 12px;">&#9881; Auto</button>
       <button class="nav-tab" id="sch-sub-rules" onclick="switchSchSection('rules')" style="font-size:12px;padding:4px 12px;">📐 Rules</button>
@@ -1481,20 +1481,20 @@ function openProfileSettings() {
   document.getElementById('profile-font-size').value = fs;
   document.getElementById('profile-font-label').textContent = fs + '%';
 }
-// Apply saved font size on page load
+// Apply saved UI scale on page load
 (function(){
   const fs = localStorage.getItem('eda_font_size');
-  if (fs && fs !== '100') document.documentElement.style.fontSize = fs + '%';
+  if (fs && fs !== '100') document.body.style.zoom = (parseInt(fs)/100);
 })();
 
 async function saveProfileSettings() {
   const btn = document.getElementById('profile-save-btn');
   const status = document.getElementById('profile-status');
   btn.disabled = true; status.textContent = 'Saving...'; status.style.color = 'var(--text-muted)';
-  // Save font size to localStorage
+  // Save UI scale to localStorage
   const fontSize = document.getElementById('profile-font-size').value;
   localStorage.setItem('eda_font_size', fontSize);
-  document.documentElement.style.fontSize = fontSize + '%';
+  document.body.style.zoom = parseInt(fontSize) / 100;
   // Also notify PCB iframe
   try { document.getElementById('pcb-frame')?.contentWindow?.postMessage({type:'setFontSize',value:fontSize},'*'); } catch(_){}
   const body = {};
@@ -1618,7 +1618,7 @@ async function adminResetPw(username) {
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:10px;color:var(--text-muted);">A</span>
           <input id="profile-font-size" type="range" min="75" max="125" step="5" value="100" style="flex:1;accent-color:var(--accent);"
-            oninput="document.getElementById('profile-font-label').textContent=this.value+'%'; document.documentElement.style.fontSize=this.value+'%';">
+            oninput="document.getElementById('profile-font-label').textContent=this.value+'%'; document.body.style.zoom=parseInt(this.value)/100;">
           <span style="font-size:16px;color:var(--text-muted);">A</span>
           <span id="profile-font-label" style="font-size:12px;color:var(--text-dim);min-width:36px;text-align:right;">100%</span>
         </div>
