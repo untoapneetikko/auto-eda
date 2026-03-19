@@ -1,0 +1,12 @@
+{
+  "john": {
+    "password_hash": "f3b40d7a101acfc2b4ffbce9ae44d150ca6b7c28e6191a0749667c6afdc970e0",
+    "display_name": "John",
+    "role": "admin"
+  },
+  "jimi": {
+    "password_hash": "f3b40d7a101acfc2b4ffbce9ae44d150ca6b7c28e6191a0749667c6afdc970e0",
+    "display_name": "jimi",
+    "role": "user"
+  }
+}

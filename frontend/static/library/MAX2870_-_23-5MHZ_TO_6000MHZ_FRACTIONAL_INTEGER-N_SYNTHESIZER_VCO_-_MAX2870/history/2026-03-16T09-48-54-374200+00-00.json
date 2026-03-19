@@ -1368,6 +1368,76 @@
           "x": 480,
           "y": 700,
           "rotation": 0
+        },
+        {
+          "id": "gnd_pin8",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_CP",
+          "value": "",
+          "x": 1100,
+          "y": 400,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_pin9",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_PLL",
+          "value": "",
+          "x": 1100,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_pin11",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_RF",
+          "value": "",
+          "x": 1100,
+          "y": 520,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_pin18",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_VCO",
+          "value": "",
+          "x": 1220,
+          "y": 400,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_pin21",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_TUNE",
+          "value": "",
+          "x": 1220,
+          "y": 460,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_pin27",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_DIG",
+          "value": "",
+          "x": 1220,
+          "y": 520,
+          "rotation": 0
+        },
+        {
+          "id": "gnd_pin31",
+          "slug": "GND",
+          "symType": "gnd",
+          "designator": "GND_SD",
+          "value": "",
+          "x": 1220,
+          "y": 580,
+          "rotation": 0
         }
       ],
       "wires": [
@@ -1875,6 +1945,46 @@
           "x": 540,
           "y": 600,
           "text": "TUNE"
+        },
+        {
+          "x": 1090,
+          "y": 370,
+          "text": "GND_CP (P8)"
+        },
+        {
+          "x": 1090,
+          "y": 430,
+          "text": "GND_PLL (P9)"
+        },
+        {
+          "x": 1090,
+          "y": 490,
+          "text": "GND_RF (P11)"
+        },
+        {
+          "x": 1210,
+          "y": 370,
+          "text": "GND_VCO (P18)"
+        },
+        {
+          "x": 1210,
+          "y": 430,
+          "text": "GND_TUNE (P21)"
+        },
+        {
+          "x": 1210,
+          "y": 490,
+          "text": "GND_DIG (P27)"
+        },
+        {
+          "x": 1210,
+          "y": 550,
+          "text": "GND_SD (P31)"
+        },
+        {
+          "x": 60,
+          "y": 340,
+          "text": "SW=NC (P5)"
         }
       ]
     },
